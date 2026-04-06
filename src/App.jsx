@@ -417,13 +417,25 @@ export default function App() {
     saveCommunity(posts)
   }, [posts])
 
-  const addPost = () => {
+  const addPost = async () => {
     const title = communityDraft.title.trim()
     const body = communityDraft.body.trim()
     if (!title || !body) return
-    const post = {
-      id: uid(),
+    const payload = {
+      category: communityDraft.category || 'other',
       title,
+      body,
+      anon: communityDraft.anon || false,
+      author_name: communityDraft.anon ? null : (communityDraft.author || null),
+      likes: 0,
+      empathy: 0,
+    }
+    const { data, error } = await supabase.from('community_posts').insert(payload).select()
+    if (error) { console.error(error); return }
+    const post = {
+      ...data[0],
+      id: data[0].id,
+      title: data[0].title,
       body,
       author: communityDraft.author.trim() || '匿名',
       createdAt: Date.now(),
