@@ -554,15 +554,15 @@ export default function App() {
       <style>{`
         :root {
           --accent: #1a3a5c;
-          --accent-dim: rgba(26, 58, 92, 0.08);
+          --accent-dim: rgba(26, 58, 92, 0.06);
           --accent-border: rgba(26, 58, 92, 0.3);
-          --bg: #e8eef5;
+          --bg: #f5f7fa;
           --surface: #ffffff;
           --border: rgba(26, 58, 92, 0.15);
           --border-2: rgba(26, 58, 92, 0.08);
-          --text: #1a3a5c;
-          --muted: rgba(26, 58, 92, 0.5);
-          --shadow: 0 2px 12px rgba(26, 58, 92, 0.10);
+          --text: #333333;
+          --muted: #888888;
+          --shadow: 0 1px 8px rgba(0,0,0,0.08);
         }
 
         #root {
@@ -963,7 +963,7 @@ export default function App() {
           border: 1px solid var(--border-2);
           border-radius: 14px;
           padding: 16px;
-          background: rgba(0, 0, 0, 0.2);
+          background: #ffffff;
           cursor: pointer;
           text-align: left;
           transition: border-color 0.15s, background 0.15s;
@@ -1037,7 +1037,7 @@ export default function App() {
           border-radius: 14px;
           padding: 14px;
           margin-bottom: 18px;
-          background: rgba(0, 0, 0, 0.2);
+          background: #ffffff;
         }
 
         .ha-post {
