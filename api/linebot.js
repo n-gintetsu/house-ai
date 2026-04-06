@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   const channelSecret = process.env.LINE_CHANNEL_SECRET;
   const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
-  // 署名検証
   const signature = req.headers['x-line-signature'];
   const body = JSON.stringify(req.body);
   const hash = crypto
@@ -30,7 +29,6 @@ export default async function handler(req, res) {
       const userMessage = event.message.text;
       const replyToken = event.replyToken;
 
-      // Claude APIで返答を生成
       const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -49,7 +47,6 @@ export default async function handler(req, res) {
       const claudeData = await claudeResponse.json();
       const replyText = claudeData.content[0].text;
 
-      // LINEに返信
       await fetch('https://api.line.me/v2/bot/message/reply', {
         method: 'POST',
         headers: {
