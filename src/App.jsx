@@ -556,12 +556,12 @@ export default function App() {
           --accent: #c9a84c;
           --accent-dim: rgba(255, 215, 100, 0.12);
           --accent-border: rgba(255, 215, 100, 0.35);
-          --bg: #0a1628;
-          --surface: rgba(255, 255, 255, 0.06);
-          --border: rgba(100, 160, 255, 0.25);
-          --border-2: rgba(100, 160, 255, 0.12);
-          --text: rgba(255, 255, 255, 0.9);
-          --muted: rgba(255, 255, 255, 0.58);
+          --bg: #eef3f8;
+          --surface: rgba(255, 255, 255, 0.85);
+          --border: rgba(30, 80, 160, 0.2);
+          --border-2: rgba(30, 80, 160, 0.1);
+          --text: rgba(10, 30, 70, 0.9);
+          --muted: rgba(10, 30, 70, 0.5);
           --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
         }
 
