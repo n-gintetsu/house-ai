@@ -3,59 +3,39 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 const DEFAULT_SYSTEM_PROMPT =
   'あなたは「不動産AIコンシェルジュ」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
 
-function getAnthropicApiKey() {
-  return import.meta.env.VITE_ANTHROPIC_API_KEY
-}
-
 async function callClaudeApi({
-  apiKey,
   model,
   system,
   messages,
   temperature = 0.4,
   maxTokens = 900,
 }) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('/api/claude', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       model,
-      max_tokens: maxTokens,
-      temperature,
       system,
       messages,
+      temperature,
+      max_tokens: maxTokens,
     }),
   })
 
+  const data = await res.json().catch(() => ({}))
+
   if (!res.ok) {
-    let detail = ''
-    try {
-      const json = await res.json()
-      detail = json?.error?.message ? String(json.error.message) : ''
-    } catch {
-      // ignore
-    }
+    const detail =
+      data?.error != null ? String(data.error) : ''
     throw new Error(
       `Claude API request failed (${res.status}).${detail ? ` ${detail}` : ''}`,
     )
   }
 
-  const data = await res.json()
-  const content = Array.isArray(data?.content) ? data.content : []
-  const text = content
-    .filter((c) => c?.type === 'text' && typeof c?.text === 'string')
-    .map((c) => c.text)
-    .join('')
-
-  return text || ''
+  return typeof data?.text === 'string' ? data.text : ''
 }
 
 function App() {
-  const apiKey = useMemo(() => getAnthropicApiKey(), [])
   const model = useMemo(
     () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-5-sonnet-latest',
     [],
@@ -102,14 +82,7 @@ function App() {
     setInput('')
 
     try {
-      if (!apiKey) {
-        throw new Error(
-          'VITE_ANTHROPIC_API_KEY が未設定です。環境変数を設定してください。',
-        )
-      }
-
       const assistantText = await callClaudeApi({
-        apiKey,
         model,
         system: DEFAULT_SYSTEM_PROMPT,
         messages: toAnthropicMessages(nextChat),
@@ -463,8 +436,8 @@ function App() {
           </div>
 
           <div className="topbarActions">
-            <div className="pill" title="使うための設定">
-              {apiKey ? `Claude: ${model}` : 'VITE_ANTHROPIC_API_KEY を未設定（チャット不可）'}
+            <div className="pill" title="モデル（サーバー経由でClaudeを呼び出します）">
+              Claude: {model}
             </div>
             <button className="btn" onClick={handleReset} disabled={isSending}>
               新規チャット
@@ -548,7 +521,7 @@ function App() {
             </div>
             <div className="hintRow">
               <span>内見時のチェック項目や比較軸も一緒に作れます。</span>
-              <span>※APIキーは画面から直接送信されます（本番運用はサーバ中継推奨）</span>
+              <span>※APIキーはVercelの環境変数 ANTHROPIC_API_KEY でサーバー管理</span>
             </div>
           </form>
         </div>
