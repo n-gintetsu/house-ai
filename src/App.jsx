@@ -37,7 +37,7 @@ async function callClaudeApi({
 
 function App() {
   const model = useMemo(
-    () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-5-sonnet-latest',
+    () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5',
     [],
   )
 
