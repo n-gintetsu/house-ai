@@ -1,7 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+const STORAGE_KEY = 'house-ai-community-v1'
 
 const DEFAULT_SYSTEM_PROMPT =
   'あなたは「不動産AIコンシェルジュ」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
+
+const EXPERT_AI_SYSTEM =
+  'あなたは不動産に関する専門家紹介のアドバイザーです。ユーザーの状況を整理し、選んだ専門家カテゴリ（リフォーム業者・司法書士・税理士・FP）ごとに、相談の進め方・準備すべき書類・注意点を簡潔に箇条書きで示してください。断定診断や法律・税務の最終判断は避け、専門家への相談を促してください。'
+
+const COMMUNITY_AI_SYSTEM =
+  'あなたは不動産コミュニティのAIモデレーターです。投稿に対し、共感しつつ実務的な視点（次の一歩・確認ポイント）を短く2〜5文で返してください。攻撃的・断定的すぎる表現は避けます。'
 
 async function callClaudeApi({
   model,
@@ -25,8 +33,7 @@ async function callClaudeApi({
   const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
-    const detail =
-      data?.error != null ? String(data.error) : ''
+    const detail = data?.error != null ? String(data.error) : ''
     throw new Error(
       `Claude API request failed (${res.status}).${detail ? ` ${detail}` : ''}`,
     )
@@ -35,12 +42,126 @@ async function callClaudeApi({
   return typeof data?.text === 'string' ? data.text : ''
 }
 
-function App() {
+function callClaudeUserMessage(model, system, userText, maxTokens = 900) {
+  return callClaudeApi({
+    model,
+    system,
+    messages: [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: userText }],
+      },
+    ],
+    maxTokens,
+  })
+}
+
+function uid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function normalizePost(p) {
+  if (!p || typeof p !== 'object') return null
+  return {
+    ...p,
+    likes: typeof p.likes === 'number' ? p.likes : 0,
+    empathy: typeof p.empathy === 'number' ? p.empathy : 0,
+    likedByMe: !!p.likedByMe,
+    empathyByMe: !!p.empathyByMe,
+    comments: Array.isArray(p.comments) ? p.comments : [],
+    aiComment: typeof p.aiComment === 'string' ? p.aiComment : '',
+  }
+}
+
+function loadCommunity() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.map(normalizePost).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+function saveCommunity(posts) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts))
+  } catch {
+    // ignore
+  }
+}
+
+const TABS = [
+  { id: 'chat', label: 'AIチャット', icon: '💬' },
+  { id: 'sell', label: '売主査定', icon: '🏷️' },
+  { id: 'owner', label: 'オーナー', icon: '🏢' },
+  { id: 'expert', label: '専門家紹介', icon: '👔' },
+  { id: 'community', label: 'コミュニティ', icon: '🏘️' },
+]
+
+const PROPERTY_TYPES = ['一戸建て', 'マンション', '土地', 'アパート一棟', 'その他']
+
+const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'その他']
+
+const EXPERT_TYPES = [
+  { id: 'reform', label: 'リフォーム業者' },
+  { id: 'legal', label: '司法書士' },
+  { id: 'tax', label: '税理士' },
+  { id: 'fp', label: 'FP（ファイナンシャルプランナー）' },
+]
+
+const initialSell = {
+  step: 1,
+  propertyType: '',
+  address: '',
+  area: '',
+  builtYear: '',
+  layout: '',
+  name: '',
+  phone: '',
+  email: '',
+  notes: '',
+}
+
+const initialExpert = {
+  step: 1,
+  types: [],
+  region: '',
+  detail: '',
+  name: '',
+  phone: '',
+  email: '',
+  notes: '',
+  aiAdvice: '',
+  aiLoading: false,
+  aiError: '',
+}
+
+function initialOwnerForm() {
+  return {
+    step: 1,
+    propertyType: '',
+    units: '',
+    address: '',
+    name: '',
+    phone: '',
+    email: '',
+    notes: '',
+  }
+}
+
+export default function App() {
   const model = useMemo(
     () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5',
     [],
   )
 
+  const [tab, setTab] = useState('chat')
+
+  /* ---- AIチャット ---- */
   const [chat, setChat] = useState(() => [
     {
       role: 'assistant',
@@ -51,19 +172,16 @@ function App() {
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-
   const endRef = useRef(null)
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat, isSending])
 
   const toAnthropicMessages = (nextChat) => {
-    // APIの入力は通常「userから始まる会話」を想定するため、
-    // 初期のアシスタント挨拶など（userより前の履歴）を除外します。
     const valid = nextChat.filter((m) => m.role === 'user' || m.role === 'assistant')
     const firstUserIndex = valid.findIndex((m) => m.role === 'user')
     const trimmed = firstUserIndex === -1 ? [] : valid.slice(firstUserIndex)
-
     return trimmed.map((m) => ({
       role: m.role === 'user' ? 'user' : 'assistant',
       content: [{ type: 'text', text: m.text }],
@@ -73,21 +191,17 @@ function App() {
   async function handleSend() {
     const text = input.trim()
     if (!text || isSending) return
-
     setErrorMessage('')
     setIsSending(true)
-
     const nextChat = [...chat, { role: 'user', text }]
     setChat(nextChat)
     setInput('')
-
     try {
       const assistantText = await callClaudeApi({
         model,
         system: DEFAULT_SYSTEM_PROMPT,
         messages: toAnthropicMessages(nextChat),
       })
-
       setChat((prev) => [...prev, { role: 'assistant', text: assistantText }])
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -105,7 +219,7 @@ function App() {
     }
   }
 
-  function handleReset() {
+  function handleResetChat() {
     if (isSending) return
     setErrorMessage('')
     setInput('')
@@ -118,20 +232,175 @@ function App() {
     ])
   }
 
+  /* ---- 売主査定 ---- */
+  const [sell, setSell] = useState(initialSell)
+
+  /* ---- オーナー ---- */
+  const [ownerService, setOwnerService] = useState(null)
+  const [ownerForm, setOwnerForm] = useState(() => initialOwnerForm())
+
+  const ownerTitle = useMemo(() => {
+    if (ownerService === 'manage') return '管理委託のご相談'
+    if (ownerService === 'occupancy') return '稼働率アップのご相談'
+    if (ownerService === 'sell') return 'オーナー向け売却査定'
+    return ''
+  }, [ownerService])
+
+  /* ---- 専門家紹介 ---- */
+  const [expert, setExpert] = useState(initialExpert)
+
+  const toggleExpertType = (id) => {
+    setExpert((e) => ({
+      ...e,
+      types: e.types.includes(id) ? e.types.filter((t) => t !== id) : [...e.types, id],
+    }))
+  }
+
+  const generateExpertAdvice = useCallback(async () => {
+    if (expert.types.length === 0 || !expert.detail.trim()) {
+      setExpert((e) => ({ ...e, aiError: '専門家の種類と相談内容を入力してください。' }))
+      return
+    }
+    setExpert((e) => ({ ...e, aiLoading: true, aiError: '', aiAdvice: '' }))
+    const labels = EXPERT_TYPES.filter((t) => expert.types.includes(t.id))
+      .map((t) => t.label)
+      .join('、')
+    const userText = `希望する専門家: ${labels}\nエリア・状況: ${expert.region}\n相談内容:\n${expert.detail}`
+    try {
+      const text = await callClaudeUserMessage(model, EXPERT_AI_SYSTEM, userText, 1200)
+      setExpert((e) => ({ ...e, aiLoading: false, aiAdvice: text }))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setExpert((e) => ({ ...e, aiLoading: false, aiError: message }))
+    }
+  }, [expert.detail, expert.region, expert.types, model])
+
+  /* ---- コミュニティ ---- */
+  const [posts, setPosts] = useState(() => loadCommunity())
+  const [communityDraft, setCommunityDraft] = useState({
+    title: '',
+    body: '',
+    author: '',
+  })
+  const [expandedPost, setExpandedPost] = useState(null)
+  const [commentDrafts, setCommentDrafts] = useState({})
+  const [aiLoadingPostId, setAiLoadingPostId] = useState(null)
+
+  useEffect(() => {
+    saveCommunity(posts)
+  }, [posts])
+
+  const addPost = () => {
+    const title = communityDraft.title.trim()
+    const body = communityDraft.body.trim()
+    if (!title || !body) return
+    const post = {
+      id: uid(),
+      title,
+      body,
+      author: communityDraft.author.trim() || '匿名',
+      createdAt: Date.now(),
+      likes: 0,
+      empathy: 0,
+      likedByMe: false,
+      empathyByMe: false,
+      comments: [],
+      aiComment: '',
+    }
+    setPosts((p) => [post, ...p])
+    setCommunityDraft({ title: '', body: '', author: '' })
+  }
+
+  const toggleLike = (id) => {
+    setPosts((list) =>
+      list.map((p) => {
+        if (p.id !== id) return p
+        const next = !p.likedByMe
+        return {
+          ...p,
+          likedByMe: next,
+          likes: Math.max(0, p.likes + (next ? 1 : -1)),
+        }
+      }),
+    )
+  }
+
+  const toggleEmpathy = (id) => {
+    setPosts((list) =>
+      list.map((p) => {
+        if (p.id !== id) return p
+        const next = !p.empathyByMe
+        return {
+          ...p,
+          empathyByMe: next,
+          empathy: Math.max(0, p.empathy + (next ? 1 : -1)),
+        }
+      }),
+    )
+  }
+
+  const addComment = (postId) => {
+    const text = (commentDrafts[postId] || '').trim()
+    if (!text) return
+    setPosts((list) =>
+      list.map((p) => {
+        if (p.id !== postId) return p
+        return {
+          ...p,
+          comments: [
+            ...p.comments,
+            {
+              id: uid(),
+              author: 'ユーザー',
+              text,
+              createdAt: Date.now(),
+            },
+          ],
+        }
+      }),
+    )
+    setCommentDrafts((d) => ({ ...d, [postId]: '' }))
+  }
+
+  const generateAiComment = async (post) => {
+    setAiLoadingPostId(post.id)
+    try {
+      const userText = `タイトル: ${post.title}\n本文:\n${post.body}`
+      const text = await callClaudeUserMessage(model, COMMUNITY_AI_SYSTEM, userText, 600)
+      setPosts((list) =>
+        list.map((p) => (p.id === post.id ? { ...p, aiComment: text } : p)),
+      )
+    } catch {
+      setPosts((list) =>
+        list.map((p) =>
+          p.id === post.id
+            ? { ...p, aiComment: 'AIコメントの生成に失敗しました。もう一度お試しください。' }
+            : p,
+        ),
+      )
+    } finally {
+      setAiLoadingPostId(null)
+    }
+  }
+
+  /* ---- 共通: 入力 ---- */
+  const fieldClass = 'ha-field'
+  const labelClass = 'ha-label'
+
   return (
     <>
       <style>{`
         :root {
-          --gold: #d4af37;
-          --gold-2: #f5c542;
-          --bg: #07070a;
-          --panel: rgba(255, 255, 255, 0.04);
-          --panel-2: rgba(255, 255, 255, 0.06);
-          --border: rgba(212, 175, 55, 0.25);
-          --border-2: rgba(212, 175, 55, 0.14);
-          --text: rgba(255, 255, 255, 0.88);
-          --muted: rgba(255, 255, 255, 0.62);
-          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          --accent: #ffd764;
+          --accent-dim: rgba(255, 215, 100, 0.12);
+          --accent-border: rgba(255, 215, 100, 0.35);
+          --bg: #050508;
+          --surface: rgba(255, 255, 255, 0.035);
+          --border: rgba(255, 215, 100, 0.22);
+          --border-2: rgba(255, 215, 100, 0.12);
+          --text: rgba(255, 255, 255, 0.9);
+          --muted: rgba(255, 255, 255, 0.58);
+          --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
         }
 
         #root {
@@ -141,393 +410,1331 @@ function App() {
           align-items: stretch;
         }
 
-        .house-ai-shell {
+        .ha-app {
           width: 100%;
-          max-width: 1040px;
+          max-width: 1080px;
           margin: 0 auto;
           min-height: 100svh;
           display: flex;
           flex-direction: column;
           color: var(--text);
+          padding-bottom: 24px;
         }
 
-        .topbar {
-          padding: 18px 18px 12px;
+        .ha-header {
+          padding: 16px 16px 8px;
           display: flex;
+          flex-wrap: wrap;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
         }
 
-        .brand {
+        .ha-brand {
           display: flex;
           align-items: center;
           gap: 12px;
-          min-width: 260px;
         }
 
-        .logoMark {
-          width: 38px;
-          height: 38px;
+        .ha-logo {
+          width: 40px;
+          height: 40px;
           border-radius: 12px;
-          background: radial-gradient(circle at 30% 30%, rgba(245, 197, 66, 0.35), transparent 55%),
-            linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(212, 175, 55, 0.12));
+          background: linear-gradient(145deg, rgba(255, 215, 100, 0.35), rgba(255, 215, 100, 0.08));
           border: 1px solid var(--border);
-          box-shadow: var(--shadow);
           display: grid;
           place-items: center;
-          color: var(--gold-2);
-          font-weight: 800;
-          letter-spacing: -0.5px;
-          font-family: var(--sans, system-ui);
+          font-weight: 900;
+          color: var(--accent);
+          box-shadow: var(--shadow);
         }
 
-        .brandTitle {
-          display: flex;
-          flex-direction: column;
-          line-height: 1.1;
-        }
-
-        .brandTitle strong {
-          font-size: 15px;
-          color: rgba(255, 255, 255, 0.92);
+        .ha-brand strong {
+          display: block;
+          font-size: 16px;
           font-weight: 750;
         }
-
-        .brandTitle span {
+        .ha-brand span {
           font-size: 12px;
           color: var(--muted);
         }
 
-        .topbarActions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .pill {
-          padding: 8px 10px;
-          border-radius: 999px;
+        .ha-pill {
+          font-size: 11px;
+          color: var(--muted);
           border: 1px solid var(--border-2);
-          background: rgba(255, 255, 255, 0.02);
-          color: var(--muted);
-          font-size: 12px;
-          max-width: 340px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          max-width: 280px;
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          white-space: nowrap;
         }
 
-        .btn {
-          appearance: none;
-          border: 1px solid var(--border);
-          background: rgba(212, 175, 55, 0.08);
-          color: var(--gold-2);
-          padding: 9px 12px;
-          border-radius: 10px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: transform 0.08s ease, background 0.2s ease;
-        }
-
-        .btn:hover {
-          background: rgba(212, 175, 55, 0.14);
-        }
-        .btn:active {
-          transform: translateY(1px);
-        }
-        .btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .panel {
-          margin: 0 18px 18px;
-          border: 1px solid var(--border-2);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
-          border-radius: 18px;
-          box-shadow: var(--shadow);
-          overflow: hidden;
+        .ha-tabs {
           display: flex;
-          flex-direction: column;
-          min-height: 520px;
-          flex: 1;
-        }
-
-        .messages {
-          padding: 16px 14px 10px;
-          overflow: auto;
-          flex: 1;
+          gap: 6px;
+          padding: 0 12px 12px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
-          scrollbar-color: rgba(212, 175, 55, 0.35) transparent;
         }
 
-        .msgRow {
-          display: flex;
-          margin: 10px 0;
-        }
-
-        .msgRow.assistant {
-          justify-content: flex-start;
-        }
-        .msgRow.user {
-          justify-content: flex-end;
-        }
-
-        .bubble {
-          max-width: 760px;
-          border-radius: 16px;
-          padding: 12px 13px;
+        .ha-tab {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 14px;
+          border-radius: 12px;
           border: 1px solid var(--border-2);
           background: rgba(255, 255, 255, 0.02);
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 650;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
 
-        .msgRow.assistant .bubble {
-          border-color: rgba(212, 175, 55, 0.28);
-          background: rgba(212, 175, 55, 0.06);
+        .ha-tab:hover {
+          border-color: var(--accent-border);
+          color: var(--text);
         }
 
-        .msgRow.user .bubble {
-          background: rgba(255, 255, 255, 0.035);
-          border-color: rgba(212, 175, 55, 0.18);
+        .ha-tab[aria-selected="true"] {
+          border-color: var(--accent-border);
+          background: var(--accent-dim);
+          color: var(--accent);
         }
 
-        .bubbleMeta {
+        .ha-main {
+          flex: 1;
+          margin: 0 12px;
+          border: 1px solid var(--border-2);
+          border-radius: 18px;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+          box-shadow: var(--shadow);
+          min-height: 480px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .ha-panel {
+          padding: 16px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+
+        .ha-sectionTitle {
+          font-size: 18px;
+          font-weight: 750;
+          margin: 0 0 6px;
+          color: var(--accent);
+        }
+
+        .ha-sectionDesc {
+          font-size: 13px;
+          color: var(--muted);
+          margin: 0 0 16px;
+          line-height: 1.5;
+        }
+
+        .ha-grid2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+          .ha-grid2 {
+            grid-template-columns: 1fr;
+          }
+          .ha-pill {
+            display: none;
+          }
+        }
+
+        .ha-label {
+          display: block;
           font-size: 12px;
           color: var(--muted);
           margin-bottom: 6px;
         }
 
-        .bubbleText {
+        .ha-field,
+        .ha-panel select {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 11px 12px;
+          border-radius: 12px;
+          border: 1px solid var(--border-2);
+          background: rgba(0, 0, 0, 0.25);
+          color: var(--text);
+          font-size: 14px;
+          outline: none;
+          font-family: inherit;
+        }
+
+        .ha-field:focus,
+        .ha-panel select:focus {
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(255, 215, 100, 0.12);
+        }
+
+        textarea.ha-field {
+          min-height: 88px;
+          resize: vertical;
+        }
+
+        .ha-row {
+          margin-bottom: 12px;
+        }
+
+        .ha-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 18px;
+          align-items: center;
+        }
+
+        .ha-btn {
+          appearance: none;
+          border: 1px solid var(--border);
+          background: var(--accent-dim);
+          color: var(--accent);
+          padding: 10px 16px;
+          border-radius: 12px;
+          font-weight: 750;
+          cursor: pointer;
+          font-size: 14px;
+          transition: transform 0.08s, background 0.15s;
+        }
+
+        .ha-btn:hover:not(:disabled) {
+          background: rgba(255, 215, 100, 0.2);
+        }
+
+        .ha-btn:active:not(:disabled) {
+          transform: translateY(1px);
+        }
+
+        .ha-btn:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+
+        .ha-btnGhost {
+          background: transparent;
+          color: var(--muted);
+          border-color: var(--border-2);
+        }
+
+        .ha-done {
+          text-align: center;
+          padding: 32px 16px;
+        }
+
+        .ha-done h3 {
+          margin: 0 0 10px;
+          color: var(--accent);
+          font-size: 20px;
+        }
+
+        .ha-done p {
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.6;
+          margin: 0 0 20px;
+        }
+
+        /* チャット */
+        .ha-chatWrap {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 420px;
+        }
+
+        .ha-chatTop {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .ha-messages {
+          flex: 1;
+          overflow: auto;
+          padding: 8px 4px 12px;
+          scrollbar-width: thin;
+        }
+
+        .ha-msgRow {
+          display: flex;
+          margin: 10px 0;
+        }
+        .ha-msgRow.assistant {
+          justify-content: flex-start;
+        }
+        .ha-msgRow.user {
+          justify-content: flex-end;
+        }
+
+        .ha-bubble {
+          max-width: min(92%, 720px);
+          border-radius: 16px;
+          padding: 12px 14px;
+          border: 1px solid var(--border-2);
+        }
+
+        .ha-msgRow.assistant .ha-bubble {
+          background: rgba(255, 215, 100, 0.07);
+          border-color: var(--accent-border);
+        }
+
+        .ha-msgRow.user .ha-bubble {
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .ha-meta {
+          font-size: 11px;
+          color: var(--muted);
+          margin-bottom: 6px;
+        }
+
+        .ha-bubbleText {
           white-space: pre-wrap;
           word-break: break-word;
-          line-height: 1.55;
           font-size: 14px;
+          line-height: 1.55;
         }
 
-        .composer {
-          padding: 12px 12px 12px;
+        .ha-composer {
           border-top: 1px solid var(--border-2);
-          background: rgba(0, 0, 0, 0.12);
+          padding: 12px 0 0;
+          margin-top: auto;
+          background: rgba(0, 0, 0, 0.15);
+          margin-left: -16px;
+          margin-right: -16px;
+          padding-left: 16px;
+          padding-right: 16px;
+          padding-bottom: 4px;
         }
 
-        .composerInner {
+        .ha-composerInner {
           display: flex;
           gap: 10px;
           align-items: flex-end;
         }
 
-        textarea {
-          width: 100%;
+        .ha-composer textarea {
+          flex: 1;
           min-height: 46px;
           max-height: 160px;
-          resize: none;
-          padding: 12px 12px;
-          border-radius: 14px;
-          border: 1px solid var(--border-2);
-          background: rgba(255, 255, 255, 0.02);
-          color: var(--text);
-          outline: none;
-          font-size: 14px;
-          line-height: 1.45;
-          font-family: inherit;
         }
 
-        textarea:focus {
-          border-color: rgba(245, 197, 66, 0.55);
-          box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
-        }
-
-        .composerActions {
+        .ha-composerActions {
           display: flex;
           flex-direction: column;
           gap: 8px;
-          align-items: stretch;
-          min-width: 124px;
+          min-width: 100px;
         }
 
-        .sendBtn {
-          width: 100%;
-        }
-
-        .hintRow {
-          display: flex;
-          justify-content: space-between;
-          gap: 10px;
-          margin-top: 10px;
-          color: var(--muted);
-          font-size: 12px;
-        }
-
-        .errorBox {
-          margin: 10px 14px 0;
-          border: 1px solid rgba(255, 80, 80, 0.4);
-          background: rgba(255, 80, 80, 0.08);
-          color: rgba(255, 210, 210, 0.95);
+        .ha-error {
+          margin: 8px 0 0;
           padding: 10px 12px;
-          border-radius: 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 100, 100, 0.45);
+          background: rgba(255, 60, 60, 0.08);
+          color: #ffc9c9;
           font-size: 13px;
         }
 
-        .spinnerDot {
+        .ha-hint {
+          font-size: 11px;
+          color: var(--muted);
+          margin-top: 8px;
+        }
+
+        .ha-spinnerDot {
           display: inline-block;
-          width: 7px;
-          height: 7px;
+          width: 6px;
+          height: 6px;
           margin: 0 2px;
           border-radius: 50%;
-          background: rgba(245, 197, 66, 0.9);
-          animation: dotPulse 1.2s infinite ease-in-out;
+          background: var(--accent);
+          animation: haPulse 1.1s infinite ease-in-out;
         }
-        .spinnerDot:nth-child(2) {
-          animation-delay: 0.15s;
-          opacity: 0.8;
+        .ha-spinnerDot:nth-child(2) {
+          animation-delay: 0.12s;
         }
-        .spinnerDot:nth-child(3) {
-          animation-delay: 0.3s;
-          opacity: 0.65;
+        .ha-spinnerDot:nth-child(3) {
+          animation-delay: 0.24s;
         }
-        @keyframes dotPulse {
+        @keyframes haPulse {
           0%,
           80%,
           100% {
+            opacity: 0.35;
             transform: translateY(0);
-            opacity: 0.55;
           }
           40% {
-            transform: translateY(-3px);
             opacity: 1;
+            transform: translateY(-3px);
           }
         }
 
-        @media (max-width: 720px) {
-          .topbar {
-            padding: 14px 14px 10px;
-          }
-          .panel {
-            margin: 0 12px 12px;
-            border-radius: 16px;
-            min-height: 520px;
-          }
-          .messages {
-            padding: 14px 10px 10px;
-          }
-          .bubbleText {
-            font-size: 13.5px;
-          }
-          .composerActions {
-            min-width: 110px;
-          }
-          .pill {
-            display: none;
-          }
+        /* オーナー メニューカード */
+        .ha-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+        }
+
+        .ha-card {
+          border: 1px solid var(--border-2);
+          border-radius: 14px;
+          padding: 16px;
+          background: rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+          text-align: left;
+          transition: border-color 0.15s, background 0.15s;
+        }
+
+        .ha-card:hover {
+          border-color: var(--accent-border);
+          background: rgba(255, 215, 100, 0.05);
+        }
+
+        .ha-card h4 {
+          margin: 0 0 8px;
+          font-size: 15px;
+          color: var(--accent);
+        }
+
+        .ha-card p {
+          margin: 0;
+          font-size: 13px;
+          color: var(--muted);
+          line-height: 1.45;
+        }
+
+        .ha-back {
+          margin-bottom: 12px;
+        }
+
+        /* 専門家チェック */
+        .ha-checkGrid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .ha-check {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 10px;
+          border-radius: 10px;
+          border: 1px solid var(--border-2);
+          font-size: 13px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .ha-checkOn {
+          border-color: var(--accent-border);
+          background: var(--accent-dim);
+          color: var(--accent);
+        }
+
+        .ha-check input {
+          accent-color: var(--accent);
+        }
+
+        .ha-aiBox {
+          margin-top: 14px;
+          padding: 14px;
+          border-radius: 14px;
+          border: 1px dashed var(--accent-border);
+          background: rgba(255, 215, 100, 0.06);
+          font-size: 13px;
+          line-height: 1.6;
+          white-space: pre-wrap;
+        }
+
+        /* コミュニティ */
+        .ha-postForm {
+          border: 1px solid var(--border-2);
+          border-radius: 14px;
+          padding: 14px;
+          margin-bottom: 18px;
+          background: rgba(0, 0, 0, 0.2);
+        }
+
+        .ha-post {
+          border: 1px solid var(--border-2);
+          border-radius: 14px;
+          padding: 14px;
+          margin-bottom: 12px;
+          background: rgba(0, 0, 0, 0.15);
+        }
+
+        .ha-post h4 {
+          margin: 0 0 8px;
+          font-size: 15px;
+          color: var(--text);
+        }
+
+        .ha-postBody {
+          font-size: 14px;
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.82);
+          margin-bottom: 10px;
+          white-space: pre-wrap;
+        }
+
+        .ha-postMeta {
+          font-size: 12px;
+          color: var(--muted);
+          margin-bottom: 10px;
+        }
+
+        .ha-reactions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        .ha-reactBtn {
+          font-size: 12px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          border: 1px solid var(--border-2);
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--muted);
+          cursor: pointer;
+        }
+
+        .ha-reactBtn[data-on="true"] {
+          border-color: var(--accent-border);
+          color: var(--accent);
+          background: var(--accent-dim);
+        }
+
+        .ha-comments {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid var(--border-2);
+        }
+
+        .ha-comment {
+          font-size: 13px;
+          padding: 8px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .ha-aiComment {
+          margin-top: 10px;
+          padding: 12px;
+          border-radius: 12px;
+          background: rgba(255, 215, 100, 0.08);
+          border: 1px solid var(--accent-border);
+          font-size: 13px;
+          line-height: 1.55;
+          white-space: pre-wrap;
+        }
+
+        .ha-stepBadge {
+          display: inline-block;
+          font-size: 11px;
+          color: var(--accent);
+          border: 1px solid var(--border-2);
+          padding: 4px 8px;
+          border-radius: 8px;
+          margin-bottom: 12px;
         }
       `}</style>
 
-      <div className="house-ai-shell">
-        <div className="topbar">
-          <div className="brand" aria-label="不動産AIコンシェルジュ">
-            <div className="logoMark" aria-hidden="true">
+      <div className="ha-app">
+        <header className="ha-header">
+          <div className="ha-brand">
+            <div className="ha-logo" aria-hidden="true">
               H
             </div>
-            <div className="brandTitle">
-              <strong>不動産AIコンシェルジュ</strong>
-              <span>Claudeに相談して、条件整理から提案まで</span>
+            <div>
+              <strong>House AI プラットフォーム</strong>
+              <span>不動産の相談・査定・オーナー支援・コミュニティ</span>
             </div>
           </div>
+          <div className="ha-pill" title="Claudeモデル">
+            Claude: {model}
+          </div>
+        </header>
 
-          <div className="topbarActions">
-            <div className="pill" title="モデル（サーバー経由でClaudeを呼び出します）">
-              Claude: {model}
-            </div>
-            <button className="btn" onClick={handleReset} disabled={isSending}>
-              新規チャット
+        <nav className="ha-tabs" role="tablist" aria-label="メイン">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              className="ha-tab"
+              onClick={() => setTab(t.id)}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.label}
             </button>
-          </div>
-        </div>
+          ))}
+        </nav>
 
-        <div className="panel">
-          <div className="messages" role="log" aria-live="polite">
-            {chat.map((m, idx) => (
-              <div
-                key={`${m.role}-${idx}`}
-                className={`msgRow ${m.role === 'user' ? 'user' : 'assistant'}`}
-              >
-                <div className="bubble">
-                  <div className="bubbleMeta">
-                    {m.role === 'user' ? 'あなた' : 'コンシェルジュ'}
-                  </div>
-                  <div className="bubbleText">{m.text}</div>
+        <main className="ha-main">
+          {tab === 'chat' && (
+            <div className="ha-panel ha-chatWrap">
+              <div className="ha-chatTop">
+                <div>
+                  <h2 className="ha-sectionTitle" style={{ marginBottom: 4 }}>
+                    💬 AIチャット
+                  </h2>
+                  <p className="ha-sectionDesc" style={{ margin: 0 }}>
+                    不動産コンシェルジュが条件整理と次の一歩をサポートします。
+                  </p>
                 </div>
+                <button type="button" className="ha-btn ha-btnGhost" onClick={handleResetChat} disabled={isSending}>
+                  新規チャット
+                </button>
               </div>
-            ))}
-            {isSending ? (
-              <div className="msgRow assistant">
-                <div className="bubble">
-                  <div className="bubbleMeta">コンシェルジュ</div>
-                  <div className="bubbleText">
-                    返信を生成中
-                    <span aria-hidden="true" style={{ marginLeft: 8 }}>
-                      <span className="spinnerDot" />
-                      <span className="spinnerDot" />
-                      <span className="spinnerDot" />
-                    </span>
+
+              <div className="ha-messages" role="log" aria-live="polite">
+                {chat.map((m, idx) => (
+                  <div
+                    key={`${m.role}-${idx}`}
+                    className={`ha-msgRow ${m.role === 'user' ? 'user' : 'assistant'}`}
+                  >
+                    <div className="ha-bubble">
+                      <div className="ha-meta">{m.role === 'user' ? 'あなた' : 'コンシェルジュ'}</div>
+                      <div className="ha-bubbleText">{m.text}</div>
+                    </div>
                   </div>
-                </div>
+                ))}
+                {isSending ? (
+                  <div className="ha-msgRow assistant">
+                    <div className="ha-bubble">
+                      <div className="ha-meta">コンシェルジュ</div>
+                      <div className="ha-bubbleText">
+                        返信を生成中
+                        <span style={{ marginLeft: 8 }} aria-hidden="true">
+                          <span className="ha-spinnerDot" />
+                          <span className="ha-spinnerDot" />
+                          <span className="ha-spinnerDot" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                <div ref={endRef} />
               </div>
-            ) : null}
-            <div ref={endRef} />
-          </div>
 
-          {errorMessage ? <div className="errorBox">{errorMessage}</div> : null}
+              {errorMessage ? <div className="ha-error">{errorMessage}</div> : null}
 
-          <form
-            className="composer"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSend()
-            }}
-          >
-            <div className="composerInner">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="エリア、予算、希望条件、通勤時間などを入力してください（Enterで送信 / Shift+Enter改行）"
-                disabled={isSending}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend()
-                  }
+              <form
+                className="ha-composer"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleSend()
                 }}
-              />
-              <div className="composerActions">
-                <button className="btn sendBtn" type="submit" disabled={isSending}>
-                  送信
-                </button>
-                <button
-                  className="btn"
-                  type="button"
-                  onClick={() =>
-                    setInput(
-                      '東京23区内で、30〜50㎡、家賃は月25万円以内。通勤は30分以内が理想です。',
-                    )
-                  }
-                  disabled={isSending}
-                  title="例文を入力"
-                >
-                  例文
+              >
+                <div className="ha-composerInner">
+                  <textarea
+                    className="ha-field"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="エリア、予算、希望条件など（Enterで送信 / Shift+Enterで改行）"
+                    disabled={isSending}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSend()
+                      }
+                    }}
+                  />
+                  <div className="ha-composerActions">
+                    <button type="submit" className="ha-btn" disabled={isSending}>
+                      送信
+                    </button>
+                    <button
+                      type="button"
+                      className="ha-btn ha-btnGhost"
+                      onClick={() =>
+                        setInput('東京23区内で、30〜50㎡、家賃は月25万円以内。通勤は30分以内が理想です。')
+                      }
+                      disabled={isSending}
+                    >
+                      例文
+                    </button>
+                  </div>
+                </div>
+                <p className="ha-hint">※Claudeはサーバー経由（/api/claude）。APIキーはサーバー側で管理されます。</p>
+              </form>
+            </div>
+          )}
+
+          {tab === 'sell' && (
+            <div className="ha-panel">
+              <h2 className="ha-sectionTitle">🏷️ 売主査定</h2>
+              <p className="ha-sectionDesc">
+                売却査定のご依頼を2ステップで受け付けます。入力内容はデモのためブラウザ内のみで完結します（実運用ではサーバー送信に差し替えてください）。
+              </p>
+
+              {sell.step === 'done' ? (
+                <div className="ha-done">
+                  <h3>送信が完了しました</h3>
+                  <p>
+                    査定依頼を受け付けました。担当より折り返しのご連絡を想定しております（デモのため実際の連絡は行われません）。
+                  </p>
+                  <button
+                    type="button"
+                    className="ha-btn"
+                    onClick={() => setSell({ ...initialSell, step: 1 })}
+                  >
+                    新しい依頼を入力
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="ha-stepBadge">
+                    ステップ {sell.step} / 2 — {sell.step === 1 ? '物件情報' : 'ご連絡先・備考'}
+                  </div>
+
+                  {sell.step === 1 && (
+                    <>
+                      <div className="ha-row">
+                        <label className={labelClass}>物件種別</label>
+                        <select
+                          className={fieldClass}
+                          value={sell.propertyType}
+                          onChange={(e) => setSell((s) => ({ ...s, propertyType: e.target.value }))}
+                        >
+                          <option value="">選択してください</option>
+                          {PROPERTY_TYPES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>住所（市区町村・番地まで）</label>
+                        <input
+                          className={fieldClass}
+                          value={sell.address}
+                          onChange={(e) => setSell((s) => ({ ...s, address: e.target.value }))}
+                          placeholder="例：東京都〇〇区..."
+                          autoComplete="street-address"
+                        />
+                      </div>
+                      <div className="ha-grid2">
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>専有面積（㎡）</label>
+                          <input
+                            className={fieldClass}
+                            value={sell.area}
+                            onChange={(e) => setSell((s) => ({ ...s, area: e.target.value }))}
+                            inputMode="decimal"
+                            placeholder="例：65.2"
+                          />
+                        </div>
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>築年数（年）</label>
+                          <input
+                            className={fieldClass}
+                            value={sell.builtYear}
+                            onChange={(e) => setSell((s) => ({ ...s, builtYear: e.target.value }))}
+                            inputMode="numeric"
+                            placeholder="例：12"
+                          />
+                        </div>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>間取り</label>
+                        <select
+                          className={fieldClass}
+                          value={sell.layout}
+                          onChange={(e) => setSell((s) => ({ ...s, layout: e.target.value }))}
+                        >
+                          <option value="">選択してください</option>
+                          {LAYOUTS.map((l) => (
+                            <option key={l} value={l}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="ha-actions">
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          onClick={() => {
+                            if (!sell.propertyType || !sell.address.trim()) return
+                            setSell((s) => ({ ...s, step: 2 }))
+                          }}
+                        >
+                          次へ（連絡先入力）
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {sell.step === 2 && (
+                    <>
+                      <div className="ha-grid2">
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>お名前</label>
+                          <input
+                            className={fieldClass}
+                            value={sell.name}
+                            onChange={(e) => setSell((s) => ({ ...s, name: e.target.value }))}
+                            autoComplete="name"
+                          />
+                        </div>
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>電話番号</label>
+                          <input
+                            className={fieldClass}
+                            value={sell.phone}
+                            onChange={(e) => setSell((s) => ({ ...s, phone: e.target.value }))}
+                            inputMode="tel"
+                            autoComplete="tel"
+                          />
+                        </div>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>メールアドレス</label>
+                        <input
+                          className={fieldClass}
+                          type="email"
+                          value={sell.email}
+                          onChange={(e) => setSell((s) => ({ ...s, email: e.target.value }))}
+                          autoComplete="email"
+                        />
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>希望・備考</label>
+                        <textarea
+                          className={fieldClass}
+                          value={sell.notes}
+                          onChange={(e) => setSell((s) => ({ ...s, notes: e.target.value }))}
+                          placeholder="売却時期の希望、内覧の可否など"
+                        />
+                      </div>
+                      <div className="ha-actions">
+                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setSell((s) => ({ ...s, step: 1 }))}>
+                          戻る
+                        </button>
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          onClick={() => {
+                            if (!sell.name.trim() || !sell.phone.trim() || !sell.email.trim()) return
+                            setSell((s) => ({ ...s, step: 'done' }))
+                          }}
+                        >
+                          送信する
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === 'owner' && (
+            <div className="ha-panel">
+              <h2 className="ha-sectionTitle">🏢 アパート賃貸オーナー向け</h2>
+              <p className="ha-sectionDesc">
+                管理委託・稼働率改善・売却査定のご相談メニューです。各メニューは2ステップのフォーム後に送信完了へ進みます。
+              </p>
+
+              {!ownerService && (
+                <div className="ha-cards">
+                  <button
+                    type="button"
+                    className="ha-card"
+                    onClick={() => {
+                      setOwnerService('manage')
+                      setOwnerForm({ ...initialOwnerForm(), step: 1 })
+                    }}
+                  >
+                    <h4>管理委託</h4>
+                    <p>賃貸管理の委託条件や切替のタイミング、見積比較の観点を整理します。</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="ha-card"
+                    onClick={() => {
+                      setOwnerService('occupancy')
+                      setOwnerForm({ ...initialOwnerForm(), step: 1 })
+                    }}
+                  >
+                    <h4>稼働率アップ</h4>
+                    <p>空室対策・家賃設定・リフォームの優先度など、収益改善の打ち手を検討します。</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="ha-card"
+                    onClick={() => {
+                      setOwnerService('sell')
+                      setOwnerForm({ ...initialOwnerForm(), step: 1 })
+                    }}
+                  >
+                    <h4>売却査定（オーナー）</h4>
+                    <p>一棟アパートの売却に向けた情報整理と次のステップをまとめます。</p>
+                  </button>
+                </div>
+              )}
+
+              {ownerService && ownerForm.step === 'done' && (
+                <div className="ha-done">
+                  <h3>送信が完了しました</h3>
+                  <p>
+                    「{ownerTitle}」のお問い合わせを受け付けました（デモのため実際の送信はありません）。
+                  </p>
+                  <button
+                    type="button"
+                    className="ha-btn"
+                    onClick={() => {
+                      setOwnerService(null)
+                      setOwnerForm(initialOwnerForm())
+                    }}
+                  >
+                    メニューに戻る
+                  </button>
+                </div>
+              )}
+
+              {ownerService && ownerForm.step !== 'done' && (
+                <>
+                  <div className="ha-back">
+                    <button
+                      type="button"
+                      className="ha-btn ha-btnGhost"
+                      onClick={() => {
+                        setOwnerService(null)
+                        setOwnerForm(initialOwnerForm())
+                      }}
+                    >
+                      ← メニューに戻る
+                    </button>
+                  </div>
+                  <h3 style={{ margin: '0 0 8px', fontSize: 16, color: 'var(--accent)' }}>{ownerTitle}</h3>
+                  <div className="ha-stepBadge">
+                    ステップ {ownerForm.step} / 2 — {ownerForm.step === 1 ? '物件・概要' : 'ご連絡先・詳細'}
+                  </div>
+
+                  {ownerForm.step === 1 && (
+                    <>
+                      <div className="ha-row">
+                        <label className={labelClass}>物件種別</label>
+                        <select
+                          className={fieldClass}
+                          value={ownerForm.propertyType}
+                          onChange={(e) => setOwnerForm((o) => ({ ...o, propertyType: e.target.value }))}
+                        >
+                          <option value="">選択</option>
+                          <option value="木造アパート">木造アパート</option>
+                          <option value="RC一棟">RC一棟</option>
+                          <option value="その他">その他</option>
+                        </select>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>戸数 / 室数</label>
+                        <input
+                          className={fieldClass}
+                          value={ownerForm.units}
+                          onChange={(e) => setOwnerForm((o) => ({ ...o, units: e.target.value }))}
+                          placeholder="例：8戸"
+                        />
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>所在地</label>
+                        <input
+                          className={fieldClass}
+                          value={ownerForm.address}
+                          onChange={(e) => setOwnerForm((o) => ({ ...o, address: e.target.value }))}
+                          placeholder="市区町村までで可"
+                        />
+                      </div>
+                      <div className="ha-actions">
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          onClick={() => {
+                            if (!ownerForm.propertyType || !ownerForm.address.trim()) return
+                            setOwnerForm((o) => ({ ...o, step: 2 }))
+                          }}
+                        >
+                          次へ
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {ownerForm.step === 2 && (
+                    <>
+                      <div className="ha-grid2">
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>お名前</label>
+                          <input
+                            className={fieldClass}
+                            value={ownerForm.name}
+                            onChange={(e) => setOwnerForm((o) => ({ ...o, name: e.target.value }))}
+                          />
+                        </div>
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>電話番号</label>
+                          <input
+                            className={fieldClass}
+                            value={ownerForm.phone}
+                            onChange={(e) => setOwnerForm((o) => ({ ...o, phone: e.target.value }))}
+                            inputMode="tel"
+                          />
+                        </div>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>メールアドレス</label>
+                        <input
+                          className={fieldClass}
+                          type="email"
+                          value={ownerForm.email}
+                          onChange={(e) => setOwnerForm((o) => ({ ...o, email: e.target.value }))}
+                        />
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>ご相談内容・備考</label>
+                        <textarea
+                          className={fieldClass}
+                          value={ownerForm.notes}
+                          onChange={(e) => setOwnerForm((o) => ({ ...o, notes: e.target.value }))}
+                          placeholder={
+                            ownerService === 'manage'
+                              ? '管理会社の切替検討、委託費の希望など'
+                              : ownerService === 'occupancy'
+                                ? '空室期間、家賃、リフォーム履歴など'
+                                : '売却理由、希望時期、ローン残債の有無など'
+                          }
+                        />
+                      </div>
+                      <div className="ha-actions">
+                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setOwnerForm((o) => ({ ...o, step: 1 }))}>
+                          戻る
+                        </button>
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          onClick={() => {
+                            if (!ownerForm.name.trim() || !ownerForm.phone.trim() || !ownerForm.email.trim()) return
+                            setOwnerForm((o) => ({ ...o, step: 'done' }))
+                          }}
+                        >
+                          送信する
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === 'expert' && (
+            <div className="ha-panel">
+              <h2 className="ha-sectionTitle">👔 専門家紹介</h2>
+              <p className="ha-sectionDesc">
+                リフォーム・司法書士・税理士・FPへの相談導線を想定したフォームです。ステップ1で状況を入力し、AIアドバイスを生成してから連絡先を送信します。
+              </p>
+
+              {expert.step === 'done' ? (
+                <div className="ha-done">
+                  <h3>送信が完了しました</h3>
+                  <p>専門家紹介のご依頼を受け付けました（デモのため実際の手配は行いません）。</p>
+                  <button type="button" className="ha-btn" onClick={() => setExpert({ ...initialExpert, step: 1 })}>
+                    新規入力
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="ha-stepBadge">
+                    ステップ {expert.step} / 2 — {expert.step === 1 ? '相談内容' : '連絡先・送信'}
+                  </div>
+
+                  {expert.step === 1 && (
+                    <>
+                      <div className="ha-row">
+                        <span className={labelClass}>紹介を希望する専門家（複数可）</span>
+                        <div className="ha-checkGrid">
+                          {EXPERT_TYPES.map((t) => (
+                            <label
+                              key={t.id}
+                              className={`ha-check ${expert.types.includes(t.id) ? 'ha-checkOn' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={expert.types.includes(t.id)}
+                                onChange={() => toggleExpertType(t.id)}
+                              />
+                              {t.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>エリア・物件の概要</label>
+                        <input
+                          className={fieldClass}
+                          value={expert.region}
+                          onChange={(e) => setExpert((x) => ({ ...x, region: e.target.value }))}
+                          placeholder="例：関東 / 中古マンション購入予定"
+                        />
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>相談したいこと</label>
+                        <textarea
+                          className={fieldClass}
+                          value={expert.detail}
+                          onChange={(e) => setExpert((x) => ({ ...x, detail: e.target.value }))}
+                          placeholder="状況や課題を具体的にご記入ください。"
+                        />
+                      </div>
+                      <div className="ha-actions">
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          disabled={expert.aiLoading}
+                          onClick={generateExpertAdvice}
+                        >
+                          {expert.aiLoading ? 'AI生成中…' : 'AIアドバイスを生成'}
+                        </button>
+                        <button
+                          type="button"
+                          className="ha-btn ha-btnGhost"
+                          onClick={() => {
+                            if (!expert.types.length || !expert.detail.trim()) return
+                            setExpert((x) => ({ ...x, step: 2 }))
+                          }}
+                        >
+                          次へ（連絡先）
+                        </button>
+                      </div>
+                      {expert.aiError ? <div className="ha-error">{expert.aiError}</div> : null}
+                      {expert.aiAdvice ? (
+                        <div>
+                          <div className={labelClass} style={{ marginTop: 16 }}>
+                            AIアドバイス（参考）
+                          </div>
+                          <div className="ha-aiBox">{expert.aiAdvice}</div>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+
+                  {expert.step === 2 && (
+                    <>
+                      {expert.aiAdvice ? (
+                        <div className="ha-aiBox" style={{ marginBottom: 14 }}>
+                          {expert.aiAdvice}
+                        </div>
+                      ) : (
+                        <p className="ha-sectionDesc">ステップ1で生成したAIアドバイスがここに表示されます。</p>
+                      )}
+                      <div className="ha-grid2">
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>お名前</label>
+                          <input
+                            className={fieldClass}
+                            value={expert.name}
+                            onChange={(e) => setExpert((x) => ({ ...x, name: e.target.value }))}
+                          />
+                        </div>
+                        <div className="ha-row" style={{ marginBottom: 0 }}>
+                          <label className={labelClass}>電話番号</label>
+                          <input
+                            className={fieldClass}
+                            value={expert.phone}
+                            onChange={(e) => setExpert((x) => ({ ...x, phone: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>メールアドレス</label>
+                        <input
+                          className={fieldClass}
+                          type="email"
+                          value={expert.email}
+                          onChange={(e) => setExpert((x) => ({ ...x, email: e.target.value }))}
+                        />
+                      </div>
+                      <div className="ha-row">
+                        <label className={labelClass}>備考</label>
+                        <textarea
+                          className={fieldClass}
+                          value={expert.notes}
+                          onChange={(e) => setExpert((x) => ({ ...x, notes: e.target.value }))}
+                        />
+                      </div>
+                      <div className="ha-actions">
+                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setExpert((x) => ({ ...x, step: 1 }))}>
+                          戻る
+                        </button>
+                        <button
+                          type="button"
+                          className="ha-btn"
+                          onClick={() => {
+                            if (!expert.name.trim() || !expert.phone.trim() || !expert.email.trim()) return
+                            setExpert((x) => ({ ...x, step: 'done' }))
+                          }}
+                        >
+                          送信する
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === 'community' && (
+            <div className="ha-panel">
+              <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
+              <p className="ha-sectionDesc">
+                不動産の体験談や悩みを共有できます。データはお使いのブラウザに保存されます（他端末とは共有されません）。
+              </p>
+
+              <div className="ha-postForm">
+                <div className="ha-row">
+                  <label className={labelClass}>タイトル</label>
+                  <input
+                    className={fieldClass}
+                    value={communityDraft.title}
+                    onChange={(e) => setCommunityDraft((d) => ({ ...d, title: e.target.value }))}
+                  />
+                </div>
+                <div className="ha-row">
+                  <label className={labelClass}>本文</label>
+                  <textarea
+                    className={fieldClass}
+                    value={communityDraft.body}
+                    onChange={(e) => setCommunityDraft((d) => ({ ...d, body: e.target.value }))}
+                  />
+                </div>
+                <div className="ha-row">
+                  <label className={labelClass}>お名前（任意）</label>
+                  <input
+                    className={fieldClass}
+                    value={communityDraft.author}
+                    onChange={(e) => setCommunityDraft((d) => ({ ...d, author: e.target.value }))}
+                    placeholder="空欄なら匿名"
+                  />
+                </div>
+                <button type="button" className="ha-btn" onClick={addPost}>
+                  投稿する
                 </button>
               </div>
+
+              {posts.length === 0 ? (
+                <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
+              ) : (
+                posts.map((post) => (
+                  <article key={post.id} className="ha-post">
+                    <h4>{post.title}</h4>
+                    <div className="ha-postBody">{post.body}</div>
+                    <div className="ha-postMeta">
+                      {post.author} ・ {new Date(post.createdAt).toLocaleString('ja-JP')}
+                    </div>
+                    <div className="ha-reactions">
+                      <button
+                        type="button"
+                        className="ha-reactBtn"
+                        data-on={post.likedByMe}
+                        onClick={() => toggleLike(post.id)}
+                      >
+                        👍 いいね {post.likes}
+                      </button>
+                      <button
+                        type="button"
+                        className="ha-reactBtn"
+                        data-on={post.empathyByMe}
+                        onClick={() => toggleEmpathy(post.id)}
+                      >
+                        💗 共感 {post.empathy}
+                      </button>
+                      <button
+                        type="button"
+                        className="ha-btn ha-btnGhost"
+                        style={{ padding: '6px 10px', fontSize: 12 }}
+                        onClick={() => setExpandedPost((id) => (id === post.id ? null : post.id))}
+                      >
+                        {expandedPost === post.id ? '閉じる' : 'コメント・AI'}
+                      </button>
+                    </div>
+
+                    {expandedPost === post.id && (
+                      <div className="ha-comments">
+                        {post.aiComment ? (
+                          <div className="ha-aiComment">
+                            <strong style={{ color: 'var(--accent)' }}>AIコメント</strong>
+                            {'\n\n'}
+                            {post.aiComment}
+                          </div>
+                        ) : null}
+                        <div className="ha-actions" style={{ marginTop: 10 }}>
+                          <button
+                            type="button"
+                            className="ha-btn"
+                            disabled={aiLoadingPostId === post.id}
+                            onClick={() => generateAiComment(post)}
+                          >
+                            {aiLoadingPostId === post.id ? 'AI生成中…' : 'AIコメントを生成'}
+                          </button>
+                        </div>
+                        {post.comments.map((c) => (
+                          <div key={c.id} className="ha-comment">
+                            <strong>{c.author}</strong> · {new Date(c.createdAt).toLocaleString('ja-JP')}
+                            {'\n'}
+                            {c.text}
+                          </div>
+                        ))}
+                        <div className="ha-row" style={{ marginTop: 10 }}>
+                          <input
+                            className={fieldClass}
+                            placeholder="コメントを入力"
+                            value={commentDrafts[post.id] || ''}
+                            onChange={(e) =>
+                              setCommentDrafts((d) => ({ ...d, [post.id]: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => addComment(post.id)}>
+                          コメントを投稿
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                ))
+              )}
             </div>
-            <div className="hintRow">
-              <span>内見時のチェック項目や比較軸も一緒に作れます。</span>
-              <span>※APIキーはVercelの環境変数 ANTHROPIC_API_KEY でサーバー管理</span>
-            </div>
-          </form>
-        </div>
+          )}
+        </main>
       </div>
     </>
   )
 }
-
-export default App
