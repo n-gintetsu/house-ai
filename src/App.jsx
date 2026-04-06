@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { supabase } from './lib/supabase'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 
@@ -59,6 +60,19 @@ function callClaudeUserMessage(model, system, userText, maxTokens = 900) {
 function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function toNumberOrNull(v) {
+  if (v === null || v === undefined) return null
+  const s = typeof v === 'string' ? v.trim() : v
+  if (typeof s === 'string' && s === '') return null
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
+function toIntOrNull(v) {
+  const n = toNumberOrNull(v)
+  return n === null ? null : Math.trunc(n)
 }
 
 function normalizePost(p) {
@@ -234,10 +248,14 @@ export default function App() {
 
   /* ---- 売主査定 ---- */
   const [sell, setSell] = useState(initialSell)
+  const [sellSubmitting, setSellSubmitting] = useState(false)
+  const [sellSubmitError, setSellSubmitError] = useState('')
 
   /* ---- オーナー ---- */
   const [ownerService, setOwnerService] = useState(null)
   const [ownerForm, setOwnerForm] = useState(() => initialOwnerForm())
+  const [ownerSubmitting, setOwnerSubmitting] = useState(false)
+  const [ownerSubmitError, setOwnerSubmitError] = useState('')
 
   const ownerTitle = useMemo(() => {
     if (ownerService === 'manage') return '管理委託のご相談'
@@ -248,6 +266,8 @@ export default function App() {
 
   /* ---- 専門家紹介 ---- */
   const [expert, setExpert] = useState(initialExpert)
+  const [expertSubmitting, setExpertSubmitting] = useState(false)
+  const [expertSubmitError, setExpertSubmitError] = useState('')
 
   const toggleExpertType = (id) => {
     setExpert((e) => ({
@@ -274,6 +294,113 @@ export default function App() {
       setExpert((e) => ({ ...e, aiLoading: false, aiError: message }))
     }
   }, [expert.detail, expert.region, expert.types, model])
+
+  async function submitValuation() {
+    if (sellSubmitting) return
+    if (!sell.propertyType || !sell.address.trim()) return
+    if (!sell.name.trim() || !sell.phone.trim() || !sell.email.trim()) return
+
+    setSellSubmitError('')
+    setSellSubmitting(true)
+    try {
+      const size = toNumberOrNull(sell.area)
+      const age = toIntOrNull(sell.builtYear)
+
+      const payload = {
+        property_type: sell.propertyType,
+        address: sell.address,
+        size,
+        age,
+        layout: sell.layout || null,
+        name: sell.name,
+        phone: sell.phone,
+        email: sell.email,
+        wishes: sell.notes || null,
+      }
+
+      const { error } = await supabase.from('valuations').insert(payload)
+      if (error) throw error
+
+      setSell((s) => ({ ...s, step: 'done' }))
+    } catch (err) {
+      console.error(err)
+      setSellSubmitError('送信に失敗しました。もう一度お試しください。')
+    } finally {
+      setSellSubmitting(false)
+    }
+  }
+
+  async function submitOwnerRequest() {
+    if (ownerSubmitting) return
+    if (!ownerService) return
+    if (!ownerForm.propertyType || !ownerForm.address.trim()) return
+    if (!ownerForm.name.trim() || !ownerForm.phone.trim() || !ownerForm.email.trim()) return
+
+    setOwnerSubmitError('')
+    setOwnerSubmitting(true)
+    try {
+      const payload = {
+        service_type: ownerService,
+        property_type: ownerForm.propertyType || null,
+        address: ownerForm.address,
+        units: ownerForm.units || null,
+        occupancy: null,
+        name: ownerForm.name,
+        phone: ownerForm.phone,
+        email: ownerForm.email,
+        note: ownerForm.notes || null,
+      }
+
+      const { error } = await supabase.from('owner_requests').insert(payload)
+      if (error) throw error
+
+      setOwnerForm((o) => ({ ...o, step: 'done' }))
+    } catch (err) {
+      console.error(err)
+      setOwnerSubmitError('送信に失敗しました。もう一度お試しください。')
+    } finally {
+      setOwnerSubmitting(false)
+    }
+  }
+
+  async function submitExpertRequest() {
+    if (expertSubmitting) return
+    if (!expert.types.length) return
+    if (!expert.detail.trim()) return
+    if (!expert.name.trim() || !expert.phone.trim() || !expert.email.trim()) return
+
+    setExpertSubmitError('')
+    setExpertSubmitting(true)
+    try {
+      const expertTypeLabels = EXPERT_TYPES.filter((t) =>
+        expert.types.includes(t.id),
+      )
+        .map((t) => t.label)
+        .join('、')
+
+      const situationText = expert.detail.trim() +
+        (expert.notes.trim() ? `\n\n備考: ${expert.notes.trim()}` : '')
+
+      const payload = {
+        expert_type: expertTypeLabels || null,
+        name: expert.name,
+        phone: expert.phone,
+        email: expert.email,
+        situation: situationText || null,
+        timing: expert.region || null,
+      }
+
+      const { error } = await supabase.from('expert_requests').insert(payload)
+      if (error) throw error
+
+      setExpert((x) => ({ ...x, step: 'done' }))
+    } catch (err) {
+      console.error(err)
+      setExpertSubmitError('送信に失敗しました。もう一度お試しください。')
+    } finally {
+      setExpertSubmitting(false)
+    }
+  }
 
   /* ---- コミュニティ ---- */
   const [posts, setPosts] = useState(() => loadCommunity())
@@ -1096,14 +1223,17 @@ export default function App() {
 
               {sell.step === 'done' ? (
                 <div className="ha-done">
-                  <h3>送信が完了しました</h3>
+                  <h3>送信しました！</h3>
                   <p>
-                    査定依頼を受け付けました。担当より折り返しのご連絡を想定しております（デモのため実際の連絡は行われません）。
+                    査定依頼を受け付けました。担当よりご連絡します。
                   </p>
                   <button
                     type="button"
                     className="ha-btn"
-                    onClick={() => setSell({ ...initialSell, step: 1 })}
+                    onClick={() => {
+                      setSellSubmitError('')
+                      setSell({ ...initialSell, step: 1 })
+                    }}
                   >
                     新しい依頼を入力
                   </button>
@@ -1235,19 +1365,25 @@ export default function App() {
                           placeholder="売却時期の希望、内覧の可否など"
                         />
                       </div>
+                      {sellSubmitError ? <div className="ha-error">{sellSubmitError}</div> : null}
                       <div className="ha-actions">
-                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setSell((s) => ({ ...s, step: 1 }))}>
+                        <button
+                          type="button"
+                          className="ha-btn ha-btnGhost"
+                          onClick={() => {
+                            setSellSubmitError('')
+                            setSell((s) => ({ ...s, step: 1 }))
+                          }}
+                        >
                           戻る
                         </button>
                         <button
                           type="button"
                           className="ha-btn"
-                          onClick={() => {
-                            if (!sell.name.trim() || !sell.phone.trim() || !sell.email.trim()) return
-                            setSell((s) => ({ ...s, step: 'done' }))
-                          }}
+                          disabled={sellSubmitting}
+                          onClick={submitValuation}
                         >
-                          送信する
+                          {sellSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
@@ -1304,14 +1440,15 @@ export default function App() {
 
               {ownerService && ownerForm.step === 'done' && (
                 <div className="ha-done">
-                  <h3>送信が完了しました</h3>
+                  <h3>送信しました！</h3>
                   <p>
-                    「{ownerTitle}」のお問い合わせを受け付けました（デモのため実際の送信はありません）。
+                    「{ownerTitle}」の依頼を受け付けました。担当よりご連絡します。
                   </p>
                   <button
                     type="button"
                     className="ha-btn"
                     onClick={() => {
+                      setOwnerSubmitError('')
                       setOwnerService(null)
                       setOwnerForm(initialOwnerForm())
                     }}
@@ -1433,19 +1570,25 @@ export default function App() {
                           }
                         />
                       </div>
+                      {ownerSubmitError ? <div className="ha-error">{ownerSubmitError}</div> : null}
                       <div className="ha-actions">
-                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setOwnerForm((o) => ({ ...o, step: 1 }))}>
+                        <button
+                          type="button"
+                          className="ha-btn ha-btnGhost"
+                          onClick={() => {
+                            setOwnerSubmitError('')
+                            setOwnerForm((o) => ({ ...o, step: 1 }))
+                          }}
+                        >
                           戻る
                         </button>
                         <button
                           type="button"
                           className="ha-btn"
-                          onClick={() => {
-                            if (!ownerForm.name.trim() || !ownerForm.phone.trim() || !ownerForm.email.trim()) return
-                            setOwnerForm((o) => ({ ...o, step: 'done' }))
-                          }}
+                          disabled={ownerSubmitting}
+                          onClick={submitOwnerRequest}
                         >
-                          送信する
+                          {ownerSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
@@ -1464,9 +1607,16 @@ export default function App() {
 
               {expert.step === 'done' ? (
                 <div className="ha-done">
-                  <h3>送信が完了しました</h3>
-                  <p>専門家紹介のご依頼を受け付けました（デモのため実際の手配は行いません）。</p>
-                  <button type="button" className="ha-btn" onClick={() => setExpert({ ...initialExpert, step: 1 })}>
+                  <h3>送信しました！</h3>
+                  <p>専門家紹介のご依頼を受け付けました。担当よりご連絡します。</p>
+                  <button
+                    type="button"
+                    className="ha-btn"
+                    onClick={() => {
+                      setExpertSubmitError('')
+                      setExpert({ ...initialExpert, step: 1 })
+                    }}
+                  >
                     新規入力
                   </button>
                 </div>
@@ -1590,19 +1740,25 @@ export default function App() {
                           onChange={(e) => setExpert((x) => ({ ...x, notes: e.target.value }))}
                         />
                       </div>
+                      {expertSubmitError ? <div className="ha-error">{expertSubmitError}</div> : null}
                       <div className="ha-actions">
-                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => setExpert((x) => ({ ...x, step: 1 }))}>
+                        <button
+                          type="button"
+                          className="ha-btn ha-btnGhost"
+                          onClick={() => {
+                            setExpertSubmitError('')
+                            setExpert((x) => ({ ...x, step: 1 }))
+                          }}
+                        >
                           戻る
                         </button>
                         <button
                           type="button"
                           className="ha-btn"
-                          onClick={() => {
-                            if (!expert.name.trim() || !expert.phone.trim() || !expert.email.trim()) return
-                            setExpert((x) => ({ ...x, step: 'done' }))
-                          }}
+                          disabled={expertSubmitting}
+                          onClick={submitExpertRequest}
                         >
-                          送信する
+                          {expertSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
