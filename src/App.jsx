@@ -553,13 +553,13 @@ export default function App() {
     <>
       <style>{`
         :root {
-          --accent: #ffd764;
+          --accent: #c9a84c;
           --accent-dim: rgba(255, 215, 100, 0.12);
           --accent-border: rgba(255, 215, 100, 0.35);
-          --bg: #050508;
-          --surface: rgba(255, 255, 255, 0.035);
-          --border: rgba(255, 215, 100, 0.22);
-          --border-2: rgba(255, 215, 100, 0.12);
+          --bg: #0a1628;
+          --surface: rgba(255, 255, 255, 0.06);
+          --border: rgba(100, 160, 255, 0.25);
+          --border-2: rgba(100, 160, 255, 0.12);
           --text: rgba(255, 255, 255, 0.9);
           --muted: rgba(255, 255, 255, 0.58);
           --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
