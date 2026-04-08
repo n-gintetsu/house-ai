@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import PropertyMatching from './PropertyMatching'
 import { supabase } from './lib/supabase'
 
 export default function AuthPanel() {
@@ -129,38 +130,17 @@ export default function AuthPanel() {
 
   if (mode === 'loggedIn' && user) {
     return (
-      <div style={{ padding: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', marginBottom: 6 }}>
-          👤 会員専用ページ
-        </h2>
-        <p style={{ fontSize: 13, color: '#777', marginBottom: 20 }}>
-          ようこそ、{user.user_metadata?.name || user.email} さん
-        </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
-          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🗒 相談履歴</h4>
-            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>過去のAI相談履歴を保存・閲覧できます。</p>
+      <div>
+        <div style={{ padding: '16px 20px', background: '#1a3a5c', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>👤 {user.user_metadata?.name || user.email} さん</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{user.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}</div>
           </div>
-          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🔔 物件アラート</h4>
-            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>希望条件に合った物件が出たらメールでお知らせします。</p>
-          </div>
-          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🏠 お気に入り</h4>
-            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>気になる物件や専門家を登録できます。</p>
-          </div>
+          <button style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer', fontSize: 13 }} onClick={handleLogout}>
+            ログアウト
+          </button>
         </div>
-
-        <div style={{ padding: '12px 16px', borderRadius: 12, background: '#f0f4f8', marginBottom: 20, fontSize: 13, color: '#555' }}>
-          <strong>登録情報</strong><br />
-          メール：{user.email}<br />
-          種別：{user.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}
-        </div>
-
-        <button style={{ ...btnStyle, width: 'auto', padding: '10px 24px' }} onClick={handleLogout}>
-          ログアウト
-        </button>
+        <PropertyMatching user={user} />
       </div>
     )
   }

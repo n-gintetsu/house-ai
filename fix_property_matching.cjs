@@ -1,0 +1,359 @@
+const fs = require('fs');
+
+// ① PropertyMatching.jsx を作成
+const propertyMatching = `import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabase'
+
+const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'こだわらない']
+const PROPERTY_TYPES = ['マンション', '一戸建て', 'アパート', '土地', 'こだわらない']
+
+export default function PropertyMatching({ user }) {
+  const [properties, setProperties] = useState([])
+  const [favorites, setFavorites] = useState([])
+  const [activeTab, setActiveTab] = useState('matching')
+
+  const [conditions, setConditions] = useState({
+    area: '',
+    maxRent: '',
+    maxPrice: '',
+    layout: '',
+    propertyType: '',
+    other: '',
+  })
+  const [aiResult, setAiResult] = useState('')
+  const [matched, setMatched] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [searched, setSearched] = useState(false)
+
+  useEffect(() => {
+    loadProperties()
+    loadFavorites()
+  }, [])
+
+  async function loadProperties() {
+    const { data } = await supabase.from('properties').select('*').eq('status', 'active').order('created_at', { ascending: false })
+    setProperties(data || [])
+  }
+
+  async function loadFavorites() {
+    if (!user) return
+    const { data } = await supabase.from('favorites').select('*').eq('user_id', user.id)
+    setFavorites((data || []).map(f => f.property_id))
+  }
+
+  async function toggleFavorite(propertyId) {
+    if (!user) { alert('お気に入り登録にはログインが必要です'); return }
+    if (favorites.includes(propertyId)) {
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('property_id', propertyId)
+      setFavorites(f => f.filter(id => id !== propertyId))
+    } else {
+      await supabase.from('favorites').insert({ user_id: user.id, property_id: propertyId })
+      setFavorites(f => [...f, propertyId])
+    }
+  }
+
+  async function handleSearch() {
+    if (!conditions.area.trim()) { alert('エリアを入力してください'); return }
+    setLoading(true)
+    setSearched(true)
+    setAiResult('')
+    setMatched([])
+
+    try {
+      // DBから条件に合う物件を検索
+      let query = supabase.from('properties').select('*').eq('status', 'active')
+      if (conditions.layout && conditions.layout !== 'こだわらない') {
+        query = query.eq('layout', conditions.layout)
+      }
+      if (conditions.propertyType && conditions.propertyType !== 'こだわらない') {
+        query = query.eq('property_type', conditions.propertyType)
+      }
+      if (conditions.maxRent) {
+        query = query.lte('rent', parseInt(conditions.maxRent) * 10000)
+      }
+      if (conditions.maxPrice) {
+        query = query.lte('price', parseInt(conditions.maxPrice) * 10000)
+      }
+
+      const { data: matchedProps } = await query.limit(5)
+      setMatched(matchedProps || [])
+
+      // AIによる提案文を生成
+      const propertyList = (matchedProps || []).length > 0
+        ? (matchedProps || []).map((p, i) => \`物件\${i+1}: \${p.title} / \${p.address} / \${p.layout} / \${p.property_type} / \${p.rent ? '賃料'+Math.round(p.rent/10000)+'万円' : ''}\${p.price ? '価格'+Math.round(p.price/10000)+'万円' : ''}\`).join('\\n')
+        : '現在条件に合う物件はありません'
+
+      const prompt = \`以下のお客様の希望条件と物件情報をもとに、親切で具体的なアドバイスをしてください。
+
+【お客様の希望条件】
+エリア: \${conditions.area}
+\${conditions.maxRent ? '家賃上限: ' + conditions.maxRent + '万円' : ''}
+\${conditions.maxPrice ? '購入予算: ' + conditions.maxPrice + '万円' : ''}
+\${conditions.layout && conditions.layout !== 'こだわらない' ? '間取り: ' + conditions.layout : ''}
+\${conditions.propertyType && conditions.propertyType !== 'こだわらない' ? '物件種別: ' + conditions.propertyType : ''}
+\${conditions.other ? 'その他の希望: ' + conditions.other : ''}
+
+【マッチした物件】
+\${propertyList}
+
+上記の条件と物件情報をもとに、200字程度でお客様へのアドバイスと次のステップを提案してください。\`
+
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          system: 'あなたは不動産のプロフェッショナルなAIコンシェルジュです。お客様の希望に寄り添い、具体的で親切なアドバイスをしてください。',
+          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+          max_tokens: 600,
+        }),
+      })
+      const data = await res.json()
+      setAiResult(data.text || '')
+    } catch (err) {
+      console.error(err)
+      setAiResult('AI提案の生成に失敗しました。もう一度お試しください。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fieldStyle = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    borderRadius: 10, border: '1px solid rgba(26,58,92,0.12)',
+    background: '#fff', color: '#222', fontSize: 14, outline: 'none', fontFamily: 'inherit',
+  }
+  const labelStyle = { display: 'block', fontSize: 12, color: '#777', marginBottom: 5 }
+
+  const favProps = properties.filter(p => favorites.includes(p.id))
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', margin: '0 0 4px' }}>🏠 物件マッチングAI</h2>
+      <p style={{ fontSize: 13, color: '#777', margin: '0 0 20px' }}>希望条件を入力するとAIが最適な物件を提案します</p>
+
+      {/* タブ */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.12)', width: 'fit-content' }}>
+        {[{ id: 'matching', label: '🔍 物件を探す' }, { id: 'favorites', label: \`❤️ お気に入り(\${favorites.length})\` }].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+            padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            background: activeTab === t.id ? '#1a3a5c' : '#f8fafc',
+            color: activeTab === t.id ? '#fff' : '#777',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {activeTab === 'matching' && (
+        <>
+          {/* 検索条件 */}
+          <div style={{ background: '#f8fafc', borderRadius: 14, padding: 16, marginBottom: 20, border: '1px solid rgba(26,58,92,0.08)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <label style={labelStyle}>エリア・地域 <span style={{ color: '#e53e3e' }}>*</span></label>
+                <input style={fieldStyle} value={conditions.area} onChange={e => setConditions(c => ({ ...c, area: e.target.value }))} placeholder="例：さいたま市大宮区" />
+              </div>
+              <div>
+                <label style={labelStyle}>物件種別</label>
+                <select style={fieldStyle} value={conditions.propertyType} onChange={e => setConditions(c => ({ ...c, propertyType: e.target.value }))}>
+                  <option value="">選択してください</option>
+                  {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>家賃上限（万円）</label>
+                <input style={fieldStyle} value={conditions.maxRent} onChange={e => setConditions(c => ({ ...c, maxRent: e.target.value }))} placeholder="例：8" inputMode="numeric" />
+              </div>
+              <div>
+                <label style={labelStyle}>購入予算（万円）</label>
+                <input style={fieldStyle} value={conditions.maxPrice} onChange={e => setConditions(c => ({ ...c, maxPrice: e.target.value }))} placeholder="例：3000" inputMode="numeric" />
+              </div>
+              <div>
+                <label style={labelStyle}>間取り</label>
+                <select style={fieldStyle} value={conditions.layout} onChange={e => setConditions(c => ({ ...c, layout: e.target.value }))}>
+                  <option value="">選択してください</option>
+                  {LAYOUTS.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>その他の希望</label>
+                <input style={fieldStyle} value={conditions.other} onChange={e => setConditions(c => ({ ...c, other: e.target.value }))} placeholder="例：駅徒歩10分以内" />
+              </div>
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loading}
+              style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 28px', fontWeight: 700, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'AI検索中...' : '🔍 AIマッチング検索'}
+            </button>
+          </div>
+
+          {/* AI提案 */}
+          {searched && (
+            <>
+              {aiResult && (
+                <div style={{ background: 'rgba(26,58,92,0.05)', border: '1px dashed rgba(26,58,92,0.25)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginBottom: 8 }}>🤖 AIからの提案</div>
+                  <div style={{ fontSize: 14, lineHeight: 1.7, color: '#333', whiteSpace: 'pre-wrap' }}>{aiResult}</div>
+                </div>
+              )}
+
+              {/* マッチした物件一覧 */}
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a3a5c', margin: '0 0 12px' }}>
+                マッチした物件（{matched.length}件）
+              </h3>
+              {matched.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: '#777', fontSize: 14 }}>
+                  条件に合う物件が見つかりませんでした。<br />条件を変えて再検索してください。
+                </div>
+              ) : matched.map(p => (
+                <PropertyCard key={p.id} property={p} isFavorite={favorites.includes(p.id)} onToggleFavorite={toggleFavorite} />
+              ))}
+            </>
+          )}
+
+          {/* 全物件一覧 */}
+          {!searched && properties.length > 0 && (
+            <>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a3a5c', margin: '0 0 12px' }}>📋 掲載中の物件（{properties.length}件）</h3>
+              {properties.map(p => (
+                <PropertyCard key={p.id} property={p} isFavorite={favorites.includes(p.id)} onToggleFavorite={toggleFavorite} />
+              ))}
+            </>
+          )}
+
+          {!searched && properties.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 16px', color: '#777', fontSize: 14 }}>
+              現在掲載中の物件はありません。<br />希望条件を入力してAI提案を受けることができます。
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'favorites' && (
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a3a5c', margin: '0 0 12px' }}>❤️ お気に入り物件（{favProps.length}件）</h3>
+          {favProps.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 16px', color: '#777', fontSize: 14 }}>
+              お気に入りに登録した物件はありません。
+            </div>
+          ) : favProps.map(p => (
+            <PropertyCard key={p.id} property={p} isFavorite={true} onToggleFavorite={toggleFavorite} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, border: '1px solid rgba(26,58,92,0.1)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c', marginBottom: 6 }}>{p.title}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {p.property_type && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.property_type}</span>}
+            {p.layout && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.layout}</span>}
+            {p.area && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.area}㎡</span>}
+          </div>
+          {p.address && <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>📍 {p.address}</div>}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1a3a5c' }}>
+            {p.rent ? \`賃料 \${Math.round(p.rent / 10000)}万円/月\` : ''}
+            {p.price ? \`価格 \${(p.price / 10000).toLocaleString()}万円\` : ''}
+          </div>
+          {p.description && <div style={{ fontSize: 12, color: '#777', marginTop: 6, lineHeight: 1.5 }}>{p.description}</div>}
+        </div>
+        <button
+          onClick={() => onToggleFavorite(p.id)}
+          style={{ marginLeft: 12, fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+          title={isFavorite ? 'お気に入り解除' : 'お気に入り登録'}
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
+      </div>
+    </div>
+  )
+}
+`;
+
+fs.writeFileSync('src/PropertyMatching.jsx', propertyMatching, 'utf8');
+console.log('SUCCESS: src/PropertyMatching.jsx を作成しました');
+
+// AuthPanel.jsx を更新して会員専用ページにマッチング機能を追加
+let authPanel = fs.readFileSync('src/AuthPanel.jsx', 'utf8');
+
+// importを追加
+if (!authPanel.includes("import PropertyMatching")) {
+  authPanel = authPanel.replace(
+    "import { useState } from 'react'",
+    "import { useState, useEffect } from 'react'\nimport PropertyMatching from './PropertyMatching'"
+  );
+}
+
+// ログイン済みの会員専用ページを差し替え
+const oldLoggedIn = `  if (mode === 'loggedIn' && user) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', marginBottom: 6 }}>
+          \u{1F464} 会員専用ページ
+        </h2>
+        <p style={{ fontSize: 13, color: '#777', marginBottom: 20 }}>
+          ようこそ、{user.user_metadata?.name || user.email} さん
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
+          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🗒 相談履歴</h4>
+            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>過去のAI相談履歴を保存・閲覧できます。</p>
+          </div>
+          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🔔 物件アラート</h4>
+            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>希望条件に合った物件が出たらメールでお知らせします。</p>
+          </div>
+          <div style={{ border: '1px solid rgba(26,58,92,0.1)', borderRadius: 14, padding: 16, background: '#fff' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 15, color: '#1a3a5c' }}>🏠 お気に入り</h4>
+            <p style={{ margin: 0, fontSize: 13, color: '#777', lineHeight: 1.45 }}>気になる物件や専門家を登録できます。</p>
+          </div>
+        </div>
+
+        <div style={{ padding: '12px 16px', borderRadius: 12, background: '#f0f4f8', marginBottom: 20, fontSize: 13, color: '#555' }}>
+          <strong>登録情報</strong><br />
+          メール：{user.email}<br />
+          種別：{user.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}
+        </div>
+
+        <button style={{ ...btnStyle, width: 'auto', padding: '10px 24px' }} onClick={handleLogout}>
+          ログアウト
+        </button>
+      </div>
+    )
+  }`;
+
+const newLoggedIn = `  if (mode === 'loggedIn' && user) {
+    return (
+      <div>
+        <div style={{ padding: '16px 20px', background: '#1a3a5c', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>👤 {user.user_metadata?.name || user.email} さん</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{user.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}</div>
+          </div>
+          <button style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer', fontSize: 13 }} onClick={handleLogout}>
+            ログアウト
+          </button>
+        </div>
+        <PropertyMatching user={user} />
+      </div>
+    )
+  }`;
+
+if (authPanel.includes('相談履歴')) {
+  authPanel = authPanel.replace(oldLoggedIn, newLoggedIn);
+  console.log('SUCCESS: AuthPanel.jsx の会員専用ページを更新しました');
+} else {
+  console.log('WARNING: ログイン済みページの置換に失敗しました');
+}
+
+fs.writeFileSync('src/AuthPanel.jsx', authPanel, 'utf8');
+console.log('SUCCESS: AuthPanel.jsx を保存しました');
+console.log('SUCCESS: 完了！');
