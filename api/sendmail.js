@@ -9,6 +9,7 @@ export default async function handler(req, res) {
     valuation: '【売主査定依頼】新しい査定依頼が届きました',
     owner: '【オーナー依頼】新しい依頼が届きました',
     expert: '【専門家紹介依頼】新しい依頼が届きました',
+    agency: '【業者登録申請】新規業者様からの登録申請があります',
   };
 
   const subject = subjects[type] || '【お問い合わせ】新しい依頼が届きました';

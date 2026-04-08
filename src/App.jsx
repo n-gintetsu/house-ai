@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
 import AuthPanel from './AuthPanel'
+import AgencyForm from './AgencyForm'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 
@@ -1892,35 +1893,8 @@ export default function App() {
           )}
 
           {tab === 'agency' && (
-            <div className="ha-panel">
-              <h2 className="ha-sectionTitle">🏗️ 業者様向け</h2>
-              <p className="ha-sectionDesc">
-                不動産業者・リフォーム業者・士業の方向けの会員サービスです。会員登録いただくと企業紹介ページを作成できます。
-              </p>
-              <div className="ha-cards">
-                <div className="ha-card">
-                  <h4>📣 企業紹介ページ</h4>
-                  <p>会員登録後、自社の紹介ページを作成できます。サービス内容・エリア・実績などを掲載可能です。</p>
-                </div>
-                <div className="ha-card">
-                  <h4>🎯 ターゲット集客</h4>
-                  <p>不動産に関心の高いユーザーへのアプローチが可能です。問い合わせを直接受け付けられます。</p>
-                </div>
-                <div className="ha-card">
-                  <h4>📊 広告掲載</h4>
-                  <p>バナー広告・記事広告など、貴社のニーズに合わせた広告プランをご用意予定です。</p>
-                </div>
-              </div>
-              <div className="ha-actions" style={{ marginTop: 24 }}>
-                <button
-                  type="button"
-                  className="ha-btn"
-                  style={{ background: 'var(--accent)', color: '#fff', border: 'none' }}
-                  onClick={() => alert('業者様向け会員登録は準備中です。しばらくお待ちください。')}
-                >
-                  業者会員登録（準備中）
-                </button>
-              </div>
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <AgencyForm />
             </div>
           )}
 
