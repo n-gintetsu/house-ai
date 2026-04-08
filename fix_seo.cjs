@@ -1,4 +1,6 @@
-<!doctype html>
+const fs = require('fs');
+
+const newHtml = `<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -58,3 +60,7 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+`;
+
+fs.writeFileSync('index.html', newHtml, 'utf8');
+console.log('SUCCESS: index.html のSEO対策を完了しました');
