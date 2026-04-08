@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
 import AuthPanel from './AuthPanel'
 import AgencyForm from './AgencyForm'
+import TickerBanner from './TickerBanner'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 
@@ -1175,6 +1176,7 @@ export default function App() {
             </button>
           </div>
         </header>
+        <TickerBanner />
 
         <div style={{
           margin: '0 12px 12px',
