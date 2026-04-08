@@ -110,8 +110,8 @@ function saveCommunity(posts) {
 
 const TABS = [
   { id: 'chat', label: 'AIチャット', icon: '💬' },
-  { id: 'sell', label: '売主査定', icon: '🏷️' },
-  { id: 'owner', label: 'オーナー', icon: '🏢' },
+  { id: 'sell', label: '買取無料査定', icon: '🏷️' },
+  { id: 'owner', label: '賃貸経営者様向け', icon: '🏢' },
   { id: 'expert', label: '専門家紹介', icon: '👔' },
   { id: 'community', label: 'コミュニティ', icon: '🏘️' },
 ]
@@ -122,9 +122,11 @@ const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'その他']
 
 const EXPERT_TYPES = [
   { id: 'reform', label: 'リフォーム業者' },
+  { id: 'exterior', label: '外構工事' },
   { id: 'legal', label: '司法書士' },
   { id: 'tax', label: '税理士' },
-  { id: 'fp', label: 'FP（ファイナンシャルプランナー）' },
+  { id: 'bank', label: '金融機関' },
+  { id: 'other', label: 'その他' },
 ]
 
 const initialSell = {
@@ -572,15 +574,15 @@ export default function App() {
       <style>{`
         :root {
           --accent: #1a3a5c;
-          --accent-dim: rgba(26, 58, 92, 0.06);
-          --accent-border: rgba(26, 58, 92, 0.3);
-          --bg: #f5f7fa;
+          --accent-dim: rgba(26, 58, 92, 0.08);
+          --accent-border: rgba(26, 58, 92, 0.25);
+          --bg: #eef2f7;
           --surface: #ffffff;
           --border: rgba(26, 58, 92, 0.15);
-          --border-2: rgba(26, 58, 92, 0.08);
-          --text: #333333;
-          --muted: #888888;
-          --shadow: 0 1px 8px rgba(0,0,0,0.08);
+          --border-2: rgba(26, 58, 92, 0.1);
+          --text: #222222;
+          --muted: #777777;
+          --shadow: 0 2px 12px rgba(26,58,92,0.08);
         }
 
         #root {
@@ -693,7 +695,7 @@ export default function App() {
           margin: 0 12px;
           border: 1px solid var(--border-2);
           border-radius: 18px;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+          background: #ffffff;
           box-shadow: var(--shadow);
           min-height: 480px;
           display: flex;
@@ -752,7 +754,7 @@ export default function App() {
           padding: 11px 12px;
           border-radius: 12px;
           border: 1px solid var(--border-2);
-          background: rgba(0, 0, 0, 0.25);
+          background: #ffffff;
           color: var(--text);
           font-size: 14px;
           outline: none;
@@ -899,7 +901,7 @@ export default function App() {
           border-top: 1px solid var(--border-2);
           padding: 12px 0 0;
           margin-top: auto;
-          background: rgba(0, 0, 0, 0.15);
+          background: #f8fafc;
           margin-left: -16px;
           margin-right: -16px;
           padding-left: 16px;
@@ -1063,7 +1065,7 @@ export default function App() {
           border-radius: 14px;
           padding: 14px;
           margin-bottom: 12px;
-          background: rgba(0, 0, 0, 0.15);
+          background: #f8fafc;
         }
 
         .ha-post h4 {
@@ -1155,8 +1157,18 @@ export default function App() {
               <span>不動産の相談・査定・オーナー支援・コミュニティ</span>
             </div>
           </div>
-          <div className="ha-pill" title="Claudeモデル">
-            Claude: {model}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="ha-pill" title="Claudeモデル">
+              Claude: {model}
+            </div>
+            <button
+              type="button"
+              className="ha-btn"
+              style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
+              onClick={() => alert('会員登録機能は準備中です。')}
+            >
+              会員登録
+            </button>
           </div>
         </header>
 
@@ -1448,7 +1460,7 @@ export default function App() {
 
           {tab === 'owner' && (
             <div className="ha-panel">
-              <h2 className="ha-sectionTitle">🏢 アパート賃貸オーナー向け</h2>
+              <h2 className="ha-sectionTitle">🏢 アパート賃貸経営者様向け</h2>
               <p className="ha-sectionDesc">
                 管理委託・稼働率改善・売却査定のご相談メニューです。各メニューは2ステップのフォーム後に送信完了へ進みます。
               </p>
