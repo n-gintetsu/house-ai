@@ -58,6 +58,7 @@ export default function TickerBanner() {
       width: '100%',
       position: 'relative',
       flexShrink: 0,
+      marginBottom: '12px',
     }}>
       <div style={{
         position: 'absolute', left: 0, top: 0, bottom: 0,
