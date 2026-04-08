@@ -3,8 +3,28 @@ import { supabase } from './lib/supabase'
 import AuthPanel from './AuthPanel'
 import AgencyForm from './AgencyForm'
 import TickerBanner from './TickerBanner'
+import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 
 const STORAGE_KEY = 'house-ai-community-v1'
+const AI_CHAT_FREE_LIMIT = 5
+const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
+
+function getTodayChatCount() {
+  try {
+    const data = JSON.parse(localStorage.getItem(AI_CHAT_COUNT_KEY) || '{}')
+    const today = new Date().toDateString()
+    return data.date === today ? (data.count || 0) : 0
+  } catch { return 0 }
+}
+
+function incrementTodayChatCount() {
+  try {
+    const today = new Date().toDateString()
+    const count = getTodayChatCount() + 1
+    localStorage.setItem(AI_CHAT_COUNT_KEY, JSON.stringify({ date: today, count }))
+    return count
+  } catch { return 0 }
+}
 
 const DEFAULT_SYSTEM_PROMPT =
   'あなたは「不動産AIコンシェルジュ」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
