@@ -321,6 +321,12 @@ export default function App() {
       const { error } = await supabase.from('valuations').insert(payload)
       if (error) throw error
 
+      await fetch('/api/sendmail', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'valuation', data: payload }),
+      })
+
       setSell((s) => ({ ...s, step: 'done' }))
     } catch (err) {
       console.error(err)
@@ -353,6 +359,12 @@ export default function App() {
 
       const { error } = await supabase.from('owner_requests').insert(payload)
       if (error) throw error
+
+      await fetch('/api/sendmail', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'owner', data: payload }),
+      })
 
       setOwnerForm((o) => ({ ...o, step: 'done' }))
     } catch (err) {
@@ -392,6 +404,12 @@ export default function App() {
 
       const { error } = await supabase.from('expert_requests').insert(payload)
       if (error) throw error
+
+      await fetch('/api/sendmail', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'expert', data: payload }),
+      })
 
       setExpert((x) => ({ ...x, step: 'done' }))
     } catch (err) {
