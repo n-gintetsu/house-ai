@@ -21,6 +21,40 @@ const TABS = [
 ]
 
 
+function ImageUploader({ supabase, onUploaded, currentUrl }) {
+  const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState(currentUrl || '')
+
+  async function handleFile(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `property_${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('property-images').upload(fileName, file, { upsert: true })
+      if (error) throw error
+      const { data } = supabase.storage.from('property-images').getPublicUrl(fileName)
+      setPreview(data.publicUrl)
+      onUploaded(data.publicUrl)
+    } catch (err) {
+      alert('アップロードに失敗しました: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div>
+      {preview && <img src={preview} alt="プレビュー" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />}
+      <label style={{ display: 'inline-block', padding: '8px 16px', background: uploading ? '#94a3b8' : '#1a3a5c', color: '#fff', borderRadius: 8, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 13 }}>
+        {uploading ? 'アップロード中...' : '📷 写真を選択'}
+        <input type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} disabled={uploading} />
+      </label>
+    </div>
+  )
+}
+
 const PROPERTY_TYPES_ADMIN = ['マンション', '一戸建て', 'アパート', '土地', 'その他']
 const LAYOUTS_ADMIN = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上']
 
@@ -32,7 +66,7 @@ function PropertiesPanel({ supabase }) {
   const [form, setForm] = useState({
     title: '', property_type: '', deal_type: 'rent', price: '', rent: '',
     address: '', area: '', layout: '', built_year: '',
-    description: '', features: '', status: 'active'
+    description: '', features: '', status: 'active', image_url: ''
   })
 
   useEffect(() => { loadProperties() }, [])
@@ -63,6 +97,7 @@ function PropertiesPanel({ supabase }) {
       features: form.features || null,
       deal_type: form.deal_type || 'rent',
       status: form.status,
+      image_url: form.image_url || null,
     }
     const { error } = await supabase.from('properties').insert(payload)
     if (error) { alert('登録に失敗しました: ' + error.message); setSubmitting(false); return }
@@ -156,6 +191,14 @@ function PropertiesPanel({ supabase }) {
               <input style={fieldStyle} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="例：埼玉県さいたま市大宮区桜木町1-1" />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>物件写真</label>
+              <ImageUploader
+                supabase={supabase}
+                onUploaded={url => setForm(f => ({ ...f, image_url: url }))}
+                currentUrl={form.image_url}
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>物件説明</label>
               <textarea style={{ ...fieldStyle, minHeight: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="物件の特徴や魅力を記入してください" />
             </div>
@@ -175,6 +218,7 @@ function PropertiesPanel({ supabase }) {
 
       {properties.length === 0 ? <p style={{ color: '#777' }}>物件はありません。「物件を登録」ボタンから追加してください。</p> : properties.map(p => (
         <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          {p.image_url && <img src={p.image_url} alt={p.title} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 12 }} />}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
