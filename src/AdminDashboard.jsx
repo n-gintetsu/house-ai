@@ -30,7 +30,7 @@ function PropertiesPanel({ supabase }) {
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
-    title: '', property_type: '', price: '', rent: '',
+    title: '', property_type: '', deal_type: 'rent', price: '', rent: '',
     address: '', area: '', layout: '', built_year: '',
     description: '', features: '', status: 'active'
   })
@@ -61,6 +61,7 @@ function PropertiesPanel({ supabase }) {
       built_year: form.built_year ? parseInt(form.built_year) : null,
       description: form.description || null,
       features: form.features || null,
+      deal_type: form.deal_type || 'rent',
       status: form.status,
     }
     const { error } = await supabase.from('properties').insert(payload)
@@ -101,6 +102,21 @@ function PropertiesPanel({ supabase }) {
         <div style={{ background: '#f8fafc', borderRadius: 14, padding: 20, marginBottom: 24, border: '1px solid rgba(26,58,92,0.1)' }}>
           <h3 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 16 }}>新規物件登録</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>取引種別 *</label>
+              <select style={fieldStyle} value={form.deal_type} onChange={e => setForm(f => ({ ...f, deal_type: e.target.value }))}>
+                <option value="rent">賃貸</option>
+                <option value="sale">売買</option>
+                <option value="both">賃貸・売買両方</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>ステータス</label>
+              <select style={fieldStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                <option value="active">公開中</option>
+                <option value="inactive">非公開</option>
+              </select>
+            </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>物件名 *</label>
               <input style={fieldStyle} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：大宮駅徒歩5分 2LDKマンション" />
@@ -161,7 +177,12 @@ function PropertiesPanel({ supabase }) {
         <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'both' ? '#ede9fe' : '#dbeafe', color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'both' ? '#5b21b6' : '#1e40af', fontWeight: 700 }}>
+                  {p.deal_type === 'sale' ? '売買' : p.deal_type === 'both' ? '賃貸・売買' : '賃貸'}
+                </span>
+              </div>
               <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
                 {p.property_type && <span style={{ marginRight: 8 }}>{p.property_type}</span>}
                 {p.layout && <span style={{ marginRight: 8 }}>{p.layout}</span>}

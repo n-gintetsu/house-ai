@@ -11,6 +11,7 @@ export default function PropertyMatching({ user }) {
 
   const [conditions, setConditions] = useState({
     area: '',
+    dealType: '',
     maxRent: '',
     maxPrice: '',
     layout: '',
@@ -59,6 +60,9 @@ export default function PropertyMatching({ user }) {
     try {
       // DBから条件に合う物件を検索
       let query = supabase.from('properties').select('*').eq('status', 'active')
+      if (conditions.dealType) {
+        query = query.eq('deal_type', conditions.dealType)
+      }
       if (conditions.layout && conditions.layout !== 'こだわらない') {
         query = query.eq('layout', conditions.layout)
       }
@@ -148,6 +152,14 @@ ${propertyList}
               <div>
                 <label style={labelStyle}>エリア・地域 <span style={{ color: '#e53e3e' }}>*</span></label>
                 <input style={fieldStyle} value={conditions.area} onChange={e => setConditions(c => ({ ...c, area: e.target.value }))} placeholder="例：さいたま市大宮区" />
+              </div>
+              <div>
+                <label style={labelStyle}>取引種別</label>
+                <select style={fieldStyle} value={conditions.dealType} onChange={e => setConditions(c => ({ ...c, dealType: e.target.value }))}>
+                  <option value="">すべて（賃貸・売買）</option>
+                  <option value="rent">賃貸</option>
+                  <option value="sale">売買</option>
+                </select>
               </div>
               <div>
                 <label style={labelStyle}>物件種別</label>
@@ -248,7 +260,12 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
     <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, border: '1px solid rgba(26,58,92,0.1)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c', marginBottom: 6 }}>{p.title}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
+            {p.deal_type && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'both' ? '#ede9fe' : '#dbeafe', color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'both' ? '#5b21b6' : '#1e40af', fontWeight: 700 }}>
+              {p.deal_type === 'sale' ? '売買' : p.deal_type === 'both' ? '賃貸・売買' : '賃貸'}
+            </span>}
+          </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
             {p.property_type && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.property_type}</span>}
             {p.layout && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.layout}</span>}
