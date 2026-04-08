@@ -223,7 +223,7 @@ export default function AuthPanel() {
               value={form.userType}
               onChange={e => setForm(f => ({ ...f, userType: e.target.value }))}
             >
-              <option value="general">一般会員（物件を探している方）</option>
+              <option value="general">一般会員</option>
               <option value="agency">業者・企業会員</option>
             </select>
           </div>
