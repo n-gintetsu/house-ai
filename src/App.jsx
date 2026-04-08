@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
+import AuthPanel from './AuthPanel'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 
@@ -1885,35 +1886,8 @@ export default function App() {
           )}
 
           {tab === 'member' && (
-            <div className="ha-panel">
-              <h2 className="ha-sectionTitle">👤 会員専用ページ</h2>
-              <p className="ha-sectionDesc">
-                会員の方向けの専用コンテンツです。会員登録いただくと以下のサービスをご利用いただけます。
-              </p>
-              <div className="ha-cards">
-                <div className="ha-card">
-                  <h4>📁 相談履歴</h4>
-                  <p>過去のAI相談履歴を保存・閲覧できます。いつでも振り返ることができます。</p>
-                </div>
-                <div className="ha-card">
-                  <h4>🔔 物件アラート</h4>
-                  <p>希望条件に合った物件が出たらメールでお知らせします。</p>
-                </div>
-                <div className="ha-card">
-                  <h4>⭐ お気に入り</h4>
-                  <p>気になる物件や専門家をお気に入り登録できます。</p>
-                </div>
-              </div>
-              <div className="ha-actions" style={{ marginTop: 24 }}>
-                <button
-                  type="button"
-                  className="ha-btn"
-                  style={{ background: 'var(--accent)', color: '#fff', border: 'none' }}
-                  onClick={() => alert('会員登録機能は準備中です。しばらくお待ちください。')}
-                >
-                  会員登録する（準備中）
-                </button>
-              </div>
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <AuthPanel />
             </div>
           )}
 
