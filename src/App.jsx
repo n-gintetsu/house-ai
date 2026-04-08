@@ -1718,7 +1718,7 @@ export default function App() {
             <div className="ha-panel">
               <h2 className="ha-sectionTitle">👔 専門家紹介</h2>
               <p className="ha-sectionDesc">
-                リフォーム・司法書士・税理士・FPへの相談導線を想定したフォームです。ステップ1で状況を入力し、AIアドバイスを生成してから連絡先を送信します。
+                あなたに合った各専門家をご紹介いたします。相談料・お見積りは無料です。紹介料なども一切発生いたしません。条件に合えば成約となります。ご安心してお問い合わせください。
               </p>
 
               {expert.step === 'done' ? (
@@ -1954,7 +1954,7 @@ export default function App() {
             <div className="ha-panel">
               <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
               <p className="ha-sectionDesc">
-                不動産の体験談や悩みを共有できます。データはお使いのブラウザに保存されます（他端末とは共有されません）。
+                不動産の体験談や悩みを共有できます。投稿内容はサービス全体で共有されます。
               </p>
 
               <div className="ha-postForm">
