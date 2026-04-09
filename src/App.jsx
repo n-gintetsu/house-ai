@@ -947,11 +947,11 @@ export default function App() {
             min-height: 100px;
         }
 
-        .ha-composerInner {
-          display: flex;
-          gap: 10px;
-          align-items: flex-end;
-        }
+          .ha-composerInner {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+          }
 
         .ha-composer textarea {
           flex: 1;
@@ -959,12 +959,12 @@ export default function App() {
           max-height: 160px;
         }
 
-        .ha-composerActions {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          min-width: 100px;
-        }
+          .ha-composerActions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+          }
 
         .ha-error {
           margin: 8px 0 0;
@@ -1099,6 +1099,7 @@ export default function App() {
         }
 
         .ha-post {
+            color: #1a1a1a;
           border: 1px solid var(--border-2);
           border-radius: 14px;
           padding: 14px;
@@ -1314,7 +1315,7 @@ export default function App() {
                         handleSend()
                       }
                     }}
-                  />
+                  style={{ minHeight: '80px', flex: 1, resize: 'none' }} />
                   <div className="ha-composerActions">
                     <button type="submit" className="ha-btn" disabled={isSending}>
                       送信
@@ -1977,7 +1978,7 @@ export default function App() {
                 <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
               ) : (
                 posts.map((post) => (
-                  <article key={post.id} className="ha-post">
+                  <article key={post.id} className="ha-post" style={{ color: '#1a1a1a' }}>
                     <h4>{post.title}</h4>
                     <div className="ha-postBody">{post.body}</div>
                     <div className="ha-postMeta">
