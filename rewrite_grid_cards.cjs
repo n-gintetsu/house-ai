@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react'
+const fs = require('fs')
+const path = require('path')
+
+const filePath = path.join(__dirname, 'src', 'PropertyMatching.jsx')
+
+const newContent = `import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 
 const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'こだわらない']
@@ -83,18 +88,18 @@ export default function PropertyMatching({ user }) {
       setMatched(matchedProps || [])
 
       const propertyList = (matchedProps || []).length > 0
-        ? (matchedProps || []).map((p, i) => `物件${i+1}: ${p.title} / ${p.address} / ${p.layout} / ${p.property_type} / ${p.rent ? '賃料'+Math.round(p.rent/10000)+'万円/月' : ''}${p.price ? '価格'+Math.round(p.price/10000)+'万円' : ''}`).join('\n')
+        ? (matchedProps || []).map((p, i) => \`物件\${i+1}: \${p.title} / \${p.address} / \${p.layout} / \${p.property_type} / \${p.rent ? '賃料'+Math.round(p.rent/10000)+'万円/月' : ''}\${p.price ? '価格'+Math.round(p.price/10000)+'万円' : ''}\`).join('\\n')
         : '現在条件に合う物件はありません'
 
-      const prompt = `以下のお客様の希望条件と物件情報をもとに、親切で具体的なアドバイスをしてください。
-お客様の希望条件: エリア: ${conditions.area}
-${conditions.maxRent ? '賃料上限: ' + conditions.maxRent + '万円' : ''}
-${conditions.maxPrice ? '購入予算: ' + conditions.maxPrice + '万円' : ''}
-${conditions.layout && conditions.layout !== 'こだわらない' ? '間取り: ' + conditions.layout : ''}
-${conditions.propertyType && conditions.propertyType !== 'こだわらない' ? '物件種別: ' + conditions.propertyType : ''}
-${conditions.other ? 'その他希望: ' + conditions.other : ''}
-マッチした物件: ${propertyList}
-上記の条件と物件情報をもとに、200字程度でお客様へのアドバイスと次のステップを提案してください。`
+      const prompt = \`以下のお客様の希望条件と物件情報をもとに、親切で具体的なアドバイスをしてください。
+お客様の希望条件: エリア: \${conditions.area}
+\${conditions.maxRent ? '賃料上限: ' + conditions.maxRent + '万円' : ''}
+\${conditions.maxPrice ? '購入予算: ' + conditions.maxPrice + '万円' : ''}
+\${conditions.layout && conditions.layout !== 'こだわらない' ? '間取り: ' + conditions.layout : ''}
+\${conditions.propertyType && conditions.propertyType !== 'こだわらない' ? '物件種別: ' + conditions.propertyType : ''}
+\${conditions.other ? 'その他希望: ' + conditions.other : ''}
+マッチした物件: \${propertyList}
+上記の条件と物件情報をもとに、200字程度でお客様へのアドバイスと次のステップを提案してください。\`
 
       const res = await fetch('/api/claude', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -128,7 +133,7 @@ ${conditions.other ? 'その他希望: ' + conditions.other : ''}
       <p style={{ fontSize: 13, color: '#777', margin: '0 0 20px' }}>希望条件を入力するとAIが最適な物件を提案します</p>
 
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.12)', width: 'fit-content' }}>
-        {[{ id: 'matching', label: '🔍 物件を探す' }, { id: 'favorites', label: `❤️ お気に入り(${favorites.length})` }].map(t => (
+        {[{ id: 'matching', label: '🔍 物件を探す' }, { id: 'favorites', label: \`❤️ お気に入り(\${favorites.length})\` }].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
             padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
             background: activeTab === t.id ? '#1a3a5c' : '#f8fafc',
@@ -238,7 +243,7 @@ ${conditions.other ? 'その他希望: ' + conditions.other : ''}
 }
 
 function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
-  const searchUrl = p.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : ''
+  const searchUrl = p.address ? \`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(p.address)}\` : ''
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #f5a623', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -276,8 +281,8 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
 
         {/* 価格 */}
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1a3a5c', marginTop: 2 }}>
-          {p.rent ? `賃料 ${Math.round(p.rent / 10000)}万円/月` : ''}
-          {p.price ? `価格 ${(p.price / 10000).toLocaleString()}万円` : ''}
+          {p.rent ? \`賃料 \${Math.round(p.rent / 10000)}万円/月\` : ''}
+          {p.price ? \`価格 \${(p.price / 10000).toLocaleString()}万円\` : ''}
         </div>
 
         {/* 間取り・面積 */}
@@ -296,3 +301,7 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
     </div>
   )
 }
+`
+
+fs.writeFileSync(filePath, newContent, 'utf8')
+console.log('SUCCESS: PropertyMatching.jsx をグリッドカードデザインに書き換えました！')
