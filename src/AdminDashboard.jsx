@@ -578,6 +578,13 @@ export default function AdminDashboard() {
           )}
 
           {/* オーナー依頼 */}
+              {/* 広告管理 */}
+              {activeTab === 'ads' && (
+                <div>
+                  <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📢 広告管理</h2>
+                  <AdManagement supabaseAdmin={supabaseAdmin} />
+                </div>
+              )}
           {tab === 'owners' && (
             <div>
               <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🔑 オーナー依頼管理（{owners.length}件）</h2>
