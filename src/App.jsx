@@ -139,6 +139,7 @@ const TABS = [
   { id: 'expert', label: '専門家紹介', icon: '👔' },
   { id: 'community', label: 'コミュニティ', icon: '🏘️' },
   { id: 'agency', label: '業者様向け', icon: '🏗️' },
+  { id: 'column', label: '💰 お得情報', icon: '💰' },
   { id: 'member', label: '会員専用', icon: '👤' },
 ]
 
@@ -1935,6 +1936,10 @@ export default function App() {
             <div className="ha-panel" style={{ padding: 0 }}>
               <AgencyForm />
             </div>
+          )}
+
+          {tab === 'column' && (
+            <ColumnPage />
           )}
 
           {tab === 'community' && (
