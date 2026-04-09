@@ -11,7 +11,6 @@ export default function PropertyMatching({ user }) {
 
   const [conditions, setConditions] = useState({
     area: '',
-    dealType: '',
     maxRent: '',
     maxPrice: '',
     layout: '',
@@ -60,9 +59,6 @@ export default function PropertyMatching({ user }) {
     try {
       // DBから条件に合う物件を検索
       let query = supabase.from('properties').select('*').eq('status', 'active')
-      if (conditions.dealType) {
-        query = query.eq('deal_type', conditions.dealType)
-      }
       if (conditions.layout && conditions.layout !== 'こだわらない') {
         query = query.eq('layout', conditions.layout)
       }
@@ -152,14 +148,6 @@ ${propertyList}
               <div>
                 <label style={labelStyle}>エリア・地域 <span style={{ color: '#e53e3e' }}>*</span></label>
                 <input style={fieldStyle} value={conditions.area} onChange={e => setConditions(c => ({ ...c, area: e.target.value }))} placeholder="例：さいたま市大宮区" />
-              </div>
-              <div>
-                <label style={labelStyle}>取引種別</label>
-                <select style={fieldStyle} value={conditions.dealType} onChange={e => setConditions(c => ({ ...c, dealType: e.target.value }))}>
-                  <option value="">すべて（賃貸・売買）</option>
-                  <option value="rent">賃貸</option>
-                  <option value="sale">売買</option>
-                </select>
               </div>
               <div>
                 <label style={labelStyle}>物件種別</label>
@@ -256,22 +244,11 @@ ${propertyList}
 }
 
 function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
-  const [showMap, setShowMap] = useState(false)
-  const mapUrl = p.address ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(p.address)}&layer=mapnik&marker=${encodeURIComponent(p.address)}` : ''
-  const searchUrl = p.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : ''
-
   return (
-    <div style={{ background: '#fff', borderRadius: 14, marginBottom: 12, border: '1px solid rgba(26,58,92,0.1)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-      {p.image_url && <img src={p.image_url} alt={p.title} style={{ width: '100%', height: 200, objectFit: 'cover' }} />}
-      <div style={{ padding: 16 }}>
+    <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, border: '1px solid rgba(26,58,92,0.1)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
-            {p.deal_type && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'both' ? '#ede9fe' : '#dbeafe', color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'both' ? '#5b21b6' : '#1e40af', fontWeight: 700 }}>
-              {p.deal_type === 'sale' ? '売買' : p.deal_type === 'both' ? '賃貸・売買' : '賃貸'}
-            </span>}
-          </div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c', marginBottom: 6 }}>{p.title}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
             {p.property_type && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.property_type}</span>}
             {p.layout && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: '#eef2f7', color: '#1a3a5c' }}>{p.layout}</span>}
@@ -283,18 +260,6 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
             {p.price ? `価格 ${(p.price / 10000).toLocaleString()}万円` : ''}
           </div>
           {p.description && <div style={{ fontSize: 12, color: '#777', marginTop: 6, lineHeight: 1.5 }}>{p.description}</div>}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {p.address && (
-              <button onClick={() => setShowMap(!showMap)} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.2)', background: showMap ? '#1a3a5c' : '#f8fafc', color: showMap ? '#fff' : '#555', cursor: 'pointer' }}>
-                🗺️ {showMap ? '地図を閉じる' : '地図を見る'}
-              </button>
-            )}
-            {p.address && (
-              <a href={searchUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.2)', background: '#f8fafc', color: '#555', textDecoration: 'none' }}>
-                📍 Google Mapsで開く
-              </a>
-            )}
-          </div>
         </div>
         <button
           onClick={() => onToggleFavorite(p.id)}
@@ -303,20 +268,6 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite }) {
         >
           {isFavorite ? '❤️' : '🤍'}
         </button>
-      </div>
-      {showMap && p.address && (
-        <div style={{ marginTop: 12, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.1)' }}>
-          <iframe
-            title={p.title}
-            width="100%"
-            height="250"
-            frameBorder="0"
-            scrolling="no"
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(p.address)}&t=m&z=15&output=embed&iwloc=near`}
-            style={{ display: 'block' }}
-          />
-        </div>
-      )}
       </div>
     </div>
   )
