@@ -720,7 +720,7 @@ function AdManagement({ supabaseAdmin }) {
               <option>広告</option><option>PR</option><option>提携</option>
             </select>
             <input placeholder="タイトル（例：リフォームのご相談）" value={adForm.title} onChange={e => setAdForm({...adForm, title: e.target.value})} style={inputStyle} />
-            <input placeholder="説明文（例：外壁・内装・水回りの工事）" value={adForm.description} onChange={e => setAdForm({...adForm, desc: e.target.value})} style={inputStyle} />
+            <input placeholder="説明文（例：外壁・内装・水回りの工事）" value={adForm.description} onChange={e => setAdForm({...adForm, description: e.target.value})} style={inputStyle} />
             <input placeholder="URL" value={adForm.url} onChange={e => setAdForm({...adForm, url: e.target.value})} style={inputStyle} />
             <input placeholder="カラー（例：#1a3a5c）" value={adForm.color} onChange={e => setAdForm({...adForm, color: e.target.value})} style={inputStyle} />
             <button onClick={saveAd} disabled={saving || !adForm.title} style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
