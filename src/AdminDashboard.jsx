@@ -593,13 +593,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-              {activeTab === 'ads' && (
-                <div>
-                  <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📢 広告管理</h2>
-                  <AdManagement supabaseAdmin={supabaseAdmin} />
-                </div>
-              )}
-
           {/* 物件管理 */}
           {tab === 'properties' && (
             <PropertiesPanel supabase={supabase} />
