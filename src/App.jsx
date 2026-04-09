@@ -705,9 +705,9 @@ export default function App() {
             gap: 3px;
             padding: 10px 6px;
             border-radius: 10px;
-            border: 1.5px solid rgba(255,255,255,0.4);
-            background: rgba(255,255,255,0.2);
-            color: #fff;
+            border: 1.5px solid rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.85);
+            color: #1a3a5c;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -722,8 +722,9 @@ export default function App() {
           }
           .ha-tab[aria-selected="true"] {
             background: #fff;
-            color: #c47d00;
+            color: #1a3a5c;
             border-color: #fff;
+            font-weight: 700;
           }
 
         .ha-main {
@@ -943,6 +944,7 @@ export default function App() {
           padding-left: 16px;
           padding-right: 16px;
           padding-bottom: 4px;
+            min-height: 100px;
         }
 
         .ha-composerInner {
