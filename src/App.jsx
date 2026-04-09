@@ -689,42 +689,42 @@ export default function App() {
           text-overflow: ellipsis;
         }
 
-        .ha-tabs {
-          display: flex;
-          gap: 6px;
-          padding: 0 12px 12px;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: thin;
-        }
-
-        .ha-tab {
-          flex: 0 0 auto;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 10px 14px;
-          border-radius: 12px;
-          border: 1px solid var(--border-2);
-          background: rgba(255, 255, 255, 0.02);
-          color: var(--muted);
-          font-size: 13px;
-          font-weight: 650;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: background 0.15s, border-color 0.15s, color 0.15s;
-        }
-
-        .ha-tab:hover {
-          border-color: var(--accent-border);
-          color: var(--text);
-        }
-
-        .ha-tab[aria-selected="true"] {
-          border-color: var(--accent-border);
-          background: var(--accent-dim);
-          color: var(--accent);
-        }
+          .ha-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            background: #f5a623;
+            padding: 10px 12px;
+            border-radius: 14px;
+            margin: 0 0 4px;
+          }
+          .ha-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 10px 6px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+          }
+          .ha-tab span[aria-hidden] {
+            font-size: 16px;
+          }
+          .ha-tab:hover {
+            background: rgba(255,255,255,0.35);
+          }
+          .ha-tab[aria-selected="true"] {
+            background: #fff;
+            color: #c47d00;
+            border-color: #fff;
+          }
 
         .ha-main {
           flex: 1;
