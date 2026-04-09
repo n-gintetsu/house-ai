@@ -1,4 +1,10 @@
-import { useState, useEffect } from 'react'
+const fs = require('fs')
+const path = require('path')
+
+// ===== 1. PropertyMatching.jsx を完全書き直し =====
+const pmPath = path.join(__dirname, 'src', 'PropertyMatching.jsx')
+
+const pmContent = `import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 
 const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'こだわらない']
@@ -86,17 +92,17 @@ export default function PropertyMatching({ user }) {
       const { data: matchedProps } = await query.limit(6)
       setMatched(matchedProps || [])
       const propertyList = (matchedProps || []).length > 0
-        ? (matchedProps || []).map((p, i) => `物件${i+1}: ${p.title} / ${p.address} / ${p.layout} / ${p.property_type} / ${p.rent ? '賃料'+Math.round(p.rent/10000)+'万円/月' : ''}${p.price ? '価格'+Math.round(p.price/10000)+'万円' : ''}`).join('\n')
+        ? (matchedProps || []).map((p, i) => \`物件\${i+1}: \${p.title} / \${p.address} / \${p.layout} / \${p.property_type} / \${p.rent ? '賃料'+Math.round(p.rent/10000)+'万円/月' : ''}\${p.price ? '価格'+Math.round(p.price/10000)+'万円' : ''}\`).join('\\n')
         : '現在条件に合う物件はありません'
-      const prompt = `以下のお客様の希望条件と物件情報をもとに、親切で具体的なアドバイスをしてください。
-お客様の希望条件: エリア: ${conditions.area}
-${conditions.maxRent ? '賃料上限: ' + conditions.maxRent + '万円' : ''}
-${conditions.maxPrice ? '購入予算: ' + conditions.maxPrice + '万円' : ''}
-${conditions.layout && conditions.layout !== 'こだわらない' ? '間取り: ' + conditions.layout : ''}
-${conditions.propertyType && conditions.propertyType !== 'こだわらない' ? '物件種別: ' + conditions.propertyType : ''}
-${conditions.other ? 'その他希望: ' + conditions.other : ''}
-マッチした物件: ${propertyList}
-200字程度でアドバイスと次のステップを提案してください。`
+      const prompt = \`以下のお客様の希望条件と物件情報をもとに、親切で具体的なアドバイスをしてください。
+お客様の希望条件: エリア: \${conditions.area}
+\${conditions.maxRent ? '賃料上限: ' + conditions.maxRent + '万円' : ''}
+\${conditions.maxPrice ? '購入予算: ' + conditions.maxPrice + '万円' : ''}
+\${conditions.layout && conditions.layout !== 'こだわらない' ? '間取り: ' + conditions.layout : ''}
+\${conditions.propertyType && conditions.propertyType !== 'こだわらない' ? '物件種別: ' + conditions.propertyType : ''}
+\${conditions.other ? 'その他希望: ' + conditions.other : ''}
+マッチした物件: \${propertyList}
+200字程度でアドバイスと次のステップを提案してください。\`
       const res = await fetch('/api/claude', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +128,7 @@ ${conditions.other ? 'その他希望: ' + conditions.other : ''}
       <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', margin: '0 0 4px' }}>🏠 物件マッチングAI</h2>
       <p style={{ fontSize: 13, color: '#777', margin: '0 0 20px' }}>希望条件を入力するとAIが最適な物件を提案します</p>
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.12)', width: 'fit-content' }}>
-        {[{ id: 'matching', label: '🔍 物件を探す' }, { id: 'favorites', label: `❤️ お気に入り(${favorites.length})` }].map(t => (
+        {[{ id: 'matching', label: '🔍 物件を探す' }, { id: 'favorites', label: \`❤️ お気に入り(\${favorites.length})\` }].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, background: activeTab === t.id ? '#1a3a5c' : '#f8fafc', color: activeTab === t.id ? '#fff' : '#777' }}>{t.label}</button>
         ))}
       </div>
@@ -187,8 +193,8 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite, onClick }) {
         {p.address && <div style={{ fontSize: 11, color: '#666' }}>📍 {p.address}</div>}
         {p.access && <div style={{ fontSize: 11, color: '#666' }}>🚃 {p.access}</div>}
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1a3a5c', marginTop: 2 }}>
-          {p.rent ? `賃料 ${Math.round(p.rent / 10000)}万円/月` : ''}
-          {p.price ? `価格 ${(p.price / 10000).toLocaleString()}万円` : ''}
+          {p.rent ? \`賃料 \${Math.round(p.rent / 10000)}万円/月\` : ''}
+          {p.price ? \`価格 \${(p.price / 10000).toLocaleString()}万円\` : ''}
         </div>
         <div style={{ fontSize: 11, color: '#888', display: 'flex', gap: 8 }}>
           {p.layout && <span>{p.layout}</span>}
@@ -200,7 +206,7 @@ function PropertyCard({ property: p, isFavorite, onToggleFavorite, onClick }) {
 }
 
 function PropertyModal({ property: p, isFavorite, onToggleFavorite, onClose }) {
-  const searchUrl = p.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : ''
+  const searchUrl = p.address ? \`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(p.address)}\` : ''
   const defaultPrice = p.price ? Math.round(p.price / 10000) : ''
   const [loanPrice, setLoanPrice] = useState(defaultPrice)
   const [downPayment, setDownPayment] = useState('')
@@ -224,9 +230,9 @@ function PropertyModal({ property: p, isFavorite, onToggleFavorite, onClose }) {
 
   const rows = [
     { label: '所在地', value: p.address }, { label: '交通・アクセス', value: p.access },
-    { label: '賃料', value: p.rent ? `${Math.round(p.rent/10000)}万円/月` : null },
-    { label: '価格', value: p.price ? `${(p.price/10000).toLocaleString()}万円` : null },
-    { label: '間取り', value: p.layout }, { label: '面積', value: p.area ? `${p.area}㎡` : null },
+    { label: '賃料', value: p.rent ? \`\${Math.round(p.rent/10000)}万円/月\` : null },
+    { label: '価格', value: p.price ? \`\${(p.price/10000).toLocaleString()}万円\` : null },
+    { label: '間取り', value: p.layout }, { label: '面積', value: p.area ? \`\${p.area}㎡\` : null },
     { label: '物件種別', value: p.property_type }, { label: '築年月', value: p.built_date },
     { label: '構造', value: p.structure }, { label: '階数/所在階', value: p.floor_info },
     { label: '管理費', value: p.management_fee }, { label: '修繕積立金', value: p.repair_fund },
@@ -255,8 +261,8 @@ function PropertyModal({ property: p, isFavorite, onToggleFavorite, onClose }) {
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a3a5c', margin: '0 0 8px' }}>{p.title}</h2>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#1a3a5c', marginBottom: 16 }}>
-            {p.rent ? `賃料 ${Math.round(p.rent/10000)}万円/月` : ''}
-            {p.price ? `価格 ${(p.price/10000).toLocaleString()}万円` : ''}
+            {p.rent ? \`賃料 \${Math.round(p.rent/10000)}万円/月\` : ''}
+            {p.price ? \`価格 \${(p.price/10000).toLocaleString()}万円\` : ''}
           </div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
             <button onClick={e => onToggleFavorite(p.id, e)} style={{ flex: 1, padding: '10px', border: '1.5px solid #f5a623', borderRadius: 10, background: isFavorite ? '#fff8e7' : '#fff', color: '#1a3a5c', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
@@ -351,3 +357,75 @@ function PropertyModal({ property: p, isFavorite, onToggleFavorite, onClose }) {
     </div>
   )
 }
+`
+
+fs.writeFileSync(pmPath, pmContent, 'utf8')
+console.log('✅ PropertyMatching.jsx を完全書き直しました（重複解消・ローン・引越し・保険ボタン整理済み）')
+
+// ===== 2. App.jsx に「💰 お得情報」タブ追加 =====
+const appPath = path.join(__dirname, 'src', 'App.jsx')
+let appContent = fs.readFileSync(appPath, 'utf8')
+
+// ColumnPage import追加
+if (!appContent.includes('ColumnPage')) {
+  const lines = appContent.split('\n')
+  let lastImportIdx = 0
+  lines.forEach((l, i) => { if (l.startsWith('import ')) lastImportIdx = i })
+  lines.splice(lastImportIdx + 1, 0, "import ColumnPage from './ColumnPage'")
+  appContent = lines.join('\n')
+  console.log('✅ ColumnPage import追加')
+}
+
+// タブ定義に「💰 お得情報」を追加
+const tabAddPatterns = [
+  "{ id: 'agency', label: '🏗️ 業者様向け' },\n  { id: 'column', label: '📰 コラム' },",
+  "{ id: 'agency', label: '🏗️ 業者様向け' },\n  { id: 'column', label: '💰 お得情報' },",
+]
+const hasOldColumn = tabAddPatterns.some(p => appContent.includes(p))
+
+if (!hasOldColumn && appContent.includes("{ id: 'agency'")) {
+  // agencyタブの後に追加
+  appContent = appContent.replace(
+    "{ id: 'agency', label: '🏗️ 業者様向け' },",
+    "{ id: 'agency', label: '🏗️ 業者様向け' },\n  { id: 'column', label: '💰 お得情報' },"
+  )
+  console.log('✅ お得情報タブをタブ定義に追加')
+} else if (appContent.includes("{ id: 'column', label: '📰 コラム' },")) {
+  appContent = appContent.replace(
+    "{ id: 'column', label: '📰 コラム' },",
+    "{ id: 'column', label: '💰 お得情報' },"
+  )
+  console.log('✅ コラム→お得情報に名前変更')
+} else {
+  console.log('INFO: タブ定義はすでに設定済みです')
+}
+
+// コラムタブの表示を追加（まだない場合）
+if (!appContent.includes("tab === 'column'")) {
+  // 会員専用タブの表示を探して後に追加
+  const memberPatterns = [
+    "tab === 'member'",
+    "tab === 'auth'",
+    "activeTab === 'member'",
+  ]
+  let inserted = false
+  for (const pat of memberPatterns) {
+    if (appContent.includes(pat)) {
+      // そのif文全体の後に追加するため、AuthPanelの閉じタグを探す
+      const idx = appContent.indexOf(pat)
+      // タブコンテンツの最後のパターンを探す
+      const afterIdx = appContent.indexOf('</div>', idx + 200)
+      if (afterIdx > 0) {
+        const insertStr = `\n          {tab === 'column' && <ColumnPage />}`
+        appContent = appContent.slice(0, afterIdx + 6) + insertStr + appContent.slice(afterIdx + 6)
+        console.log('✅ コラムタブの表示を追加')
+        inserted = true
+        break
+      }
+    }
+  }
+  if (!inserted) console.log('INFO: コラムタブ表示の自動挿入をスキップ（手動確認が必要かもしれません）')
+}
+
+fs.writeFileSync(appPath, appContent, 'utf8')
+console.log('\nSUCCESS: すべての修正が完了しました！npm run build を実行してください')
