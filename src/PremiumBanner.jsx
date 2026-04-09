@@ -7,7 +7,7 @@ const FALLBACK_ADS = [
     id: 1,
     label: '広告',
     title: 'リフォームのご相談',
-    desc: '外壁・内装・水回りの工事は信頼の提携業者へ',
+    description: '外壁・内装・水回りの工事は信頼の提携業者へ',
     url: 'https://www.gintetsu-fudosan.com',
     color: '#1a3a5c',
   },
@@ -15,7 +15,7 @@ const FALLBACK_ADS = [
     id: 2,
     label: '提携',
     title: '住宅ローン相談',
-    desc: 'ご成約者様に提携金融機関をご紹介します',
+    description: 'ご成約者様に提携金融機関をご紹介します',
     url: 'https://www.gintetsu-fudosan.com',
     color: '#2d6a4f',
   },
@@ -91,7 +91,7 @@ export function AdBanner({ slot = 'sidebar' }) {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '13px', fontWeight: '600', color: ad.color || '#1a3a5c' }}>{ad.title}</div>
-          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>{ad.desc}</div>
+          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>{ad.description}</div>
         </div>
         <div style={{ fontSize: '12px', color: '#999' }}>›</div>
       </div>
@@ -126,7 +126,7 @@ export function AdBanner({ slot = 'sidebar' }) {
           {ad.title}
         </div>
       </div>
-      <div style={{ fontSize: '12px', color: '#555' }}>{ad.desc}</div>
+      <div style={{ fontSize: '12px', color: '#555' }}>{ad.description}</div>
     </div>
   )
 }

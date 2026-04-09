@@ -622,7 +622,7 @@ function AdManagement({ supabaseAdmin }) {
   const [adItems, setAdItems] = useState([])
   const [activeSection, setActiveSection] = useState('ticker')
   const [form, setForm] = useState({ label: 'PR', text: '', url: '', active: true, sort_order: 0 })
-  const [adForm, setAdForm] = useState({ label: '広告', title: '', desc: '', url: '', active: true, color: '#1a3a5c' })
+  const [adForm, setAdForm] = useState({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' })
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -657,7 +657,7 @@ function AdManagement({ supabaseAdmin }) {
   const saveAd = async () => {
     setSaving(true)
     const { error } = await supabaseAdmin.from('ad_items').insert([{ ...adForm }])
-    if (!error) { setMsg('✅ 追加しました'); fetchAds(); setAdForm({ label: '広告', title: '', desc: '', url: '', active: true, color: '#1a3a5c' }) }
+    if (!error) { setMsg('✅ 追加しました'); fetchAds(); setAdForm({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' }) }
     else setMsg('❌ エラー: ' + error.message)
     setSaving(false)
   }
@@ -720,7 +720,7 @@ function AdManagement({ supabaseAdmin }) {
               <option>広告</option><option>PR</option><option>提携</option>
             </select>
             <input placeholder="タイトル（例：リフォームのご相談）" value={adForm.title} onChange={e => setAdForm({...adForm, title: e.target.value})} style={inputStyle} />
-            <input placeholder="説明文（例：外壁・内装・水回りの工事）" value={adForm.desc} onChange={e => setAdForm({...adForm, desc: e.target.value})} style={inputStyle} />
+            <input placeholder="説明文（例：外壁・内装・水回りの工事）" value={adForm.description} onChange={e => setAdForm({...adForm, desc: e.target.value})} style={inputStyle} />
             <input placeholder="URL" value={adForm.url} onChange={e => setAdForm({...adForm, url: e.target.value})} style={inputStyle} />
             <input placeholder="カラー（例：#1a3a5c）" value={adForm.color} onChange={e => setAdForm({...adForm, color: e.target.value})} style={inputStyle} />
             <button onClick={saveAd} disabled={saving || !adForm.title} style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -733,7 +733,7 @@ function AdManagement({ supabaseAdmin }) {
               <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
                 <div style={{ width: 12, height: 12, borderRadius: 3, background: item.color || '#1a3a5c' }} />
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{item.title}</span>
-                <span style={{ fontSize: 11, color: '#999', flex: 1 }}>{item.desc}</span>
+                <span style={{ fontSize: 11, color: '#999', flex: 1 }}>{item.description}</span>
                 <button onClick={() => deleteAd(item.id)} style={{ background: '#fee', color: '#c00', border: '1px solid #fcc', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>削除</button>
               </div>
             ))}
