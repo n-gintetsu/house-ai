@@ -86,9 +86,7 @@ export function AdBanner({ slot = 'sidebar' }) {
           background: '#f0f0f0',
           padding: '1px 6px',
           borderRadius: '3px',
-          marginRight: '6px',
         }}>{ad.label}</span>
-        広告
       </div>
       <div style={{
         width: '100%',
