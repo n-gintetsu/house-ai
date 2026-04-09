@@ -196,7 +196,6 @@ function initialOwnerForm() {
 
 export default function App() {
   const [isPremium, setIsPremium] = useState(false)
-  const [isPremium, setIsPremium] = React.useState ? React.useState(false) : (() => { throw new Error() })()
   const model = useMemo(
     () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5',
     [],
