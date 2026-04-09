@@ -233,6 +233,16 @@ export default function App() {
   async function handleSend() {
     const text = input.trim()
     if (!text || isSending) return
+    // 未ログイン時のチャット回数制限
+    const currentUser = window.__houseAiUser || null
+    if (!currentUser) {
+      const todayCount = getTodayChatCount()
+      if (todayCount >= AI_CHAT_FREE_LIMIT) {
+        setErrorMessage('本日の無料チャット回数（5回）に達しました。会員登録すると無制限でご利用いただけます。')
+        return
+      }
+      incrementTodayChatCount()
+    }
     setErrorMessage('')
     setIsSending(true)
     const nextChat = [...chat, { role: 'user', text }]
