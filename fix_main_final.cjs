@@ -1,4 +1,9 @@
-import { StrictMode } from 'react'
+const fs = require('fs')
+const path = require('path')
+
+const mainPath = path.join(__dirname, 'src', 'main.jsx')
+
+const newContent = `import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -19,3 +24,7 @@ createRoot(document.getElementById('root')).render(
     <Component />
   </StrictMode>,
 )
+`
+
+fs.writeFileSync(mainPath, newContent, 'utf8')
+console.log('SUCCESS: main.jsx を書き換えました！')
