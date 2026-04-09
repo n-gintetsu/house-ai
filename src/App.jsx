@@ -1910,7 +1910,6 @@ export default function App() {
 
           {tab === 'member' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel />
             </div>
           )}
