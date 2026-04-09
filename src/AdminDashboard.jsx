@@ -602,6 +602,14 @@ export default function AdminDashboard() {
           {tab === 'members' && (
             <MembersPanel supabaseAdmin={supabaseAdmin} />
           )}
+
+          {/* 広告管理 */}
+          {tab === 'ads' && (
+            <div>
+              <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📢 広告管理</h2>
+              <AdManagement supabaseAdmin={supabaseAdmin} />
+            </div>
+          )}
         </div>
       </div>
     </div>
