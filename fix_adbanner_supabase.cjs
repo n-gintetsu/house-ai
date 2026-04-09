@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react'
+const fs = require('fs')
+const path = require('path')
+
+const filePath = path.join(__dirname, 'src', 'PremiumBanner.jsx')
+
+const newContent = `import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 
 // フォールバック用サンプルデータ（Supabaseにデータがない場合に使用）
@@ -64,8 +69,8 @@ export function AdBanner({ slot = 'sidebar' }) {
   }
 
   const inlineStyle = {
-    background: `linear-gradient(135deg, ${ad.color}15, ${ad.color}05)`,
-    border: `1px solid ${ad.color}30`,
+    background: \`linear-gradient(135deg, \${ad.color}15, \${ad.color}05)\`,
+    border: \`1px solid \${ad.color}30\`,
     borderRadius: '8px',
     padding: '10px 14px',
     display: 'flex',
@@ -115,7 +120,7 @@ export function AdBanner({ slot = 'sidebar' }) {
       <div style={{
         width: '100%',
         height: '80px',
-        background: `linear-gradient(135deg, ${ad.color || '#1a3a5c'}, ${ad.color || '#1a3a5c'}aa)`,
+        background: \`linear-gradient(135deg, \${ad.color || '#1a3a5c'}, \${ad.color || '#1a3a5c'}aa)\`,
         borderRadius: '6px',
         display: 'flex',
         alignItems: 'center',
@@ -178,3 +183,7 @@ export function PremiumUpgradeBanner({ user, isPremium, onUpgrade }) {
     </div>
   )
 }
+`
+
+fs.writeFileSync(filePath, newContent, 'utf8')
+console.log('SUCCESS: PremiumBanner.jsxをSupabase対応に更新しました！')
