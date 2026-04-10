@@ -54,7 +54,11 @@ export default function PartnerDashboard() {
     setLoginLoading(true)
     setLoginError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setLoginError('メールアドレスまたはパスワードが正しくありません')
+    if (error) {
+      setLoginError('メールアドレスまたはパスワードが正しくありません')
+    } else {
+      window.location.href = '/partner'
+    }
     setLoginLoading(false)
   }
 
