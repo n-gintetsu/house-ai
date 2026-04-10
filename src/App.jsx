@@ -133,6 +133,8 @@ function saveCommunity(posts) {
 }
 
 const TABS = [
+  { id: 'properties', label: '🏠 物件情報', icon: '🏠' },
+  { id: 'vendors', label: '👷 業者一覧', icon: '👷' },
   { id: 'chat', label: 'AIチャット', icon: '💬' },
   { id: 'sell', label: '売却査定', icon: '🏷️' },
   { id: 'owner', label: '賃貸経営者様向け', icon: '🏢' },
@@ -1249,6 +1251,16 @@ export default function App() {
         </nav>
 
         <main className="ha-main">
+          {tab === 'properties' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <PropertiesPage user={user} />
+            </div>
+          )}
+          {tab === 'vendors' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <VendorPage />
+            </div>
+          )}
           {tab === 'chat' && (
             <div className="ha-panel ha-chatWrap">
               <div className="ha-chatTop">
