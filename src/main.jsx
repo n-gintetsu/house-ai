@@ -13,6 +13,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = AdminDashboard
 } else if (pathname === '/agency' || pathname === '/agency/') {
   Component = AgencyDashboard
+} else if (pathname === '/partner' || pathname === '/partner/') {
+  Component = PartnerDashboard
 }
 
 createRoot(document.getElementById('root')).render(
