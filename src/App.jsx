@@ -1948,7 +1948,11 @@ export default function App() {
                         物件の登録・掲載・管理ができます。専用ダッシュボードにて物件情報をご登録いただけます。
                       </div>
                       <div style={{ display: 'inline-block', padding: '10px 24px', background: '#1a3a5c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        物件掲載ダッシュボードへ →
+                        会員登録はこちら →
+                      </div>
+                      <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
+                        すでに登録済みの方は
+                        <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
                       </div>
                     </div>
                     <div style={{ border: '2px solid #c9a84c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
@@ -1960,7 +1964,11 @@ export default function App() {
                       </div>
                       <div style={{ color: '#888', fontSize: 12, marginBottom: 16 }}>※ 広告ページはこちらで作成し、当サイトに掲載いたします</div>
                       <div style={{ display: 'inline-block', padding: '10px 24px', background: '#c9a84c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        広告掲載のお申し込みへ →
+                        会員登録はこちら →
+                      </div>
+                      <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
+                        すでに登録済みの方は
+                        <a href="/agency" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
                       </div>
                     </div>
                   </div>
