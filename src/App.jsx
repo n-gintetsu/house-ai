@@ -1213,6 +1213,17 @@ export default function App() {
             >
               会員登録
             </button>
+                {/* tab_nav_buttons_added */}
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  <button type="button" onClick={() => setTab('properties')}
+                    style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    🏠 物件情報
+                  </button>
+                  <button type="button" onClick={() => setTab('vendors')}
+                    style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    👷 業者一覧・比較
+                  </button>
+                </div>
           </div>
         </header>
         <TickerBanner />
