@@ -1,4 +1,9 @@
-import { useState } from 'react'
+const fs = require('fs');
+const path = require('path');
+
+const filePath = path.join(__dirname, 'src', 'ColumnPage.jsx');
+
+const newContent = `import { useState } from 'react'
 
 const COLUMNS = [
   {
@@ -9,7 +14,7 @@ const COLUMNS = [
     readTime: '8分',
     date: '2026年4月',
     tags: ['住宅ローン', '金利', '審査'],
-    content: `
+    content: \`
 ## 住宅ローンを選ぶ前に知っておくべき3つのポイント
 住宅購入は人生最大の買い物です。住宅ローン選びを間違えると、数十年にわたって損をすることになります。この記事では、住宅ローン選びの基本をわかりやすく解説します。
 ### 1. 金利タイプの違いを理解する
@@ -31,7 +36,7 @@ const COLUMNS = [
 - 信用情報（延滞の履歴など）- 他のローンの残高
 ## まとめ
 住宅ローンは一度結んだら長い付き合いになります。複数の金融機関を比較して、最もお得な条件のローンを選びましょう。
-    `,
+    \`,
     affiliate: {
       label: '🏠 住宅ローンを無料で一括比較する',
       desc: '複数の金融機関に一括で申込・比較できます。金利・審査条件を比べて最適なローンを見つけましょう。',
@@ -47,7 +52,7 @@ const COLUMNS = [
     readTime: '5分',
     date: '2026年4月',
     tags: ['不動産担保ローン', '資金調達', 'ローン'],
-    content: `
+    content: \`
 ## 不動産担保ローンとは
 
 不動産担保ローンとは、所有している土地や建物を担保に入れることで、まとまった資金を借り入れできる金融サービスです。
@@ -74,7 +79,7 @@ const COLUMNS = [
 ## まとめ
 
 不動産担保ローンは、不動産を活用して有利な条件で資金調達できる手段です。複数の金融機関を比較して、最適なプランを見つけましょう。
-    `,
+    \`,
     affiliate: {
       label: '🏦 不動産担保ローンを無料で一括比較する',
       desc: '複数の金融機関に一括で申込・比較できます。融資額・金利・審査条件を比べて最適なローンを見つけましょう。',
@@ -90,7 +95,7 @@ const COLUMNS = [
     readTime: '6分',
     date: '2026年4月',
     tags: ['引越し', '節約', '見積もり'],
-    content: `
+    content: \`
 ## 引越し費用の相場を知ろう
 
 引越し費用は移動距離・荷物量・時期によって大きく変わります。一般的な目安は以下の通りです。
@@ -111,7 +116,7 @@ const COLUMNS = [
 梱包作業を業者に頼むと費用が上がります。自分で荷造りすることで大幅に節約できます。
 ## まとめ
 引越し費用の節約には、複数業者への一括見積もりが最も効果的です。
-    `,
+    \`,
     affiliate: {
       label: '🚛 引越し費用を無料で一括見積もりする',
       desc: '最大10社に一括見積もり依頼。比較して一番安い業者を選べます。',
@@ -127,7 +132,7 @@ const COLUMNS = [
     readTime: '6分',
     date: '2026年4月',
     tags: ['火災保険', '賃貸', '持ち家'],
-    content: `
+    content: \`
 ## 火災保険は「火災」だけじゃない
 火災保険という名前ですが、実際には様々なリスクに備えることができます。
 ### 主な補償内容
@@ -155,7 +160,7 @@ const COLUMNS = [
 
 ## まとめ
 火災保険は複数社を比較することで、同じ補償内容でも保険料が大きく変わります。
-    `,
+    \`,
     affiliate: {
       label: '🔥 火災保険を無料で一括比較する',
       desc: '最大20社を一括比較。補償内容と保険料を比べて最適な保険を選べます。',
@@ -205,7 +210,7 @@ export default function ColumnPage() {
         </div>
 
         {/* アフィリエイトバナー（上部） */}
-        <div style={{ background: '#f8fafc', border: `1.5px solid ${col.affiliate.color}20`, borderRadius: 12, padding: 16, marginBottom: 24 }}>
+        <div style={{ background: '#f8fafc', border: \`1.5px solid \${col.affiliate.color}20\`, borderRadius: 12, padding: 16, marginBottom: 24 }}>
           <div style={{ fontSize: 13, color: '#555', marginBottom: 10 }}>{col.affiliate.desc}</div>
           <a href={col.affiliate.url} target="_blank" rel="noopener noreferrer sponsored"
             style={{ display: 'block', padding: '12px', background: col.affiliate.color, color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none', textAlign: 'center' }}>
@@ -216,10 +221,10 @@ export default function ColumnPage() {
 
         {/* 本文 */}
         <div style={{ fontSize: 14, lineHeight: 1.9, color: '#333' }}>
-          {col.content.trim().split('\n').map((line, i) => {
+          {col.content.trim().split('\\n').map((line, i) => {
             if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 18, fontWeight: 700, color: '#1a3a5c', margin: '28px 0 12px', borderBottom: '2px solid #f5a623', paddingBottom: 6 }}>{line.replace('## ', '')}</h2>
             if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 15, fontWeight: 700, color: '#1a3a5c', margin: '20px 0 8px' }}>{line.replace('### ', '')}</h3>
-            if (line.startsWith('**') && line.endsWith('**')) return <p key={i} style={{ fontWeight: 700, color: '#1a3a5c', margin: '12px 0 4px' }}>{line.replace(/\*\*/g, '')}</p>
+            if (line.startsWith('**') && line.endsWith('**')) return <p key={i} style={{ fontWeight: 700, color: '#1a3a5c', margin: '12px 0 4px' }}>{line.replace(/\\*\\*/g, '')}</p>
             if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: 20, marginBottom: 4 }}>{line.replace('- ', '')}</li>
             if (line.trim() === '') return <br key={i} />
             return <p key={i} style={{ margin: '8px 0' }}>{line}</p>
@@ -289,3 +294,11 @@ export default function ColumnPage() {
     </div>
   )
 }
+`;
+
+fs.writeFileSync(filePath, newContent, 'utf8');
+console.log('SUCCESS: ColumnPage.jsx を完全に書き直しました');
+console.log('  - 住宅ローンコラム（既存）: そのまま');
+console.log('  - 不動産担保ローンコラム: 新規追加');
+console.log('  - 引越しコラム: 仮リンクのまま（承認後に差替え）');
+console.log('  - 火災保険コラム: 本物のA8.netリンクに差替え済み');
