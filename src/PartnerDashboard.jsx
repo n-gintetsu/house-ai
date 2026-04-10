@@ -8,7 +8,6 @@ const supabase = createClient(
 
 const navy = '#1a3a5c'
 const gold = '#c9a84c'
-const orange = '#f5a623'
 
 export default function PartnerDashboard() {
   const [user, setUser] = useState(null)
@@ -24,30 +23,37 @@ export default function PartnerDashboard() {
   const [saveMsg, setSaveMsg] = useState('')
   const [inquiry, setInquiry] = useState('')
   const [inquirySent, setInquirySent] = useState(false)
+  const [inquiries, setInquiries] = useState([])
+  const [selectedInquiry, setSelectedInquiry] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+        fetchInquiries(session.user.id)
+      } else setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      if (session?.user) {
+        fetchProfile(session.user.id)
+        fetchInquiries(session.user.id)
+      } else { setProfile(null); setLoading(false) }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   const fetchProfile = async (userId) => {
-    const { data } = await supabase
-      .from('partner_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
+    const { data } = await supabase.from('partner_profiles').select('*').eq('user_id', userId).single()
     setProfile(data)
     setEditData(data || {})
     setLoading(false)
+  }
+
+  const fetchInquiries = async (userId) => {
+    const { data } = await supabase.from('partner_inquiries').select('*').eq('partner_user_id', userId).order('created_at', { ascending: false })
+    setInquiries(data || [])
   }
 
   const handleLogin = async () => {
@@ -58,14 +64,10 @@ export default function PartnerDashboard() {
     setLoginLoading(false)
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-  }
+  const handleLogout = async () => { await supabase.auth.signOut() }
 
   const handleSaveProfile = async () => {
-    const { error } = await supabase
-      .from('partner_profiles')
-      .upsert({ ...editData, user_id: user.id })
+    const { error } = await supabase.from('partner_profiles').upsert({ ...editData, user_id: user.id })
     if (!error) {
       setSaveMsg('保存しました！')
       setEditMode(false)
@@ -87,6 +89,12 @@ export default function PartnerDashboard() {
     setTimeout(() => setInquirySent(false), 3000)
   }
 
+  const handleStatusChange = async (id, status) => {
+    await supabase.from('partner_inquiries').update({ status }).eq('id', id)
+    fetchInquiries(user.id)
+    if (selectedInquiry?.id === id) setSelectedInquiry({ ...selectedInquiry, status })
+  }
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#eef2f7' }}>
       <div style={{ color: navy, fontSize: 16 }}>読み込み中...</div>
@@ -103,31 +111,18 @@ export default function PartnerDashboard() {
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>メールアドレス</label>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="info@example.com"
-            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-          />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="info@example.com"
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 24 }}>
           <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>パスワード</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
             style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-          />
+            onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
         {loginError && <div style={{ color: '#e74c3c', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{loginError}</div>}
-        <button
-          onClick={handleLogin}
-          disabled={loginLoading}
-          style={{ width: '100%', padding: '12px', background: navy, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
-        >
+        <button onClick={handleLogin} disabled={loginLoading}
+          style={{ width: '100%', padding: '12px', background: navy, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
           {loginLoading ? 'ログイン中...' : 'ログイン'}
         </button>
         <div style={{ textAlign: 'center', marginTop: 16 }}>
@@ -139,14 +134,16 @@ export default function PartnerDashboard() {
 
   const tabs = [
     { id: 'ads', label: '📢 広告掲載状況' },
+    { id: 'customers', label: `👥 顧客管理${inquiries.length > 0 ? ` (${inquiries.length})` : ''}` },
     { id: 'profile', label: '🏢 会社情報' },
     { id: 'invoice', label: '💰 請求・支払い' },
     { id: 'inquiry', label: '📩 お問い合わせ' },
   ]
 
+  const statusColors = { '未対応': '#e74c3c', '対応中': '#f39c12', '対応済み': '#27ae60' }
+
   return (
     <div style={{ minHeight: '100vh', background: '#eef2f7' }}>
-      {/* ヘッダー */}
       <div style={{ background: navy, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ color: gold, fontSize: 11, fontWeight: 700 }}>パートナー業者様専用</div>
@@ -160,7 +157,6 @@ export default function PartnerDashboard() {
         </div>
       </div>
 
-      {/* タブ */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e0e0e0', padding: '0 16px', display: 'flex', gap: 4, overflowX: 'auto' }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -170,7 +166,7 @@ export default function PartnerDashboard() {
         ))}
       </div>
 
-      <div style={{ padding: 16, maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 760, margin: '0 auto' }}>
 
         {/* 広告掲載状況 */}
         {tab === 'ads' && (
@@ -199,6 +195,103 @@ export default function PartnerDashboard() {
           </div>
         )}
 
+        {/* 顧客管理 */}
+        {tab === 'customers' && (
+          <div>
+            {selectedInquiry ? (
+              <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <button onClick={() => setSelectedInquiry(null)}
+                  style={{ background: 'none', border: 'none', color: navy, fontSize: 13, cursor: 'pointer', textDecoration: 'underline', marginBottom: 20, display: 'block' }}>
+                  ← 一覧に戻る
+                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                  <h2 style={{ color: navy, fontSize: 18, fontWeight: 700 }}>問い合わせ詳細</h2>
+                  <select value={selectedInquiry.status} onChange={e => handleStatusChange(selectedInquiry.id, e.target.value)}
+                    style={{ padding: '6px 12px', border: `2px solid ${statusColors[selectedInquiry.status]}`, borderRadius: 8, fontSize: 13, fontWeight: 700, color: statusColors[selectedInquiry.status], cursor: 'pointer' }}>
+                    <option value="未対応">未対応</option>
+                    <option value="対応中">対応中</option>
+                    <option value="対応済み">対応済み</option>
+                  </select>
+                </div>
+                {[
+                  { label: 'お名前', value: selectedInquiry.customer_name },
+                  { label: '電話番号', value: selectedInquiry.customer_phone },
+                  { label: 'メールアドレス', value: selectedInquiry.customer_email },
+                ].map(f => (
+                  <div key={f.label} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
+                    <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>{f.label}</div>
+                    <div style={{ color: navy, fontSize: 15, fontWeight: 600 }}>{f.value || '未入力'}</div>
+                  </div>
+                ))}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>お問い合わせ内容</div>
+                  <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, color: '#333', fontSize: 14, lineHeight: 1.8 }}>
+                    {selectedInquiry.message || '内容なし'}
+                  </div>
+                </div>
+                <div style={{ color: '#aaa', fontSize: 12 }}>
+                  受信日時：{new Date(selectedInquiry.created_at).toLocaleString('ja-JP')}
+                </div>
+                {selectedInquiry.customer_phone && (
+                  <a href={`tel:${selectedInquiry.customer_phone}`}
+                    style={{ display: 'inline-block', marginTop: 20, padding: '12px 24px', background: '#27ae60', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                    📞 折り返し電話をかける
+                  </a>
+                )}
+                {selectedInquiry.customer_email && (
+                  <a href={`mailto:${selectedInquiry.customer_email}`}
+                    style={{ display: 'inline-block', marginTop: 20, marginLeft: 10, padding: '12px 24px', background: navy, color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                    ✉️ メールを送る
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <h2 style={{ color: navy, fontSize: 18, fontWeight: 700 }}>👥 顧客からの問い合わせ一覧</h2>
+                  <button onClick={() => fetchInquiries(user.id)}
+                    style={{ padding: '6px 14px', background: '#f0f0f0', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                    🔄 更新
+                  </button>
+                </div>
+                {inquiries.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                    <div style={{ fontSize: 14 }}>まだ問い合わせはありません</div>
+                    <div style={{ fontSize: 12, marginTop: 8 }}>広告からのお問い合わせがここに表示されます</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {inquiries.map(inq => (
+                      <div key={inq.id} onClick={() => setSelectedInquiry(inq)}
+                        style={{ border: '1.5px solid #e0e0e0', borderRadius: 10, padding: '16px', cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.1)'}
+                        onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <div style={{ color: navy, fontWeight: 700, fontSize: 15 }}>{inq.customer_name || '名前未入力'}</div>
+                          <span style={{ padding: '3px 10px', background: statusColors[inq.status] || '#aaa', color: '#fff', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                            {inq.status}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 16, marginBottom: 6 }}>
+                          {inq.customer_phone && <div style={{ color: '#555', fontSize: 12 }}>📞 {inq.customer_phone}</div>}
+                          {inq.customer_email && <div style={{ color: '#555', fontSize: 12 }}>✉️ {inq.customer_email}</div>}
+                        </div>
+                        <div style={{ color: '#888', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {inq.message || '内容なし'}
+                        </div>
+                        <div style={{ color: '#bbb', fontSize: 11, marginTop: 6 }}>
+                          {new Date(inq.created_at).toLocaleString('ja-JP')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 会社情報 */}
         {tab === 'profile' && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -221,11 +314,8 @@ export default function PartnerDashboard() {
               <div key={field.key} style={{ marginBottom: 16 }}>
                 <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>{field.label}</label>
                 {editMode ? (
-                  <input
-                    value={editData[field.key] || ''}
-                    onChange={e => setEditData({ ...editData, [field.key]: e.target.value })}
-                    style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-                  />
+                  <input value={editData[field.key] || ''} onChange={e => setEditData({ ...editData, [field.key]: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
                 ) : (
                   <div style={{ color: navy, fontSize: 15, fontWeight: 500, padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
                     {profile?.[field.key] || '未登録'}
@@ -271,13 +361,9 @@ export default function PartnerDashboard() {
             <h2 style={{ color: navy, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>📩 GINTETSUへのお問い合わせ</h2>
             <p style={{ color: '#888', fontSize: 13, marginBottom: 20 }}>広告内容の変更・ご要望・ご質問などをお気軽にどうぞ</p>
             {inquirySent && <div style={{ color: '#27ae60', fontSize: 13, marginBottom: 16 }}>✅ 送信しました！担当者よりご連絡いたします。</div>}
-            <textarea
-              value={inquiry}
-              onChange={e => setInquiry(e.target.value)}
-              placeholder="お問い合わせ内容を入力してください..."
-              rows={6}
-              style={{ width: '100%', padding: '12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', resize: 'vertical' }}
-            />
+            <textarea value={inquiry} onChange={e => setInquiry(e.target.value)}
+              placeholder="お問い合わせ内容を入力してください..." rows={6}
+              style={{ width: '100%', padding: '12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', resize: 'vertical' }} />
             <button onClick={handleInquiry}
               style={{ marginTop: 12, padding: '12px 28px', background: navy, color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               送信する
