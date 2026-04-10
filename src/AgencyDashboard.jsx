@@ -23,7 +23,6 @@ const PROPERTY_FIELDS = {
     { key: 'agricultural_law', label: '農地法' },
     { key: 'buried_cultural', label: '埋蔵文化財' },
     { key: 'soil_contamination', label: '土壌汚染' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '売一戸建': [
     { key: 'address', label: '所在地', required: true },
@@ -40,12 +39,10 @@ const PROPERTY_FIELDS = {
     { key: 'land_rights', label: '土地権利' },
     { key: 'road_access', label: '接道状況' },
     { key: 'parking', label: '駐車場' },
-    { key: 'management_fee', label: '管理費' },
     { key: 'repair_fund', label: '修繕積立金' },
     { key: 'reform', label: 'リフォーム' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '売マンション': [
     { key: 'address', label: '所在地', required: true },
@@ -56,7 +53,6 @@ const PROPERTY_FIELDS = {
     { key: 'built_date', label: '築年月' },
     { key: 'structure', label: '構造' },
     { key: 'floor_info', label: '階数／所在階' },
-    { key: 'management_fee', label: '管理費' },
     { key: 'repair_fund', label: '修繕積立金' },
     { key: 'delivery', label: '引渡' },
     { key: 'land_rights', label: '土地権利' },
@@ -68,7 +64,6 @@ const PROPERTY_FIELDS = {
     { key: 'reform', label: 'リフォーム' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '売外全': [
     { key: 'address', label: '所在地', required: true },
@@ -90,7 +85,6 @@ const PROPERTY_FIELDS = {
     { key: 'electric_capacity', label: '電気容量' },
     { key: 'gas', label: 'ガス' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '売外一': [
     { key: 'address', label: '所在地', required: true },
@@ -105,20 +99,17 @@ const PROPERTY_FIELDS = {
     { key: 'total_floors', label: '総階数' },
     { key: 'delivery', label: '引渡' },
     { key: 'land_rights', label: '土地権利' },
-    { key: 'management_fee', label: '管理費' },
     { key: 'repair_fund', label: '修繕積立金' },
     { key: 'parking', label: '駐車場' },
     { key: 'current_status', label: '現況' },
     { key: 'facilities', label: '設備' },
     { key: 'electric_capacity', label: '電気容量' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '賃貸居住用': [
     { key: 'address', label: '所在地', required: true },
     { key: 'access', label: '交通・アクセス', required: true },
     { key: 'rent', label: '賃料（万円/月）', type: 'number', required: true },
-    { key: 'management_fee', label: '管理費' },
     { key: 'deposit', label: '敷金' },
     { key: 'key_money', label: '礼金' },
     { key: 'layout', label: '間取り' },
@@ -134,13 +125,11 @@ const PROPERTY_FIELDS = {
     { key: 'guarantor', label: '保証人' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '賃貸事業用': [
     { key: 'address', label: '所在地', required: true },
     { key: 'access', label: '交通・アクセス', required: true },
     { key: 'rent', label: '賃料（万円/月）', type: 'number', required: true },
-    { key: 'management_fee', label: '管理費/共益費' },
     { key: 'deposit', label: '敷金' },
     { key: 'key_money', label: '礼金' },
     { key: 'occupied_area', label: '占有面積（㎡）', type: 'number' },
@@ -156,7 +145,6 @@ const PROPERTY_FIELDS = {
     { key: 'electric_capacity', label: '電気容量' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '賃貸土地': [
     { key: 'address', label: '所在地', required: true },
@@ -170,13 +158,11 @@ const PROPERTY_FIELDS = {
     { key: 'contract_period', label: '契約期間' },
     { key: 'delivery', label: '引渡' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '賃貸一戸建': [
     { key: 'address', label: '所在地', required: true },
     { key: 'access', label: '交通・アクセス', required: true },
     { key: 'rent', label: '賃料（万円/月）', type: 'number', required: true },
-    { key: 'management_fee', label: '管理費' },
     { key: 'deposit', label: '敷金' },
     { key: 'key_money', label: '礼金' },
     { key: 'layout', label: '間取り' },
@@ -190,13 +176,11 @@ const PROPERTY_FIELDS = {
     { key: 'pet', label: 'ペット飼育' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
   '賃貸マンション': [
     { key: 'address', label: '所在地', required: true },
     { key: 'access', label: '交通・アクセス', required: true },
     { key: 'rent', label: '賃料（万円/月）', type: 'number', required: true },
-    { key: 'management_fee', label: '管理費' },
     { key: 'deposit', label: '敷金' },
     { key: 'key_money', label: '礼金' },
     { key: 'layout', label: '間取り' },
@@ -213,7 +197,6 @@ const PROPERTY_FIELDS = {
     { key: 'management_company', label: '管理会社' },
     { key: 'current_status', label: '現況' },
     { key: 'transaction_type', label: '取引態様' },
-    { key: 'remarks', label: '備考', type: 'textarea' },
   ],
 }
 
@@ -750,7 +733,7 @@ export default function AgencyDashboard() {
                 <button onClick={function() { setScreen('list') }} style={{ padding: '10px 24px', background: '#f1f5f9', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>キャンセル</button>
                 <button onClick={async function() {
                   if (!editForm.title) { setEditMsg('❌ 物件名は必須です'); return }
-                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null, management_fee: editForm.management_fee ? Number(editForm.management_fee) : null, remarks: editForm.remarks || '' }).eq('id', editingProperty.id)
+                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null }).eq('id', editingProperty.id)
                   if (result.error) { setEditMsg('❌ 更新失敗: ' + result.error.message); return }
                   setEditMsg('✅ 更新しました！')
                   await loadMyProperties()
