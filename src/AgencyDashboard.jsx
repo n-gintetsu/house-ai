@@ -220,6 +220,69 @@ const PROPERTY_FIELDS = {
 const SALE_TYPES = ['売土地', '売一戸建', '売マンション', '売外全', '売外一']
 const RENT_TYPES = ['賃貸居住用', '賃貸事業用', '賃貸土地', '賃貸一戸建', '賃貸マンション']
 
+
+function MultiImageUploader({ onUploaded, currentUrls = [] }) {
+  const [uploading, setUploading] = useState(false)
+  const [previews, setPreviews] = useState(currentUrls)
+  const MAX = 20
+
+  async function handleFiles(e) {
+    const files = Array.from(e.target.files)
+    if (!files.length) return
+    if (previews.length + files.length > MAX) {
+      alert('写真は最大' + MAX + '枚までです')
+      return
+    }
+    setUploading(true)
+    try {
+      const newUrls = []
+      for (const file of files) {
+        const ext = file.name.split('.').pop()
+        const fileName = 'agency_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext
+        const { error } = await supabase.storage.from('property-images').upload(fileName, file, { upsert: true })
+        if (error) throw error
+        const { data } = supabase.storage.from('property-images').getPublicUrl(fileName)
+        newUrls.push(data.publicUrl)
+      }
+      const updated = [...previews, ...newUrls]
+      setPreviews(updated)
+      onUploaded(updated)
+    } catch (err) {
+      alert('アップロードに失敗しました: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function removeImage(idx) {
+    const updated = previews.filter((_, i) => i !== idx)
+    setPreviews(updated)
+    onUploaded(updated)
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        {previews.map((url, i) => (
+          <div key={i} style={{ position: 'relative', width: 72, height: 54 }}>
+            <img src={url} alt={'写真' + (i+1)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
+            <button onClick={() => removeImage(i)} style={{ position: 'absolute', top: -6, right: -6, background: '#dc2626', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>x</button>
+            {i === 0 && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(26,58,92,0.7)', color: '#fff', fontSize: 9, textAlign: 'center', borderRadius: '0 0 6px 6px' }}>メイン</div>}
+          </div>
+        ))}
+        {previews.length < MAX && (
+          <label style={{ width: 72, height: 54, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: uploading ? '#f1f5f9' : '#eef2f7', borderRadius: 6, border: '2px dashed #cbd5e1', cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 10, color: '#64748b', gap: 2 }}>
+            {uploading ? '...' : '+'}
+            <span style={{ fontSize: 9 }}>{uploading ? 'UP中' : '追加'}</span>
+            <input type="file" accept="image/*" multiple onChange={handleFiles} style={{ display: 'none' }} disabled={uploading} />
+          </label>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: '#999' }}>最大{MAX}枚・1枚目がメイン写真になります</div>
+    </div>
+  )
+}
+
 function ImageUploader({ onUploaded, currentUrl }) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState(currentUrl || '')
@@ -267,7 +330,7 @@ export default function AgencyDashboard() {
   const [submitMsg, setSubmitMsg] = useState('')
 
   const initForm = () => ({
-    title: '', catchcopy: '', price: '', image_url: '', is_public: true,
+    title: '', catchcopy: '', price: '', image_url: '', image_urls: [], is_public: true,
     address: '', access: '', land_area: '', building_area: '', occupied_area: '',
     balcony_area: '', layout: '', built_date: '', structure: '', floor_info: '',
     floors: '', total_floors: '', total_units: '', use_zone: '', building_coverage: '',
@@ -323,6 +386,7 @@ export default function AgencyDashboard() {
       price: form.price ? parseFloat(form.price) * 10000 : null,
       rent: form.rent ? parseFloat(form.rent) * 10000 : null,
       image_url: form.image_url || null,
+      image_urls: form.image_urls || (form.image_url ? [form.image_url] : []),
       is_public: form.is_public,
       status: 'active',
       details: JSON.stringify(

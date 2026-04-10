@@ -167,6 +167,34 @@ ${conditions.other ? 'その他希望: ' + conditions.other : ''}
   )
 }
 
+
+function PhotoSlider({ images, title }) {
+  const [idx, setIdx] = useState(0)
+  const imgs = images && images.length > 0 ? images : []
+  const prev = (e) => { e.stopPropagation(); setIdx(i => (i - 1 + imgs.length) % imgs.length) }
+  const next = (e) => { e.stopPropagation(); setIdx(i => (i + 1) % imgs.length) }
+  if (imgs.length === 0) {
+    return <div style={{ width: '100%', aspectRatio: '16/9', background: '#f0f4f8', borderRadius: '16px 16px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60 }}>🏠</div>
+  }
+  return (
+    <div style={{ width: '100%', aspectRatio: '16/9', background: '#f0f4f8', borderRadius: '16px 16px 0 0', overflow: 'hidden', position: 'relative' }}>
+      <img src={imgs[idx]} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.2s' }} />
+      {imgs.length > 1 && (
+        <>
+          <button onClick={prev} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{'<'}</button>
+          <button onClick={next} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{'>'}</button>
+          <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, maxWidth: '80%', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {imgs.map((_, i) => (
+              <div key={i} onClick={e => { e.stopPropagation(); setIdx(i) }} style={{ width: i === idx ? 16 : 6, height: 6, borderRadius: 3, background: i === idx ? '#f5a623' : 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: 'all 0.2s' }} />
+            ))}
+          </div>
+          <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 11, padding: '3px 8px', borderRadius: 10 }}>{idx + 1} / {imgs.length}</div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function PropertyCard({ property: p, isFavorite, onToggleFavorite, onClick }) {
   return (
     <div onClick={onClick} style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #f5a623', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}
@@ -245,9 +273,7 @@ function PropertyModal({ property: p, isFavorite, onToggleFavorite, onClose }) {
     <div onClick={onClose} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowY: 'auto', padding: '20px 16px' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 600, position: 'relative', marginTop: 20, marginBottom: 20 }}>
         <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-        <div style={{ width: '100%', aspectRatio: '16/9', background: '#f0f4f8', borderRadius: '16px 16px 0 0', overflow: 'hidden' }}>
-          {p.image_url ? <img src={p.image_url} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60 }}>🏠</div>}
-        </div>
+        <PhotoSlider images={[...(p.image_urls || []), ...(p.image_url ? [p.image_url] : [])].filter((v,i,a) => a.indexOf(v) === i)} title={p.title} />
         <div style={{ padding: '20px 24px 24px' }}>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             {p.is_agency && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: '#fef3c7', color: '#92400e', fontWeight: 700 }}>業者掲載</span>}
