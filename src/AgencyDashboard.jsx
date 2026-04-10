@@ -308,7 +308,7 @@ function ImageUploader({ onUploaded, currentUrl }) {
 
   return (
     <div>
-      {preview && <img src={preview} alt="プレビュー" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />}
+      {preview && <img src={preview} alt="プレビュー" style={{ width: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 8, marginBottom: 8, background: '#f0f4f8' }} />}
       <label style={{ display: 'inline-block', padding: '8px 16px', background: uploading ? '#94a3b8' : '#1a3a5c', color: '#fff', borderRadius: 8, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 13 }}>
         {uploading ? 'アップロード中...' : '📷 写真を選択'}
         <input type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} disabled={uploading} />
@@ -625,7 +625,10 @@ export default function AgencyDashboard() {
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>物件写真</label>
-                  <ImageUploader onUploaded={url => setForm(f => ({ ...f, image_url: url }))} currentUrl={form.image_url} />
+                  <MultiImageUploader
+                    onUploaded={urls => setForm(f => ({ ...f, image_url: urls[0] || '', image_urls: urls }))}
+                    currentUrls={form.image_urls || (form.image_url ? [form.image_url] : [])}
+                  />
                 </div>
               </div>
             </div>
