@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 import AgencyDashboard from './AgencyDashboard'
+import PartnerDashboard from './PartnerDashboard'
 
 const pathname = window.location.pathname
 
