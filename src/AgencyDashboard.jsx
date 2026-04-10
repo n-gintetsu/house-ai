@@ -322,9 +322,6 @@ export default function AgencyDashboard() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [screen, setScreen] = useState('menu') // menu | sale | rent | form | list
-	const [editingProperty, setEditingProperty] = useState(null)
-	const [editForm, setEditForm] = useState({})
-	const [editMsg, setEditMsg] = useState('')
   const [selectedType, setSelectedType] = useState('')
   const [dealCategory, setDealCategory] = useState('') // sale | rent
   const [myProperties, setMyProperties] = useState([])
@@ -709,86 +706,12 @@ export default function AgencyDashboard() {
                       <button onClick={() => togglePublic(p.id, p.is_public)} style={{ padding: '5px 12px', background: p.is_public ? '#f59e0b' : '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                         {p.is_public ? '非公開にする' : '公開する'}
                       </button>
-						<button onClick={() => { setEditingProperty(p); setEditForm({...p}); setScreen('edit'); setEditMsg('') }} style={{ padding: '5px 12px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>✏️ 編集</button>
                       <button onClick={() => deleteProperty(p.id)} style={{ padding: '5px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>削除</button>
                     </div>
                   </div>
                 </div>
               ))
             )}
-
-		{/* 物件編集フォーム */}
-		{screen === 'edit' && editingProperty && (
-			<div>
-				<button onClick={() => setScreen('list')} style={{ marginBottom: 16, background: 'none', border: 'none', color: '#1a3a5c', cursor: 'pointer', fontSize: 13 }}>← 物件一覧に戻る</button>
-				<h2 style={{ color: '#1a3a5c', fontSize: 20, marginBottom: 20 }}>✏️ 物件編集：{editingProperty.title}</h2>
-
-				<div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-					{[
-						{ key: 'title', label: '物件名 *', type: 'text' },
-						{ key: 'catchcopy', label: 'キャッチコピー', type: 'text' },
-						{ key: 'price', label: '売買価格（円）', type: 'number' },
-						{ key: 'rent', label: '賃料（円/月）', type: 'number' },
-						{ key: 'address', label: '所在地 *', type: 'text' },
-						{ key: 'area', label: '面積（㎡）', type: 'number' },
-						{ key: 'floor_plan', label: '間取り', type: 'text' },
-						{ key: 'age', label: '築年数', type: 'number' },
-						{ key: 'nearest_station', label: '最寄り駅', type: 'text' },
-						{ key: 'walk_minutes', label: '駅徒歩（分）', type: 'number' },
-						{ key: 'management_fee', label: '管理費（円/月）', type: 'number' },
-						{ key: 'description', label: '物件説明', type: 'textarea' },
-						{ key: 'remarks', label: '備考', type: 'textarea' },
-					].map(({ key, label, type }) => (
-						<div key={key} style={{ marginBottom: 16 }}>
-							<label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#1a3a5c', marginBottom: 4 }}>{label}</label>
-							{type === 'textarea' ? (
-								<textarea
-									value={editForm[key] || ''}
-									onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-									rows={3}
-									style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, boxSizing: 'border-box', resize: 'vertical' }}
-								/>
-							) : (
-								<input
-									type={type}
-									value={editForm[key] || ''}
-									onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-									style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
-								/>
-							)}
-						</div>
-					))}
-
-					{editMsg && <div style={{ padding: '10px 16px', borderRadius: 8, background: editMsg.startsWith('✅') ? '#dcfce7' : '#fee2e2', color: editMsg.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 16, fontSize: 13 }}>{editMsg}</div>}
-
-					<div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-						<button onClick={() => setScreen('list')} style={{ padding: '10px 24px', background: '#f1f5f9', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>キャンセル</button>
-						<button onClick={async () => {
-							if (!editForm.title || !editForm.address) { setEditMsg('❌ 物件名と所在地は必須です'); return; }
-							const { error } = await supabase.from('agency_properties').update({
-								title: editForm.title,
-								catchcopy: editForm.catchcopy,
-								price: editForm.price ? Number(editForm.price) : null,
-								rent: editForm.rent ? Number(editForm.rent) : null,
-								address: editForm.address,
-								area: editForm.area ? Number(editForm.area) : null,
-								floor_plan: editForm.floor_plan,
-								age: editForm.age ? Number(editForm.age) : null,
-								nearest_station: editForm.nearest_station,
-								walk_minutes: editForm.walk_minutes ? Number(editForm.walk_minutes) : null,
-								management_fee: editForm.management_fee ? Number(editForm.management_fee) : null,
-								description: editForm.description,
-								remarks: editForm.remarks,
-							}).eq('id', editingProperty.id);
-							if (error) { setEditMsg('❌ 更新に失敗しました: ' + error.message); return; }
-							setEditMsg('✅ 物件情報を更新しました！');
-							await loadMyProperties();
-							setEditingProperty({ ...editingProperty, ...editForm });
-						}} style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>💾 保存する</button>
-					</div>
-				</div>
-			</div>
-		)}
           </div>
         )}
       </div>
