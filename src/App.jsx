@@ -1271,18 +1271,20 @@ export default function App() {
                     不動産コンシェルジュが条件整理と次の一歩をサポートします。
                   </p>
                 </div>
-                {/* chat_nav_buttons_v3 */}
-                <button type="button" onClick={() => setTab('properties')}
-                  style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  🏠 物件情報
-                </button>
-                <button type="button" onClick={() => setTab('vendors')}
-                  style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  👷 業者一覧・比較
-                </button>
-                <button type="button" className="ha-btn ha-btnGhost" onClick={handleResetChat} disabled={isSending}>
-                  新規チャット
-                </button>
+				{/* chat_nav_buttons_v3 */}
+				<div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+					<button type="button" onClick={() => setTab('properties')}
+						style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+						🏠 物件情報
+					</button>
+					<button type="button" onClick={() => setTab('vendors')}
+						style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+						👷 業者一覧・比較
+					</button>
+					<button type="button" className="ha-btn ha-btnGhost" onClick={handleResetChat} disabled={isSending}>
+						新規チャット
+					</button>
+				</div>
               </div>
 
               <div className="ha-messages" role="log" aria-live="polite">
