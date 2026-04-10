@@ -732,7 +732,6 @@ export default function AgencyDashboard() {
                 { key: 'price', label: '売買価格（円）', type: 'number' },
                 { key: 'rent', label: '賞料（円/月）', type: 'number' },
                 { key: 'address', label: '所在地 *', type: 'text' },
-                { key: 'access', label: '交通・アクセス', type: 'text' },
                 { key: 'management_fee', label: '管理費（円/月）', type: 'number' },
                 { key: 'remarks', label: '備考', type: 'textarea' },
               ].map(function(field) {
@@ -754,7 +753,7 @@ export default function AgencyDashboard() {
                 <button onClick={function() { setScreen('list') }} style={{ padding: '10px 24px', background: '#f1f5f9', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>キャンセル</button>
                 <button onClick={async function() {
                   if (!editForm.title || !editForm.address) { setEditMsg('❌ 物件名と所在地は必須です'); return }
-                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null, address: editForm.address, access: editForm.access || '', management_fee: editForm.management_fee ? Number(editForm.management_fee) : null, remarks: editForm.remarks || '' }).eq('id', editingProperty.id)
+                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null, address: editForm.address, management_fee: editForm.management_fee ? Number(editForm.management_fee) : null, remarks: editForm.remarks || '' }).eq('id', editingProperty.id)
                   if (result.error) { setEditMsg('❌ 更新失敗: ' + result.error.message); return }
                   setEditMsg('✅ 更新しました！')
                   await loadMyProperties()
