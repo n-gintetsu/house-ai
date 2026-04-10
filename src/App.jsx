@@ -1212,19 +1212,7 @@ export default function App() {
               onClick={() => alert('会員登録機能は準備中です。')}
             >
               会員登録
-            </button>
-                {/* tab_nav_buttons_added */}
-                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                  <button type="button" onClick={() => setTab('properties')}
-                    style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    🏠 物件情報
-                  </button>
-                  <button type="button" onClick={() => setTab('vendors')}
-                    style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    👷 業者一覧・比較
-                  </button>
-                </div>
-          </div>
+            </button></div>
         </header>
         <TickerBanner />
 
@@ -1283,6 +1271,15 @@ export default function App() {
                     不動産コンシェルジュが条件整理と次の一歩をサポートします。
                   </p>
                 </div>
+                {/* chat_nav_buttons_v3 */}
+                <button type="button" onClick={() => setTab('properties')}
+                  style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  🏠 物件情報
+                </button>
+                <button type="button" onClick={() => setTab('vendors')}
+                  style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  👷 業者一覧・比較
+                </button>
                 <button type="button" className="ha-btn ha-btnGhost" onClick={handleResetChat} disabled={isSending}>
                   新規チャット
                 </button>
@@ -2037,7 +2034,19 @@ export default function App() {
 
           {tab === 'community' && (
             <div className="ha-panel">
-              <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button type="button" onClick={() => setTab('properties')}
+                    style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    🏠 物件情報
+                  </button>
+                  <button type="button" onClick={() => setTab('vendors')}
+                    style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    👷 業者一覧・比較
+                  </button>
+                </div>
+              </div>
               <p className="ha-sectionDesc">
                 不動産の体験談や悩みを共有できます。投稿内容はサービス全体で共有されます。
               </p>
