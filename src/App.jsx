@@ -1941,7 +1941,7 @@ export default function App() {
                   <p style={{ color: '#666', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>ご利用用途をお選びください</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 560, margin: '0 auto' }}>
                     <div style={{ border: '2px solid #1a3a5c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
-                      onClick={() => setAgencyType('realestate')}>
+                      onClick={() => window.location.href = '/agency'}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
                       <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>不動産業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
@@ -1956,7 +1956,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ border: '2px solid #c9a84c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
-                      onClick={() => setAgencyType('other')}>
+                      onClick={() => window.location.href = '/partner'}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
                       <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>その他の業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
