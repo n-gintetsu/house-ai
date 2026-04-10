@@ -730,11 +730,8 @@ export default function AgencyDashboard() {
                 { key: 'title', label: '物件名 *', type: 'text' },
                 { key: 'catchcopy', label: 'キャッチコピー', type: 'text' },
                 { key: 'price', label: '売買価格（円）', type: 'number' },
-                { key: 'rent', label: '賞料（円/月）', type: 'number' },
-                { key: 'address', label: '所在地 *', type: 'text' },
-                { key: 'management_fee', label: '管理費（円/月）', type: 'number' },
-                { key: 'remarks', label: '備考', type: 'textarea' },
-              ].map(function(field) {
+                { key: 'rent', label: '賃料（円/月）', type: 'number' },
+                    ].map(function(field) {
                 return (
                   <div key={field.key} style={{ marginBottom: 16 }}>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#1a3a5c', marginBottom: 4 }}>{field.label}</label>
@@ -752,8 +749,8 @@ export default function AgencyDashboard() {
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                 <button onClick={function() { setScreen('list') }} style={{ padding: '10px 24px', background: '#f1f5f9', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>キャンセル</button>
                 <button onClick={async function() {
-                  if (!editForm.title || !editForm.address) { setEditMsg('❌ 物件名と所在地は必須です'); return }
-                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null, address: editForm.address, management_fee: editForm.management_fee ? Number(editForm.management_fee) : null, remarks: editForm.remarks || '' }).eq('id', editingProperty.id)
+                  if (!editForm.title) { setEditMsg('❌ 物件名は必須です'); return }
+                  var result = await supabase.from('agency_properties').update({ title: editForm.title, catchcopy: editForm.catchcopy || '', price: editForm.price ? Number(editForm.price) : null, rent: editForm.rent ? Number(editForm.rent) : null, management_fee: editForm.management_fee ? Number(editForm.management_fee) : null, remarks: editForm.remarks || '' }).eq('id', editingProperty.id)
                   if (result.error) { setEditMsg('❌ 更新失敗: ' + result.error.message); return }
                   setEditMsg('✅ 更新しました！')
                   await loadMyProperties()
