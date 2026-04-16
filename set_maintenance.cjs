@@ -1,4 +1,19 @@
-export default function App() {
+const fs = require('fs');
+const path = require('path');
+
+// 現在のApp.jsxをバックアップ
+const appPath = path.join(__dirname, 'src', 'App.jsx');
+const backupPath = path.join(__dirname, 'src', 'App.jsx.backup');
+
+if (!fs.existsSync(backupPath)) {
+  fs.copyFileSync(appPath, backupPath);
+  console.log('✓ App.jsxをバックアップしました（App.jsx.backup）');
+} else {
+  console.log('✓ バックアップは既に存在します');
+}
+
+// メンテナンス画面のApp.jsxを作成
+const maintenanceApp = `export default function App() {
   return (
     <div style={{
       minHeight: '100vh',
@@ -67,3 +82,10 @@ export default function App() {
     </div>
   )
 }
+`;
+
+fs.writeFileSync(appPath, maintenanceApp, 'utf8');
+console.log('✓ メンテナンス画面をApp.jsxに設定しました');
+console.log('SUCCESS: メンテナンスモードの準備完了！');
+console.log('');
+console.log('※ 元に戻す場合は restore_app.cjs を実行してください');
