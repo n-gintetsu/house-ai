@@ -322,7 +322,7 @@ function MembersPanel({ supabaseAdmin }) {
 }
 
 export default function AdminDashboard() {
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_authed') === 'true')
+  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true')
   const [pw, setPw] = useState('')
   const [pwError, setPwError] = useState('')
   const [tab, setTab] = useState('summary')
@@ -389,7 +389,7 @@ export default function AdminDashboard() {
             type="password"
             value={pw}
             onChange={e => setPw(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (pw === ADMIN_PASSWORD ? (setAuthed(true), sessionStorage.setItem('admin_authed', 'true'), setPwError('')) : setPwError('パスワードが違います'))}
+            onKeyDown={e => e.key === 'Enter' && (pw === ADMIN_PASSWORD ? (setAuthed(true), localStorage.setItem('admin_authed', 'true'), setPwError('')) : setPwError('パスワードが違います'))}
             style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 12, border: '1px solid rgba(26,58,92,0.15)', fontSize: 14, outline: 'none', marginBottom: 12 }}
             placeholder="パスワードを入力"
           />
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
           <button onClick={loadAll} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
             🔄 更新
           </button>
-          <button onClick={() => { setAuthed(false); sessionStorage.removeItem('admin_authed'); }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
+          <button onClick={() => { setAuthed(false); localStorage.removeItem('admin_authed'); }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
             ログアウト
           </button>
         </div>
