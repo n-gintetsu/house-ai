@@ -741,6 +741,34 @@ function AdManagement({ supabaseAdmin }) {
           </div>
         </div>
       )}
+
+      {activeSection === 'パートナー' && (
+        <div>
+          <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#1a3a5c' }}>👥 パートナー業者一覧（{partnerProfiles.length}件）</h3>
+          {partnerMsg && <div style={{ padding: '8px 14px', borderRadius: 8, background: partnerMsg.startsWith('✅') ? '#dcfce7' : '#fee2e2', color: partnerMsg.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 12, fontSize: 13 }}>{partnerMsg}</div>}
+          {partnerProfiles.length === 0 ? (
+            <p style={{ color: '#777', fontSize: 13 }}>登録はありません</p>
+          ) : partnerProfiles.map(p => (
+            <div key={p.user_id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1a3a5c' }}>{p.company_name || p.user_id}</div>
+                  {p.ad_title && <div style={{ fontSize: 12, color: '#555', marginTop: 3 }}>広告タイトル：{p.ad_title}</div>}
+                  {p.ad_description && <div style={{ fontSize: 11, color: '#777', marginTop: 2 }}>{p.ad_description}</div>}
+                  <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>登録：{p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: p.ad_status === '掲載中' ? '#dcfce7' : '#fef9c3', color: p.ad_status === '掲載中' ? '#16a34a' : '#92400e' }}>
+                    {p.ad_status === '掲載中' ? '✅ 掲載中' : '⏳ 審査中'}
+                  </span>
+                  {p.ad_status !== '掲載中' && <button onClick={() => updateAdStatus(p.user_id, '掲載中')} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>掲載中にする</button>}
+                  {p.ad_status === '掲載中' && <button onClick={() => updateAdStatus(p.user_id, '審査中')} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>展示停止</button>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
