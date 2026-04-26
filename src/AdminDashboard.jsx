@@ -679,7 +679,6 @@ function AdManagement({ supabaseAdmin }) {
       <div style={{ marginBottom: 20 }}>
         <button style={btnStyle(activeSection==='ticker')} onClick={() => setActiveSection('ticker')}>📡 ティッカーバナー</button>
         <button style={btnStyle(activeSection==='ads')} onClick={() => setActiveSection('ads')}>🖼️ 広告バナー</button>
-        <button style={btnStyle(activeSection==='パートナー')} onClick={() => setActiveSection('パートナー')}>👥 パートナー業者</button>
       </div>
 
       {msg && <div style={{ padding: '10px 14px', borderRadius: 8, background: '#f0f7ff', marginBottom: 16, fontSize: 13 }}>{msg}</div>}
