@@ -395,7 +395,7 @@ export default function AdminDashboard() {
           />
           {pwError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
           <button
-            onClick={() => pw === ADMIN_PASSWORD ? (setAuthed(true), setPwError('')) : setPwError('パスワードが違います')}
+            onClick={() => pw === ADMIN_PASSWORD ? (setAuthed(true), localStorage.setItem('admin_authed', 'true'), setPwError('')) : setPwError('パスワードが違います')}
             style={{ width: '100%', padding: '11px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
           >
             ログイン
