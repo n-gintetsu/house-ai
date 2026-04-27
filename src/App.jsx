@@ -5,6 +5,7 @@ import AgencyForm from './AgencyForm'
 import TickerBanner from './TickerBanner'
 import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 import ColumnPage from './ColumnPage'
+import HomeScreen from './HomeScreen'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 const AI_CHAT_FREE_LIMIT = 5
@@ -1260,7 +1261,11 @@ export default function App() {
               <VendorPage />
             </div>
           )}
-          {tab === 'chat' && (
+          {tab === 'home' && (
+          <HomeScreen onNavigate={(view) => setTab(view)} />
+        )}
+
+        {tab === 'chat' && (
             <div className="ha-panel ha-chatWrap">
               <div className="ha-chatTop">
                 <div>
