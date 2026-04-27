@@ -206,7 +206,7 @@ export default function App() {
     [],
   )
 
-  const [tab, setTab] = useState('chat')
+  const [tab, setTab] = useState('home')
   const [agencyType, setAgencyType] = useState(null)
 
   /* ---- AIチャット ---- */
