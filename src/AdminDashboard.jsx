@@ -330,6 +330,8 @@ export default function AdminDashboard() {
   // データ
   const [members, setMembers] = useState([])
   const [agencies, setAgencies] = useState([])
+  const [partnerProfiles, setPartnerProfiles] = useState([])
+  const [partnerMsg, setPartnerMsg] = useState('')
   const [valuations, setValuations] = useState([])
   const [experts, setExperts] = useState([])
   const [community, setCommunity] = useState([])
