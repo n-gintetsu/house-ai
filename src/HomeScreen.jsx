@@ -2,17 +2,16 @@ import { useState, useEffect } from "react";
 
 // ============================================================
 // HomeScreen.jsx  — House AI コンシェルジュ
-// CV最大化改善版（TASK①〜⑥対応）
+// LINE導線強化版 + 固定底部ボタン
 // ============================================================
 
 const LINE_URL = "https://line.me/R/ti/p/@216lcryt";
+const SITE_URL = "https://house-ai-ten.vercel.app";
 
-// TASK①：デバイス判定
 const isMobile = /iPhone|Android/i.test(
   typeof navigator !== "undefined" ? navigator.userAgent : ""
 );
 
-// --- 診断UI用カラー ---
 const D = {
   bg: "#F4F7FB",
   card: "#FFFFFF",
@@ -22,7 +21,6 @@ const D = {
   desc: "#5C677D",
 };
 
-// --- 既存UI用カラー ---
 const C = {
   bg: "#faf7f2",
   card: "#ffffff",
@@ -46,7 +44,6 @@ const STEP3_OPTIONS = {
   "投資-経験あり": { question: "重視したい投資方針は？", options: ["安定収入", "売却益", "低リスク"] },
 };
 
-// TASK③：結果文言強化
 const RESULTS = {
   "住む-購入": {
     icon: "🏡",
@@ -75,20 +72,16 @@ const RESULTS = {
 };
 
 // ============================================================
-// LINEButton — TASK①②⑤
+// LINEButton
 // ============================================================
 function LINEButton() {
   const [hover, setHover] = useState(false);
   const [active, setActive] = useState(false);
 
-  const handleClick = () => {
-    window.open(LINE_URL, "_blank", "noopener,noreferrer");
-  };
-
   return (
     <div style={{ marginBottom: 6 }}>
       <button
-        onClick={handleClick}
+        onClick={() => window.open(LINE_URL, "_blank", "noopener,noreferrer")}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => { setHover(false); setActive(false); }}
         onMouseDown={() => setActive(true)}
@@ -96,27 +89,13 @@ function LINEButton() {
         onTouchStart={() => setActive(true)}
         onTouchEnd={() => setActive(false)}
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          width: "100%",
-          background: hover ? "#05a847" : "#06C755",
-          color: "#fff",
-          border: "none",
-          borderRadius: 14,
-          padding: "16px",
-          fontSize: 16,
-          fontWeight: 700,
-          cursor: "pointer",
-          fontFamily: "'Noto Sans JP', sans-serif",
-          marginBottom: 6,
-          boxSizing: "border-box",
-          transition: "all 0.2s ease",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          width: "100%", background: hover ? "#05a847" : "#06C755", color: "#fff",
+          border: "none", borderRadius: 14, padding: "16px", fontSize: 16, fontWeight: 700,
+          cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 6,
+          boxSizing: "border-box", transition: "all 0.2s ease",
           transform: active ? "scale(0.98)" : "scale(1)",
-          boxShadow: hover
-            ? "0 4px 20px rgba(6,199,85,0.35)"
-            : "0 2px 8px rgba(6,199,85,0.2)",
+          boxShadow: hover ? "0 4px 20px rgba(6,199,85,0.35)" : "0 2px 8px rgba(6,199,85,0.2)",
         }}
       >
         <svg width="20" height="20" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -135,20 +114,102 @@ function LINEButton() {
 }
 
 // ============================================================
-// DiagnosisGame — 3ステップ診断（TASK④戻るボタン追加）
+// LineFlowGuide — LINE導線説明（新規）
 // ============================================================
-function DiagnosisGame({ onNavigate }) {
+function LineFlowGuide() {
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #fffbe6 0%, #e8f4ff 100%)",
+      border: "1.5px solid #f0d060",
+      borderRadius: 14,
+      padding: "16px 18px",
+      marginBottom: 16,
+    }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: D.title, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 12, textAlign: "center" }}>
+        👇 このまま進んでください
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {[
+          { num: "①", text: "LINE追加", color: "#06C755" },
+          { num: "②", text: "「診断」と送信", color: D.blue },
+          { num: "③", text: "専用提案が届きます", color: "#e67e00" },
+        ].map((step) => (
+          <div key={step.num} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: step.color, color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, fontWeight: 700, flexShrink: 0,
+              fontFamily: "'Noto Sans JP', sans-serif",
+            }}>
+              {step.num}
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: D.title, fontFamily: "'Noto Sans JP', sans-serif" }}>
+              {step.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// SaveButton — あとで保存（新規）
+// ============================================================
+function SaveButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleSave = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(SITE_URL).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      });
+    } else {
+      alert(`このURLをブックマークしてください：\n${SITE_URL}`);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleSave}
+      style={{
+        width: "100%", background: copied ? "#e8f4ff" : "#f8f9fa",
+        color: copied ? D.blue : D.desc,
+        border: `1.5px solid ${copied ? D.blue : "#D0D7E3"}`,
+        borderRadius: 12, padding: "12px",
+        fontSize: 13, fontWeight: 600, cursor: "pointer",
+        fontFamily: "'Noto Sans JP', sans-serif",
+        marginBottom: 10, boxSizing: "border-box",
+        transition: "all 0.2s ease",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+      }}
+    >
+      {copied ? "✅ URLをコピーしました！" : "🔖 あとで見返すために保存"}
+    </button>
+  );
+}
+
+// ============================================================
+// DiagnosisGame
+// ============================================================
+function DiagnosisGame({ onNavigate, onShowStep1 }) {
   const [step, setStep] = useState(1);
   const [s1, setS1] = useState(null);
   const [s2, setS2] = useState(null);
   const [s3, setS3] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
 
+  // 外部から step1 に戻せるよう expose
+  useEffect(() => {
+    if (onShowStep1) onShowStep1(() => handleReset);
+  }, []);
+
   const handleReset = () => {
     setStep(1); setS1(null); setS2(null); setS3(null); setHoveredBtn(null);
   };
 
-  // TASK④：戻る
   const handleBack = () => {
     if (step === 2) { setStep(1); setS1(null); }
     if (step === 3) { setStep(2); setS2(null); }
@@ -160,68 +221,38 @@ function DiagnosisGame({ onNavigate }) {
   const step3Data = resultKey ? STEP3_OPTIONS[resultKey] : null;
 
   const cardStyle = {
-    background: D.card,
-    borderRadius: 24,
+    background: D.card, borderRadius: 24,
     boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
-    padding: "32px 28px",
-    maxWidth: 520,
-    margin: "0 auto",
-    width: "100%",
-    boxSizing: "border-box",
+    padding: "32px 28px", maxWidth: 520,
+    margin: "0 auto", width: "100%", boxSizing: "border-box",
   };
 
   const optionBtnStyle = (key) => ({
     width: "100%",
     background: hoveredBtn === key ? D.blueBg : D.card,
     border: `2px solid ${hoveredBtn === key ? D.blue : "#D0D7E3"}`,
-    borderRadius: 14,
-    padding: "18px 20px",
-    fontSize: 15,
-    fontWeight: 600,
-    color: D.title,
-    cursor: "pointer",
-    fontFamily: "'Noto Sans JP', sans-serif",
-    textAlign: "left",
-    transition: "all 0.18s ease",
-    marginBottom: 10,
-    display: "block",
-    boxSizing: "border-box",
+    borderRadius: 14, padding: "18px 20px", fontSize: 15, fontWeight: 600,
+    color: D.title, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif",
+    textAlign: "left", transition: "all 0.18s ease",
+    marginBottom: 10, display: "block", boxSizing: "border-box",
   });
 
   const BackButton = () => (
-    <button
-      onClick={handleBack}
-      style={{
-        background: "none",
-        border: "none",
-        color: D.desc,
-        fontSize: 13,
-        cursor: "pointer",
-        fontFamily: "'Noto Sans JP', sans-serif",
-        padding: "0 0 16px 0",
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-      }}
-    >
-      ← 戻る
-    </button>
+    <button onClick={handleBack} style={{
+      background: "none", border: "none", color: D.desc, fontSize: 13,
+      cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif",
+      padding: "0 0 16px 0", display: "flex", alignItems: "center", gap: 4,
+    }}>← 戻る</button>
   );
 
   const progressBar = (
     <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
       {[1, 2, 3].map((s) => (
-        <div
-          key={s}
-          style={{
-            height: 4,
-            flex: 1,
-            borderRadius: 2,
-            background: step > s ? D.blue : step === s ? D.blue : "#D0D7E3",
-            opacity: step >= s ? 1 : 0.4,
-            transition: "all 0.3s",
-          }}
-        />
+        <div key={s} style={{
+          height: 4, flex: 1, borderRadius: 2,
+          background: step >= s ? D.blue : "#D0D7E3",
+          opacity: step >= s ? 1 : 0.4, transition: "all 0.3s",
+        }} />
       ))}
     </div>
   );
@@ -232,19 +263,11 @@ function DiagnosisGame({ onNavigate }) {
     </p>
   );
 
-  const titleStyle = {
-    fontSize: 22,
-    fontWeight: 700,
-    color: D.title,
-    fontFamily: "'Noto Serif JP', serif",
-    marginBottom: 20,
-    lineHeight: 1.5,
-  };
+  const titleStyle = { fontSize: 22, fontWeight: 700, color: D.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 20, lineHeight: 1.5 };
 
   return (
-    <div style={cardStyle}>
+    <div style={cardStyle} id="diagnosis-card">
 
-      {/* STEP 1 */}
       {step === 1 && (
         <>
           {progressBar}
@@ -254,20 +277,15 @@ function DiagnosisGame({ onNavigate }) {
             { label: "🏠 住む家を探している", val: "住む" },
             { label: "💰 資産として不動産を考えている", val: "投資" },
           ].map((o) => (
-            <button
-              key={o.val}
-              style={optionBtnStyle(o.val)}
+            <button key={o.val} style={optionBtnStyle(o.val)}
               onMouseEnter={() => setHoveredBtn(o.val)}
               onMouseLeave={() => setHoveredBtn(null)}
               onClick={() => { setS1(o.val); setStep(2); setHoveredBtn(null); }}
-            >
-              {o.label}
-            </button>
+            >{o.label}</button>
           ))}
         </>
       )}
 
-      {/* STEP 2：住む */}
       {step === 2 && s1 === "住む" && (
         <>
           {progressBar}
@@ -278,20 +296,15 @@ function DiagnosisGame({ onNavigate }) {
             { label: "🏡 購入したい", val: "購入" },
             { label: "🔑 賃貸で探したい", val: "賃貸" },
           ].map((o) => (
-            <button
-              key={o.val}
-              style={optionBtnStyle(o.val)}
+            <button key={o.val} style={optionBtnStyle(o.val)}
               onMouseEnter={() => setHoveredBtn(o.val)}
               onMouseLeave={() => setHoveredBtn(null)}
               onClick={() => { setS2(o.val); setStep(3); setHoveredBtn(null); }}
-            >
-              {o.label}
-            </button>
+            >{o.label}</button>
           ))}
         </>
       )}
 
-      {/* STEP 2：投資 */}
       {step === 2 && s1 === "投資" && (
         <>
           {progressBar}
@@ -302,20 +315,15 @@ function DiagnosisGame({ onNavigate }) {
             { label: "📚 初めて", val: "初めて" },
             { label: "📊 経験あり", val: "経験あり" },
           ].map((o) => (
-            <button
-              key={o.val}
-              style={optionBtnStyle(o.val)}
+            <button key={o.val} style={optionBtnStyle(o.val)}
               onMouseEnter={() => setHoveredBtn(o.val)}
               onMouseLeave={() => setHoveredBtn(null)}
               onClick={() => { setS2(o.val); setStep(3); setHoveredBtn(null); }}
-            >
-              {o.label}
-            </button>
+            >{o.label}</button>
           ))}
         </>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && step3Data && (
         <>
           {progressBar}
@@ -323,23 +331,19 @@ function DiagnosisGame({ onNavigate }) {
           {stepLabel(3)}
           <h2 style={titleStyle}>{step3Data.question}</h2>
           {step3Data.options.map((o) => (
-            <button
-              key={o}
-              style={optionBtnStyle(o)}
+            <button key={o} style={optionBtnStyle(o)}
               onMouseEnter={() => setHoveredBtn(o)}
               onMouseLeave={() => setHoveredBtn(null)}
               onClick={() => { setS3(o); setStep(4); setHoveredBtn(null); }}
-            >
-              {o}
-            </button>
+            >{o}</button>
           ))}
         </>
       )}
 
-      {/* 結果 STEP 4 */}
       {step === 4 && result && (
         <>
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
+          {/* 結果タイトル */}
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>{result.icon}</div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: D.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 12, lineHeight: 1.5 }}>
               {result.title}
@@ -347,30 +351,31 @@ function DiagnosisGame({ onNavigate }) {
             <p style={{ fontSize: 14, color: D.desc, fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.8, marginBottom: 12 }}>
               {result.desc}
             </p>
-            <p style={{ fontSize: 14, fontWeight: 700, color: D.blue, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 20, background: D.blueBg, borderRadius: 10, padding: "12px 16px" }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: D.blue, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 0, background: D.blueBg, borderRadius: 10, padding: "12px 16px" }}>
               💡 {result.cta}
             </p>
           </div>
 
+          {/* LINE導線ガイド（新規） */}
+          <LineFlowGuide />
+
+          {/* LINEボタン */}
           <LINEButton />
 
+          {/* 保存ボタン（新規） */}
+          <SaveButton />
+
+          {/* LINEが不安な方向け */}
+          <p style={{ fontSize: 12, color: D.desc, textAlign: "center", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 6, marginTop: 4 }}>
+            LINEが不安な方はこちら
+          </p>
           <button
             onClick={() => onNavigate("chat")}
             style={{
-              width: "100%",
-              background: D.blue,
-              color: "#fff",
-              border: "none",
-              borderRadius: 14,
-              padding: "14px",
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: "'Noto Sans JP', sans-serif",
-              marginTop: 10,
-              marginBottom: 16,
-              boxSizing: "border-box",
-              transition: "opacity 0.2s",
+              width: "100%", background: D.blue, color: "#fff", border: "none",
+              borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700,
+              cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif",
+              marginBottom: 16, boxSizing: "border-box", transition: "opacity 0.2s",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -379,15 +384,59 @@ function DiagnosisGame({ onNavigate }) {
           </button>
 
           <div style={{ textAlign: "center" }}>
-            <button
-              onClick={handleReset}
-              style={{ background: "none", border: "none", color: D.desc, fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline" }}
-            >
-              最初からやり直す
-            </button>
+            <button onClick={handleReset} style={{
+              background: "none", border: "none", color: D.desc, fontSize: 13,
+              cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline",
+            }}>最初からやり直す</button>
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// FixedDiagnosisButton — 画面下固定ボタン（新規）
+// ============================================================
+function FixedDiagnosisButton() {
+  const handleClick = () => {
+    const el = document.getElementById("diagnosis-card");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div style={{
+      position: "fixed",
+      bottom: 20,
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 1000,
+      pointerEvents: "auto",
+    }}>
+      <button
+        onClick={handleClick}
+        style={{
+          background: "#06C755",
+          color: "#fff",
+          border: "none",
+          borderRadius: 50,
+          padding: "14px 32px",
+          fontSize: 15,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontFamily: "'Noto Sans JP', sans-serif",
+          boxShadow: "0 4px 20px rgba(6,199,85,0.45)",
+          whiteSpace: "nowrap",
+          transition: "all 0.2s ease",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(6,199,85,0.55)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(6,199,85,0.45)"; }}
+      >
+        🏠 無料診断する
+      </button>
     </div>
   );
 }
@@ -541,7 +590,7 @@ export default function HomeScreen({ onNavigate }) {
   const navigate = onNavigate || (() => {});
 
   return (
-    <div style={{ minHeight: "100vh", background: D.bg, fontFamily: "'Noto Sans JP', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: D.bg, fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80 }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
       <Header onNavigate={navigate} />
       <TickerBanner />
@@ -555,6 +604,9 @@ export default function HomeScreen({ onNavigate }) {
         </div>
         <SubActionButtons onNavigate={navigate} />
       </main>
+
+      {/* 固定底部ボタン */}
+      <FixedDiagnosisButton />
     </div>
   );
 }
