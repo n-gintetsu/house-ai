@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import os
+
+new_content = r'''import { useState, useEffect } from "react";
 
 // ============================================================
 // HomeScreen.jsx  — House AI コンシェルジュ v5 ホーム画面
@@ -612,3 +614,9 @@ export default function HomeScreen({ onNavigate }) {
     </div>
   );
 }
+'''
+
+target = os.path.expanduser("~/Desktop/house-ai/src/HomeScreen.jsx")
+with open(target, "w", encoding="utf-8") as f:
+    f.write(new_content)
+print("✅ HomeScreen.jsx 更新完了！")
