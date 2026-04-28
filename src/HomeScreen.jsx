@@ -2,15 +2,11 @@ import { useState, useEffect } from "react";
 
 // ============================================================
 // HomeScreen.jsx  — House AI コンシェルジュ
-// LINE導線強化版 + 固定底部ボタン
+// CV最大化 + ChatGPT修正指示反映版
 // ============================================================
 
 const LINE_URL = "https://line.me/R/ti/p/@216lcryt";
 const SITE_URL = "https://house-ai-ten.vercel.app";
-
-const isMobile = /iPhone|Android/i.test(
-  typeof navigator !== "undefined" ? navigator.userAgent : ""
-);
 
 const D = {
   bg: "#F4F7FB",
@@ -49,30 +45,30 @@ const RESULTS = {
     icon: "🏡",
     title: 'あなたは「無理なく購入スタート型」です',
     desc: "今すぐ購入を検討できる可能性があります。まずは予算・希望エリア・住宅ローンの目安を整理することで、失敗しない物件選びができます。",
-    cta: "今の市場状況だと早めの相談が有利です。LINEで今すぐ無料診断を受けられます",
+    cta: "今の市場は良い物件がすぐ埋まります\n無料で診断しておくと有利です",
   },
   "住む-賃貸": {
     icon: "🔑",
     title: 'あなたは「まずは賃貸で安心スタート型」です',
     desc: "生活スタイルや予算に合わせて、無理なく住める物件を探すのがおすすめです。将来的な購入も見据えて、今の条件を整理しましょう。",
-    cta: "条件の良い物件はすぐ埋まります。LINEで最新情報を受け取れます",
+    cta: "今の市場は良い物件がすぐ埋まります\n無料で診断しておくと有利です",
   },
   "投資-初めて": {
     icon: "📚",
     title: 'あなたは「低リスク投資スタート型」です',
     desc: "初めての不動産投資では、利回りだけでなく空室リスク・管理費・出口戦略まで確認することが大切です。まずはリスクの少ない選択肢から検討しましょう。",
-    cta: "リスクを抑えるには早めの情報収集が重要です。LINEで無料相談できます",
+    cta: "今の市場は良い物件がすぐ埋まります\n無料で診断しておくと有利です",
   },
   "投資-経験あり": {
     icon: "📊",
     title: 'あなたは「積極投資検討型」です',
     desc: "収益性・エリア・出口戦略を比較しながら、より条件の良い投資物件を検討できます。複数物件の比較や収益シミュレーションがおすすめです。",
-    cta: "好条件の物件はスピード勝負です。LINEで最新案件をチェックできます",
+    cta: "今の市場は良い物件がすぐ埋まります\n無料で診断しておくと有利です",
   },
 };
 
 // ============================================================
-// LINEButton
+// LINEButton — 文言・安心文 更新
 // ============================================================
 function LINEButton() {
   const [hover, setHover] = useState(false);
@@ -90,19 +86,26 @@ function LINEButton() {
         onTouchEnd={() => setActive(false)}
         style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          width: "100%", background: hover ? "#05a847" : "#06C755", color: "#fff",
-          border: "none", borderRadius: 14, padding: "16px", fontSize: 16, fontWeight: 700,
-          cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 6,
+          width: "100%",
+          background: hover ? "#05a847" : "#06C755",
+          color: "#fff", border: "none", borderRadius: 14, padding: "16px",
+          fontSize: 16, fontWeight: 700, cursor: "pointer",
+          fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 6,
           boxSizing: "border-box", transition: "all 0.2s ease",
-          transform: active ? "scale(0.98)" : "scale(1)",
-          boxShadow: hover ? "0 4px 20px rgba(6,199,85,0.35)" : "0 2px 8px rgba(6,199,85,0.2)",
+          transform: active ? "scale(0.98)" : hover ? "scale(1.03)" : "scale(1)",
+          boxShadow: hover ? "0 6px 24px rgba(6,199,85,0.45)" : "0 2px 8px rgba(6,199,85,0.2)",
         }}
       >
         <svg width="20" height="20" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 4C11.163 4 4 10.268 4 17.994c0 6.993 6.2 12.848 14.594 13.808.568.122 1.341.374 1.537.859.176.44.115 1.13.056 1.576l-.249 1.492c-.076.44-.351 1.723 1.51.939 1.861-.784 10.042-5.914 13.7-10.125C37.175 23.658 38 20.93 38 17.994 38 10.268 28.837 4 20 4z" fill="white"/>
         </svg>
-        30秒で無料相談する
+        {/* ChatGPT修正①：文言変更 */}
+        30秒で無料診断を受ける
       </button>
+      {/* ChatGPT修正②：安心文追加 */}
+      <p style={{ fontSize: 11, color: "#888", textAlign: "center", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 4 }}>
+        ※営業は一切ありません
+      </p>
       <p style={{ fontSize: 12, color: "#06C755", textAlign: "center", fontFamily: "'Noto Sans JP', sans-serif", fontWeight: 600, marginBottom: 4 }}>
         最短5分で専門家から返信が来ます
       </p>
@@ -114,7 +117,7 @@ function LINEButton() {
 }
 
 // ============================================================
-// LineFlowGuide — LINE導線説明（新規）
+// LineFlowGuide — 👇このまま進んでください
 // ============================================================
 function LineFlowGuide() {
   return (
@@ -155,7 +158,7 @@ function LineFlowGuide() {
 }
 
 // ============================================================
-// SaveButton — あとで保存（新規）
+// SaveButton — 「あとでゆっくり検討する」
 // ============================================================
 function SaveButton() {
   const [copied, setCopied] = useState(false);
@@ -175,7 +178,8 @@ function SaveButton() {
     <button
       onClick={handleSave}
       style={{
-        width: "100%", background: copied ? "#e8f4ff" : "#f8f9fa",
+        width: "100%",
+        background: copied ? "#e8f4ff" : "#f8f9fa",
         color: copied ? D.blue : D.desc,
         border: `1.5px solid ${copied ? D.blue : "#D0D7E3"}`,
         borderRadius: 12, padding: "12px",
@@ -186,7 +190,8 @@ function SaveButton() {
         display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
       }}
     >
-      {copied ? "✅ URLをコピーしました！" : "🔖 あとで見返すために保存"}
+      {/* ChatGPT修正④：保存ボタン文言変更 */}
+      {copied ? "✅ URLをコピーしました！" : "🔖 あとでゆっくり検討する"}
     </button>
   );
 }
@@ -194,17 +199,12 @@ function SaveButton() {
 // ============================================================
 // DiagnosisGame
 // ============================================================
-function DiagnosisGame({ onNavigate, onShowStep1 }) {
+function DiagnosisGame({ onNavigate }) {
   const [step, setStep] = useState(1);
   const [s1, setS1] = useState(null);
   const [s2, setS2] = useState(null);
   const [s3, setS3] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
-
-  // 外部から step1 に戻せるよう expose
-  useEffect(() => {
-    if (onShowStep1) onShowStep1(() => handleReset);
-  }, []);
 
   const handleReset = () => {
     setStep(1); setS1(null); setS2(null); setS3(null); setHoveredBtn(null);
@@ -263,7 +263,10 @@ function DiagnosisGame({ onNavigate, onShowStep1 }) {
     </p>
   );
 
-  const titleStyle = { fontSize: 22, fontWeight: 700, color: D.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 20, lineHeight: 1.5 };
+  const titleStyle = {
+    fontSize: 22, fontWeight: 700, color: D.title,
+    fontFamily: "'Noto Serif JP', serif", marginBottom: 20, lineHeight: 1.5,
+  };
 
   return (
     <div style={cardStyle} id="diagnosis-card">
@@ -342,30 +345,27 @@ function DiagnosisGame({ onNavigate, onShowStep1 }) {
 
       {step === 4 && result && (
         <>
-          {/* 結果タイトル */}
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>{result.icon}</div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: D.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 12, lineHeight: 1.5 }}>
               {result.title}
             </h2>
-            <p style={{ fontSize: 14, color: D.desc, fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.8, marginBottom: 12 }}>
+            <p style={{ fontSize: 14, color: D.desc, fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.8, marginBottom: 16 }}>
               {result.desc}
             </p>
-            <p style={{ fontSize: 14, fontWeight: 700, color: D.blue, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 0, background: D.blueBg, borderRadius: 10, padding: "12px 16px" }}>
-              💡 {result.cta}
-            </p>
+            {/* ChatGPT修正③：青いボックス文言変更 */}
+            <div style={{ background: D.blueBg, borderRadius: 10, padding: "12px 16px", marginBottom: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: D.blue, fontFamily: "'Noto Sans JP', sans-serif", margin: 0, lineHeight: 1.7 }}>
+                ⚠️ 今の市場は良い物件がすぐ埋まります<br />
+                無料で診断しておくと有利です
+              </p>
+            </div>
           </div>
 
-          {/* LINE導線ガイド（新規） */}
           <LineFlowGuide />
-
-          {/* LINEボタン */}
           <LINEButton />
-
-          {/* 保存ボタン（新規） */}
           <SaveButton />
 
-          {/* LINEが不安な方向け */}
           <p style={{ fontSize: 12, color: D.desc, textAlign: "center", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 6, marginTop: 4 }}>
             LINEが不安な方はこちら
           </p>
@@ -396,7 +396,7 @@ function DiagnosisGame({ onNavigate, onShowStep1 }) {
 }
 
 // ============================================================
-// FixedDiagnosisButton — 画面下固定ボタン（新規）
+// FixedDiagnosisButton — 固定底部ボタン（文言更新）
 // ============================================================
 function FixedDiagnosisButton() {
   const handleClick = () => {
@@ -406,36 +406,30 @@ function FixedDiagnosisButton() {
 
   return (
     <div style={{
-      position: "fixed",
-      bottom: 20,
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 1000,
-      pointerEvents: "auto",
+      position: "fixed", bottom: 20, left: "50%",
+      transform: "translateX(-50%)", zIndex: 1000,
     }}>
       <button
         onClick={handleClick}
         style={{
-          background: "#06C755",
-          color: "#fff",
-          border: "none",
-          borderRadius: 50,
-          padding: "14px 32px",
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: "pointer",
-          fontFamily: "'Noto Sans JP', sans-serif",
+          background: "#06C755", color: "#fff", border: "none",
+          borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 700,
+          cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif",
           boxShadow: "0 4px 20px rgba(6,199,85,0.45)",
-          whiteSpace: "nowrap",
-          transition: "all 0.2s ease",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
+          whiteSpace: "nowrap", transition: "all 0.2s ease",
+          display: "flex", alignItems: "center", gap: 8,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(6,199,85,0.55)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(6,199,85,0.45)"; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.04)";
+          e.currentTarget.style.boxShadow = "0 6px 28px rgba(6,199,85,0.55)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = "0 4px 20px rgba(6,199,85,0.45)";
+        }}
       >
-        🏠 無料診断する
+        {/* ChatGPT修正③：固定ボタン文言変更 */}
+        🏠 無料診断する（30秒）
       </button>
     </div>
   );
@@ -455,7 +449,6 @@ function AnimatedLogo() {
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
-
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
       <span style={{ fontFamily: "'Brush Script MT', cursive", fontSize: 32, color: C.red, fontStyle: "italic", display: "inline-block", overflow: "hidden", maxWidth: phase >= 1 ? 120 : 0, opacity: phase >= 1 ? 1 : 0, transition: "max-width 1.4s ease, opacity 0.3s ease", whiteSpace: "nowrap" }}>House</span>
@@ -604,8 +597,6 @@ export default function HomeScreen({ onNavigate }) {
         </div>
         <SubActionButtons onNavigate={navigate} />
       </main>
-
-      {/* 固定底部ボタン */}
       <FixedDiagnosisButton />
     </div>
   );
