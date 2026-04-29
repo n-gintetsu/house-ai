@@ -1327,7 +1327,7 @@ export default function App() {
             </div>
           </div>
         </header>
-        <TickerBanner />
+        {tab !== 'properties' && <TickerBanner />}
 
 
 
