@@ -436,7 +436,7 @@ export default function HomeScreen({ onNavigate }) {
       <main style={{ maxWidth: "100%", margin: "0 auto", padding: "20px 24px 48px" }}>
 
         {/* ファーストビュー */}
-        <div style={{ textAlign: "center", padding: "24px 16px 28px" }}>
+        <div style={{ textAlign: "center", padding: "24px 16px 28px", maxWidth: 800, margin: "0 auto" }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: C.red, letterSpacing: 2, marginBottom: 8, fontFamily: "'Noto Sans JP', sans-serif" }}>
             ⚠️ 知らずに進むと損します
           </p>
@@ -468,13 +468,13 @@ export default function HomeScreen({ onNavigate }) {
         </div>
 
         {/* 3カラムレイアウト */}
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 200px", gap: 16, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 200px", gap: 0, alignItems: "start", width: "100%", padding: "0" }}>
 
           {/* 左：不安・失敗事例 */}
-          <LeftPanel onNavigate={navigate} />
+          <div style={{ padding: "0 12px 0 16px" }}><LeftPanel onNavigate={navigate} /></div>
 
           {/* 中央：AIチャット + コミュニティ */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }} ref={chatRef}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
             {showChat ? (
               <AIChatFlow onNavigate={navigate} />
             ) : (
@@ -491,11 +491,11 @@ export default function HomeScreen({ onNavigate }) {
           </div>
 
           {/* 右：最新情報 */}
-          <RightPanel onNavigate={navigate} />
+          <div style={{ padding: "0 16px 0 12px" }}><RightPanel onNavigate={navigate} /></div>
         </div>
 
         {/* 裏導線（小さく） */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, padding: "20px 0 0", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 16, padding: "20px 16px 0", flexWrap: "wrap" }}>
           {[
             { label: "業者の方はこちら", tab: "agency" },
             { label: "専門家の方はこちら", tab: "expert" },
