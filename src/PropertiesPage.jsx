@@ -142,7 +142,7 @@ function AIPanel({ property, onClose, onChat }) {
             </div>
           ))}
         </div>
-        <div style={{ background: 'rgba(47,107,255,0.15)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #c9a84c', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
           <p style={{ color: C.blue, fontSize: 12, fontWeight: 600, margin: 0 }}>
             推奨アクション：{action}
           </p>
