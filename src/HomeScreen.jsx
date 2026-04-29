@@ -298,13 +298,13 @@ function LeftPanel({ onNavigate }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ background: C.card, borderRadius: 16, padding: "16px", border: `0.5px solid ${C.border}` }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: C.red, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.5 }}>
+      <div style={{ background: C.card, borderRadius: 18, padding: "20px", border: `0.5px solid ${C.border}` }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: C.red, margin: "0 0 14px", fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.5 }}>
           ⚠️ 知らないと損する<br />不動産の現実
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {cases.map((c, i) => (
-            <div key={i} style={{ background: C.redBg, borderLeft: `3px solid ${C.red}`, padding: "8px 10px", borderRadius: "0 8px 8px 0" }}>
+            <div key={i} style={{ background: C.redBg, borderLeft: `3px solid ${C.red}`, padding: "10px 12px", borderRadius: "0 10px 10px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: C.red, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>{c.title}</p>
                 <span style={{ fontSize: 9, background: "#ffd5d5", color: C.red, padding: "1px 5px", borderRadius: 3, fontWeight: 600, flexShrink: 0, marginLeft: 4 }}>{c.tag}</span>
@@ -334,13 +334,13 @@ function RightPanel({ onNavigate }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ background: C.card, borderRadius: 16, padding: "16px", border: `0.5px solid ${C.border}` }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: "0 0 10px", fontFamily: "'Noto Sans JP', sans-serif" }}>📰 最新情報</p>
+      <div style={{ background: C.card, borderRadius: 18, padding: "20px", border: `0.5px solid ${C.border}` }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: C.title, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif" }}>📰 最新情報</p>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {news.map((n, i) => (
-            <div key={i} style={{ padding: "8px 0", borderBottom: i < news.length - 1 ? `0.5px solid ${C.border}` : "none", display: "flex", alignItems: "flex-start", gap: 7 }}>
+            <div key={i} style={{ padding: "10px 0", borderBottom: i < news.length - 1 ? `0.5px solid ${C.border}` : "none", display: "flex", alignItems: "flex-start", gap: 8 }}>
               <span style={{ fontSize: 9, background: n.badgeBg, color: n.badgeColor, padding: "2px 5px", borderRadius: 3, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{n.badge}</span>
-              <p style={{ fontSize: 11, color: C.title, margin: 0, lineHeight: 1.5, fontFamily: "'Noto Sans JP', sans-serif" }}>{n.text}</p>
+              <p style={{ fontSize: 12, color: C.title, margin: 0, lineHeight: 1.6, fontFamily: "'Noto Sans JP', sans-serif" }}>{n.text}</p>
             </div>
           ))}
         </div>
@@ -362,7 +362,7 @@ function CommunityStrip({ onNavigate }) {
   ];
 
   return (
-    <div style={{ background: C.card, borderRadius: 16, padding: "16px", border: `0.5px solid ${C.border}` }}>
+    <div style={{ background: C.card, borderRadius: 18, padding: "20px", border: `0.5px solid ${C.border}` }}>
       <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif" }}>
         💬 あなたの不安、みんな同じです
       </p>
@@ -468,10 +468,10 @@ export default function HomeScreen({ onNavigate }) {
         </div>
 
         {/* 3カラムレイアウト */}
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 200px", gap: 0, alignItems: "start", width: "100%", padding: "0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: 0, alignItems: "start", width: "100%", padding: "0" }}>
 
           {/* 左：不安・失敗事例 */}
-          <div style={{ padding: "0 12px 0 16px" }}><LeftPanel onNavigate={navigate} /></div>
+          <div style={{ padding: "0 16px 0 20px" }}><LeftPanel onNavigate={navigate} /></div>
 
           {/* 中央：AIチャット + コミュニティ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
@@ -491,7 +491,7 @@ export default function HomeScreen({ onNavigate }) {
           </div>
 
           {/* 右：最新情報 */}
-          <div style={{ padding: "0 16px 0 12px" }}><RightPanel onNavigate={navigate} /></div>
+          <div style={{ padding: "0 20px 0 16px" }}><RightPanel onNavigate={navigate} /></div>
         </div>
 
         {/* 裏導線（小さく） */}
