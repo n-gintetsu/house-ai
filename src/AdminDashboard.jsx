@@ -750,11 +750,11 @@ function AdManagement({ supabaseAdmin }) {
 
       {activeSection === 'パートナー' && (
         <div>
-//           <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#1a3a5c' }}>👥 パートナー業者一覧（{partnerProfiles.length}件）</h3>
-//           {partnerMsg && <div style={{ padding: '8px 14px', borderRadius: 8, background: partnerMsg.startsWith('✅') ? '#dcfce7' : '#fee2e2', color: partnerMsg.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 12, fontSize: 13 }}>{partnerMsg}</div>}
-//           {partnerProfiles.length === 0 ? (
-//             <p style={{ color: '#777', fontSize: 13 }}>登録はありません</p>
-//           ) : partnerProfiles.map(p => (
+          <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#1a3a5c' }}>👥 パートナー業者一覧（{partnerProfiles.length}件）</h3>
+          {partnerMsg && <div style={{ padding: '8px 14px', borderRadius: 8, background: partnerMsg.startsWith('✅') ? '#dcfce7' : '#fee2e2', color: partnerMsg.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 12, fontSize: 13 }}>{partnerMsg}</div>}
+          {partnerProfiles.length === 0 ? (
+            <p style={{ color: '#777', fontSize: 13 }}>登録はありません</p>
+          ) : partnerProfiles.map(p => (
             <div key={p.user_id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                 <div>
