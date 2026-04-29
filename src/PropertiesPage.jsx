@@ -47,7 +47,7 @@ function AIPanel({ property, onClose, onChat }) {
   const price = property.price || 0
 
   const priceScore = price < 3000 ? 5 : price < 5000 ? 4 : price < 8000 ? 3 : price < 12000 ? 2 : 1
-  const walkScore = walk <= 5 ? 5 : walk <= 10 ? 4 : walk <= 15 ? 3 : walk <= 20 ? 2 : 1
+  const walkScore = 3
   const overallScore = Math.round((priceScore + walkScore) / 2)
 
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
