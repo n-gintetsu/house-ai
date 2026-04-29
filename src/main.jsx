@@ -22,3 +22,4 @@ createRoot(document.getElementById('root')).render(
     <Component />
   </StrictMode>,
 )
+// cache bust 2026年 4月29日 水曜日 19時04分58秒 JST
