@@ -18,16 +18,12 @@ const C = {
   muted: 'rgba(255,255,255,0.6)',
 }
 
-// ============================================================
-// AI評価ロジック（仕様書準拠）
-// ============================================================
 function calcAIScore(property) {
   const price = property.price || 0
   const rent = property.rent || 0
   const walk = property.walk_minutes ?? 12
   const address = property.address || ''
 
-  // 価格評価（売買）
   let priceScore = 3
   if (property.property_type === 'sale') {
     if (price < 2000) priceScore = 5
@@ -36,7 +32,6 @@ function calcAIScore(property) {
     else if (price < 10000) priceScore = 2
     else priceScore = 1
   } else {
-    // 賃貸（万円/月に換算して比較）
     const rentMan = rent / 10000
     if (rentMan < 5) priceScore = 5
     else if (rentMan < 8) priceScore = 4
@@ -45,7 +40,6 @@ function calcAIScore(property) {
     else priceScore = 1
   }
 
-  // 立地評価（駅徒歩分）
   let walkScore = 3
   if (walk <= 5) walkScore = 5
   else if (walk <= 10) walkScore = 4
@@ -53,24 +47,20 @@ function calcAIScore(property) {
   else if (walk <= 20) walkScore = 2
   else walkScore = 1
 
-  // 将来性評価（住所キーワードで判定）
   let futureScore = 3
   const highGrowth = ['大宮', '浦和', '川口', '武蔵浦和', '与野', 'さいたま']
   const midGrowth = ['蕨', '戸田', '草加', '越谷', '春日部', '所沢']
   if (highGrowth.some(k => address.includes(k))) futureScore = 5
   else if (midGrowth.some(k => address.includes(k))) futureScore = 4
 
-  // 総合評価
   const overall = Math.round((priceScore * 0.4 + walkScore * 0.4 + futureScore * 0.2))
 
-  // グレード
   let grade, gradeColor
   if (overall >= 5) { grade = 'S'; gradeColor = '#06C755' }
   else if (overall >= 4) { grade = 'A'; gradeColor = C.gold }
   else if (overall >= 3) { grade = 'B'; gradeColor = C.blue }
   else { grade = 'C'; gradeColor = '#888' }
 
-  // バッジ
   const badges = []
   if (overall >= 5 && walkScore >= 4) badges.push({ label: '掘り出し物', color: '#06C755' })
   if (overall >= 4) badges.push({ label: '人気', color: C.gold })
@@ -79,13 +69,11 @@ function calcAIScore(property) {
   if (overall <= 2) badges.push({ label: '要確認', color: '#888' })
   if (priceScore >= 5) badges.push({ label: '初心者向け', color: '#9b59b6' })
 
-  // 推奨アクション
   let action = 'AIに詳細を確認してから判断しましょう。'
   if (overall >= 5) action = 'すぐに内見予約を！人気物件は早い者勝ちです。'
   else if (overall >= 4) action = '条件が良い物件です。早めの検討をおすすめします。'
   else if (overall >= 3) action = '標準的な物件です。他の物件と比較してみましょう。'
 
-  // コメント
   const comments = {
     price: priceScore >= 4 ? '相場より割安でお得です' : priceScore === 3 ? '相場並みの価格帯です' : '相場より割高な傾向です',
     walk: walkScore >= 5 ? '駅徒歩5分以内！利便性抜群' : walkScore === 4 ? '駅10分以内で便利な立地' : walkScore === 3 ? '駅徒歩15分以内' : '駅から少し距離があります',
@@ -95,20 +83,87 @@ function calcAIScore(property) {
   return { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments, walk }
 }
 
+function AIBadge({ property }) {
+  const { grade, gradeColor, badges } = calcAIScore(property)
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <span style={{ background: gradeColor, color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>
+        AI {grade}
+      </span>
+      {badges.slice(0, 2).map((b, i) => (
+        <span key={i} style={{ background: 'rgba(255,255,255,0.15)', color: b.color, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: `1px solid ${b.color}` }}>
+          {b.label}
+        </span>
+      ))}
+    </div>
+  )
+}
 
-// ============================================================
-// 比較バナー（画面下部固定）
-// ============================================================
+function AIPanel({ property, onClose, onChat }) {
+  const { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments } = calcAIScore(property)
+  const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
+      onClick={onClose}>
+      <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', maxWidth: 480, margin: '0 auto' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '0 auto 20px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ background: gradeColor, borderRadius: 12, width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>{grade}</span>
+          </div>
+          <div>
+            <p style={{ color: C.gold, fontSize: 12, fontWeight: 700, margin: '0 0 2px' }}>AI評価レポート</p>
+            <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{property.title || '物件名未設定'}</p>
+          </div>
+        </div>
+        {badges.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+            {badges.map((b, i) => (
+              <span key={i} style={{ background: 'rgba(255,255,255,0.1)', color: b.color, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: `1px solid ${b.color}` }}>
+                {b.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          {[
+            { label: '総合評価', score: overall, comment: overall >= 4 ? 'おすすめ物件' : overall === 3 ? '標準的な物件' : '慎重に検討を' },
+            { label: '価格評価', score: priceScore, comment: comments.price },
+            { label: '立地評価', score: walkScore, comment: comments.walk },
+            { label: '将来性', score: futureScore, comment: comments.future },
+          ].map((item) => (
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: C.muted, fontSize: 12, width: 68, flexShrink: 0 }}>{item.label}</span>
+              <span style={{ color: C.gold, fontSize: 13, letterSpacing: 1, flexShrink: 0 }}>{stars(item.score)}</span>
+              <span style={{ color: '#aaa', fontSize: 11, lineHeight: 1.4 }}>{item.comment}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: 'rgba(47,107,255,0.15)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+          <p style={{ color: C.blue, fontSize: 12, fontWeight: 600, margin: 0 }}>
+            推奨アクション：{action}
+          </p>
+        </div>
+        <button onClick={onChat} style={{ width: '100%', background: C.navy, color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+          この物件をAIに相談する
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function CompareBar({ compareList, onOpen, onRemove }) {
   if (compareList.length === 0) return null
   return (
     <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200, background: '#1a3a5c', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span style={{ color: '#c9a84c', fontSize: 12, fontWeight: 700 }}>{compareList.length}件を比較中</span>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', overflow: 'hidden' }}>
+        <span style={{ color: '#c9a84c', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{compareList.length}件比較中</span>
         <div style={{ display: 'flex', gap: 6 }}>
           {compareList.map((p) => (
             <div key={p.id} style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 6, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ color: '#fff', fontSize: 11, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: '#fff', fontSize: 11, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {p.title || '物件'}
               </span>
               <button onClick={() => onRemove(p.id)}
@@ -118,23 +173,17 @@ function CompareBar({ compareList, onOpen, onRemove }) {
         </div>
       </div>
       <button onClick={onOpen}
-        style={{ background: '#c9a84c', color: '#1a3a5c', border: 'none', borderRadius: 20, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        style={{ background: '#c9a84c', color: '#1a3a5c', border: 'none', borderRadius: 20, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
         比較する →
       </button>
     </div>
-
-      <CompareBar compareList={compareList} onOpen={() => setShowCompare(true)} onRemove={handleRemoveCompare} />
-      {showCompare && <CompareModal compareList={compareList} onClose={() => setShowCompare(false)} onChat={handleChat} />}
   )
 }
 
-// ============================================================
-// 比較モーダル
-// ============================================================
 function CompareModal({ compareList, onClose, onChat }) {
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
-
   const scores = compareList.map(p => calcAIScore(p))
+  const bestIdx = scores.reduce((best, s, i) => s.overall > scores[best].overall ? i : best, 0)
 
   const rows = [
     { label: 'AI評価', render: (p, s) => (
@@ -159,29 +208,21 @@ function CompareModal({ compareList, onClose, onChat }) {
       </div>
     )},
     { label: '間取り', render: (p) => <span style={{ color: '#fff', fontSize: 12 }}>{p.layout || '-'}</span> },
-    { label: '面積', render: (p) => <span style={{ color: '#fff', fontSize: 12 }}>{p.area ? `${p.area}㎡` : '-'}</span> },
-    { label: 'エリア', render: (p) => <span style={{ color: '#aaa', fontSize: 10, lineHeight: 1.4 }}>{p.address?.slice(0, 12) || '-'}</span> },
+    { label: '面積', render: (p) => <span style={{ color: '#fff', fontSize: 12 }}>{p.area ? `${p.area}m2` : '-'}</span> },
+    { label: 'エリア', render: (p) => <span style={{ color: '#aaa', fontSize: 10, lineHeight: 1.4 }}>{p.address ? p.address.slice(0, 12) : '-'}</span> },
   ]
-
-  // 総合スコアが一番高い物件
-  const bestIdx = scores.reduce((best, s, i) => s.overall > scores[best].overall ? i : best, 0)
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
-      <div style={{ background: '#111', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 600, margin: '0 auto', maxHeight: '85vh', overflow: 'auto' }}
+      <div style={{ background: '#111', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 600, margin: '0 auto', maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
-        {/* ハンドル */}
         <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '12px auto 0' }} />
-
-        {/* ヘッダー */}
         <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '0.5px solid #333' }}>
           <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: 0 }}>物件比較</p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#888', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>
-
         <div style={{ padding: '12px 12px 24px' }}>
-          {/* 物件ヘッダー行 */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <div style={{ width: 44 }} />
             {compareList.map((p, i) => (
@@ -195,13 +236,11 @@ function CompareModal({ compareList, onClose, onChat }) {
                   {(p.title || '物件').slice(0, 12)}
                 </p>
                 <p style={{ color: '#c9a84c', fontSize: 11, fontWeight: 700, margin: 0 }}>
-                  {p.price ? `${p.price.toLocaleString()}万` : p.rent ? `¥${(p.rent/10000).toFixed(1)}万/月` : '未定'}
+                  {p.price ? `${p.price.toLocaleString()}万` : p.rent ? `${(p.rent / 10000).toFixed(1)}万/月` : '未定'}
                 </p>
               </div>
             ))}
           </div>
-
-          {/* 比較行 */}
           {rows.map((row) => (
             <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #222' }}>
               <span style={{ color: '#666', fontSize: 11, width: 44, flexShrink: 0 }}>{row.label}</span>
@@ -212,22 +251,17 @@ function CompareModal({ compareList, onClose, onChat }) {
               ))}
             </div>
           ))}
-
-          {/* AIコメント */}
           <div style={{ background: 'rgba(47,107,255,0.12)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 12px', margin: '12px 0' }}>
-            <p style={{ color: '#2F6BFF', fontSize: 12, fontWeight: 700, margin: '0 0 4px' }}>🤖 AI総評</p>
+            <p style={{ color: '#2F6BFF', fontSize: 12, fontWeight: 700, margin: '0 0 4px' }}>AI総評</p>
             <p style={{ color: '#aaa', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
-              {compareList[bestIdx]?.title || '物件'}が総合スコア{scores[bestIdx]?.overall}点でトップです。
-              {scores[bestIdx]?.action}
+              {compareList[bestIdx] ? compareList[bestIdx].title || '物件' : ''}が総合スコア{scores[bestIdx] ? scores[bestIdx].overall : ''}点でトップです。{scores[bestIdx] ? scores[bestIdx].action : ''}
             </p>
           </div>
-
-          {/* CTAボタン */}
           <div style={{ display: 'flex', gap: 8 }}>
             {compareList.map((p, i) => (
               <button key={p.id} onClick={() => { onClose(); onChat(p) }}
                 style={{ flex: 1, background: i === bestIdx ? '#1a3a5c' : 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                {i === bestIdx ? '👑 ' : ''}{(p.title || '物件').slice(0, 8)}をAIに相談
+                {i === bestIdx ? '👑 ' : ''}{(p.title || '物件').slice(0, 8)}をAI相談
               </button>
             ))}
           </div>
@@ -237,103 +271,11 @@ function CompareModal({ compareList, onClose, onChat }) {
   )
 }
 
-// ============================================================
-// AI評価バッジ
-// ============================================================
-function AIBadge({ property }) {
-  const { grade, gradeColor, badges } = calcAIScore(property)
-  return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-      <span style={{ background: gradeColor, color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>
-        AI {grade}
-      </span>
-      {badges.slice(0, 2).map((b, i) => (
-        <span key={i} style={{ background: 'rgba(255,255,255,0.15)', color: b.color, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: `1px solid ${b.color}` }}>
-          {b.label}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-// ============================================================
-// AI評価パネル
-// ============================================================
-function AIPanel({ property, onClose, onChat }) {
-  const { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments, walk } = calcAIScore(property)
-  const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
-      onClick={onClose}>
-      <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', maxWidth: 480, margin: '0 auto' }}
-        onClick={e => e.stopPropagation()}>
-        <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '0 auto 20px' }} />
-
-        {/* ヘッダー */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div style={{ background: gradeColor, borderRadius: 12, width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>{grade}</span>
-          </div>
-          <div>
-            <p style={{ color: C.gold, fontSize: 12, fontWeight: 700, margin: '0 0 2px' }}>🤖 AI評価レポート</p>
-            <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{property.title || '物件名未設定'}</p>
-          </div>
-        </div>
-
-        {/* バッジ一覧 */}
-        {badges.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {badges.map((b, i) => (
-              <span key={i} style={{ background: 'rgba(255,255,255,0.1)', color: b.color, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: `1px solid ${b.color}` }}>
-                {b.label}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* スコア一覧 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-          {[
-            { label: '総合評価', score: overall, comment: overall >= 4 ? 'おすすめ物件' : overall === 3 ? '標準的な物件' : '慎重に検討を' },
-            { label: '価格評価', score: priceScore, comment: comments.price },
-            { label: '立地評価', score: walkScore, comment: comments.walk },
-            { label: '将来性', score: futureScore, comment: comments.future },
-          ].map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ color: C.muted, fontSize: 12, width: 68, flexShrink: 0 }}>{item.label}</span>
-              <span style={{ color: C.gold, fontSize: 13, letterSpacing: 1, flexShrink: 0 }}>{stars(item.score)}</span>
-              <span style={{ color: '#aaa', fontSize: 11, lineHeight: 1.4 }}>{item.comment}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* 推奨アクション */}
-        <div style={{ background: 'rgba(47,107,255,0.15)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
-          <p style={{ color: C.blue, fontSize: 12, fontWeight: 600, margin: 0 }}>
-            🎯 推奨アクション：{action}
-          </p>
-        </div>
-
-        <button onClick={onChat} style={{ width: '100%', background: C.navy, color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-          💬 この物件をAIに相談する
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// 物件カード
-// ============================================================
 function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, inCompare }) {
   const [showAI, setShowAI] = useState(false)
   const typeLabel = property.property_type === 'sale' ? '売買' : property.property_type === 'rent' ? '賃貸' : '物件'
   const typeColor = property.property_type === 'sale' ? '#e74c3c' : '#27ae60'
-
-  const imageUrl = property.images?.[0] ||
-    property.image_url ||
-    `https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80`
+  const imageUrl = property.images?.[0] || property.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80'
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', background: C.bg, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
@@ -343,16 +285,19 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
           onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80' }}
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.95) 100%)' }} />
-
         <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8 }}>
           <span style={{ background: typeColor, color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>{typeLabel}</span>
         </div>
-
-        <div style={{ position: 'absolute', right: 16, bottom: 120, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+        <div style={{ position: 'absolute', right: 16, bottom: 120, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
           <button onClick={() => onSave(property.id)}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 22 }}>{saved ? '❤️' : '🤍'}</span>
             <span style={{ color: '#fff', fontSize: 9 }}>保存</span>
+          </button>
+          <button onClick={() => onCompare && onCompare(property)}
+            style={{ background: inCompare ? 'rgba(201,168,76,0.9)' : 'rgba(0,0,0,0.5)', border: inCompare ? '1.5px solid #c9a84c' : 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <span style={{ color: '#fff', fontSize: 18 }}>{inCompare ? '✓' : '⊕'}</span>
+            <span style={{ color: '#fff', fontSize: 9 }}>比較</span>
           </button>
           <button onClick={() => setShowAI(true)}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
@@ -365,7 +310,6 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
             <span style={{ color: '#fff', fontSize: 9 }}>シェア</span>
           </button>
         </div>
-
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 16px 8px' }}>
           <AIBadge property={property} />
           <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '8px 0 4px', lineHeight: 1.3 }}>
@@ -383,7 +327,6 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
           </div>
         </div>
       </div>
-
       <div style={{ background: '#0a0a0a', padding: '12px 16px 20px', display: 'flex', gap: 10 }}>
         <button onClick={() => onChat(property)}
           style={{ flex: 2, background: C.navy, color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
@@ -394,15 +337,11 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
           🤖 AI評価
         </button>
       </div>
-
       {showAI && <AIPanel property={property} onClose={() => setShowAI(false)} onChat={() => { setShowAI(false); onChat(property) }} />}
     </div>
   )
 }
 
-// ============================================================
-// メイン
-// ============================================================
 export default function PropertiesPage({ user, onNavigate }) {
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
@@ -412,20 +351,6 @@ export default function PropertiesPage({ user, onNavigate }) {
   const [viewMode, setViewMode] = useState('swipe')
   const [compareList, setCompareList] = useState([])
   const [showCompare, setShowCompare] = useState(false)
-
-  const handleCompare = (property) => {
-    setCompareList(prev => {
-      if (prev.find(p => p.id === property.id)) {
-        return prev.filter(p => p.id !== property.id)
-      }
-      if (prev.length >= 3) return prev
-      return [...prev, property]
-    })
-  }
-
-  const handleRemoveCompare = (id) => {
-    setCompareList(prev => prev.filter(p => p.id !== id))
-  }
   const containerRef = useRef(null)
   const touchStartY = useRef(null)
   const mouseStartY = useRef(null)
@@ -451,7 +376,19 @@ export default function PropertiesPage({ user, onNavigate }) {
     })
   }
 
-  const handleChat = (property) => { onNavigate && onNavigate('chat') }
+  const handleCompare = (property) => {
+    setCompareList(prev => {
+      if (prev.find(p => p.id === property.id)) return prev.filter(p => p.id !== property.id)
+      if (prev.length >= 3) return prev
+      return [...prev, property]
+    })
+  }
+
+  const handleRemoveCompare = (id) => {
+    setCompareList(prev => prev.filter(p => p.id !== id))
+  }
+
+  const handleChat = () => { onNavigate && onNavigate('chat') }
 
   const handleMouseDown = (e) => { mouseStartY.current = e.clientY; isDragging.current = true }
   const handleMouseUp = (e) => {
@@ -523,7 +460,8 @@ export default function PropertiesPage({ user, onNavigate }) {
           style={{ overflow: 'hidden', height: '100vh' }}>
           <div style={{ transform: `translateY(-${currentIndex * 100}vh)`, transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)' }}>
             {properties.map((p, i) => (
-              <PropertyCard key={p.id} property={p} onChat={handleChat} onSave={handleSave} saved={saved.has(p.id)} isActive={i === currentIndex} onCompare={handleCompare} inCompare={!!compareList.find(c => c.id === p.id)} />
+              <PropertyCard key={p.id} property={p} onChat={handleChat} onSave={handleSave} saved={saved.has(p.id)} isActive={i === currentIndex}
+                onCompare={handleCompare} inCompare={!!compareList.find(c => c.id === p.id)} />
             ))}
           </div>
           {currentIndex === 0 && properties.length > 1 && (
@@ -556,6 +494,9 @@ export default function PropertiesPage({ user, onNavigate }) {
           </div>
         </div>
       )}
+
+      <CompareBar compareList={compareList} onOpen={() => setShowCompare(true)} onRemove={handleRemoveCompare} />
+      {showCompare && <CompareModal compareList={compareList} onClose={() => setShowCompare(false)} onChat={handleChat} />}
     </div>
   )
 }
