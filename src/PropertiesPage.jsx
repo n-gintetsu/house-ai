@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -103,7 +104,7 @@ function AIPanel({ property, onClose, onChat }) {
   const { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments } = calcAIScore(property)
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
       <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', boxSizing: 'border-box' }}
@@ -150,7 +151,8 @@ function AIPanel({ property, onClose, onChat }) {
           この物件をAIに相談する
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -212,7 +214,7 @@ function CompareModal({ compareList, onClose, onChat }) {
     { label: 'エリア', render: (p) => <span style={{ color: '#ddd', fontSize: 10, lineHeight: 1.4 }}>{p.address ? p.address.slice(0, 12) : '-'}</span> },
   ]
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
       <div style={{ background: '#111', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 600, margin: '0 auto', maxHeight: '85vh', overflowY: 'auto' }}
@@ -267,7 +269,8 @@ function CompareModal({ compareList, onClose, onChat }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
