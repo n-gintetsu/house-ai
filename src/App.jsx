@@ -5,6 +5,7 @@ import AgencyForm from './AgencyForm'
 import TickerBanner from './TickerBanner'
 import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 import ColumnPage from './ColumnPage'
+import LegalPage from './LegalPage'
 import HomeScreen from './HomeScreen'
 import PropertiesPage from './PropertiesPage'
 
@@ -2088,6 +2089,12 @@ export default function App() {
             <ColumnPage />
           )}
 
+          {tab === 'legal' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <LegalPage onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
+
           {tab === 'community' && (
             <div className="ha-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
@@ -2249,6 +2256,49 @@ export default function App() {
           )}
         </main>
       </div>
+
+        {/* フッター */}
+        <footer style={{
+          background: '#1a3a5c',
+          color: 'rgba(255,255,255,0.7)',
+          padding: '24px 20px 32px',
+          marginTop: 16,
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c', marginBottom: 12 }}>
+            不動産AIコンシェルジュ
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 20px', marginBottom: 16 }}>
+            {[
+              { label: '利用ガイド', tab: 'guide' },
+              { label: '利用規約', tab: 'terms' },
+              { label: 'プライバシーポリシー', tab: 'privacy' },
+              { label: '特定商取引法に基づく表記', tab: 'tokusho' },
+              { label: '業者・専門家向け利用規約', tab: 'partner_terms' },
+            ].map((item) => (
+              <button
+                key={item.tab}
+                type="button"
+                onClick={() => setTab('legal')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.75)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontFamily: 'inherit',
+                  padding: 0,
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+            © 2024 GINTETSU不動産株式会社　All rights reserved.
+          </div>
+        </footer>
     </>
   )
 }
