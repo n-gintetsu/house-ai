@@ -183,7 +183,6 @@ function RegisterModal({ onSuccess, onClose, tags }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-        {/* ロックアイコン */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🔓</div>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", margin: "0 0 6px", lineHeight: 1.4 }}>
@@ -195,7 +194,6 @@ function RegisterModal({ onSuccess, onClose, tags }) {
           </p>
         </div>
 
-        {/* 限定感 */}
         <div style={{ background: C.blueBg, borderRadius: 10, padding: "10px 14px", marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 16 }}>🎁</span>
           <p style={{ fontSize: 12, color: C.blue, fontFamily: "'Noto Sans JP', sans-serif", margin: 0, fontWeight: 600 }}>
@@ -203,7 +201,6 @@ function RegisterModal({ onSuccess, onClose, tags }) {
           </p>
         </div>
 
-        {/* フォーム */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
           <input
             type="email"
@@ -249,13 +246,11 @@ function RegisterModal({ onSuccess, onClose, tags }) {
 // 登録後の即価値提供 + AI業者マッチング
 // ============================================================
 
-// タグから推薦理由を生成
 function getMatchReason(tags) {
   const t = tags.join("・");
   return `「${t}」の状況に最も合致した業者です`;
 }
 
-// ダミー業者データ（実際はSupabaseから取得）
 function getMatchedVendors(tags) {
   const isRent = tags.some(t => ["家賃不安","エリア重視","設備重視","急ぎ"].includes(t))
   const isInvest = tags.some(t => ["初心者","経験者","利回り改善","物件探し中"].includes(t));
@@ -285,7 +280,6 @@ function PostRegisterValue({ tags, onNavigate }) {
 
   return (
     <div style={{ background: C.card, borderRadius: 20, padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.08)" }}>
-      {/* 登録完了 */}
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", margin: "0 0 6px" }}>
@@ -296,7 +290,6 @@ function PostRegisterValue({ tags, onNavigate }) {
         </p>
       </div>
 
-      {/* 専用提案3ステップ */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
         {result.steps.map((s, i) => (
           <div key={i} style={{ background: C.bg, borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -306,7 +299,6 @@ function PostRegisterValue({ tags, onNavigate }) {
         ))}
       </div>
 
-      {/* AI業者マッチング */}
       <div style={{ borderTop: `0.5px solid ${C.border}`, paddingTop: 16, marginBottom: 16 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: C.title, fontFamily: "'Noto Sans JP', sans-serif", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 14 }}>🤖</span> あなたの状況に合った業者をAIが提案
@@ -320,7 +312,6 @@ function PostRegisterValue({ tags, onNavigate }) {
               background: C.card,
               position: "relative",
             }}>
-              {/* AIおすすめバッジ */}
               {i === 0 && (
                 <div style={{ position: "absolute", top: -9, left: 12, background: "#06C755", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10 }}>
                   🤖 AIおすすめ No.1
@@ -341,7 +332,6 @@ function PostRegisterValue({ tags, onNavigate }) {
                 </span>
               </div>
 
-              {/* 推薦理由（1位のみ） */}
               {v.reason && (
                 <div style={{ background: "#E6F1FB", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}>
                   <p style={{ fontSize: 11, color: "#0C447C", fontWeight: 600, fontFamily: "'Noto Sans JP', sans-serif", margin: 0 }}>
@@ -350,7 +340,6 @@ function PostRegisterValue({ tags, onNavigate }) {
                 </div>
               )}
 
-              {/* プレミアムの評価 */}
               {v.plan === "premium" && (
                 <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
                   <span style={{ fontSize: 10, background: "#EAF3DE", color: "#27500A", padding: "2px 7px", borderRadius: 6, fontWeight: 600 }}>⭐ 評価 4.8</span>
@@ -376,7 +365,6 @@ function PostRegisterValue({ tags, onNavigate }) {
         </div>
       </div>
 
-      {/* アクションボタン */}
       <p style={{ fontSize: 12, fontWeight: 700, color: C.navy, textAlign: "center", fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 10 }}>
         このまま進めると失敗しません👇
       </p>
@@ -700,15 +688,14 @@ function MiniTicker() {
 }
 
 // ============================================================
-// 固定底部CTA
+// 固定底部CTA（スマホのみ表示）
 // ============================================================
-function FixedCTA({ onStartChat }) {
+function FixedCTA({ onStartChat, isMobile }) {
+  // PCではファーストビューにボタンがあるのでFixedCTAは非表示
+  if (!isMobile) return null;
   return (
     <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 1000 }}>
-      <button onClick={onStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.4)", whiteSpace: "nowrap", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 8 }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.04)"}
-        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-      >
+      <button onClick={onStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.4)", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 8 }}>
         💬 無料でAI相談する
       </button>
     </div>
@@ -723,6 +710,7 @@ export default function HomeScreen({ onNavigate }) {
   const [showChat, setShowChat] = useState(false);
   const [initialTag, setInitialTag] = useState(null);
   const [user, setUser] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const chatRef = useRef(null);
 
   useEffect(() => {
@@ -731,71 +719,135 @@ export default function HomeScreen({ onNavigate }) {
     });
   }, []);
 
+  // レスポンシブ判定
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const handleStartChat = () => {
     setShowChat(true);
     setTimeout(() => chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
       <MiniTicker />
 
       <main style={{ width: "100%", padding: "20px 0 48px" }}>
         {/* ファーストビュー */}
-        <div style={{ textAlign: "center", padding: "32px 16px 32px", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", padding: isMobile ? "24px 16px 24px" : "32px 16px 32px", maxWidth: 900, margin: "0 auto" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: C.red, letterSpacing: 1, marginBottom: 10, fontFamily: "'Noto Sans JP', sans-serif" }}>
             ⚠️ 知らずに進むと損します
           </p>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", lineHeight: 1.3, marginBottom: 10, whiteSpace: "nowrap" }}>
-            あなたの不動産判断、30秒で最適化
+          <h1 style={{
+            fontSize: isMobile ? 22 : 28,
+            fontWeight: 700,
+            color: C.title,
+            fontFamily: "'Noto Serif JP', serif",
+            lineHeight: 1.4,
+            marginBottom: 10,
+            // whiteSpace: "nowrap" を削除してスマホ対応
+          }}>
+            あなたの不動産判断、<br style={{ display: isMobile ? "block" : "none" }} />30秒で最適化
           </h1>
-          <p style={{ fontSize: 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 24, lineHeight: 1.7 }}>
+          <p style={{ fontSize: isMobile ? 13 : 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 24, lineHeight: 1.7 }}>
             営業なし・完全無料｜AIが最適な進め方を提示します
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
             {["🏠 家を買いたい", "🏷️ 売りたい", "💰 投資したい"].map((label) => (
               <button key={label} onClick={handleStartChat}
-                style={{ background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "12px 20px", fontSize: 14, fontWeight: 600, color: C.title, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.background = C.blueBg; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = "#fff"; }}
+                style={{
+                  background: "#fff",
+                  border: `1.5px solid ${C.border}`,
+                  borderRadius: 12,
+                  padding: isMobile ? "10px 14px" : "12px 20px",
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: 600,
+                  color: C.title,
+                  cursor: "pointer",
+                  fontFamily: "'Noto Sans JP', sans-serif",
+                  flex: isMobile ? "1 1 40%" : "0 0 auto",
+                  maxWidth: isMobile ? "48%" : "none",
+                }}
               >{label}</button>
             ))}
           </div>
-          <button onClick={handleStartChat}
-            style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "18px 56px", fontSize: 17, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.3)", transition: "all 0.2s" }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
-            onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-          >
-            💬 無料でAI相談する
-          </button>
+          {/* PCのみ大きいCTAボタン表示（スマホはFixedCTAで代替） */}
+          {!isMobile && (
+            <button onClick={handleStartChat}
+              style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "18px 56px", fontSize: 17, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.3)", transition: "all 0.2s" }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+            >
+              💬 無料でAI相談する
+            </button>
+          )}
+          {isMobile && (
+            <button onClick={handleStartChat}
+              style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "14px 40px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.3)", width: "100%", maxWidth: 320 }}
+            >
+              💬 無料でAI相談する
+            </button>
+          )}
           <p style={{ fontSize: 10, color: "#aaa", marginTop: 8, fontFamily: "'Noto Sans JP', sans-serif" }}>※営業は一切ありません</p>
         </div>
 
-        {/* 3カラム */}
-        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr 300px", gap: 0, alignItems: "start", width: "100%" }}>
-          <div style={{ padding: "0 16px 0 20px" }}>
-            <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
-            {showChat ? (
-              <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
-            ) : (
-              <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 6 }}>AIに相談してみる</p>
-                <p style={{ fontSize: 12, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 16, lineHeight: 1.6 }}>3ステップで最適な進め方を提案します</p>
-                <div style={{ background: C.navy, color: "#fff", borderRadius: 50, padding: "12px 32px", fontSize: 14, fontWeight: 700, display: "inline-block", fontFamily: "'Noto Sans JP', sans-serif" }}>
-                  💬 無料でAI相談する
+        {/* レイアウト：スマホは1カラム、PCは3カラム */}
+        {isMobile ? (
+          // スマホ：1カラム縦積み
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px" }}>
+            {/* AIチャット */}
+            <div ref={chatRef}>
+              {showChat ? (
+                <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
+              ) : (
+                <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 6 }}>AIに相談してみる</p>
+                  <p style={{ fontSize: 12, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 16, lineHeight: 1.6 }}>3ステップで最適な進め方を提案します</p>
+                  <div style={{ background: C.navy, color: "#fff", borderRadius: 50, padding: "12px 32px", fontSize: 14, fontWeight: 700, display: "inline-block", fontFamily: "'Noto Sans JP', sans-serif" }}>
+                    💬 無料でAI相談する
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            {/* 失敗事例 */}
+            <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
+            {/* コミュニティ */}
             <CommunityStrip onNavigate={navigate} />
-          </div>
-          <div style={{ padding: "0 20px 0 16px" }}>
+            {/* 最新情報 */}
             <RightPanel onNavigate={navigate} />
           </div>
-        </div>
+        ) : (
+          // PC：3カラム
+          <div style={{ display: "grid", gridTemplateColumns: "320px 1fr 300px", gap: 0, alignItems: "start", width: "100%" }}>
+            <div style={{ padding: "0 16px 0 20px" }}>
+              <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
+              {showChat ? (
+                <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
+              ) : (
+                <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 6 }}>AIに相談してみる</p>
+                  <p style={{ fontSize: 12, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 16, lineHeight: 1.6 }}>3ステップで最適な進め方を提案します</p>
+                  <div style={{ background: C.navy, color: "#fff", borderRadius: 50, padding: "12px 32px", fontSize: 14, fontWeight: 700, display: "inline-block", fontFamily: "'Noto Sans JP', sans-serif" }}>
+                    💬 無料でAI相談する
+                  </div>
+                </div>
+              )}
+              <CommunityStrip onNavigate={navigate} />
+            </div>
+            <div style={{ padding: "0 20px 0 16px" }}>
+              <RightPanel onNavigate={navigate} />
+            </div>
+          </div>
+        )}
 
         {/* 裏導線 */}
         <div style={{ display: "flex", justifyContent: "center", gap: 16, padding: "20px 16px 0", flexWrap: "wrap" }}>
@@ -811,7 +863,7 @@ export default function HomeScreen({ onNavigate }) {
         </div>
       </main>
 
-      <FixedCTA onStartChat={handleStartChat} />
+      <FixedCTA onStartChat={handleStartChat} isMobile={isMobile} />
     </div>
   );
 }
