@@ -348,7 +348,7 @@ export default function AdminDashboard() {
         supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
         supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
-        supabase.from('partner_profiles').select('*').order('created_at', { ascending: false }),
+        Promise.resolve({ data: [], error: null }),
       ])
       setAgencies(a.data || [])
       setValuations(v.data || [])
