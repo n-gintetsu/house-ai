@@ -207,6 +207,7 @@ export default function App() {
   )
 
   const [tab, setTab] = useState('home')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [agencyType, setAgencyType] = useState(null)
 
   /* ---- AIチャット ---- */
