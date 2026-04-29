@@ -186,6 +186,8 @@ export default function PropertiesPage({ user, onNavigate }) {
   const [viewMode, setViewMode] = useState('swipe') // swipe or list
   const containerRef = useRef(null)
   const touchStartY = useRef(null)
+  const mouseStartY = useRef(null)
+  const isDragging = useRef(false)
 
   useEffect(() => { fetchProperties() }, [filter])
 
@@ -209,6 +211,17 @@ export default function PropertiesPage({ user, onNavigate }) {
 
   const handleChat = (property) => {
     onNavigate && onNavigate('chat')
+  }
+
+  // マウスドラッグ
+  const handleMouseDown = (e) => { mouseStartY.current = e.clientY; isDragging.current = true }
+  const handleMouseUp = (e) => {
+    if (!isDragging.current || mouseStartY.current === null) return
+    const diff = mouseStartY.current - e.clientY
+    if (diff > 50 && currentIndex < properties.length - 1) setCurrentIndex(i => i + 1)
+    if (diff < -50 && currentIndex > 0) setCurrentIndex(i => i - 1)
+    mouseStartY.current = null
+    isDragging.current = false
   }
 
   // タッチスワイプ
@@ -270,7 +283,7 @@ export default function PropertiesPage({ user, onNavigate }) {
         </div>
       ) : viewMode === 'swipe' ? (
         /* スワイプUI */
-        <div ref={containerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+        <div ref={containerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
           style={{ overflow: 'hidden', height: '100vh' }}>
           <div style={{ transform: `translateY(-${currentIndex * 100}vh)`, transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)' }}>
             {properties.map((p, i) => (
