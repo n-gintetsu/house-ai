@@ -1294,21 +1294,6 @@ export default function App() {
         <TickerBanner />
 
 
-        <nav className="ha-tabs" role="tablist" aria-label="メイン">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              className="ha-tab"
-              onClick={() => setTab(t.id)}
-            >
-              <span aria-hidden="true">{t.icon}</span>
-              {t.label}
-            </button>
-          ))}
-        </nav>
 
         <main className="ha-main">
           {tab === 'properties' && (
