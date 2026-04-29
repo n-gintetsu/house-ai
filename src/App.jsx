@@ -1302,7 +1302,7 @@ export default function App() {
         <main className="ha-main">
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PropertiesPage user={user} />
+              <PropertiesPage user={null} />
             </div>
           )}
           {tab === 'vendors' && (
