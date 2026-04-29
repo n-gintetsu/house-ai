@@ -1302,7 +1302,7 @@ export default function App() {
         <main className="ha-main">
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PropertiesPage user={null} />
+              <PropertiesPage user={null} onNavigate={(view) => setTab(view)} />
             </div>
           )}
           {tab === 'vendors' && (

@@ -256,8 +256,7 @@ export default function PropertiesPage({ user, onNavigate }) {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{currentIndex + 1} / {properties.length}</span>
-          <button onClick={() => setViewMode(v => v === 'swipe' ? 'list' : 'swipe')}
-            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: 8, padding: '5px 10px', fontSize: 12, cursor: 'pointer' }}>
+          <button onClick={() => setViewMode(v => v === 'swipe' ? 'list' : 'swipe')} style={{ padding: '5px 12px', background: '#fff', color: '#1a3a5c', border: 'none', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
             {viewMode === 'swipe' ? '一覧' : 'スワイプ'}
           </button>
         </div>
