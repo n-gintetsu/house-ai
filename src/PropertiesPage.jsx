@@ -22,6 +22,7 @@ const C = {
 function AIBadge({ property }) {
   const price = property.price || 0
 
+  const walk = property.walk_minutes ?? 10
   let grade, label, color
   if (walk <= 5 && price < 5000) { grade = 'S'; label = '掘り出し物'; color = '#06C755' }
   else if (walk <= 10) { grade = 'A'; label = '人気'; color = C.gold }
