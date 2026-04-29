@@ -203,6 +203,22 @@ function initialOwnerForm() {
 
 export default function App() {
   const [isPremium, setIsPremium] = useState(false)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUser(data.session.user)
+        window.__houseAiUser = data.session.user
+      }
+    })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null
+      setUser(u)
+      window.__houseAiUser = u
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
   const model = useMemo(
     () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5',
     [],
@@ -1209,14 +1225,29 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              type="button"
-              className="ha-btn"
-              style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
-              onClick={() => alert('会員登録機能は準備中です。')}
-            >
-              会員登録
-            </button>
+            {user ? (
+              <button
+                type="button"
+                className="ha-btn"
+                style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  setUser(null)
+                  window.__houseAiUser = null
+                }}
+              >
+                ログアウト
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ha-btn"
+                style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
+                onClick={() => setTab('member')}
+              >
+                会員登録 / ログイン
+              </button>
+            )}
             {/* ハンバーガーメニュー */}
             <div style={{ position: 'relative' }}>
               <button
@@ -1303,7 +1334,7 @@ export default function App() {
         <main className="ha-main">
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PropertiesPage user={null} onNavigate={(view) => setTab(view)} />
+              <PropertiesPage user={user} onNavigate={(view) => setTab(view)} />
             </div>
           )}
           {tab === 'vendors' && (
@@ -2005,7 +2036,7 @@ export default function App() {
 
           {tab === 'member' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PremiumUpgradeBanner user={null} isPremium={isPremium} />
+              <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel />
             </div>
           )}
