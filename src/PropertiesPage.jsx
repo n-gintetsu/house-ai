@@ -104,7 +104,7 @@ function AIPanel({ property, onClose, onChat }) {
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
       <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', boxSizing: 'border-box' }}
         onClick={e => e.stopPropagation()}>
@@ -213,7 +213,7 @@ function CompareModal({ compareList, onClose, onChat }) {
   ]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
       <div style={{ background: '#111', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 600, margin: '0 auto', maxHeight: '85vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>

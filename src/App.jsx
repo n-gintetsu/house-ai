@@ -713,7 +713,7 @@ export default function App() {
           border-radius: 999px;
           max-width: 280px;
           white-space: nowrap;
-          overflow: hidden;
+          overflow: visible;
           text-overflow: ellipsis;
         }
 
@@ -765,7 +765,7 @@ export default function App() {
           min-height: 480px;
           display: flex;
           flex-direction: column;
-          overflow: hidden;
+          overflow: visible;
         }
 
         .ha-panel {
