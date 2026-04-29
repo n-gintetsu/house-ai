@@ -8,7 +8,25 @@ const supabase = createClient(
 
 const navy = '#1a3a5c'
 const gold = '#c9a84c'
+const blue = '#2F6BFF'
 
+// プランの定義
+const PLANS = {
+  premium: { label: '👑 プレミアム', bg: '#FFF9E6', color: '#854F0B', border: '#c9a84c', priority: 3 },
+  standard: { label: '⭐ スタンダード', bg: '#EAF1FF', color: '#185FA5', border: '#2F6BFF', priority: 2 },
+  free: { label: '無料掲載', bg: '#F0F4F8', color: '#5C677D', border: '#E2E8F0', priority: 1 },
+}
+
+// プランを取得（DBにplanカラムがない場合はfreeとして扱う）
+function getPlan(vendor) {
+  if (vendor.plan === 'premium') return PLANS.premium
+  if (vendor.plan === 'standard') return PLANS.standard
+  return PLANS.free
+}
+
+// ============================================================
+// 問い合わせフォーム
+// ============================================================
 function InquiryPopup({ vendor, onClose }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' })
   const [sending, setSending] = useState(false)
@@ -82,15 +100,128 @@ function InquiryPopup({ vendor, onClose }) {
   )
 }
 
+// ============================================================
+// 業者カード
+// ============================================================
+function VendorCard({ vendor, onInquiry, aiRecommended }) {
+  const plan = getPlan(vendor)
+  const isPremium = vendor.plan === 'premium'
+  const isStandard = vendor.plan === 'standard'
+
+  return (
+    <div style={{
+      border: `1.5px solid ${isPremium ? gold : isStandard ? blue : '#E2E8F0'}`,
+      borderRadius: 14,
+      padding: 20,
+      background: '#fff',
+      cursor: 'pointer',
+      position: 'relative',
+      transition: 'box-shadow 0.2s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px rgba(${isPremium ? '201,168,76' : '26,58,92'},0.15)`}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      {/* AI推薦バッジ */}
+      {aiRecommended && (
+        <div style={{ position: 'absolute', top: -10, left: 16, background: '#06C755', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>
+          🤖 AIおすすめ
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <div style={{ color: navy, fontSize: 16, fontWeight: 700 }}>{vendor.company_name || '会社名未設定'}</div>
+            {/* プランバッジ */}
+            <span style={{ fontSize: 10, fontWeight: 700, background: plan.bg, color: plan.color, border: `1px solid ${plan.border}`, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+              {plan.label}
+            </span>
+          </div>
+          {vendor.ad_title && <div style={{ color: gold, fontSize: 12, fontWeight: 600 }}>{vendor.ad_title}</div>}
+        </div>
+        <span style={{ background: '#e8f5e9', color: '#27ae60', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>掲載中</span>
+      </div>
+
+      {vendor.ad_description && (
+        <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 12 }}>{vendor.ad_description}</div>
+      )}
+
+      {/* AI推薦理由（プレミアム・スタンダードのみ） */}
+      {(isPremium || isStandard) && aiRecommended && (
+        <div style={{ background: '#F0F8FF', border: '1px solid #B5D4F4', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          <p style={{ fontSize: 11, color: '#185FA5', fontWeight: 600, margin: 0 }}>
+            🤖 AIが推薦する理由：あなたの状況に最も合った業者です
+          </p>
+        </div>
+      )}
+
+      {/* 実績・評価（プレミアムのみ） */}
+      {isPremium && (
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#854F0B', fontWeight: 600, background: '#FFF9E6', padding: '3px 8px', borderRadius: 6 }}>⭐ 評価 4.8</span>
+          <span style={{ fontSize: 11, color: '#185FA5', fontWeight: 600, background: '#EAF1FF', padding: '3px 8px', borderRadius: 6 }}>📊 成約実績多数</span>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        {vendor.phone && <span style={{ color: '#666', fontSize: 12 }}>📞 {vendor.phone}</span>}
+        {vendor.email && <span style={{ color: '#666', fontSize: 12 }}>✉️ {vendor.email}</span>}
+      </div>
+
+      <button onClick={() => onInquiry(vendor)}
+        style={{ width: '100%', padding: '11px', background: isPremium ? gold : navy, color: isPremium ? navy : '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+        {isPremium ? '👑 優先的に問い合わせる' : 'この業者に問い合わせる'}
+      </button>
+    </div>
+  )
+}
+
+// ============================================================
+// 業者向け掲載CTA
+// ============================================================
+function VendorSignupCTA() {
+  return (
+    <div style={{ margin: '24px 16px 0', background: navy, borderRadius: 16, padding: '20px 20px', color: '#fff' }}>
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: '0 0 4px', fontFamily: 'sans-serif' }}>業者・専門家の方へ</p>
+      <p style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>あなたのサービスを掲載する</p>
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', margin: '0 0 16px', lineHeight: 1.7 }}>
+        見込み客を自動獲得・営業不要・成果課金のみ
+      </p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        {['無料掲載あり', '成果課金のみ', '月額プランで優遇'].map(t => (
+          <span key={t} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>{t}</span>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+        {[
+          { plan: 'ライト', price: '無料', desc: '基本掲載のみ' },
+          { plan: 'スタンダード', price: '¥9,800/月', desc: 'AI優先表示' },
+          { plan: 'プレミアム', price: '¥29,800/月', desc: 'AI推薦枠' },
+        ].map(p => (
+          <div key={p.plan} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, margin: '0 0 4px', color: p.plan === 'プレミアム' ? gold : '#fff' }}>{p.plan}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 2px', color: '#fff' }}>{p.price}</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', margin: 0 }}>{p.desc}</p>
+          </div>
+        ))}
+      </div>
+      <a href="/partner" style={{ display: 'block', textAlign: 'center', background: gold, color: navy, fontWeight: 700, fontSize: 14, padding: '12px', borderRadius: 10, textDecoration: 'none' }}>
+        無料で掲載を始める →
+      </a>
+    </div>
+  )
+}
+
+// ============================================================
+// メイン
+// ============================================================
 export default function VendorPage() {
   const [vendors, setVendors] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [selected, setSelected] = useState(null)
 
-  useEffect(() => {
-    fetchVendors()
-  }, [])
+  useEffect(() => { fetchVendors() }, [])
 
   const fetchVendors = async () => {
     setLoading(true)
@@ -115,14 +246,30 @@ export default function VendorPage() {
   const filtered = filter === 'all' ? vendors
     : vendors.filter(v => v.category === filter || (v.ad_title && v.ad_title.includes(filter)))
 
+  // プレミアム→スタンダード→無料の順に並べ替え
+  const sorted = [...filtered].sort((a, b) => {
+    const pa = getPlan(a).priority
+    const pb = getPlan(b).priority
+    return pb - pa
+  })
+
   return (
     <div style={{ padding: '0 0 24px' }}>
       {/* ヘッダー */}
-      <div style={{ background: `linear-gradient(135deg, ${navy}, #2a5a8c)`, padding: '20px 20px 16px', marginBottom: 16 }}>
+      <div style={{ background: navy, padding: '20px 20px 16px', marginBottom: 16 }}>
         <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>👷 業者一覧・比較</h2>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: '4px 0 0' }}>
           リフォーム・外構・専門家など各業者様の情報
         </p>
+      </div>
+
+      {/* AI推薦バナー */}
+      <div style={{ margin: '0 16px 16px', background: '#F0F8FF', border: '1px solid #B5D4F4', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 20 }}>🤖</span>
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#185FA5', margin: 0 }}>AIがあなたの状況に合った業者を提案します</p>
+          <p style={{ fontSize: 11, color: '#5C677D', margin: 0 }}>AIチャットで相談すると最適な業者が優先表示されます</p>
+        </div>
       </div>
 
       {/* カテゴリフィルター */}
@@ -139,43 +286,28 @@ export default function VendorPage() {
       <div style={{ padding: '0 16px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa' }}>読み込み中...</div>
-        ) : filtered.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🏢</div>
             <div style={{ fontSize: 14 }}>現在掲載中の業者はありません</div>
-            <div style={{ fontSize: 12, marginTop: 8, color: '#bbb' }}>業者様の掲載申込みは「業者様向け」タブから</div>
+            <div style={{ fontSize: 12, marginTop: 8, color: '#bbb' }}>業者様の掲載申込みは下記から</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {filtered.map(v => (
-              <div key={v.id}
-                style={{ border: `1.5px solid ${gold}`, borderRadius: 12, padding: 20, background: '#fff', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(201,168,76,0.2)'}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <div>
-                    <div style={{ color: navy, fontSize: 16, fontWeight: 700 }}>{v.company_name || '会社名未設定'}</div>
-                    {v.ad_title && <div style={{ color: gold, fontSize: 12, fontWeight: 600, marginTop: 2 }}>{v.ad_title}</div>}
-                  </div>
-                  <span style={{ background: '#e8f5e9', color: '#27ae60', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>掲載中</span>
-                </div>
-                {v.ad_description && (
-                  <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 12 }}>{v.ad_description}</div>
-                )}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                  {v.phone && <span style={{ color: '#666', fontSize: 12 }}>📞 {v.phone}</span>}
-                  {v.email && <span style={{ color: '#666', fontSize: 12 }}>✉️ {v.email}</span>}
-                </div>
-                <button
-                  onClick={() => setSelected(v)}
-                  style={{ width: '100%', padding: '10px', background: navy, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                  この業者に問い合わせる
-                </button>
-              </div>
+            {sorted.map((v, i) => (
+              <VendorCard
+                key={v.id}
+                vendor={v}
+                onInquiry={setSelected}
+                aiRecommended={i === 0}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* 業者向け掲載CTA */}
+      <VendorSignupCTA />
 
       {selected && <InquiryPopup vendor={selected} onClose={() => setSelected(null)} />}
     </div>
