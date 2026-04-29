@@ -243,12 +243,13 @@ export default function PropertiesPage({ user, onNavigate }) {
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {[
-            { key: 'all', label: 'すべて' },
+            { key: 'back', label: '← 戻る' },
+              { key: 'all', label: 'すべて' },
             { key: 'sale', label: '売買' },
             { key: 'rent', label: '賃貸' },
           ].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              style={{ padding: '5px 12px', background: filter === f.key ? '#fff' : 'rgba(255,255,255,0.2)', color: filter === f.key ? C.navy : '#fff', border: 'none', borderRadius: 20, fontSize: 12, fontWeight: filter === f.key ? 700 : 400, cursor: 'pointer' }}>
+            <button key={f.key} onClick={() => f.key === 'back' ? onNavigate && onNavigate('home') : setFilter(f.key)}
+              style={{ padding: '5px 12px', background: filter === f.key ? '#fff' : 'rgba(255,255,255,0.85)', color: filter === f.key ? C.navy : C.navy, border: 'none', borderRadius: 20, fontSize: 12, fontWeight: filter === f.key ? 700 : 400, cursor: 'pointer' }}>
               {f.label}
             </button>
           ))}
