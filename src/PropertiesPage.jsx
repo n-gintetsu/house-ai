@@ -18,39 +18,107 @@ const C = {
   muted: 'rgba(255,255,255,0.6)',
 }
 
-// AI評価バッジ
-function AIBadge({ property }) {
+// ============================================================
+// AI評価ロジック（仕様書準拠）
+// ============================================================
+function calcAIScore(property) {
   const price = property.price || 0
+  const rent = property.rent || 0
+  const walk = property.walk_minutes ?? 12
+  const address = property.address || ''
 
-  const walk = property.walk_minutes ?? 10
-  let grade, label, color
-  if (walk <= 5 && price < 5000) { grade = 'S'; label = '掘り出し物'; color = '#06C755' }
-  else if (walk <= 10) { grade = 'A'; label = '人気'; color = C.gold }
-  else if (walk <= 15) { grade = 'B'; label = '標準'; color = C.blue }
-  else { grade = 'C'; label = '要確認'; color = '#888' }
+  // 価格評価（売買）
+  let priceScore = 3
+  if (property.property_type === 'sale') {
+    if (price < 2000) priceScore = 5
+    else if (price < 4000) priceScore = 4
+    else if (price < 7000) priceScore = 3
+    else if (price < 10000) priceScore = 2
+    else priceScore = 1
+  } else {
+    // 賃貸（万円/月に換算して比較）
+    const rentMan = rent / 10000
+    if (rentMan < 5) priceScore = 5
+    else if (rentMan < 8) priceScore = 4
+    else if (rentMan < 12) priceScore = 3
+    else if (rentMan < 18) priceScore = 2
+    else priceScore = 1
+  }
 
+  // 立地評価（駅徒歩分）
+  let walkScore = 3
+  if (walk <= 5) walkScore = 5
+  else if (walk <= 10) walkScore = 4
+  else if (walk <= 15) walkScore = 3
+  else if (walk <= 20) walkScore = 2
+  else walkScore = 1
+
+  // 将来性評価（住所キーワードで判定）
+  let futureScore = 3
+  const highGrowth = ['大宮', '浦和', '川口', '武蔵浦和', '与野', 'さいたま']
+  const midGrowth = ['蕨', '戸田', '草加', '越谷', '春日部', '所沢']
+  if (highGrowth.some(k => address.includes(k))) futureScore = 5
+  else if (midGrowth.some(k => address.includes(k))) futureScore = 4
+
+  // 総合評価
+  const overall = Math.round((priceScore * 0.4 + walkScore * 0.4 + futureScore * 0.2))
+
+  // グレード
+  let grade, gradeColor
+  if (overall >= 5) { grade = 'S'; gradeColor = '#06C755' }
+  else if (overall >= 4) { grade = 'A'; gradeColor = C.gold }
+  else if (overall >= 3) { grade = 'B'; gradeColor = C.blue }
+  else { grade = 'C'; gradeColor = '#888' }
+
+  // バッジ
+  const badges = []
+  if (overall >= 5 && walkScore >= 4) badges.push({ label: '掘り出し物', color: '#06C755' })
+  if (overall >= 4) badges.push({ label: '人気', color: C.gold })
+  if (walkScore >= 5) badges.push({ label: '駅近', color: '#06C755' })
+  if (property.property_type === 'sale' && price >= 10000) badges.push({ label: '投資向け', color: C.blue })
+  if (overall <= 2) badges.push({ label: '要確認', color: '#888' })
+  if (priceScore >= 5) badges.push({ label: '初心者向け', color: '#9b59b6' })
+
+  // 推奨アクション
+  let action = 'AIに詳細を確認してから判断しましょう。'
+  if (overall >= 5) action = 'すぐに内見予約を！人気物件は早い者勝ちです。'
+  else if (overall >= 4) action = '条件が良い物件です。早めの検討をおすすめします。'
+  else if (overall >= 3) action = '標準的な物件です。他の物件と比較してみましょう。'
+
+  // コメント
+  const comments = {
+    price: priceScore >= 4 ? '相場より割安でお得です' : priceScore === 3 ? '相場並みの価格帯です' : '相場より割高な傾向です',
+    walk: walkScore >= 5 ? '駅徒歩5分以内！利便性抜群' : walkScore === 4 ? '駅10分以内で便利な立地' : walkScore === 3 ? '駅徒歩15分以内' : '駅から少し距離があります',
+    future: futureScore >= 5 ? '再開発・発展エリアで将来性高い' : futureScore === 4 ? '安定した人気エリア' : '将来性は標準的なエリア',
+  }
+
+  return { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments, walk }
+}
+
+// ============================================================
+// AI評価バッジ
+// ============================================================
+function AIBadge({ property }) {
+  const { grade, gradeColor, badges } = calcAIScore(property)
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-      <span style={{ background: color, color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>
-        AI {grade} {label}
+      <span style={{ background: gradeColor, color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>
+        AI {grade}
       </span>
-      {walk <= 5 && (
-        <span style={{ background: 'rgba(6,199,85,0.2)', color: '#06C755', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: '1px solid #06C755' }}>
-          駅近
+      {badges.slice(0, 2).map((b, i) => (
+        <span key={i} style={{ background: 'rgba(255,255,255,0.15)', color: b.color, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: `1px solid ${b.color}` }}>
+          {b.label}
         </span>
-      )}
+      ))}
     </div>
   )
 }
 
+// ============================================================
 // AI評価パネル
+// ============================================================
 function AIPanel({ property, onClose, onChat }) {
-  const price = property.price || 0
-
-  const priceScore = price < 3000 ? 5 : price < 5000 ? 4 : price < 8000 ? 3 : price < 12000 ? 2 : 1
-  const walkScore = 3
-  const overallScore = Math.round((priceScore + walkScore) / 2)
-
+  const { priceScore, walkScore, futureScore, overall, grade, gradeColor, badges, action, comments, walk } = calcAIScore(property)
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
   return (
@@ -59,26 +127,49 @@ function AIPanel({ property, onClose, onChat }) {
       <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', maxWidth: 480, margin: '0 auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '0 auto 20px' }} />
-        <p style={{ color: C.gold, fontSize: 13, fontWeight: 700, margin: '0 0 4px' }}>🤖 AI評価レポート</p>
-        <p style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: '0 0 20px' }}>{property.title || property.property_name || '物件名未設定'}</p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        {/* ヘッダー */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ background: gradeColor, borderRadius: 12, width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>{grade}</span>
+          </div>
+          <div>
+            <p style={{ color: C.gold, fontSize: 12, fontWeight: 700, margin: '0 0 2px' }}>🤖 AI評価レポート</p>
+            <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{property.title || '物件名未設定'}</p>
+          </div>
+        </div>
+
+        {/* バッジ一覧 */}
+        {badges.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+            {badges.map((b, i) => (
+              <span key={i} style={{ background: 'rgba(255,255,255,0.1)', color: b.color, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: `1px solid ${b.color}` }}>
+                {b.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* スコア一覧 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
           {[
-            { label: '総合評価', score: overallScore, comment: overallScore >= 4 ? 'おすすめ物件です' : '標準的な物件です' },
-            { label: '価格評価', score: priceScore, comment: priceScore >= 4 ? '相場より割安' : '相場並み' },
-            { label: '立地評価', score: walkScore, comment: `駅徒歩${walk}分` },
+            { label: '総合評価', score: overall, comment: overall >= 4 ? 'おすすめ物件' : overall === 3 ? '標準的な物件' : '慎重に検討を' },
+            { label: '価格評価', score: priceScore, comment: comments.price },
+            { label: '立地評価', score: walkScore, comment: comments.walk },
+            { label: '将来性', score: futureScore, comment: comments.future },
           ].map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ color: C.muted, fontSize: 12, width: 70, flexShrink: 0 }}>{item.label}</span>
-              <span style={{ color: C.gold, fontSize: 14, letterSpacing: 2 }}>{stars(item.score)}</span>
-              <span style={{ color: '#aaa', fontSize: 11 }}>{item.comment}</span>
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: C.muted, fontSize: 12, width: 68, flexShrink: 0 }}>{item.label}</span>
+              <span style={{ color: C.gold, fontSize: 13, letterSpacing: 1, flexShrink: 0 }}>{stars(item.score)}</span>
+              <span style={{ color: '#aaa', fontSize: 11, lineHeight: 1.4 }}>{item.comment}</span>
             </div>
           ))}
         </div>
 
+        {/* 推奨アクション */}
         <div style={{ background: 'rgba(47,107,255,0.15)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
           <p style={{ color: C.blue, fontSize: 12, fontWeight: 600, margin: 0 }}>
-            🎯 推奨アクション：{overallScore >= 4 ? 'すぐに内見予約を！人気物件は早い者勝ちです。' : 'AIに詳細を確認してから判断しましょう。'}
+            🎯 推奨アクション：{action}
           </p>
         </div>
 
@@ -90,7 +181,9 @@ function AIPanel({ property, onClose, onChat }) {
   )
 }
 
-// 物件カード（1画面1物件）
+// ============================================================
+// 物件カード
+// ============================================================
 function PropertyCard({ property, onChat, onSave, saved, isActive }) {
   const [showAI, setShowAI] = useState(false)
   const typeLabel = property.property_type === 'sale' ? '売買' : property.property_type === 'rent' ? '賃貸' : '物件'
@@ -102,37 +195,28 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', background: C.bg, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-      {/* 物件画像 */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <img src={imageUrl} alt={property.title}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80' }}
         />
-        {/* グラデーションオーバーレイ */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.95) 100%)' }} />
 
-        {/* 上部：種別バッジ */}
         <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8 }}>
           <span style={{ background: typeColor, color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>{typeLabel}</span>
         </div>
 
-        {/* 右側：アクションボタン */}
         <div style={{ position: 'absolute', right: 16, bottom: 120, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-          {/* 保存 */}
           <button onClick={() => onSave(property.id)}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 22 }}>{saved ? '❤️' : '🤍'}</span>
             <span style={{ color: '#fff', fontSize: 9 }}>保存</span>
           </button>
-
-          {/* AI評価 */}
           <button onClick={() => setShowAI(true)}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 20 }}>🤖</span>
             <span style={{ color: '#fff', fontSize: 9 }}>AI評価</span>
           </button>
-
-          {/* シェア */}
           <button onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 20 }}>↗️</span>
@@ -140,11 +224,10 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
           </button>
         </div>
 
-        {/* 下部：物件情報 */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 16px 8px' }}>
           <AIBadge property={property} />
           <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '8px 0 4px', lineHeight: 1.3 }}>
-            {property.title || property.property_name || '物件名未設定'}
+            {property.title || '物件名未設定'}
           </h2>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
             <span style={{ color: C.gold, fontSize: 24, fontWeight: 700 }}>
@@ -159,7 +242,6 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
         </div>
       </div>
 
-      {/* 下部CTA */}
       <div style={{ background: '#0a0a0a', padding: '12px 16px 20px', display: 'flex', gap: 10 }}>
         <button onClick={() => onChat(property)}
           style={{ flex: 2, background: C.navy, color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
@@ -171,19 +253,21 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
         </button>
       </div>
 
-      {showAI && <AIPanel property={property} onClose={() => setShowAI(false)} onChat={() => { setShowAI(false); onChat(property); }} />}
+      {showAI && <AIPanel property={property} onClose={() => setShowAI(false)} onChat={() => { setShowAI(false); onChat(property) }} />}
     </div>
   )
 }
 
+// ============================================================
 // メイン
+// ============================================================
 export default function PropertiesPage({ user, onNavigate }) {
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [saved, setSaved] = useState(new Set())
   const [filter, setFilter] = useState('all')
-  const [viewMode, setViewMode] = useState('swipe') // swipe or list
+  const [viewMode, setViewMode] = useState('swipe')
   const containerRef = useRef(null)
   const touchStartY = useRef(null)
   const mouseStartY = useRef(null)
@@ -209,11 +293,8 @@ export default function PropertiesPage({ user, onNavigate }) {
     })
   }
 
-  const handleChat = (property) => {
-    onNavigate && onNavigate('chat')
-  }
+  const handleChat = (property) => { onNavigate && onNavigate('chat') }
 
-  // マウスドラッグ
   const handleMouseDown = (e) => { mouseStartY.current = e.clientY; isDragging.current = true }
   const handleMouseUp = (e) => {
     if (!isDragging.current || mouseStartY.current === null) return
@@ -224,7 +305,6 @@ export default function PropertiesPage({ user, onNavigate }) {
     isDragging.current = false
   }
 
-  // タッチスワイプ
   const handleTouchStart = (e) => { touchStartY.current = e.touches[0].clientY }
   const handleTouchEnd = (e) => {
     if (!touchStartY.current) return
@@ -234,7 +314,6 @@ export default function PropertiesPage({ user, onNavigate }) {
     touchStartY.current = null
   }
 
-  // キーボード操作
   useEffect(() => {
     const handler = (e) => {
       if (e.key === 'ArrowDown' && currentIndex < properties.length - 1) setCurrentIndex(i => i + 1)
@@ -252,24 +331,24 @@ export default function PropertiesPage({ user, onNavigate }) {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', position: 'relative' }}>
-      {/* ヘッダー */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {[
             { key: 'back', label: '← 戻る' },
-              { key: 'all', label: 'すべて' },
+            { key: 'all', label: 'すべて' },
             { key: 'sale', label: '売買' },
             { key: 'rent', label: '賃貸' },
           ].map(f => (
             <button key={f.key} onClick={() => f.key === 'back' ? onNavigate && onNavigate('home') : setFilter(f.key)}
-              style={{ padding: '5px 12px', background: filter === f.key ? '#fff' : 'rgba(255,255,255,0.85)', color: filter === f.key ? C.navy : C.navy, border: 'none', borderRadius: 20, fontSize: 12, fontWeight: filter === f.key ? 700 : 400, cursor: 'pointer' }}>
+              style={{ padding: '5px 12px', background: filter === f.key ? '#fff' : 'rgba(255,255,255,0.85)', color: C.navy, border: 'none', borderRadius: 20, fontSize: 12, fontWeight: filter === f.key ? 700 : 400, cursor: 'pointer' }}>
               {f.label}
             </button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{currentIndex + 1} / {properties.length}</span>
-          <button onClick={() => setViewMode(v => v === 'swipe' ? 'list' : 'swipe')} style={{ padding: '5px 12px', background: '#fff', color: '#1a3a5c', border: 'none', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => setViewMode(v => v === 'swipe' ? 'list' : 'swipe')}
+            style={{ padding: '5px 12px', background: '#fff', color: C.navy, border: 'none', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
             {viewMode === 'swipe' ? '一覧' : 'スワイプ'}
           </button>
         </div>
@@ -282,7 +361,6 @@ export default function PropertiesPage({ user, onNavigate }) {
           <p style={{ fontSize: 13, color: C.muted }}>フィルターを変えて探してみましょう</p>
         </div>
       ) : viewMode === 'swipe' ? (
-        /* スワイプUI */
         <div ref={containerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
           style={{ overflow: 'hidden', height: '100vh' }}>
           <div style={{ transform: `translateY(-${currentIndex * 100}vh)`, transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)' }}>
@@ -290,7 +368,6 @@ export default function PropertiesPage({ user, onNavigate }) {
               <PropertyCard key={p.id} property={p} onChat={handleChat} onSave={handleSave} saved={saved.has(p.id)} isActive={i === currentIndex} />
             ))}
           </div>
-          {/* スワイプヒント */}
           {currentIndex === 0 && properties.length > 1 && (
             <div style={{ position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, pointerEvents: 'none' }}>
               <span style={{ fontSize: 20, animation: 'bounce 1s infinite' }}>↕</span>
@@ -300,12 +377,11 @@ export default function PropertiesPage({ user, onNavigate }) {
           )}
         </div>
       ) : (
-        /* 一覧UI */
         <div style={{ paddingTop: 60, paddingBottom: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, padding: '0 12px' }}>
             {properties.map((p) => (
               <div key={p.id} style={{ background: '#1a1a1a', borderRadius: 14, overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => { setCurrentIndex(properties.indexOf(p)); setViewMode('swipe'); }}>
+                onClick={() => { setCurrentIndex(properties.indexOf(p)); setViewMode('swipe') }}>
                 <img src={p.images?.[0] || p.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80'}
                   style={{ width: '100%', height: 160, objectFit: 'cover' }}
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80' }}
