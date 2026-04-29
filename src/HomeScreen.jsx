@@ -433,7 +433,7 @@ export default function HomeScreen({ onNavigate }) {
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
       <MiniTicker />
 
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "20px 16px 48px" }}>
+      <main style={{ maxWidth: "100%", margin: "0 auto", padding: "20px 24px 48px" }}>
 
         {/* ファーストビュー */}
         <div style={{ textAlign: "center", padding: "24px 16px 28px" }}>
@@ -468,7 +468,7 @@ export default function HomeScreen({ onNavigate }) {
         </div>
 
         {/* 3カラムレイアウト */}
-        <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 180px", gap: 14, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 200px", gap: 16, alignItems: "start" }}>
 
           {/* 左：不安・失敗事例 */}
           <LeftPanel onNavigate={navigate} />
