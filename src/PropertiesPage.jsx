@@ -294,15 +294,15 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
             <span style={{ fontSize: 22 }}>{saved ? '❤️' : '🤍'}</span>
             <span style={{ color: '#fff', fontSize: 9 }}>保存</span>
           </button>
-          <button onClick={() => onCompare && onCompare(property)}
-            style={{ background: inCompare ? 'rgba(201,168,76,0.9)' : 'rgba(0,0,0,0.5)', border: inCompare ? '1.5px solid #c9a84c' : 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-            <span style={{ color: '#fff', fontSize: 18 }}>{inCompare ? '✓' : '⊕'}</span>
-            <span style={{ color: '#fff', fontSize: 9 }}>比較</span>
-          </button>
           <button onClick={() => setShowAI(true)}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 20 }}>🤖</span>
             <span style={{ color: '#fff', fontSize: 9 }}>AI評価</span>
+          </button>
+          <button onClick={() => onCompare && onCompare(property)}
+            style={{ background: inCompare ? 'rgba(201,168,76,0.9)' : 'rgba(0,0,0,0.5)', border: inCompare ? '1.5px solid #c9a84c' : 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <span style={{ color: '#fff', fontSize: 18 }}>{inCompare ? '✓' : '⊕'}</span>
+            <span style={{ color: '#fff', fontSize: 9 }}>比較</span>
           </button>
           <button onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
@@ -333,7 +333,7 @@ function PropertyCard({ property, onChat, onSave, saved, isActive, onCompare, in
           💬 この物件をAIに相談
         </button>
         <button onClick={() => setShowAI(true)}
-          style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          style={{ flex: 1, background: 'rgba(255,255,255,0.18)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 12, padding: '14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           🤖 AI評価
         </button>
       </div>
