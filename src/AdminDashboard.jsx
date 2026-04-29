@@ -741,14 +741,8 @@ function AdManagement({ supabaseAdmin }) {
             {adItems.length === 0 && <p style={{ color: '#999', fontSize: 13 }}>データがありません</p>}
           </div>
         </div>
-      )} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>掲載中にする</button>}
-                  {p.ad_status === '掲載中' && <button onClick={() => updateAdStatus(p.user_id, '審査中')} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>展示停止</button>}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
+
     </div>
   )
 }
