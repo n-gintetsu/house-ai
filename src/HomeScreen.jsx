@@ -436,21 +436,21 @@ export default function HomeScreen({ onNavigate }) {
       <main style={{ maxWidth: "100%", margin: "0 auto", padding: "20px 24px 48px" }}>
 
         {/* ファーストビュー */}
-        <div style={{ textAlign: "center", padding: "24px 16px 28px", maxWidth: 800, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: C.red, letterSpacing: 2, marginBottom: 8, fontFamily: "'Noto Sans JP', sans-serif" }}>
+        <div style={{ textAlign: "center", padding: "32px 16px 32px", maxWidth: 900, margin: "0 auto" }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: C.red, letterSpacing: 1, marginBottom: 10, fontFamily: "'Noto Sans JP', sans-serif" }}>
             ⚠️ 知らずに進むと損します
           </p>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", lineHeight: 1.4, marginBottom: 8 }}>
-            あなたの不動産判断、<br />30秒で最適化
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", lineHeight: 1.3, marginBottom: 10, whiteSpace: "nowrap" }}>
+            あなたの不動産判断、30秒で最適化
           </h1>
-          <p style={{ fontSize: 13, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 20, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 24, lineHeight: 1.7 }}>
             営業なし・完全無料｜AIが最適な進め方を提示します
           </p>
 
           {/* クイック選択（最大3つ表示） */}
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
             {["🏠 家を買いたい", "🏷️ 売りたい", "💰 投資したい"].map((label) => (
-              <button key={label} onClick={handleStartChat} style={{ background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600, color: C.title, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", transition: "all 0.15s" }}
+              <button key={label} onClick={handleStartChat} style={{ background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "12px 20px", fontSize: 14, fontWeight: 600, color: C.title, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", transition: "all 0.15s" }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.background = C.blueBg; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = "#fff"; }}
               >{label}</button>
@@ -458,7 +458,7 @@ export default function HomeScreen({ onNavigate }) {
           </div>
 
           {/* メインCTA（1つだけ強調） */}
-          <button onClick={handleStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "16px 48px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.3)", transition: "all 0.2s" }}
+          <button onClick={handleStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "18px 56px", fontSize: 17, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.3)", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
           >
