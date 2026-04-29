@@ -2113,6 +2113,10 @@ export default function App() {
               </p>
 
               <div className="ha-postForm">
+              {/* 投稿ヒント */}
+              <div style={{ background: '#fffbe6', border: '1px solid #f0d060', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
+                💡 <strong>投稿テンプレ：</strong>「〇〇で後悔しました」「〇〇で損しました」形式が共感を呼びます！
+              </div>
                 <div className="ha-row">
                   <label className={labelClass}>タイトル</label>
                   <input
@@ -2138,6 +2142,15 @@ export default function App() {
                     placeholder="空欄なら匿名"
                   />
                 </div>
+              </div>
+              <div className="ha-row">
+                <label className={labelClass}>💸 損した金額（任意）</label>
+                <input
+                  className={fieldClass}
+                  value={communityDraft.lossAmount || ''}
+                  onChange={(e) => setCommunityDraft((d) => ({ ...d, lossAmount: e.target.value }))}
+                  placeholder="例：約100万円"
+                />
                 <button type="button" className="ha-btn" onClick={addPost}>
                   投稿する
                 </button>
