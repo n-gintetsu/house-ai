@@ -395,7 +395,7 @@ function PostRegisterValue({ tags, onNavigate }) {
 // ============================================================
 // AIChatFlow（3ターン後ロック機能付き）
 // ============================================================
-function AIChatFlow({ onNavigate, onRegisterSuccess, user }) {
+function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
   const [messages, setMessages] = useState([]);
   const [currentNode, setCurrentNode] = useState("start");
   const [tags, setTags] = useState([]);
@@ -409,7 +409,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user }) {
   const [savedTags, setSavedTags] = useState([]);
   const endRef = useRef(null);
 
-  useEffect(() => { addAIMessage(FLOW.start.text); }, []);
+  useEffect(() => { addAIMessage(FLOW.start.text); if (initialTag) setTags([initialTag]); }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isTyping]);
 
   const addAIMessage = (text, delay = 0) => {
@@ -588,11 +588,11 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user }) {
 // ============================================================
 // 左サイド：不安・失敗事例
 // ============================================================
-function LeftPanel({ onNavigate }) {
+function LeftPanel({ onNavigate, onStartChat }) {
   const cases = [
-    { title: "住宅購入で後悔しました", tag: "購入", desc: "営業に急かされて決めてしまった..." },
-    { title: "リフォームで100万損しました", tag: "リフォーム", desc: "見積もりを1社しか取らなかった..." },
-    { title: "投資物件で空室が続いています", tag: "投資", desc: "利回りだけ見て立地を軽視していた..." },
+    { title: "住宅購入で後悔しました", tag: "購入", desc: "営業に急かされて決めてしまった...", startTag: "失敗回避", cta: "AIで確認する" },
+    { title: "リフォームで100万損しました", tag: "リフォーム", desc: "見積もりを1社しか取らなかった...", startTag: "業者探し", cta: "失敗を避ける" },
+    { title: "投資物件で空室が続いています", tag: "投資", desc: "利回りだけ見て立地を軽視していた...", startTag: "初心者", cta: "リスクを診断する" },
   ];
 
   return (
@@ -602,12 +602,18 @@ function LeftPanel({ onNavigate }) {
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {cases.map((c, i) => (
-          <div key={i} style={{ background: C.redBg, borderLeft: `3px solid ${C.red}`, padding: "10px 12px", borderRadius: "0 10px 10px 0" }}>
+          <div key={i}
+            onClick={() => onStartChat && onStartChat(c.startTag)}
+            style={{ background: C.redBg, borderLeft: `3px solid ${C.red}`, padding: "10px 12px", borderRadius: "0 10px 10px 0", cursor: "pointer", transition: "opacity 0.2s" }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: C.red, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>{c.title}</p>
               <span style={{ fontSize: 9, background: "#ffd5d5", color: C.red, padding: "1px 5px", borderRadius: 3, fontWeight: 600, flexShrink: 0, marginLeft: 4 }}>{c.tag}</span>
             </div>
             <p style={{ fontSize: 10, color: "#666", margin: 0, lineHeight: 1.5, fontFamily: "'Noto Sans JP', sans-serif" }}>{c.desc}</p>
+            <p style={{ fontSize: 10, color: C.blue, fontWeight: 700, margin: "4px 0 0", fontFamily: "'Noto Sans JP', sans-serif" }}>→ {c.cta}</p>
           </div>
         ))}
       </div>
@@ -715,6 +721,7 @@ function FixedCTA({ onStartChat }) {
 export default function HomeScreen({ onNavigate }) {
   const navigate = onNavigate || (() => {});
   const [showChat, setShowChat] = useState(false);
+  const [initialTag, setInitialTag] = useState(null);
   const [user, setUser] = useState(null);
   const chatRef = useRef(null);
 
@@ -768,11 +775,11 @@ export default function HomeScreen({ onNavigate }) {
         {/* 3カラム */}
         <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: 0, alignItems: "start", width: "100%" }}>
           <div style={{ padding: "0 16px 0 20px" }}>
-            <LeftPanel onNavigate={navigate} />
+            <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
             {showChat ? (
-              <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} />
+              <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
             ) : (
               <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
