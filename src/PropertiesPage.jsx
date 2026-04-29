@@ -218,8 +218,8 @@ export default function PropertiesPage({ user, onNavigate }) {
   const handleMouseUp = (e) => {
     if (!isDragging.current || mouseStartY.current === null) return
     const diff = mouseStartY.current - e.clientY
-    if (diff > 50 && currentIndex < properties.length - 1) setCurrentIndex(i => i + 1)
-    if (diff < -50 && currentIndex > 0) setCurrentIndex(i => i - 1)
+    if (diff < -50 && currentIndex < properties.length - 1) setCurrentIndex(i => i + 1)
+    if (diff > 50 && currentIndex > 0) setCurrentIndex(i => i - 1)
     mouseStartY.current = null
     isDragging.current = false
   }
