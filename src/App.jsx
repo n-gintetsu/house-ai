@@ -471,10 +471,13 @@ export default function App() {
     title: '',
     body: '',
     author: '',
+    lossAmount: '',
+    category: 'other',
   })
   const [expandedPost, setExpandedPost] = useState(null)
   const [commentDrafts, setCommentDrafts] = useState({})
   const [aiLoadingPostId, setAiLoadingPostId] = useState(null)
+  const [rankSort, setRankSort] = useState('empathy')
 
   useEffect(() => {
     saveCommunity(posts)
@@ -2088,7 +2091,13 @@ export default function App() {
             <div className="ha-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                 <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <select value={rankSort} onChange={(e) => setRankSort(e.target.value)}
+                    style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', color: '#555', cursor: 'pointer' }}>
+                    <option value="empathy">💗 共感順</option>
+                    <option value="likes">👍 いいね順</option>
+                    <option value="new">🆕 新着順</option>
+                  </select>
                   <button type="button" onClick={() => setTab('properties')}
                     style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     🏠 物件情報
@@ -2139,7 +2148,14 @@ export default function App() {
               ) : (
                 posts.map((post) => (
                   <article key={post.id} className="ha-post" style={{ color: '#1a1a1a' }}>
-                    <h4>{post.title}</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <h4 style={{ margin: 0, flex: 1 }}>{post.title}</h4>
+                      {post.lossAmount && (
+                        <span style={{ fontSize: 11, fontWeight: 700, background: '#fff5f5', color: '#c0392b', border: '1px solid #ffd5d5', padding: '2px 8px', borderRadius: 10, marginLeft: 8, whiteSpace: 'nowrap' }}>
+                          💸 {post.lossAmount}
+                        </span>
+                      )}
+                    </div>
                     <div className="ha-postBody">{post.body}</div>
                     <div className="ha-postMeta">
                       {post.author} ・ {new Date(post.createdAt).toLocaleString('ja-JP')}
