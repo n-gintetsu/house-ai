@@ -192,24 +192,24 @@ function CompareModal({ compareList, onClose, onChat }) {
     { label: '価格', render: (p, s) => (
       <div>
         <div style={{ color: '#c9a84c', fontSize: 11 }}>{stars(s.priceScore)}</div>
-        <div style={{ color: '#888', fontSize: 10 }}>{p.price ? `${p.price.toLocaleString()}万円` : p.rent ? `¥${p.rent.toLocaleString()}/月` : '未定'}</div>
+        <div style={{ color: '#ddd', fontSize: 10 }}>{p.price ? `${p.price.toLocaleString()}万円` : p.rent ? `¥${p.rent.toLocaleString()}/月` : '未定'}</div>
       </div>
     )},
     { label: '立地', render: (p, s) => (
       <div>
         <div style={{ color: '#c9a84c', fontSize: 11 }}>{stars(s.walkScore)}</div>
-        <div style={{ color: '#888', fontSize: 10 }}>{s.comments.walk.slice(0, 10)}</div>
+        <div style={{ color: '#ddd', fontSize: 10 }}>{s.comments.walk.slice(0, 10)}</div>
       </div>
     )},
     { label: '将来性', render: (p, s) => (
       <div>
         <div style={{ color: '#c9a84c', fontSize: 11 }}>{stars(s.futureScore)}</div>
-        <div style={{ color: '#888', fontSize: 10 }}>{s.comments.future.slice(0, 10)}</div>
+        <div style={{ color: '#ddd', fontSize: 10 }}>{s.comments.future.slice(0, 10)}</div>
       </div>
     )},
-    { label: '間取り', render: (p) => <span style={{ color: '#fff', fontSize: 12 }}>{p.layout || '-'}</span> },
-    { label: '面積', render: (p) => <span style={{ color: '#fff', fontSize: 12 }}>{p.area ? `${p.area}m2` : '-'}</span> },
-    { label: 'エリア', render: (p) => <span style={{ color: '#aaa', fontSize: 10, lineHeight: 1.4 }}>{p.address ? p.address.slice(0, 12) : '-'}</span> },
+    { label: '間取り', render: (p) => <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{p.layout || '-'}</span> },
+    { label: '面積', render: (p) => <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{p.area ? `${p.area}m2` : '-'}</span> },
+    { label: 'エリア', render: (p) => <span style={{ color: '#ddd', fontSize: 10, lineHeight: 1.4 }}>{p.address ? p.address.slice(0, 12) : '-'}</span> },
   ]
 
   return (
@@ -226,9 +226,9 @@ function CompareModal({ compareList, onClose, onChat }) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <div style={{ width: 44 }} />
             {compareList.map((p, i) => (
-              <div key={p.id} style={{ flex: 1, background: i === bestIdx ? 'rgba(201,168,76,0.15)' : '#1a1a1a', border: i === bestIdx ? '1.5px solid #c9a84c' : '1px solid #333', borderRadius: 10, padding: '16px 6px 8px', textAlign: 'center', position: 'relative', marginTop: i === bestIdx ? 8 : 0 }}>
+              <div key={p.id} style={{ flex: 1, background: i === bestIdx ? 'rgba(201,168,76,0.15)' : '#1a1a1a', border: i === bestIdx ? '1.5px solid #c9a84c' : '1px solid #333', borderRadius: 10, padding: '18px 6px 8px', textAlign: 'center', position: 'relative', marginTop: i === bestIdx ? 12 : 0 }}>
                 {i === bestIdx && (
-                  <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#c9a84c', color: '#1a3a5c', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap', zIndex: 1 }}>
+                  <div style={{ position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)', background: '#c9a84c', color: '#1a3a5c', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap', zIndex: 1 }}>
                     AIおすすめ
                   </div>
                 )}
@@ -242,7 +242,7 @@ function CompareModal({ compareList, onClose, onChat }) {
             ))}
           </div>
           {rows.map((row) => (
-            <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #222' }}>
+            <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #333' }}>
               <span style={{ color: '#ccc', fontSize: 11, width: 44, flexShrink: 0 }}>{row.label}</span>
               {compareList.map((p, i) => (
                 <div key={p.id} style={{ flex: 1, textAlign: 'center', background: i === bestIdx ? 'rgba(201,168,76,0.05)' : 'transparent', borderRadius: 6, padding: '4px 2px' }}>
@@ -253,7 +253,7 @@ function CompareModal({ compareList, onClose, onChat }) {
           ))}
           <div style={{ background: 'rgba(47,107,255,0.12)', border: '1px solid rgba(47,107,255,0.3)', borderRadius: 10, padding: '10px 12px', margin: '12px 0' }}>
             <p style={{ color: '#2F6BFF', fontSize: 12, fontWeight: 700, margin: '0 0 4px' }}>AI総評</p>
-            <p style={{ color: '#aaa', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
+            <p style={{ color: '#ddd', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
               {compareList[bestIdx] ? compareList[bestIdx].title || '物件' : ''}が総合スコア{scores[bestIdx] ? scores[bestIdx].overall : ''}点でトップです。{scores[bestIdx] ? scores[bestIdx].action : ''}
             </p>
           </div>
