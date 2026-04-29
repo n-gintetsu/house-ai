@@ -1203,9 +1203,6 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div className="ha-pill" title="Claudeモデル">
-              Claude: {model}
-            </div>
             <button
               type="button"
               className="ha-btn"
