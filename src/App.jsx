@@ -1214,22 +1214,6 @@ export default function App() {
         </header>
         <TickerBanner />
 
-        <div style={{
-          margin: '0 12px 12px',
-          padding: '14px 16px',
-          borderRadius: 14,
-          background: '#fffbeb',
-          border: '1px solid #f59e0b',
-          fontSize: 13,
-          lineHeight: 1.7,
-          color: '#92400e',
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>📋 ご利用上の注意</div>
-          <div><strong>目的：</strong>当コミュニティは不動産にまつわるお悩みや課題を解決することを目的としています。</div>
-          <div>※ 組織名・固有名詞・個人もしくは組織を特定できるような内容はお控えください。</div>
-          <div>※ コミュニティ内での営業は理由を問わずアドバイス以外は禁止とします。</div>
-          <div>※ 悩みや問題解決以外の目的でのご利用はご遠慮ください。運営側で発見した場合、如何なる理由を問わず削除させていただく場合がございます。</div>
-        </div>
 
         <nav className="ha-tabs" role="tablist" aria-label="メイン">
           {TABS.map((t) => (
