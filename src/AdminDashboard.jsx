@@ -238,7 +238,7 @@ function PropertiesPanel({ supabase }) {
                 {p.rent ? `賃料 ${Math.round(p.rent/10000)}万円/月` : ''}
                 {p.price ? `価格 ${(p.price/10000).toLocaleString()}万円` : ''}
               </div>
-              <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}</div>
+              <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: p.status === 'active' ? '#dcfce7' : '#f1f5f9', color: p.status === 'active' ? '#16a34a' : '#94a3b8' }}>
@@ -570,7 +570,7 @@ export default function AdminDashboard() {
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
                       <div style={{ fontSize: 13, color: '#555', marginTop: 4, lineHeight: 1.5 }}>{p.body?.slice(0, 100)}{p.body?.length > 100 ? '...' : ''}</div>
                       <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
-                        投稿者：{p.author_name || '匿名'} / {p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}
+                        投稿者：{p.author_name || '匿名'} / {p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}
                       </div>
                     </div>
                     <button onClick={() => deletePost(p.id)} style={{ marginLeft: 12, padding: '6px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
@@ -761,7 +761,7 @@ function AdManagement({ supabaseAdmin }) {
                   <div style={{ fontWeight: 700, fontSize: 14, color: '#1a3a5c' }}>{p.company_name || p.user_id}</div>
                   {p.ad_title && <div style={{ fontSize: 12, color: '#555', marginTop: 3 }}>広告タイトル：{p.ad_title}</div>}
                   {p.ad_description && <div style={{ fontSize: 11, color: '#777', marginTop: 2 }}>{p.ad_description}</div>}
-                  <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>登録：{p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}</div>
+                  <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>登録：{p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: p.ad_status === '掲載中' ? '#dcfce7' : '#fef9c3', color: p.ad_status === '掲載中' ? '#16a34a' : '#92400e' }}>
