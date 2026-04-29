@@ -31,6 +31,7 @@ const FLOW = {
     text: "こんにちは！不動産AIコンシェルジュです😊\n30秒であなたに最適な解決方法をご提案します。\n\nどんなご相談ですか？",
     choices: [
       { label: "🏠 購入したい", next: "buy_type" },
+      { label: "🏠 借りたい（賃貸）", next: "rent_worry" },
       { label: "🏷️ 売却したい", next: "sell_worry" },
       { label: "💰 投資したい", next: "invest_worry" },
       { label: "🔨 リフォームしたい", next: "reform_worry" },
@@ -60,6 +61,21 @@ const FLOW = {
       { label: "😰 失敗したくない", next: "value", tag: "失敗回避" },
       { label: "🤷 何から始めるかわからない", next: "value", tag: "初心者" },
     ],
+  },
+  rent_worry: {
+    text: "賃貸でどんなことが気になりますか？👇",
+    choices: [
+      { label: "💰 家賃・予算が不安", next: "value", tag: "家賃不安" },
+      { label: "📍 エリア・駅近で探したい", next: "rent_area", tag: "エリア重視" },
+      { label: "🏠 間取り・設備にこだわりたい", next: "value", tag: "設備重視" },
+      { label: "⏰ 入居時期が決まっている", next: "value", tag: "急ぎ" },
+    ],
+  },
+  rent_area: {
+    text: "ご希望のエリアはどちらですか？",
+    freeInput: true,
+    freeInputPlaceholder: "例：大宮駅周辺、さいたま市など",
+    next: "value",
   },
   sell_worry: {
     text: "今こんな不安ありませんか？👇",
@@ -241,9 +257,14 @@ function getMatchReason(tags) {
 
 // ダミー業者データ（実際はSupabaseから取得）
 function getMatchedVendors(tags) {
+  const isRent = tags.some(t => ["家賃不安","エリア重視","設備重視","急ぎ"].includes(t))
   const isInvest = tags.some(t => ["初心者","経験者","利回り改善","物件探し中"].includes(t));
   const isReform = tags.some(t => ["購入前","現居","費用確認","業者探し"].includes(t));
 
+  if (isRent) return [
+    { name: "〇〇賃貸サポート", desc: "賃貸物件探し・条件整理の専門家", plan: "premium", reason: getMatchReason(tags) },
+    { name: "△△不動産エージェント", desc: "エリア密着の賃貸専門店", plan: "standard", reason: null },
+  ]
   if (isInvest) return [
     { name: "〇〇不動産投資コンサル", desc: "投資物件・収益分析の専門家", plan: "premium", reason: getMatchReason(tags) },
     { name: "△△資産運用アドバイザー", desc: "ローン・資金計画の相談", plan: "standard", reason: null },
