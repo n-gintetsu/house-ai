@@ -106,7 +106,7 @@ function AIPanel({ property, onClose, onChat }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'flex-end' }}
       onClick={onClose}>
-      <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', maxWidth: 480, margin: '0 auto' }}
+      <div style={{ background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '24px 20px 32px', width: '100%', boxSizing: 'border-box' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '0 auto 20px' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
