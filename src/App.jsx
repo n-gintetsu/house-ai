@@ -6,6 +6,7 @@ import TickerBanner from './TickerBanner'
 import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 import ColumnPage from './ColumnPage'
 import HomeScreen from './HomeScreen'
+import PropertiesPage from './PropertiesPage'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 const AI_CHAT_FREE_LIMIT = 5
