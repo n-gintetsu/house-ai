@@ -773,7 +773,7 @@ export default function HomeScreen({ onNavigate }) {
         </div>
 
         {/* 3カラム */}
-        <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: 0, alignItems: "start", width: "100%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr 300px", gap: 0, alignItems: "start", width: "100%" }}>
           <div style={{ padding: "0 16px 0 20px" }}>
             <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
           </div>
@@ -804,7 +804,7 @@ export default function HomeScreen({ onNavigate }) {
             { label: "専門家の方はこちら", tab: "expert" },
             { label: "物件を見る", tab: "properties" },
           ].map((l) => (
-            <button key={l.label} onClick={() => navigate(l.tab)} style={{ background: "none", border: "none", color: "#bbb", fontSize: 11, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline" }}>
+            <button key={l.label} onClick={() => navigate(l.tab)} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>
               {l.label}
             </button>
           ))}
