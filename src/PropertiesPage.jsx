@@ -226,9 +226,9 @@ function CompareModal({ compareList, onClose, onChat }) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <div style={{ width: 44 }} />
             {compareList.map((p, i) => (
-              <div key={p.id} style={{ flex: 1, background: i === bestIdx ? 'rgba(201,168,76,0.15)' : '#1a1a1a', border: i === bestIdx ? '1.5px solid #c9a84c' : '1px solid #333', borderRadius: 10, padding: '8px 6px', textAlign: 'center', position: 'relative' }}>
+              <div key={p.id} style={{ flex: 1, background: i === bestIdx ? 'rgba(201,168,76,0.15)' : '#1a1a1a', border: i === bestIdx ? '1.5px solid #c9a84c' : '1px solid #333', borderRadius: 10, padding: '16px 6px 8px', textAlign: 'center', position: 'relative', marginTop: i === bestIdx ? 8 : 0 }}>
                 {i === bestIdx && (
-                  <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', background: '#c9a84c', color: '#1a3a5c', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                  <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#c9a84c', color: '#1a3a5c', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap', zIndex: 1 }}>
                     AIおすすめ
                   </div>
                 )}
@@ -243,7 +243,7 @@ function CompareModal({ compareList, onClose, onChat }) {
           </div>
           {rows.map((row) => (
             <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #222' }}>
-              <span style={{ color: '#666', fontSize: 11, width: 44, flexShrink: 0 }}>{row.label}</span>
+              <span style={{ color: '#ccc', fontSize: 11, width: 44, flexShrink: 0 }}>{row.label}</span>
               {compareList.map((p, i) => (
                 <div key={p.id} style={{ flex: 1, textAlign: 'center', background: i === bestIdx ? 'rgba(201,168,76,0.05)' : 'transparent', borderRadius: 6, padding: '4px 2px' }}>
                   {row.render(p, scores[i])}
