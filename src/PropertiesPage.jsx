@@ -21,7 +21,6 @@ const C = {
 // AI評価バッジ
 function AIBadge({ property }) {
   const price = property.price || 0
-  const walk = property.walk_minutes || 10
 
   let grade, label, color
   if (walk <= 5 && price < 5000) { grade = 'S'; label = '掘り出し物'; color = '#06C755' }
@@ -46,7 +45,6 @@ function AIBadge({ property }) {
 // AI評価パネル
 function AIPanel({ property, onClose, onChat }) {
   const price = property.price || 0
-  const walk = property.walk_minutes || 10
 
   const priceScore = price < 3000 ? 5 : price < 5000 ? 4 : price < 8000 ? 3 : price < 12000 ? 2 : 1
   const walkScore = walk <= 5 ? 5 : walk <= 10 ? 4 : walk <= 15 ? 3 : walk <= 20 ? 2 : 1
@@ -61,7 +59,7 @@ function AIPanel({ property, onClose, onChat }) {
         onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: '#444', borderRadius: 2, margin: '0 auto 20px' }} />
         <p style={{ color: C.gold, fontSize: 13, fontWeight: 700, margin: '0 0 4px' }}>🤖 AI評価レポート</p>
-        <p style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: '0 0 20px' }}>{property.name || property.property_name || '物件名未設定'}</p>
+        <p style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: '0 0 20px' }}>{property.title || property.property_name || '物件名未設定'}</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
           {[
@@ -105,7 +103,7 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
     <div style={{ position: 'relative', width: '100%', height: '100vh', background: C.bg, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
       {/* 物件画像 */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <img src={imageUrl} alt={property.name}
+        <img src={imageUrl} alt={property.title}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80' }}
         />
@@ -134,7 +132,7 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
           </button>
 
           {/* シェア */}
-          <button onClick={() => navigator.share?.({ title: property.name, url: window.location.href })}
+          <button onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 48, height: 48, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <span style={{ fontSize: 20 }}>↗️</span>
             <span style={{ color: '#fff', fontSize: 9 }}>シェア</span>
@@ -145,7 +143,7 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 16px 8px' }}>
           <AIBadge property={property} />
           <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '8px 0 4px', lineHeight: 1.3 }}>
-            {property.name || property.property_name || '物件名未設定'}
+            {property.title || property.property_name || '物件名未設定'}
           </h2>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
             <span style={{ color: C.gold, fontSize: 24, fontWeight: 700 }}>
@@ -156,7 +154,6 @@ function PropertyCard({ property, onChat, onSave, saved, isActive }) {
             {property.address && <span style={{ color: C.muted, fontSize: 12 }}>📍 {property.address}</span>}
             {property.layout && <span style={{ color: C.muted, fontSize: 12 }}>🏠 {property.layout}</span>}
             {property.area && <span style={{ color: C.muted, fontSize: 12 }}>📐 {property.area}㎡</span>}
-            {property.walk_minutes && <span style={{ color: C.muted, fontSize: 12 }}>🚶 徒歩{property.walk_minutes}分</span>}
           </div>
         </div>
       </div>
@@ -193,7 +190,7 @@ export default function PropertiesPage({ user, onNavigate }) {
 
   const fetchProperties = async () => {
     setLoading(true)
-    let query = supabase.from('properties').select('*').eq('published', true).order('created_at', { ascending: false })
+    let query = supabase.from('properties').select('*').eq('status', 'published').order('created_at', { ascending: false })
     if (filter !== 'all') query = query.eq('property_type', filter)
     const { data } = await query
     setProperties(data || [])
@@ -298,9 +295,9 @@ export default function PropertiesPage({ user, onNavigate }) {
                 <img src={p.images?.[0] || p.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80'}
                   style={{ width: '100%', height: 160, objectFit: 'cover' }}
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80' }}
-                  alt={p.name} />
+                  alt={p.title} />
                 <div style={{ padding: '12px' }}>
-                  <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: '0 0 4px' }}>{p.name || '物件名未設定'}</p>
+                  <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: '0 0 4px' }}>{p.title || '物件名未設定'}</p>
                   <p style={{ color: C.gold, fontSize: 16, fontWeight: 700, margin: '0 0 6px' }}>
                     {p.price ? `${p.price.toLocaleString()}万円` : p.rent ? `¥${p.rent.toLocaleString()}/月` : '価格未定'}
                   </p>
