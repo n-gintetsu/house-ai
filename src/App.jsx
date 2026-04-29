@@ -637,7 +637,7 @@ export default function App() {
 
         .ha-app {
           width: 100%;
-          max-width: 1080px;
+          max-width: 100%;
           margin: 0 auto;
           min-height: 100svh;
           display: flex;
