@@ -399,7 +399,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
   const endRef = useRef(null);
 
   useEffect(() => { addAIMessage(FLOW.start.text); if (initialTag) setTags([initialTag]); }, []);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isTyping]);
+  useEffect(() => { if (endRef.current) { const el = endRef.current; const parent = el.parentElement; if (parent) parent.scrollTop = parent.scrollHeight; } }, [messages, isTyping]);
 
   const addAIMessage = (text, delay = 0) => {
     if (delay > 0) {
@@ -495,7 +495,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
         </div>
 
         {/* メッセージ */}
-        <div style={{ padding: "12px", background: "#F0F4F8", minHeight: 80, maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ padding: "12px", background: "#F0F4F8", height: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
           {messages.map((m, i) => (
             <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
               {m.role === "ai" && <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, marginRight: 6, flexShrink: 0 }}>🏠</div>}
@@ -536,8 +536,8 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
           {!isTyping && node?.freeInput && (
             <div style={{ display: "flex", gap: 6 }}>
               <input value={freeInput} onChange={(e) => setFreeInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleFreeInput()} placeholder={node.freeInputPlaceholder}
-                style={{ flex: 1, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title }} />
-              <button onClick={handleFreeInput} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>送信</button>
+                style={{ flex: 1, minWidth: 0, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title }} />
+              <button onClick={handleFreeInput} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", flexShrink: 0 }}>送信</button>
             </div>
           )}
 
@@ -789,7 +789,7 @@ export default function HomeScreen({ onNavigate }) {
               border: '1.5px solid #ddd',
               borderRadius: 999,
               padding: isMobile ? '12px 16px' : '16px 24px',
-              maxWidth: isMobile ? 340 : 520,
+              maxWidth: isMobile ? 280 : 520,
               width: '100%',
               cursor: 'pointer',
               boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
@@ -819,7 +819,7 @@ export default function HomeScreen({ onNavigate }) {
         {/* レイアウト：スマホは1カラム、PCは3カラム */}
         {isMobile ? (
           // スマホ：1カラム縦積み
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
             {/* AIチャット */}
             <div ref={chatRef}>
               {showChat ? (
