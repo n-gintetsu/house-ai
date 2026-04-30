@@ -54,7 +54,7 @@ function InputField({ label, id, value, onChange, step = '1', unit = '' }) {
           value={value}
           step={step}
           onChange={e => onChange(id, e.target.value)}
-          style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: C.title, background: C.card, outline: 'none', boxSizing: 'border-box' }}
+          style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: C.title, background: C.card, outline: 'none', boxSizing: 'border-box', MozAppearance: 'textfield' }}
         />
         {unit && <span style={{ fontSize: 11, color: C.desc, flexShrink: 0 }}>{unit}</span>}
       </div>
@@ -159,6 +159,7 @@ NOI: ${fmtM(m.noi)}/年
   return (
     <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 60 }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
+      <style>{`input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield}`}</style>
 
       {/* ヘッダー */}
       <div style={{ background: C.navy, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
