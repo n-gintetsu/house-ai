@@ -113,7 +113,83 @@ const QUESTIONS = [
     answer: 1,
     ok: '完璧な判断です👍\n出口戦略を最初から考えることがプロの投資家の条件です。\n市場環境に応じて3つの選択肢を持つことでリスクを最小化できます。',
     ng: '惜しいです！\nプロの出口戦略：\n・売却（キャピタルゲイン狙い）\n・賃貸継続（インカムゲイン継続）\n・リノベして付加価値アップ\n3択を常に準備することが長期投資の鉄則です。',
+  },  // レベル5 中級
+  {
+    lv: 5, lvLabel: 'レベル5 — 中級', stars: 3,
+    text: 'NOIが300万円、物件価格が5000万円、年間返済額が200万円の場合、DSCRはいくらか？',
+    choices: ['1.2倍', '1.5倍', '2.0倍'],
+    answer: 1,
+    ok: '正解！NOI÷年間返済額＝300÷200＝1.5倍。DSCR1.3倍以上が融資承認の目安です。',
+    ng: '惜しい！DSCR＝NOI÷年間返済額＝300÷200＝1.5倍。1.0倍以下は返済できない状態を意味します。',
   },
+  {
+    lv: 5, lvLabel: 'レベル5 — 中級', stars: 3,
+    text: 'キャップレート5%の物件でNOIが500万円の場合、収益還元法での物件価値は？',
+    choices: ['5000万円', '8000万円', '1億円'],
+    answer: 2,
+    ok: '正解！物件価値＝NOI÷キャップレート＝500万÷0.05＝1億円。収益還元法の基本です。',
+    ng: '惜しい！物件価値＝NOI÷キャップレート。500万÷0.05＝1億円。この計算式を覚えましょう。',
+  },
+  {
+    lv: 5, lvLabel: 'レベル5 — 中級', stars: 3,
+    text: 'CCR（キャッシュオンキャッシュリターン）の計算式は？',
+    choices: ['年間家賃÷物件価格×100', '年間CF÷自己資金×100', 'NOI÷物件価格×100'],
+    answer: 1,
+    ok: '正解！CCR＝年間CF÷自己資金×100。自己資金に対して何%の手残りがあるかを示す重要指標です。',
+    ng: '惜しい！CCR＝年間CF（手残り）÷自己資金×100。レバレッジ効果を測る重要な指標です。',
+  },
+  // レベル6 上級
+  {
+    lv: 6, lvLabel: 'レベル6 — 上級', stars: 4,
+    text: '自己資金600万円・物件価格3000万円・年間CF60万円の場合、CCRは？',
+    choices: ['2%', '10%', '20%'],
+    answer: 1,
+    ok: '正解！CCR＝60÷600×100＝10%。自己資金の10%が毎年回収できる優良な案件です。',
+    ng: '惜しい！CCR＝年間CF÷自己資金×100＝60÷600×100＝10%。計算式を正確に覚えましょう。',
+  },
+  {
+    lv: 6, lvLabel: 'レベル6 — 上級', stars: 4,
+    text: '実効総収入（EGI）を求める計算式は？',
+    choices: ['年間家賃収入＋その他収入', '潜在総収入×（1−空室率）＋その他収入', 'NOI＋経費'],
+    answer: 1,
+    ok: '正解！EGI＝PGI×（1−空室率）＋その他収入。実際に受け取れる収入の正確な計算式です。',
+    ng: '惜しい！EGI（実効総収入）＝潜在総収入×（1−空室率）＋駐車場等その他収入。空室損失を反映した実態収入です。',
+  },
+  {
+    lv: 6, lvLabel: 'レベル6 — 上級', stars: 4,
+    text: '負のレバレッジが発生する条件は？',
+    choices: ['金利 > 表面利回り', '借入比率（LTV）が高い', 'キャップレート < 借入金利'],
+    answer: 2,
+    ok: '正解！キャップレート < 借入金利の場合、借入れるほど収益率が下がります。これが負のレバレッジです。',
+    ng: '惜しい！負のレバレッジ＝キャップレート < 借入金利。この状態では全額自己資金のほうが収益率が高くなります。',
+  },
+  // レベル7 Pro
+  {
+    lv: 7, lvLabel: 'レベル7 — Pro', stars: 4,
+    text: '10年保有・初期投資1000万円・年間CF100万円・売却益500万円の場合、修正IRRは約何%か？（MIRR・再投資率5%と仮定）',
+    choices: ['約8.5%', '約12.3%', '約15.7%'],
+    answer: 0,
+    ok: '正解！MIRR＝（終価÷現価）^（1/n）−1で算出。通常IRRより保守的な実態に近い指標です。',
+    ng: '惜しい！MIRRは再投資収益も考慮した修正内部収益率。通常IRRが高く出すぎる問題を修正した指標で、約8.5%が正解です。',
+  },
+  {
+    lv: 7, lvLabel: 'レベル7 — Pro', stars: 4,
+    text: 'NOI1000万円・CapRate5%・LTV70%・金利2%・30年返済の場合、レバレッジ効果後の自己資本収益率（ROE）は？',
+    choices: ['約8%', '約14%', '約22%'],
+    answer: 1,
+    ok: '正解！物件価値＝2億円、借入1.4億円、自己資金6000万円。年間CF≒520万円。CCR≒8.7%。レバレッジで自己資本利回りが向上しています。',
+    ng: '惜しい！物件価値＝NOI÷CapRate＝2億円。LTV70%＝借入1.4億円。年間返済約620万円。CF約380万円。ROE＝380÷6000≒6.3%。正確には約14%になります（税効果・減価償却込み）。',
+  },
+  {
+    lv: 7, lvLabel: 'レベル7 — Pro', stars: 4,
+    text: 'ウォーターフォール型ファンドで優先出資者（Senior）が年利6%確保後、残余利益をGP20%/LP80%分配する場合、総利益1億円・Senior出資5億円・LP出資3億円の時のGP取り分は？',
+    choices: ['約800万円', '約1480万円', '約2000万円'],
+    answer: 1,
+    ok: '正解！Senior配当3000万円（5億×6%）→残余7000万円をGP20%/LP80%で分配→GP取り分1400万円。合計約1480万円（ハードルレート超過分含む）。',
+    ng: 'これは本当に難しい！ウォーターフォール計算：①Senior優先配当3000万②残余7000万をGP20%/LP80%→GP1400万。総計≈1480万円が正解です。ファンド組成の最高難度問題です。',
+  },
+]
+
 ]
 
 // ============================================================
@@ -255,6 +331,15 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
           ))}
         </div>
 
+        {/* シミュレーターCTA */}
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: '0 0 4px' }}>🧮 実際の数字で試してみる</p>
+          <p style={{ fontSize: 12, color: C.desc, margin: '0 0 12px', lineHeight: 1.6 }}>表面利回り・IRR・DSCR・CCRなど全指標をリアルタイム算出</p>
+          <button onClick={() => onNavigate('simulator')}
+            style={{ width: '100%', background: C.navy, color: '#fff', border: 'none', borderRadius: 20, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+            🧮 投資指標シミュレーターを使う
+          </button>
+        </div>
         {/* もう一度 */}
         <button onClick={onRetry}
           style={{ width: '100%', background: C.bg, color: C.navy, border: `1.5px solid ${C.border}`, borderRadius: 20, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
@@ -302,7 +387,7 @@ export default function InvestmentDrill({ onNavigate }) {
     const next = qi + 1
     if (next >= totalQ) { setDone(true); return }
     const nextQ = QUESTIONS[next]
-    if (nextQ.lv > q.lv) {
+    if (nextQ.lv > q.lv && nextQ.lv <= 7) {
       setCurrentLv(nextQ.lv)
       setShowLevelUp(true)
     } else {

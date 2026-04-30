@@ -8,6 +8,7 @@ import ColumnPage from './ColumnPage'
 import LegalPage from './LegalPage'
 import HomeScreen from './HomeScreen'
 import InvestmentDrill from './InvestmentDrill'
+import InvestmentSimulator from './InvestmentSimulator'
 import PropertiesPage from './PropertiesPage'
 
 const STORAGE_KEY = 'house-ai-community-v1'
@@ -1306,6 +1307,7 @@ export default function App() {
                     { id: 'agency',     label: '🏗️ 業者様向け' },
                     { id: 'column',     label: '💰 お得情報' },
                     { id: 'drill',      label: '📊 投資ドリル' },
+                    { id: 'simulator',  label: '🧮 投資シミュレーター' },
                     { id: 'member',     label: '👤 会員専用' },
                   ].map((item) => (
                     <button
@@ -2131,6 +2133,12 @@ export default function App() {
           {tab === 'drill' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <InvestmentDrill onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
+
+          {tab === 'simulator' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <InvestmentSimulator onNavigate={(view) => setTab(view)} />
             </div>
           )}
 
