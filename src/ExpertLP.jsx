@@ -66,8 +66,12 @@ export default function ExpertLP({ onNavigate }) {
     setSubmitted(true);
   };
 
-  const scrollToForm = () => {
+  const scrollToForm = (plan) => {
+    if (plan) setForm((p) => ({ ...p, plan }));
     document.getElementById("expert-form")?.scrollIntoView({ behavior: "smooth" });
+  };
+  const scrollToPlan = () => {
+    document.getElementById("expert-plan")?.scrollIntoView({ behavior: "smooth" });
   };
 
   if (submitted) {
@@ -106,7 +110,7 @@ export default function ExpertLP({ onNavigate }) {
           style={{ background: C.gold, color: C.navy, border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12, display: "block", margin: "0 auto 12px" }}>
           無料で掲載申請する
         </button>
-        <button onClick={scrollToForm}
+        <button onClick={scrollToPlan}
           style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 50, padding: "10px 28px", fontSize: 13, cursor: "pointer", marginTop: 10, display: "block", margin: "10px auto 0" }}>
           料金プランを見る
         </button>
@@ -160,7 +164,7 @@ export default function ExpertLP({ onNavigate }) {
         </div>
 
         {/* 料金プラン */}
-        <div style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <div id="expert-plan" style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 20, textAlign: "center" }}>料金プラン</h2>
           {[
             { key: "free", name: "フリープラン", price: "0円", items: ["プロフィール掲載", "一部案件閲覧", "問い合わせ制限あり"], color: C.border, textColor: C.title },
