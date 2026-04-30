@@ -1223,7 +1223,7 @@ export default function App() {
       `}</style>
 
       <div className="ha-app">
-        {tab !== 'properties' && <header className="ha-header">
+        {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo" aria-hidden="true">
               H
@@ -1337,7 +1337,7 @@ export default function App() {
               )}
             </div>
           </div>
-        </header>
+        </header>)}
         {tab !== 'properties' && <TickerBanner />}
 
 
