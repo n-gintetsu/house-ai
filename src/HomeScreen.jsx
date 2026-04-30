@@ -639,6 +639,7 @@ function RightPanel({ onNavigate }) {
         物件一覧を見る →
       </button>
     </div>
+      <AffiliateCard type="insurance" reason="物件購入・賃貸時に確認を" />
   );
 }
 
