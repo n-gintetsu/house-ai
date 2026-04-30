@@ -822,18 +822,7 @@ export default function HomeScreen({ onNavigate }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px" }}>
             {/* AIチャット */}
             <div ref={chatRef}>
-              {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
-              ) : (
-                <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 6 }}>AIに相談してみる</p>
-                  <p style={{ fontSize: 12, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 16, lineHeight: 1.6 }}>3ステップで最適な進め方を提案します</p>
-                  <div style={{ background: C.navy, color: "#fff", borderRadius: 50, padding: "12px 32px", fontSize: 14, fontWeight: 700, display: "inline-block", fontFamily: "'Noto Sans JP', sans-serif" }}>
-                    💬 無料でAI相談する
-                  </div>
-                </div>
-              )}
             </div>
             {/* 失敗事例 */}
             <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
@@ -857,18 +846,7 @@ export default function HomeScreen({ onNavigate }) {
               <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
-              {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
-              ) : (
-                <div style={{ background: C.card, borderRadius: 20, padding: "24px", border: `0.5px solid ${C.border}`, textAlign: "center", cursor: "pointer" }} onClick={handleStartChat}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: C.title, fontFamily: "'Noto Serif JP', serif", marginBottom: 6 }}>AIに相談してみる</p>
-                  <p style={{ fontSize: 12, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 16, lineHeight: 1.6 }}>3ステップで最適な進め方を提案します</p>
-                  <div style={{ background: C.navy, color: "#fff", borderRadius: 50, padding: "12px 32px", fontSize: 14, fontWeight: 700, display: "inline-block", fontFamily: "'Noto Sans JP', sans-serif" }}>
-                    💬 無料でAI相談する
-                  </div>
-                </div>
-              )}
               <CommunityStrip onNavigate={navigate} />
             </div>
             <div style={{ padding: "0 20px 0 16px" }}>
