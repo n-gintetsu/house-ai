@@ -190,12 +190,10 @@ const QUESTIONS = [
   },
 ]
 
-]
-
 // ============================================================
 // スター表示
 // ============================================================
-function Stars({ count, max = 4 }) {
+function Stars({ count, max = 7 }) {
   return (
     <span style={{ fontSize: 14, letterSpacing: 2 }}>
       {'★'.repeat(count)}{'☆'.repeat(max - count)}
