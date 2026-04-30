@@ -148,7 +148,9 @@ NOI: ${fmtM(m.noi)}/年
         })
       })
       const data = await res.json()
-      setAiAdvice(data.text || 'アドバイスを取得できませんでした。')
+      const raw = data.text || 'アドバイスを取得できませんでした。'
+      const clean = raw.replace(/^#{1,3}\s/gm,'').replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/^-{3,}$/gm,'─────').replace(/^- /gm,'・')
+      setAiAdvice(clean)
     } catch {
       setAiAdvice('AIアドバイスの取得に失敗しました。もう一度お試しください。')
     } finally {
