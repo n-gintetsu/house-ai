@@ -217,7 +217,13 @@ export default function App() {
       setUser(u)
       window.__houseAiUser = u
     })
-    return () => listener.subscription.unsubscribe()
+    // MemberDashboard からのナビゲーションイベント
+    const handleNav = (e) => setTab(e.detail.tab)
+    window.addEventListener('navigate', handleNav)
+    return () => {
+      listener.subscription.unsubscribe()
+      window.removeEventListener('navigate', handleNav)
+    }
   }, [])
   const model = useMemo(
     () => import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5',

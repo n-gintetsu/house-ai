@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import PropertyMatching from './PropertyMatching'
 import { supabase } from './lib/supabase'
+import MemberDashboard from './MemberDashboard'
 
 export default function AuthPanel() {
   const [mode, setMode] = useState('login')
@@ -130,18 +130,14 @@ export default function AuthPanel() {
 
   if (mode === 'loggedIn' && user) {
     return (
-      <div>
-        <div style={{ padding: '16px 20px', background: '#1a3a5c', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>👤 {user.user_metadata?.name || user.email} さん</div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{user.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}</div>
-          </div>
-          <button style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer', fontSize: 13 }} onClick={handleLogout}>
-            ログアウト
-          </button>
-        </div>
-        <PropertyMatching user={user} />
-      </div>
+      <MemberDashboard
+        user={user}
+        onNavigate={(tab) => {
+          // App.jsx の setTab を呼ぶために window イベントを使う
+          window.dispatchEvent(new CustomEvent('navigate', { detail: { tab } }))
+        }}
+        onLogout={handleLogout}
+      />
     )
   }
 
