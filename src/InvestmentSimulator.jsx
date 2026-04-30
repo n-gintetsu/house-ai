@@ -65,18 +65,19 @@ function InputField({ label, id, value, onChange, step = '1', unit = '' }) {
 
 export default function InvestmentSimulator({ onNavigate }) {
   const [vals, setVals] = useState({
-    price: 3000, rent: 240, cost: 150, exp: 36,
-    loan: 2400, rate: 1.8, years: 25, vacancy: 5,
-    sell: 2800, hold: 10, dep: 60, tax: 20,
+    price: '3000', rent: '240', cost: '150', exp: '36',
+    loan: '2400', rate: '1.8', years: '25', vacancy: '5',
+    sell: '2800', hold: '10', dep: '60', tax: '20',
   })
   const [loading, setLoading] = useState(false)
   const [aiAdvice, setAiAdvice] = useState(null)
   const resultRef = useRef(null)
 
-  const set = (id, v) => setVals(prev => ({ ...prev, [id]: v === '' ? 0 : parseFloat(v) || 0 }))
+  const set = (id, v) => setVals(prev => ({ ...prev, [id]: v }))
 
   const calc = () => {
-    const { price: P, rent: R, cost: C2, exp: E, loan: L, rate: ri, years: Y, vacancy: VV, sell: SP, hold: H, dep: D, tax: T } = vals
+    const { price: _p, rent: _r, cost: _c2, exp: _e, loan: _l, rate: _ri, years: _y, vacancy: _vv, sell: _sp, hold: _h, dep: _d, tax: _t } = vals
+    const [P,R,C2,E,L,ri,Y,VV,SP,H,D,T] = [_p,_r,_c2,_e,_l,_ri,_y,_vv,_sp,_h,_d,_t].map(v=>parseFloat(v)||0)
     const i = ri / 100 / 12
     const n = Y * 12
     const equity = P + C2 - L
