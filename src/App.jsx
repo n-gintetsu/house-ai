@@ -7,6 +7,7 @@ import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 import ColumnPage from './ColumnPage'
 import LegalPage from './LegalPage'
 import HomeScreen from './HomeScreen'
+import InvestmentDrill from './InvestmentDrill'
 import PropertiesPage from './PropertiesPage'
 
 const STORAGE_KEY = 'house-ai-community-v1'
@@ -2124,6 +2125,12 @@ export default function App() {
 
           {tab === 'column' && (
             <ColumnPage />
+          )}
+
+          {tab === 'drill' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <InvestmentDrill onNavigate={(view) => setTab(view)} />
+            </div>
           )}
 
           {tab === 'legal' && (
