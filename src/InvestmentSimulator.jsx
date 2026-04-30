@@ -50,11 +50,12 @@ function InputField({ label, id, value, onChange, step = '1', unit = '' }) {
       <label style={{ display: 'block', fontSize: 11, color: C.desc, marginBottom: 4 }}>{label}</label>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <input
-          type="number"
+          type="text"
+          inputMode="decimal"
           value={value}
           step={step}
           onChange={e => onChange(id, e.target.value)}
-          style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: C.title, background: C.card, outline: 'none', boxSizing: 'border-box', MozAppearance: 'textfield' }}
+          style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: C.title, background: C.card, outline: 'none', boxSizing: 'border-box' }}
         />
         {unit && <span style={{ fontSize: 11, color: C.desc, flexShrink: 0 }}>{unit}</span>}
       </div>
@@ -72,7 +73,7 @@ export default function InvestmentSimulator({ onNavigate }) {
   const [aiAdvice, setAiAdvice] = useState(null)
   const resultRef = useRef(null)
 
-  const set = (id, v) => setVals(prev => ({ ...prev, [id]: parseFloat(v) || 0 }))
+  const set = (id, v) => setVals(prev => ({ ...prev, [id]: v === '' ? 0 : parseFloat(v) || 0 }))
 
   const calc = () => {
     const { price: P, rent: R, cost: C2, exp: E, loan: L, rate: ri, years: Y, vacancy: VV, sell: SP, hold: H, dep: D, tax: T } = vals
