@@ -1305,6 +1305,7 @@ export default function App() {
                     { id: 'community',  label: '🏘️ コミュニティ' },
                     { id: 'agency',     label: '🏗️ 業者様向け' },
                     { id: 'column',     label: '💰 お得情報' },
+                    { id: 'drill',      label: '📊 投資ドリル' },
                     { id: 'member',     label: '👤 会員専用' },
                   ].map((item) => (
                     <button

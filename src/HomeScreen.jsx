@@ -837,6 +837,14 @@ export default function HomeScreen({ onNavigate }) {
             <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
             {/* コミュニティ */}
             <CommunityStrip onNavigate={navigate} />
+            {/* 投資ドリルCTA */}
+            <div style={{ background: '#FAEEDA', border: '1px solid #EF9F27', borderRadius: 16, padding: '16px' }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#633806', margin: '0 0 4px' }}>📊 投資家へのサクセスロード</p>
+              <p style={{ fontSize: 12, color: '#854F0B', margin: '0 0 12px', lineHeight: 1.6 }}>楽しく学べる不動産投資術ドリルで投資力を測ろう！</p>
+              <button onClick={() => navigate('drill')} style={{ width: '100%', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 20, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Noto Sans JP', sans-serif" }}>
+                今すぐチャレンジ →
+              </button>
+            </div>
             {/* 最新情報 */}
             <RightPanel onNavigate={navigate} />
           </div>
