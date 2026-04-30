@@ -6,6 +6,7 @@ import TickerBanner from './TickerBanner'
 import { AdBanner, PremiumUpgradeBanner } from './PremiumBanner'
 import ColumnPage from './ColumnPage'
 import LegalPage from './LegalPage'
+import ExpertLP from './ExpertLP'
 import HomeScreen from './HomeScreen'
 import InvestmentDrill from './InvestmentDrill'
 import InvestmentSimulator from './InvestmentSimulator'
@@ -2146,6 +2147,12 @@ export default function App() {
           {tab === 'legal' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <LegalPage onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
+
+          {tab === 'expertlp' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <ExpertLP onNavigate={(view) => setTab(view)} />
             </div>
           )}
 

@@ -881,7 +881,7 @@ export default function HomeScreen({ onNavigate }) {
         <div style={{ display: "flex", justifyContent: "center", gap: 16, padding: "20px 16px 0", flexWrap: "wrap" }}>
           {[
             { label: "業者の方はこちら", tab: "agency" },
-            { label: "専門家の方はこちら", tab: "expert" },
+            { label: "専門家の方はこちら", tab: "expertlp" },
             { label: "物件を見る", tab: "properties" },
           ].map((l) => (
             <button key={l.label} onClick={() => navigate(l.tab)} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>
