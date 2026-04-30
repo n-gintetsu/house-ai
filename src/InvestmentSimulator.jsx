@@ -246,6 +246,8 @@ NOI: ${fmtM(m.noi)}/年
               style={{ width: '100%', background: C.gold, color: C.navy, border: 'none', borderRadius: 20, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               👉 実際の投資物件を見る
             </button>
+          <AffiliateCard type="loan" reason="シミュレーション結果を活用した資金調達" />
+          <AffiliateCard type="investment" reason="投資知識をさらに深める" />
           </div>
         )}
       </div>
