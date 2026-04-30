@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { AffiliateCard } from './AffiliateCard'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -491,6 +492,11 @@ export default function PropertiesPage({ user, onNavigate }) {
                     {p.price ? `${p.price.toLocaleString()}万円` : p.rent ? `¥${p.rent.toLocaleString()}/月` : '価格未定'}
                   </p>
                   <AIBadge property={p} />
+                  {properties.indexOf(p) === 1 && (
+                    <div style={{ marginTop: 8 }}>
+                      <AffiliateCard type="insurance" reason="物件購入時に確認を" />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

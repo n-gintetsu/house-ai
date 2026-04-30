@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AffiliateCard } from './AffiliateCard'
 
 const C = {
   navy: '#1a3a5c',
@@ -314,20 +315,8 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
         </div>
 
         {/* アフィリエイト */}
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px', marginBottom: 16 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: '0 0 10px' }}>💰 資金管理・運用はこちら</p>
-          {[
-            { name: 'NISA・つみたて投資入門', tag: 'おすすめ' },
-            { name: '不動産投資ローン比較', tag: '低金利' },
-            { name: 'キャッシュフロー管理ツール', tag: '無料' },
-          ].map((item) => (
-            <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `0.5px solid ${C.border}` }}>
-              <span style={{ background: C.navy, color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{item.tag}</span>
-              <span style={{ fontSize: 12, color: C.title }}>{item.name}</span>
-              <span style={{ marginLeft: 'auto', color: C.desc, fontSize: 12 }}>→</span>
-            </div>
-          ))}
-        </div>
+        <AffiliateCard type="investment" reason="投資を学んだ次のステップ" />
+        <AffiliateCard type="loan" reason="資金計画に役立てましょう" />
 
         {/* シミュレーターCTA */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center' }}>

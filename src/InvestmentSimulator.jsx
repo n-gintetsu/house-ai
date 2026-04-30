@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { AffiliateCard } from './AffiliateCard'
 
 const C = {
   navy: '#1a3a5c',

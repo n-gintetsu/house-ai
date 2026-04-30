@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { AffiliateCard } from './AffiliateCard';
 import { supabase } from "./lib/supabase";
 
 // ============================================================
