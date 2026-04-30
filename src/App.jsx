@@ -986,7 +986,7 @@ export default function App() {
 
           .ha-composerInner {
             display: flex;
-            align-items: stretch;
+            align-items: flex-end;
             gap: 8px;
           }
 
@@ -1223,7 +1223,7 @@ export default function App() {
       `}</style>
 
       <div className="ha-app">
-        <header className="ha-header">
+        {tab !== 'properties' && <header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo" aria-hidden="true">
               H
@@ -2150,7 +2150,7 @@ export default function App() {
           )}
 
           {tab === 'community' && (
-            <div className="ha-panel">
+            <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                 <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

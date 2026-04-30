@@ -461,7 +461,7 @@ export default function PropertiesPage({ user, onNavigate }) {
         </div>
       ) : viewMode === 'swipe' ? (
         <div ref={containerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
-          style={{ overflow: 'hidden', height: '100vh' }}>
+          style={{ overflow: 'hidden', height: '100vh', paddingTop: 0 }}>
           <div style={{ transform: `translateY(-${currentIndex * 100}vh)`, transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)' }}>
             {properties.map((p, i) => (
               <PropertyCard key={p.id} property={p} onChat={handleChat} onSave={handleSave} saved={saved.has(p.id)} isActive={i === currentIndex}
