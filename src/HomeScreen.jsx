@@ -638,8 +638,8 @@ function RightPanel({ onNavigate }) {
       <button onClick={() => onNavigate("properties")} style={{ marginTop: 12, width: "100%", background: C.bg, color: C.navy, border: `1px solid ${C.border}`, borderRadius: 10, padding: "9px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
         物件一覧を見る →
       </button>
-    </div>
       <AffiliateCard type="insurance" reason="物件購入・賃貸時に確認を" />
+    </div>
   );
 }
 
