@@ -117,7 +117,7 @@ export function AffiliateCard({ type, reason }) {
         </div>
       </div>
       <p style={{ fontSize: 10, color: '#aaa', margin: '8px 0 0', fontFamily: "'Noto Sans JP', sans-serif" }}>
-        ※ 広告・PR
+        📌 おすすめ
       </p>
     </div>
   )
