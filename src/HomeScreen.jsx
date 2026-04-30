@@ -536,7 +536,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
           {!isTyping && node?.freeInput && (
             <div style={{ display: "flex", gap: 6 }}>
               <input value={freeInput} onChange={(e) => setFreeInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleFreeInput()} placeholder={node.freeInputPlaceholder}
-                style={{ flex: 1, minWidth: 0, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title }} />
+                style={{ flex: 1, minWidth: 0, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 16, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title }} />
               <button onClick={handleFreeInput} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", flexShrink: 0 }}>送信</button>
             </div>
           )}
@@ -772,8 +772,8 @@ export default function HomeScreen({ onNavigate }) {
                   color: C.title,
                   cursor: "pointer",
                   fontFamily: "'Noto Sans JP', sans-serif",
-                  flex: isMobile ? "1 1 40%" : "0 0 auto",
-                  maxWidth: isMobile ? "48%" : "none",
+                  flex: isMobile ? "1 1 45%" : "0 0 auto",
+                  maxWidth: isMobile ? "46%" : "none",
                 }}
               >{label}</button>
             ))}

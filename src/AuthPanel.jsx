@@ -101,7 +101,7 @@ export default function AuthPanel() {
     border: '1px solid rgba(26, 58, 92, 0.1)',
     background: '#ffffff',
     color: '#222222',
-    fontSize: 14,
+    fontSize: 16,
     outline: 'none',
     fontFamily: 'inherit',
   }
@@ -115,7 +115,7 @@ export default function AuthPanel() {
     borderRadius: 12,
     fontWeight: 750,
     cursor: loading ? 'not-allowed' : 'pointer',
-    fontSize: 14,
+    fontSize: 16,
     opacity: loading ? 0.6 : 1,
     width: '100%',
     marginTop: 8,
