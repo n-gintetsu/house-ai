@@ -495,7 +495,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
         </div>
 
         {/* メッセージ */}
-        <div style={{ padding: "12px", background: "#F0F4F8", minHeight: 240, maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ padding: "12px", background: "#F0F4F8", minHeight: 80, maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
           {messages.map((m, i) => (
             <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
               {m.role === "ai" && <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, marginRight: 6, flexShrink: 0 }}>🏠</div>}
@@ -822,7 +822,29 @@ export default function HomeScreen({ onNavigate }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px" }}>
             {/* AIチャット */}
             <div ref={chatRef}>
+              {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
+              ) : (
+                <div
+                  onClick={handleStartChat}
+                  style={{
+                    background: '#fff',
+                    border: '1.5px solid #ddd',
+                    borderRadius: 16,
+                    padding: '20px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#1a3a5c', margin: '0 0 4px', fontFamily: "'Noto Sans JP', sans-serif" }}>AIに相談してみる</p>
+                  <p style={{ fontSize: 12, color: '#888', margin: '0 0 14px', fontFamily: "'Noto Sans JP', sans-serif" }}>3ステップで最適な進め方を提案します</p>
+                  <button style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Noto Sans JP', sans-serif" }}>
+                    💬 無料でAI相談する
+                  </button>
+                </div>
+              )}
             </div>
             {/* 失敗事例 */}
             <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />

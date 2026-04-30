@@ -198,7 +198,7 @@ export default function MemberDashboard({ user, onNavigate, onLogout }) {
           <div style={{ flex: 1 }}>
             <p style={{ color: '#fff', fontSize: 17, fontWeight: 700, margin: '0 0 2px' }}>{name} さん</p>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span style={{ background: C.gold, color: C.navy, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{memberType}</span>
+              <span style={{ background: C.gold, color: C.navy, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>{memberType}</span>
               {joinDate && <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>登録 {joinDate}</span>}
             </div>
           </div>
