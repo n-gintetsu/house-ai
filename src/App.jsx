@@ -2220,7 +2220,7 @@ export default function App() {
                   onChange={(e) => setCommunityDraft((d) => ({ ...d, lossAmount: e.target.value }))}
                   placeholder="例：約100万円"
                 />
-                <button type="button" className="ha-btn" onClick={addPost}>
+                <button type="button" className="ha-btn" onClick={addPost} style={{ marginTop: 20 }}>
                   投稿する
                 </button>
               </div>
