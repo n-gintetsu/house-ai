@@ -832,7 +832,14 @@ export default function HomeScreen({ onNavigate }) {
               <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
-                <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
+                {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
+                  <div onClick={handleStartChat} style={{ background: "#fff", border: "1.5px solid #ddd", borderRadius: 16, padding: "20px", textAlign: "center", cursor: "pointer", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: "#1a3a5c", margin: "0 0 4px" }}>AIに相談してみる</p>
+                    <p style={{ fontSize: 12, color: "#888", margin: "0 0 14px" }}>3ステップで最適な進め方を提案します</p>
+                    <button style={{ background: "#1a3a5c", color: "#fff", border: "none", borderRadius: 50, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>💬 無料でAI相談する</button>
+                  </div>
+                )}
               <CommunityStrip onNavigate={navigate} />
             </div>
             <div style={{ padding: "0 20px 0 16px" }}>
