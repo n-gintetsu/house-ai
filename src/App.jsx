@@ -1411,7 +1411,6 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-                <AdBanner slot="chat" />
                 {isSending ? (
                   <div className="ha-msgRow assistant">
                     <div className="ha-bubble">
