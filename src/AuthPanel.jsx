@@ -185,7 +185,7 @@ export default function AuthPanel() {
         <>
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>お名前</label>
-            <input
+            <input style={{ fontSize: 16 }}
               style={fieldStyle}
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
