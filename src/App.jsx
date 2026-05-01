@@ -1446,7 +1446,7 @@ export default function App() {
                     placeholder="エリア、予算、希望条件など（Enterで送信 / Shift+Enterで改行）"
                     disabled={isSending}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && chatInput.endsWith('\n')) {
                         e.preventDefault()
                         handleSend()
                       }
