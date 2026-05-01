@@ -1234,25 +1234,23 @@ export default function App() {
               <span>不動産のお悩み・査定・専門家紹介・コミュニティ</span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {user ? (
               <button
                 type="button"
-                className="ha-btn"
-                style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
-                onClick={async () => {
-                  await supabase.auth.signOut()
-                  setUser(null)
-                  window.__houseAiUser = null
-                }}
+                onClick={() => setTab('member')}
+                style={{ background: 'rgba(201,168,76,0.15)', border: '1.5px solid #c9a84c', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#c9a84c', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}
               >
-                ログアウト
+                <span style={{ fontSize: 16 }}>👤</span>
+                <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.user_metadata?.name || user.email?.split('@')[0] || 'マイページ'}
+                </span>
               </button>
             ) : (
               <button
                 type="button"
                 className="ha-btn"
-                style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none' }}
+                style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 12, padding: '7px 14px' }}
                 onClick={() => setTab('member')}
               >
                 会員登録 / ログイン
@@ -1334,6 +1332,20 @@ export default function App() {
                       {item.label}
                     </button>
                   ))}
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        setUser(null)
+                        window.__houseAiUser = null
+                        setMenuOpen(false)
+                      }}
+                      style={{ display: "block", width: "100%", background: "transparent", border: "none", borderTop: "1px solid rgba(255,255,255,0.15)", padding: "10px 14px", color: "#ff8080", fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left", fontFamily: "inherit", marginTop: 4 }}
+                    >
+                      🚪 ログアウト
+                    </button>
+                  )}
                 </div>
               )}
             </div>
