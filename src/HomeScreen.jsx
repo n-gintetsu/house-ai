@@ -778,43 +778,6 @@ export default function HomeScreen({ onNavigate }) {
               >{label}</button>
             ))}
           </div>
-          {/* 検索バー風CTA */}
-          <div
-            onClick={handleStartChat}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: '#fff',
-              border: '1.5px solid #ddd',
-              borderRadius: 999,
-              padding: isMobile ? '12px 16px' : '16px 24px',
-              maxWidth: isMobile ? 280 : 520,
-              width: '100%',
-              cursor: 'pointer',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
-              margin: '0 auto',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 24px rgba(26,58,92,0.18)';
-              e.currentTarget.style.borderColor = '#1a3a5c';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
-              e.currentTarget.style.borderColor = '#ddd';
-            }}
-          >
-            <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: '50%', background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: isMobile ? 15 : 17 }}>💬</span>
-            </div>
-            <span style={{ flex: 1, fontSize: isMobile ? 13 : 15, color: '#bbb', fontFamily: "'Noto Sans JP', sans-serif", userSelect: 'none', textAlign: 'left' }}>
-              AIに今すぐ相談してみる！
-            </span>
-            <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: '50%', background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ color: '#fff', fontSize: isMobile ? 14 : 16 }}>→</span>
-            </div>
-          </div>
-        </div>
 
         {/* レイアウト：スマホは1カラム、PCは3カラム */}
         {isMobile ? (
