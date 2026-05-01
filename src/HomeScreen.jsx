@@ -778,6 +778,7 @@ export default function HomeScreen({ onNavigate }) {
               >{label}</button>
             ))}
           </div>
+        </div>
 
         {/* レイアウト：スマホは1カラム、PCは3カラム */}
         {isMobile ? (
