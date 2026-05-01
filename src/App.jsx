@@ -2225,10 +2225,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* コミュニティ連動アフィリエイト */}
-              <div style={{ marginBottom: 16 }}>
-                <AffiliateCard type="reform" reason="リフォームで失敗しないために" />
-              </div>
               {posts.length === 0 ? (
                 <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
               ) : (
