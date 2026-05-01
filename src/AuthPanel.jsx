@@ -154,14 +154,14 @@ export default function AuthPanel() {
 
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.15)' }}>
         <button
-          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 16,
             background: mode === 'login' ? '#1a3a5c' : '#f8fafc', color: mode === 'login' ? '#fff' : '#777' }}
           onClick={() => { setMode('login'); setError(''); setSuccess('') }}
         >
           ログイン
         </button>
         <button
-          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 16,
             background: mode === 'register' ? '#1a3a5c' : '#f8fafc', color: mode === 'register' ? '#fff' : '#777' }}
           onClick={() => { setMode('register'); setError(''); setSuccess('') }}
         >
@@ -208,7 +208,7 @@ export default function AuthPanel() {
 
       <div style={{ marginBottom: 12 }}>
         <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>メールアドレス</label>
-        <input
+        <input style={{ fontSize: 16 }}
           style={fieldStyle}
           type="email"
           value={form.email}
@@ -222,7 +222,7 @@ export default function AuthPanel() {
         <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>
           パスワード{mode === 'register' && <span style={{ color: '#aaa' }}>（6文字以上）</span>}
         </label>
-        <input
+        <input style={{ fontSize: 16 }}
           style={fieldStyle}
           type="password"
           value={form.password}
