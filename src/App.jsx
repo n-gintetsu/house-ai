@@ -2077,6 +2077,7 @@ export default function App() {
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel />
             </div>
+        )}
           </div>
 
           {tab === 'agency' && (
