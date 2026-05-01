@@ -1286,9 +1286,9 @@ export default function App() {
               </button>
               {menuOpen && (
                 <div style={{
-                  position: 'absolute',
-                  top: '110%',
-                  right: 0,
+                  position: 'fixed',
+                  top: 60,
+                  right: 12,
                   background: '#1a3a5c',
                   borderRadius: 14,
                   padding: '12px 8px',
