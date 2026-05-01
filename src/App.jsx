@@ -1294,6 +1294,8 @@ export default function App() {
                   padding: '12px 8px',
                   zIndex: 9999,
                   minWidth: 200,
+                  maxHeight: '70vh',
+                  overflowY: 'auto',
                   boxShadow: '0 8px 32px rgba(26,58,92,0.25)',
                 }}>
                   {[
