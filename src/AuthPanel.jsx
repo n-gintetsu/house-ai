@@ -142,7 +142,7 @@ export default function AuthPanel() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 440, margin: '0 auto' }}>
+    <div style={{ padding: 24, maxWidth: 440, width: "calc(100% - 32px)", margin: '0 auto' }}>
       <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', marginBottom: 6 }}>
         👤 {mode === 'login' ? 'ログイン' : '会員登録'}
       </h2>
