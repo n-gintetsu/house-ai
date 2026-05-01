@@ -1407,7 +1407,7 @@ export default function App() {
                   >
                     <div className="ha-bubble">
                       <div className="ha-meta">{m.role === 'user' ? 'あなた' : 'コンシェルジュ'}</div>
-                      <div className="ha-bubbleText">{m.text}</div>
+                      <div className="ha-bubbleText">{m.text.replace(/\*\*/g, "").replace(/\*/g, "").replace(/^#+\s/gm, "").replace(/^-\s/gm, "・")}</div>
                     </div>
                   </div>
                 ))}
