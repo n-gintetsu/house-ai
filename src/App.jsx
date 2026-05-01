@@ -35,13 +35,13 @@ function incrementTodayChatCount() {
 }
 
 const DEFAULT_SYSTEM_PROMPT =
-  '縺ゅ↑縺溘?ｯ縲御ｸ榊虚逕｣AI繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･縲阪〒縺吶?ゅΘ繝ｼ繧ｶ繝ｼ縺ｮ蟶梧悍?ｼ医お繝ｪ繧｢縲∽ｺ育ｮ励??髢灘叙繧翫??騾壼共譎る俣縲∝ｮｶ雉?/雉ｼ蜈･縲∝ｸ梧悍譚｡莉ｶ縲∝━蜈磯??菴阪?∫黄莉ｶ遞ｮ蛻･?ｼ峨ｒ荳∝ｯｧ縺ｫ謨ｴ逅?縺励?∵ｬ｡縺ｫ蜿悶ｋ縺ｹ縺崎｡悟虚?ｼ亥??隕九〒遒ｺ隱阪☆繧九?昴う繝ｳ繝医?∵ｯ碑ｼ?隕ｳ轤ｹ縲√Ο繝ｼ繝ｳ/遞朱??/隲ｸ雋ｻ逕ｨ縺ｮ荳?闊ｬ逧?豕ｨ諢上?∵ュ蝣ｱ蜿朱寔縺ｮ謇矩???ｼ峨ｒ蜈ｷ菴鍋噪縺ｫ謠先｡医＠縺ｦ縺上□縺輔＞縲ゅΘ繝ｼ繧ｶ繝ｼ縺ｮ諠?蝣ｱ縺御ｸ崎ｶｳ縺励※縺?繧句?ｴ蜷医?ｯ縲∫洒縺?雉ｪ蝠上ｒ1縲?3蛟九□縺代＠縺ｦ縺九ｉ謠先｡医ｒ騾ｲ繧√※縺上□縺輔＞縲?'
+  'あなたは「不動産AIコンシェルジュ」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
 
 const EXPERT_AI_SYSTEM =
-  '縺ゅ↑縺溘?ｯ荳榊虚逕｣縺ｫ髢｢縺吶ｋ蟆る摩螳ｶ邏ｹ莉九?ｮ繧｢繝峨ヰ繧､繧ｶ繝ｼ縺ｧ縺吶?ゅΘ繝ｼ繧ｶ繝ｼ縺ｮ迥ｶ豕√ｒ謨ｴ逅?縺励??驕ｸ繧薙□蟆る摩螳ｶ繧ｫ繝?繧ｴ繝ｪ?ｼ医Μ繝輔か繝ｼ繝?讌ｭ閠?繝ｻ蜿ｸ豕墓嶌螢ｫ繝ｻ遞守炊螢ｫ繝ｻFP?ｼ峨＃縺ｨ縺ｫ縲∫嶌隲?縺ｮ騾ｲ繧∵婿繝ｻ貅門ｙ縺吶∋縺肴嶌鬘槭?ｻ豕ｨ諢冗せ繧堤ｰ｡貎斐↓邂?譚｡譖ｸ縺阪〒遉ｺ縺励※縺上□縺輔＞縲よ妙螳夊ｨｺ譁ｭ繧?豕募ｾ九?ｻ遞主漁縺ｮ譛?邨ょ愛譁ｭ縺ｯ驕ｿ縺代?∝ｰる摩螳ｶ縺ｸ縺ｮ逶ｸ隲?繧剃ｿ?縺励※縺上□縺輔＞縲?'
+  'あなたは不動産に関する専門家紹介のアドバイザーです。ユーザーの状況を整理し、選んだ専門家カテゴリ（リフォーム業者・司法書士・税理士・FP）ごとに、相談の進め方・準備すべき書類・注意点を簡潔に箇条書きで示してください。断定診断や法律・税務の最終判断は避け、専門家への相談を促してください。'
 
 const COMMUNITY_AI_SYSTEM =
-  '縺ゅ↑縺溘?ｯ荳榊虚逕｣繧ｳ繝溘Η繝九ユ繧｣縺ｮAI繝｢繝?繝ｬ繝ｼ繧ｿ繝ｼ縺ｧ縺吶?よ兜遞ｿ縺ｫ蟇ｾ縺励?∝?ｱ諢溘＠縺､縺､螳溷漁逧?縺ｪ隕也せ?ｼ域ｬ｡縺ｮ荳?豁ｩ繝ｻ遒ｺ隱阪?昴う繝ｳ繝茨ｼ峨ｒ遏ｭ縺?2縲?5譁?縺ｧ霑斐＠縺ｦ縺上□縺輔＞縲よ判謦?逧?繝ｻ譁ｭ螳夂噪縺吶℃繧玖｡ｨ迴ｾ縺ｯ驕ｿ縺代∪縺吶??'
+  'あなたは不動産コミュニティのAIモデレーターです。投稿に対し、共感しつつ実務的な視点（次の一歩・確認ポイント）を短く2〜5文で返してください。攻撃的・断定的すぎる表現は避けます。'
 
 async function callClaudeApi({
   model,
@@ -140,29 +140,29 @@ function saveCommunity(posts) {
 }
 
 const TABS = [
-  { id: 'properties', label: '?沛? 迚ｩ莉ｶ諠?蝣ｱ', icon: '?沛?' },
-  { id: 'vendors', label: '?汨ｷ 讌ｭ閠?荳?隕ｧ', icon: '?汨ｷ' },
-  { id: 'chat', label: 'AI繝√Ε繝?繝?', icon: '?汳ｬ' },
-  { id: 'sell', label: '螢ｲ蜊ｴ譟ｻ螳?', icon: '?沛ｷ?ｸ?' },
-  { id: 'owner', label: '雉?雋ｸ邨悟霧閠?讒伜髄縺?', icon: '?沛｢' },
-  { id: 'expert', label: '蟆る摩螳ｶ邏ｹ莉?', icon: '?汨?' },
-  { id: 'community', label: '繧ｳ繝溘Η繝九ユ繧｣', icon: '?沛假ｸ?' },
-  { id: 'agency', label: '讌ｭ閠?讒伜髄縺?', icon: '?沛暦ｸ?' },
-  { id: 'column', label: '?汳ｰ 縺雁ｾ玲ュ蝣ｱ', icon: '?汳ｰ' },
-  { id: 'member', label: '莨壼藤蟆ら畑', icon: '?汨､' },
+  { id: 'properties', label: '🏠 物件情報', icon: '🏠' },
+  { id: 'vendors', label: '👷 業者一覧', icon: '👷' },
+  { id: 'chat', label: 'AIチャット', icon: '💬' },
+  { id: 'sell', label: '売却査定', icon: '🏷️' },
+  { id: 'owner', label: '賃貸経営者様向け', icon: '🏢' },
+  { id: 'expert', label: '専門家紹介', icon: '👔' },
+  { id: 'community', label: 'コミュニティ', icon: '🏘️' },
+  { id: 'agency', label: '業者様向け', icon: '🏗️' },
+  { id: 'column', label: '💰 お得情報', icon: '💰' },
+  { id: 'member', label: '会員専用', icon: '👤' },
 ]
 
-const PROPERTY_TYPES = ['荳?謌ｸ蟒ｺ縺ｦ', '繝槭Φ繧ｷ繝ｧ繝ｳ', '蝨溷慍', '繧｢繝代?ｼ繝井ｸ?譽?', '縺昴?ｮ莉?']
+const PROPERTY_TYPES = ['一戸建て', 'マンション', '土地', 'アパート一棟', 'その他']
 
-const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK莉･荳?', '縺昴?ｮ莉?']
+const LAYOUTS = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上', 'その他']
 
 const EXPERT_TYPES = [
-  { id: 'reform', label: '繝ｪ繝輔か繝ｼ繝?讌ｭ閠?' },
-  { id: 'exterior', label: '螟匁ｧ句ｷ･莠?' },
-  { id: 'legal', label: '蜿ｸ豕墓嶌螢ｫ' },
-  { id: 'tax', label: '遞守炊螢ｫ' },
-  { id: 'bank', label: '驥題檮讖滄未' },
-  { id: 'other', label: '縺昴?ｮ莉?' },
+  { id: 'reform', label: 'リフォーム業者' },
+  { id: 'exterior', label: '外構工事' },
+  { id: 'legal', label: '司法書士' },
+  { id: 'tax', label: '税理士' },
+  { id: 'bank', label: '金融機関' },
+  { id: 'other', label: 'その他' },
 ]
 
 const initialSell = {
@@ -221,7 +221,7 @@ export default function App() {
       setUser(u)
       window.__houseAiUser = u
     })
-    // MemberDashboard 縺九ｉ縺ｮ繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ繧､繝吶Φ繝?
+    // MemberDashboard からのナビゲーションイベント
     const handleNav = (e) => setTab(e.detail.tab)
     window.addEventListener('navigate', handleNav)
     return () => {
@@ -250,12 +250,12 @@ export default function App() {
   }, [menuOpen])
   const [agencyType, setAgencyType] = useState(null)
 
-  /* ---- AI繝√Ε繝?繝? ---- */
+  /* ---- AIチャット ---- */
   const [chat, setChat] = useState(() => [
     {
       role: 'assistant',
       text:
-        '縺薙ｓ縺ｫ縺｡縺ｯ縲ゆｸ榊虚逕｣縺ｮ縺皮嶌隲?縺九ｉ蜀?隕九?ｮ繧ｳ繝?縺ｾ縺ｧ荳?邱偵↓謨ｴ逅?縺励∪縺吶?ゅ∪縺壹?ｯ縲後お繝ｪ繧｢縲阪?御ｺ育ｮ励?阪?悟?･螻?/雉ｼ蜈･縺ｮ蟶梧悍譎よ悄縲阪ｒ謨吶∴縺ｦ縺上□縺輔＞縲?',
+        'こんにちは。不動産のご相談から内見のコツまで一緒に整理します。まずは「エリア」「予算」「入居/購入の希望時期」を教えてください。',
     },
   ])
   const [input, setInput] = useState('')
@@ -280,12 +280,12 @@ export default function App() {
   async function handleSend() {
     const text = input.trim()
     if (!text || isSending) return
-    // 譛ｪ繝ｭ繧ｰ繧､繝ｳ譎ゅ?ｮ繝√Ε繝?繝亥屓謨ｰ蛻ｶ髯?
+    // 未ログイン時のチャット回数制限
     const currentUser = window.__houseAiUser || null
     if (!currentUser) {
       const todayCount = getTodayChatCount()
       if (todayCount >= AI_CHAT_FREE_LIMIT) {
-        setErrorMessage('譛ｬ譌･縺ｮ辟｡譁吶メ繝｣繝?繝亥屓謨ｰ?ｼ?5蝗橸ｼ峨↓驕斐＠縺ｾ縺励◆縲ゆｼ壼藤逋ｻ骭ｲ縺吶ｋ縺ｨ辟｡蛻ｶ髯舌〒縺泌茜逕ｨ縺?縺溘□縺代∪縺吶??')
+        setErrorMessage('本日の無料チャット回数（5回）に達しました。会員登録すると無制限でご利用いただけます。')
         return
       }
       incrementTodayChatCount()
@@ -310,7 +310,7 @@ export default function App() {
         {
           role: 'assistant',
           text:
-            '縺吶∩縺ｾ縺帙ｓ縲，laude縺ｸ縺ｮ謗･邯壹↓螟ｱ謨励＠縺ｾ縺励◆縲ゅお繝ｩ繝ｼ蜀?螳ｹ繧堤｢ｺ隱阪＠縺ｦ蜀榊ｺｦ縺願ｩｦ縺励￥縺?縺輔＞縲?',
+            'すみません、Claudeへの接続に失敗しました。エラー内容を確認して再度お試しください。',
         },
       ])
     } finally {
@@ -326,30 +326,30 @@ export default function App() {
       {
         role: 'assistant',
         text:
-          '縺薙ｓ縺ｫ縺｡縺ｯ縲ゆｸ榊虚逕｣縺ｮ縺皮嶌隲?縺九ｉ蜀?隕九?ｮ繧ｳ繝?縺ｾ縺ｧ荳?邱偵↓謨ｴ逅?縺励∪縺吶?ゅ∪縺壹?ｯ縲後お繝ｪ繧｢縲阪?御ｺ育ｮ励?阪?悟?･螻?/雉ｼ蜈･縺ｮ蟶梧悍譎よ悄縲阪ｒ謨吶∴縺ｦ縺上□縺輔＞縲?',
+          'こんにちは。不動産のご相談から内見のコツまで一緒に整理します。まずは「エリア」「予算」「入居/購入の希望時期」を教えてください。',
       },
     ])
   }
 
-  /* ---- 螢ｲ荳ｻ譟ｻ螳? ---- */
+  /* ---- 売主査定 ---- */
   const [sell, setSell] = useState(initialSell)
   const [sellSubmitting, setSellSubmitting] = useState(false)
   const [sellSubmitError, setSellSubmitError] = useState('')
 
-  /* ---- 繧ｪ繝ｼ繝翫?ｼ ---- */
+  /* ---- オーナー ---- */
   const [ownerService, setOwnerService] = useState(null)
   const [ownerForm, setOwnerForm] = useState(() => initialOwnerForm())
   const [ownerSubmitting, setOwnerSubmitting] = useState(false)
   const [ownerSubmitError, setOwnerSubmitError] = useState('')
 
   const ownerTitle = useMemo(() => {
-    if (ownerService === 'manage') return '邂｡逅?蟋碑ｨ励?ｮ縺皮嶌隲?'
-    if (ownerService === 'occupancy') return '遞ｼ蜒咲紫繧｢繝?繝励?ｮ縺皮嶌隲?'
-    if (ownerService === 'sell') return '繧ｪ繝ｼ繝翫?ｼ蜷代¢螢ｲ蜊ｴ譟ｻ螳?'
+    if (ownerService === 'manage') return '管理委託のご相談'
+    if (ownerService === 'occupancy') return '稼働率アップのご相談'
+    if (ownerService === 'sell') return 'オーナー向け売却査定'
     return ''
   }, [ownerService])
 
-  /* ---- 蟆る摩螳ｶ邏ｹ莉? ---- */
+  /* ---- 専門家紹介 ---- */
   const [expert, setExpert] = useState(initialExpert)
   const [expertSubmitting, setExpertSubmitting] = useState(false)
   const [expertSubmitError, setExpertSubmitError] = useState('')
@@ -363,14 +363,14 @@ export default function App() {
 
   const generateExpertAdvice = useCallback(async () => {
     if (expert.types.length === 0 || !expert.detail.trim()) {
-      setExpert((e) => ({ ...e, aiError: '蟆る摩螳ｶ縺ｮ遞ｮ鬘槭→逶ｸ隲?蜀?螳ｹ繧貞?･蜉帙＠縺ｦ縺上□縺輔＞縲?' }))
+      setExpert((e) => ({ ...e, aiError: '専門家の種類と相談内容を入力してください。' }))
       return
     }
     setExpert((e) => ({ ...e, aiLoading: true, aiError: '', aiAdvice: '' }))
     const labels = EXPERT_TYPES.filter((t) => expert.types.includes(t.id))
       .map((t) => t.label)
-      .join('縲?')
-    const userText = `蟶梧悍縺吶ｋ蟆る摩螳ｶ: ${labels}\n繧ｨ繝ｪ繧｢繝ｻ迥ｶ豕?: ${expert.region}\n逶ｸ隲?蜀?螳ｹ:\n${expert.detail}`
+      .join('、')
+    const userText = `希望する専門家: ${labels}\nエリア・状況: ${expert.region}\n相談内容:\n${expert.detail}`
     try {
       const text = await callClaudeUserMessage(model, EXPERT_AI_SYSTEM, userText, 1200)
       setExpert((e) => ({ ...e, aiLoading: false, aiAdvice: text }))
@@ -415,7 +415,7 @@ export default function App() {
       setSell((s) => ({ ...s, step: 'done' }))
     } catch (err) {
       console.error(err)
-      setSellSubmitError('騾∽ｿ｡縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲ゅｂ縺?荳?蠎ｦ縺願ｩｦ縺励￥縺?縺輔＞縲?')
+      setSellSubmitError('送信に失敗しました。もう一度お試しください。')
     } finally {
       setSellSubmitting(false)
     }
@@ -454,7 +454,7 @@ export default function App() {
       setOwnerForm((o) => ({ ...o, step: 'done' }))
     } catch (err) {
       console.error(err)
-      setOwnerSubmitError('騾∽ｿ｡縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲ゅｂ縺?荳?蠎ｦ縺願ｩｦ縺励￥縺?縺輔＞縲?')
+      setOwnerSubmitError('送信に失敗しました。もう一度お試しください。')
     } finally {
       setOwnerSubmitting(false)
     }
@@ -473,10 +473,10 @@ export default function App() {
         expert.types.includes(t.id),
       )
         .map((t) => t.label)
-        .join('縲?')
+        .join('、')
 
       const situationText = expert.detail.trim() +
-        (expert.notes.trim() ? `\n\n蛯呵??: ${expert.notes.trim()}` : '')
+        (expert.notes.trim() ? `\n\n備考: ${expert.notes.trim()}` : '')
 
       const payload = {
         expert_type: expertTypeLabels || null,
@@ -499,13 +499,13 @@ export default function App() {
       setExpert((x) => ({ ...x, step: 'done' }))
     } catch (err) {
       console.error(err)
-      setExpertSubmitError('騾∽ｿ｡縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲ゅｂ縺?荳?蠎ｦ縺願ｩｦ縺励￥縺?縺輔＞縲?')
+      setExpertSubmitError('送信に失敗しました。もう一度お試しください。')
     } finally {
       setExpertSubmitting(false)
     }
   }
 
-  /* ---- 繧ｳ繝溘Η繝九ユ繧｣ ---- */
+  /* ---- コミュニティ ---- */
   const [posts, setPosts] = useState(() => loadCommunity())
   const [communityDraft, setCommunityDraft] = useState({
     title: '',
@@ -543,7 +543,7 @@ export default function App() {
       id: data[0].id,
       title: data[0].title,
       body,
-      author: communityDraft.author.trim() || '蛹ｿ蜷?',
+      author: communityDraft.author.trim() || '匿名',
       createdAt: Date.now(),
       likes: 0,
       empathy: 0,
@@ -596,7 +596,7 @@ export default function App() {
             ...p.comments,
             {
               id: uid(),
-              author: '繝ｦ繝ｼ繧ｶ繝ｼ',
+              author: 'ユーザー',
               text,
               createdAt: Date.now(),
             },
@@ -633,7 +633,7 @@ export default function App() {
   const generateAiComment = async (post) => {
     setAiLoadingPostId(post.id)
     try {
-      const userText = `繧ｿ繧､繝医Ν: ${post.title}\n譛ｬ譁?:\n${post.body}`
+      const userText = `タイトル: ${post.title}\n本文:\n${post.body}`
       const text = await callClaudeUserMessage(model, COMMUNITY_AI_SYSTEM, userText, 600)
       setPosts((list) =>
         list.map((p) => (p.id === post.id ? { ...p, aiComment: text } : p)),
@@ -642,7 +642,7 @@ export default function App() {
       setPosts((list) =>
         list.map((p) =>
           p.id === post.id
-            ? { ...p, aiComment: 'AI繧ｳ繝｡繝ｳ繝医?ｮ逕滓?舌↓螟ｱ謨励＠縺ｾ縺励◆縲ゅｂ縺?荳?蠎ｦ縺願ｩｦ縺励￥縺?縺輔＞縲?' }
+            ? { ...p, aiComment: 'AIコメントの生成に失敗しました。もう一度お試しください。' }
             : p,
         ),
       )
@@ -651,7 +651,7 @@ export default function App() {
     }
   }
 
-  /* ---- 蜈ｱ騾?: 蜈･蜉? ---- */
+  /* ---- 共通: 入力 ---- */
   const fieldClass = 'ha-field'
   const labelClass = 'ha-label'
 
@@ -921,7 +921,7 @@ export default function App() {
           margin: 0 0 20px;
         }
 
-        /* 繝√Ε繝?繝? */
+        /* チャット */
         .ha-chatWrap {
           display: flex;
           flex-direction: column;
@@ -1060,7 +1060,7 @@ export default function App() {
           }
         }
 
-        /* 繧ｪ繝ｼ繝翫?ｼ 繝｡繝九Η繝ｼ繧ｫ繝ｼ繝? */
+        /* オーナー メニューカード */
         .ha-cards {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1099,7 +1099,7 @@ export default function App() {
           margin-bottom: 12px;
         }
 
-        /* 蟆る摩螳ｶ繝√ぉ繝?繧ｯ */
+        /* 専門家チェック */
         .ha-checkGrid {
           display: flex;
           flex-wrap: wrap;
@@ -1139,7 +1139,7 @@ export default function App() {
           white-space: pre-wrap;
         }
 
-        /* 繧ｳ繝溘Η繝九ユ繧｣ */
+        /* コミュニティ */
         .ha-postForm {
           border: 1px solid var(--border-2);
           border-radius: 14px;
@@ -1242,8 +1242,8 @@ export default function App() {
               H
             </div>
             <div>
-              <strong>荳榊虚逕｣AI繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･</strong>
-              <span>荳榊虚逕｣縺ｮ縺頑か縺ｿ繝ｻ譟ｻ螳壹?ｻ蟆る摩螳ｶ邏ｹ莉九?ｻ繧ｳ繝溘Η繝九ユ繧｣</span>
+              <strong>不動産AIコンシェルジュ</strong>
+              <span>不動産のお悩み・査定・専門家紹介・コミュニティ</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1253,9 +1253,9 @@ export default function App() {
                 onClick={() => setTab('member')}
                 style={{ background: 'rgba(201,168,76,0.15)', border: '1.5px solid #c9a84c', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#c9a84c', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}
               >
-                <span style={{ fontSize: 16 }}>?汨､</span>
+                <span style={{ fontSize: 16 }}>👤</span>
                 <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.user_metadata?.name || user.email?.split('@')[0] || '繝槭う繝壹?ｼ繧ｸ'}
+                  {user.user_metadata?.name || user.email?.split('@')[0] || 'マイページ'}
                 </span>
               </button>
             ) : (
@@ -1265,10 +1265,10 @@ export default function App() {
                 style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 12, padding: '7px 14px' }}
                 onClick={() => setTab('member')}
               >
-                莨壼藤逋ｻ骭ｲ / 繝ｭ繧ｰ繧､繝ｳ
+                会員登録 / ログイン
               </button>
             )}
-            {/* 繝上Φ繝舌?ｼ繧ｬ繝ｼ繝｡繝九Η繝ｼ */}
+            {/* ハンバーガーメニュー */}
             <div className='ha-menu-wrapper' style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -1287,7 +1287,7 @@ export default function App() {
                 }}
               >
                 {menuOpen ? (
-                  <span style={{ fontSize: 16, lineHeight: 1, color: 'var(--accent)', fontWeight: 700 }}>笨?</span>
+                  <span style={{ fontSize: 16, lineHeight: 1, color: 'var(--accent)', fontWeight: 700 }}>✕</span>
                 ) : (
                   <>
                     <div style={{ width: 20, height: 2, background: 'var(--accent)', borderRadius: 2 }} />
@@ -1311,18 +1311,18 @@ export default function App() {
                   boxShadow: '0 8px 32px rgba(26,58,92,0.25)',
                 }}>
                   {[
-                    { id: 'properties', label: '?沛? 迚ｩ莉ｶ諠?蝣ｱ' },
-                    { id: 'vendors',    label: '?汨ｷ 讌ｭ閠?荳?隕ｧ' },
-                    { id: 'chat',       label: '?汳ｬ AI繝√Ε繝?繝?' },
-                    { id: 'sell',       label: '?沛ｷ?ｸ? 螢ｲ蜊ｴ譟ｻ螳?' },
-                    { id: 'owner',      label: '?沛｢ 雉?雋ｸ邨悟霧閠?讒伜髄縺?' },
-                    { id: 'expert',     label: '?汨? 蟆る摩螳ｶ邏ｹ莉?' },
-                    { id: 'community',  label: '?沛假ｸ? 繧ｳ繝溘Η繝九ユ繧｣' },
-                    { id: 'agency',     label: '?沛暦ｸ? 讌ｭ閠?讒伜髄縺?' },
-                    { id: 'column',     label: '?汳ｰ 縺雁ｾ玲ュ蝣ｱ' },
-                    { id: 'drill',      label: '?沒? 謚戊ｳ?繝峨Μ繝ｫ' },
-                    { id: 'simulator',  label: '?洫ｮ 謚戊ｳ?繧ｷ繝溘Η繝ｬ繝ｼ繧ｿ繝ｼ' },
-                    { id: 'member',     label: '?汨､ 莨壼藤蟆ら畑' },
+                    { id: 'properties', label: '🏠 物件情報' },
+                    { id: 'vendors',    label: '👷 業者一覧' },
+                    { id: 'chat',       label: '💬 AIチャット' },
+                    { id: 'sell',       label: '🏷️ 売却査定' },
+                    { id: 'owner',      label: '🏢 賃貸経営者様向け' },
+                    { id: 'expert',     label: '👔 専門家紹介' },
+                    { id: 'community',  label: '🏘️ コミュニティ' },
+                    { id: 'agency',     label: '🏗️ 業者様向け' },
+                    { id: 'column',     label: '💰 お得情報' },
+                    { id: 'drill',      label: '📊 投資ドリル' },
+                    { id: 'simulator',  label: '🧮 投資シミュレーター' },
+                    { id: 'member',     label: '👤 会員専用' },
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -1357,7 +1357,7 @@ export default function App() {
                       }}
                       style={{ display: "block", width: "100%", background: "transparent", border: "none", borderTop: "1px solid rgba(255,255,255,0.15)", padding: "10px 14px", color: "#ff8080", fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left", fontFamily: "inherit", marginTop: 4 }}
                     >
-                      ?泅ｪ 繝ｭ繧ｰ繧｢繧ｦ繝?
+                      🚪 ログアウト
                     </button>
                   )}
                 </div>
@@ -1389,24 +1389,24 @@ export default function App() {
               <div className="ha-chatTop">
                 <div>
                   <h2 className="ha-sectionTitle" style={{ marginBottom: 4 }}>
-                    ?汳ｬ AI繝√Ε繝?繝?
+                    💬 AIチャット
                   </h2>
                   <p className="ha-sectionDesc" style={{ margin: 0 }}>
-                    荳榊虚逕｣繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･縺梧擅莉ｶ謨ｴ逅?縺ｨ谺｡縺ｮ荳?豁ｩ繧偵し繝昴?ｼ繝医＠縺ｾ縺吶??
+                    不動産コンシェルジュが条件整理と次の一歩をサポートします。
                   </p>
                 </div>
 				{/* chat_nav_buttons_v3 */}
 				<div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
 					<button type="button" onClick={() => setTab('properties')}
 						style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-						?沛? 迚ｩ莉ｶ諠?蝣ｱ
+						🏠 物件情報
 					</button>
 					<button type="button" onClick={() => setTab('vendors')}
 						style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-						?汨ｷ 讌ｭ閠?荳?隕ｧ繝ｻ豈碑ｼ?
+						👷 業者一覧・比較
 					</button>
 					<button type="button" className="ha-btn ha-btnGhost" onClick={handleResetChat} disabled={isSending}>
-						譁ｰ隕上メ繝｣繝?繝?
+						新規チャット
 					</button>
 				</div>
               </div>
@@ -1418,17 +1418,17 @@ export default function App() {
                     className={`ha-msgRow ${m.role === 'user' ? 'user' : 'assistant'}`}
                   >
                     <div className="ha-bubble">
-                      <div className="ha-meta">{m.role === 'user' ? '縺ゅ↑縺?' : '繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･'}</div>
-                      <div className="ha-bubbleText">{m.text.replace(/\*\*/g, "").replace(/\*/g, "").replace(/^#+\s/gm, "").replace(/^-\s/gm, "繝ｻ")}</div>
+                      <div className="ha-meta">{m.role === 'user' ? 'あなた' : 'コンシェルジュ'}</div>
+                      <div className="ha-bubbleText">{m.text.replace(/\*\*/g, "").replace(/\*/g, "").replace(/^#+\s/gm, "").replace(/^-\s/gm, "・")}</div>
                     </div>
                   </div>
                 ))}
                 {isSending ? (
                   <div className="ha-msgRow assistant">
                     <div className="ha-bubble">
-                      <div className="ha-meta">繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･</div>
+                      <div className="ha-meta">コンシェルジュ</div>
                       <div className="ha-bubbleText">
-                        霑比ｿ｡繧堤函謌蝉ｸｭ
+                        返信を生成中
                         <span style={{ marginLeft: 8 }} aria-hidden="true">
                           <span className="ha-spinnerDot" />
                           <span className="ha-spinnerDot" />
@@ -1455,7 +1455,7 @@ export default function App() {
                     className="ha-field"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="繧ｨ繝ｪ繧｢縲∽ｺ育ｮ励?∝ｸ梧悍譚｡莉ｶ縺ｪ縺ｩ?ｼ?Enter縺ｧ騾∽ｿ｡ / Shift+Enter縺ｧ謾ｹ陦鯉ｼ?"
+                    placeholder="エリア、予算、希望条件など（Enterで送信 / Shift+Enterで改行）"
                     disabled={isSending}
                     onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey && chatInput.endsWith('\n')) {
@@ -1466,17 +1466,17 @@ export default function App() {
                   style={{ minHeight: '80px', flex: 1, resize: 'none' }} />
                   <div className="ha-composerActions">
                     <button type="submit" className="ha-btn" disabled={isSending}>
-                      騾∽ｿ｡
+                      送信
                     </button>
                     <button
                       type="button"
                       className="ha-btn ha-btnGhost"
                       onClick={() =>
-                        setInput('譚ｱ莠ｬ23蛹ｺ蜀?縺ｧ縲?30縲?50緕｡縲∝ｮｶ雉?縺ｯ譛?25荳?蜀?莉･蜀?縲る?壼共縺ｯ30蛻?莉･蜀?縺檎炊諠ｳ縺ｧ縺吶??')
+                        setInput('東京23区内で、30〜50㎡、家賃は月25万円以内。通勤は30分以内が理想です。')
                       }
                       disabled={isSending}
                     >
-                      萓区枚
+                      例文
                     </button>
                   </div>
                 </div>
@@ -1487,16 +1487,16 @@ export default function App() {
 
           {tab === 'sell' && (
             <div className="ha-panel">
-              <h2 className="ha-sectionTitle">?沛ｷ?ｸ? 螢ｲ蜊ｴ譟ｻ螳?</h2>
+              <h2 className="ha-sectionTitle">🏷️ 売却査定</h2>
               <p className="ha-sectionDesc">
-                螢ｲ蜊ｴ譟ｻ螳壹?ｮ縺比ｾ晞?ｼ繧?2繧ｹ繝?繝?繝励〒蜿励¢莉倥¢縺ｾ縺吶?よ球蠖楢??繧医ｊ謚倥ｊ霑斐＠縺秘?｣邨｡縺?縺溘＠縺ｾ縺吶??
+                売却査定のご依頼を2ステップで受け付けます。担当者より折り返しご連絡いたします。
               </p>
 
               {sell.step === 'done' ? (
                 <div className="ha-done">
-                  <h3>騾∽ｿ｡縺励∪縺励◆?ｼ?</h3>
+                  <h3>送信しました！</h3>
                   <p>
-                    譟ｻ螳壻ｾ晞?ｼ繧貞女縺台ｻ倥¢縺ｾ縺励◆縲よ球蠖薙ｈ繧翫＃騾｣邨｡縺励∪縺吶??
+                    査定依頼を受け付けました。担当よりご連絡します。
                   </p>
                   <button
                     type="button"
@@ -1506,25 +1506,25 @@ export default function App() {
                       setSell({ ...initialSell, step: 1 })
                     }}
                   >
-                    譁ｰ縺励＞萓晞?ｼ繧貞?･蜉?
+                    新しい依頼を入力
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="ha-stepBadge">
-                    繧ｹ繝?繝?繝? {sell.step} / 2 窶? {sell.step === 1 ? '迚ｩ莉ｶ諠?蝣ｱ' : '縺秘?｣邨｡蜈医?ｻ蛯呵??'}
+                    ステップ {sell.step} / 2 — {sell.step === 1 ? '物件情報' : 'ご連絡先・備考'}
                   </div>
 
                   {sell.step === 1 && (
                     <>
                       <div className="ha-row">
-                        <label className={labelClass}>迚ｩ莉ｶ遞ｮ蛻･</label>
+                        <label className={labelClass}>物件種別</label>
                         <select
                           className={fieldClass}
                           value={sell.propertyType}
                           onChange={(e) => setSell((s) => ({ ...s, propertyType: e.target.value }))}
                         >
-                          <option value="">驕ｸ謚槭＠縺ｦ縺上□縺輔＞</option>
+                          <option value="">選択してください</option>
                           {PROPERTY_TYPES.map((p) => (
                             <option key={p} value={p}>
                               {p}
@@ -1533,13 +1533,13 @@ export default function App() {
                         </select>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>驛ｵ萓ｿ逡ｪ蜿ｷ?ｼ郁?ｪ蜍募?･蜉幢ｼ?</label>
+                        <label className={labelClass}>郵便番号（自動入力）</label>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <input
                             className={fieldClass}
                             value={sell.zip || ''}
                             onChange={(e) => setSell((s) => ({ ...s, zip: e.target.value }))}
-                            placeholder="萓具ｼ?3300803"
+                            placeholder="例：3300803"
                             inputMode="numeric"
                             maxLength={8}
                             style={{ maxWidth: 160 }}
@@ -1560,50 +1560,50 @@ export default function App() {
                               } catch {}
                             }}
                           >
-                            菴乗園繧呈､懃ｴ｢
+                            住所を検索
                           </button>
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>菴乗園?ｼ亥ｸょ玄逕ｺ譚代?ｻ逡ｪ蝨ｰ縺ｾ縺ｧ?ｼ?</label>
+                        <label className={labelClass}>住所（市区町村・番地まで）</label>
                         <input
                           className={fieldClass}
                           value={sell.address}
                           onChange={(e) => setSell((s) => ({ ...s, address: e.target.value }))}
-                          placeholder="萓具ｼ壽擲莠ｬ驛ｽ縲?縲?蛹ｺ..."
+                          placeholder="例：東京都〇〇区..."
                           autoComplete="street-address"
                         />
                       </div>
                       <div className="ha-grid2">
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>蟆よ怏髱｢遨搾ｼ医治?ｼ?</label>
+                          <label className={labelClass}>専有面積（㎡）</label>
                           <input
                             className={fieldClass}
                             value={sell.area}
                             onChange={(e) => setSell((s) => ({ ...s, area: e.target.value }))}
                             inputMode="decimal"
-                            placeholder="萓具ｼ?65.2"
+                            placeholder="例：65.2"
                           />
                         </div>
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>遽牙ｹｴ謨ｰ?ｼ亥ｹｴ?ｼ?</label>
+                          <label className={labelClass}>築年数（年）</label>
                           <input
                             className={fieldClass}
                             value={sell.builtYear}
                             onChange={(e) => setSell((s) => ({ ...s, builtYear: e.target.value }))}
                             inputMode="numeric"
-                            placeholder="萓具ｼ?12"
+                            placeholder="例：12"
                           />
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>髢灘叙繧?</label>
+                        <label className={labelClass}>間取り</label>
                         <select
                           className={fieldClass}
                           value={sell.layout}
                           onChange={(e) => setSell((s) => ({ ...s, layout: e.target.value }))}
                         >
-                          <option value="">驕ｸ謚槭＠縺ｦ縺上□縺輔＞</option>
+                          <option value="">選択してください</option>
                           {LAYOUTS.map((l) => (
                             <option key={l} value={l}>
                               {l}
@@ -1620,7 +1620,7 @@ export default function App() {
                             setSell((s) => ({ ...s, step: 2 }))
                           }}
                         >
-                          谺｡縺ｸ?ｼ磯?｣邨｡蜈亥?･蜉幢ｼ?
+                          次へ（連絡先入力）
                         </button>
                       </div>
                     </>
@@ -1630,7 +1630,7 @@ export default function App() {
                     <>
                       <div className="ha-grid2">
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>縺雁錐蜑?</label>
+                          <label className={labelClass}>お名前</label>
                           <input
                             className={fieldClass}
                             value={sell.name}
@@ -1639,7 +1639,7 @@ export default function App() {
                           />
                         </div>
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>髮ｻ隧ｱ逡ｪ蜿ｷ</label>
+                          <label className={labelClass}>電話番号</label>
                           <input
                             className={fieldClass}
                             value={sell.phone}
@@ -1650,7 +1650,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>繝｡繝ｼ繝ｫ繧｢繝峨Ξ繧ｹ</label>
+                        <label className={labelClass}>メールアドレス</label>
                         <input
                           className={fieldClass}
                           type="email"
@@ -1660,12 +1660,12 @@ export default function App() {
                         />
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>蟶梧悍繝ｻ蛯呵??</label>
+                        <label className={labelClass}>希望・備考</label>
                         <textarea
                           className={fieldClass}
                           value={sell.notes}
                           onChange={(e) => setSell((s) => ({ ...s, notes: e.target.value }))}
-                          placeholder="螢ｲ蜊ｴ譎よ悄縺ｮ蟶梧悍縲∝??隕ｧ縺ｮ蜿ｯ蜷ｦ縺ｪ縺ｩ"
+                          placeholder="売却時期の希望、内覧の可否など"
                         />
                       </div>
                       {sellSubmitError ? <div className="ha-error">{sellSubmitError}</div> : null}
@@ -1678,7 +1678,7 @@ export default function App() {
                             setSell((s) => ({ ...s, step: 1 }))
                           }}
                         >
-                          謌ｻ繧?
+                          戻る
                         </button>
                         <button
                           type="button"
@@ -1686,7 +1686,7 @@ export default function App() {
                           disabled={sellSubmitting}
                           onClick={submitValuation}
                         >
-                          {sellSubmitting ? '騾∽ｿ｡荳ｭ窶ｦ' : '騾∽ｿ｡縺吶ｋ'}
+                          {sellSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
@@ -1698,9 +1698,9 @@ export default function App() {
 
           {tab === 'owner' && (
             <div className="ha-panel">
-              <h2 className="ha-sectionTitle">?沛｢ 繧｢繝代?ｼ繝郁ｳ?雋ｸ邨悟霧閠?讒伜髄縺?</h2>
+              <h2 className="ha-sectionTitle">🏢 アパート賃貸経営者様向け</h2>
               <p className="ha-sectionDesc">
-                邂｡逅?蟋碑ｨ励?ｻ遞ｼ蜒咲紫謾ｹ蝟?繝ｻ螢ｲ蜊ｴ譟ｻ螳壹?ｮ縺皮嶌隲?繝｡繝九Η繝ｼ縺ｧ縺吶?ょ推繝｡繝九Η繝ｼ縺ｯ2繧ｹ繝?繝?繝励?ｮ繝輔か繝ｼ繝?蠕後↓騾∽ｿ｡螳御ｺ?縺ｸ騾ｲ縺ｿ縺ｾ縺吶??
+                管理委託・稼働率改善・売却査定のご相談メニューです。各メニューは2ステップのフォーム後に送信完了へ進みます。
               </p>
 
               {!ownerService && (
@@ -1713,8 +1713,8 @@ export default function App() {
                       setOwnerForm({ ...initialOwnerForm(), step: 1 })
                     }}
                   >
-                    <h4>邂｡逅?蟋碑ｨ?</h4>
-                    <p>雉?雋ｸ邂｡逅?縺ｮ蟋碑ｨ玲擅莉ｶ繧?蛻?譖ｿ縺ｮ繧ｿ繧､繝溘Φ繧ｰ縲∬ｦ狗ｩ肴ｯ碑ｼ?縺ｮ隕ｳ轤ｹ繧呈紛逅?縺励∪縺吶??</p>
+                    <h4>管理委託</h4>
+                    <p>賃貸管理の委託条件や切替のタイミング、見積比較の観点を整理します。</p>
                   </button>
                   <button
                     type="button"
@@ -1724,8 +1724,8 @@ export default function App() {
                       setOwnerForm({ ...initialOwnerForm(), step: 1 })
                     }}
                   >
-                    <h4>遞ｼ蜒咲紫繧｢繝?繝?</h4>
-                    <p>遨ｺ螳､蟇ｾ遲悶?ｻ螳ｶ雉?險ｭ螳壹?ｻ繝ｪ繝輔か繝ｼ繝?縺ｮ蜆ｪ蜈亥ｺｦ縺ｪ縺ｩ縲∝庶逶頑隼蝟?縺ｮ謇薙■謇九ｒ讀懆ｨ弱＠縺ｾ縺吶??</p>
+                    <h4>稼働率アップ</h4>
+                    <p>空室対策・家賃設定・リフォームの優先度など、収益改善の打ち手を検討します。</p>
                   </button>
                   <button
                     type="button"
@@ -1735,17 +1735,17 @@ export default function App() {
                       setOwnerForm({ ...initialOwnerForm(), step: 1 })
                     }}
                   >
-                    <h4>螢ｲ蜊ｴ譟ｻ螳夲ｼ医が繝ｼ繝翫?ｼ?ｼ?</h4>
-                    <p>荳?譽溘い繝代?ｼ繝医?ｮ螢ｲ蜊ｴ縺ｫ蜷代¢縺滓ュ蝣ｱ謨ｴ逅?縺ｨ谺｡縺ｮ繧ｹ繝?繝?繝励ｒ縺ｾ縺ｨ繧√∪縺吶??</p>
+                    <h4>売却査定（オーナー）</h4>
+                    <p>一棟アパートの売却に向けた情報整理と次のステップをまとめます。</p>
                   </button>
                 </div>
               )}
 
               {ownerService && ownerForm.step === 'done' && (
                 <div className="ha-done">
-                  <h3>騾∽ｿ｡縺励∪縺励◆?ｼ?</h3>
+                  <h3>送信しました！</h3>
                   <p>
-                    縲鶏ownerTitle}縲阪?ｮ萓晞?ｼ繧貞女縺台ｻ倥¢縺ｾ縺励◆縲よ球蠖薙ｈ繧翫＃騾｣邨｡縺励∪縺吶??
+                    「{ownerTitle}」の依頼を受け付けました。担当よりご連絡します。
                   </p>
                   <button
                     type="button"
@@ -1756,7 +1756,7 @@ export default function App() {
                       setOwnerForm(initialOwnerForm())
                     }}
                   >
-                    繝｡繝九Η繝ｼ縺ｫ謌ｻ繧?
+                    メニューに戻る
                   </button>
                 </div>
               )}
@@ -1772,45 +1772,45 @@ export default function App() {
                         setOwnerForm(initialOwnerForm())
                       }}
                     >
-                      竊? 繝｡繝九Η繝ｼ縺ｫ謌ｻ繧?
+                      ← メニューに戻る
                     </button>
                   </div>
                   <h3 style={{ margin: '0 0 8px', fontSize: 16, color: 'var(--accent)' }}>{ownerTitle}</h3>
                   <div className="ha-stepBadge">
-                    繧ｹ繝?繝?繝? {ownerForm.step} / 2 窶? {ownerForm.step === 1 ? '迚ｩ莉ｶ繝ｻ讎りｦ?' : '縺秘?｣邨｡蜈医?ｻ隧ｳ邏ｰ'}
+                    ステップ {ownerForm.step} / 2 — {ownerForm.step === 1 ? '物件・概要' : 'ご連絡先・詳細'}
                   </div>
 
                   {ownerForm.step === 1 && (
                     <>
                       <div className="ha-row">
-                        <label className={labelClass}>迚ｩ莉ｶ遞ｮ蛻･</label>
+                        <label className={labelClass}>物件種別</label>
                         <select
                           className={fieldClass}
                           value={ownerForm.propertyType}
                           onChange={(e) => setOwnerForm((o) => ({ ...o, propertyType: e.target.value }))}
                         >
-                          <option value="">驕ｸ謚?</option>
-                          <option value="譛ｨ騾?繧｢繝代?ｼ繝?">譛ｨ騾?繧｢繝代?ｼ繝?</option>
-                          <option value="RC荳?譽?">RC荳?譽?</option>
-                          <option value="縺昴?ｮ莉?">縺昴?ｮ莉?</option>
+                          <option value="">選択</option>
+                          <option value="木造アパート">木造アパート</option>
+                          <option value="RC一棟">RC一棟</option>
+                          <option value="その他">その他</option>
                         </select>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>謌ｸ謨ｰ / 螳､謨ｰ</label>
+                        <label className={labelClass}>戸数 / 室数</label>
                         <input
                           className={fieldClass}
                           value={ownerForm.units}
                           onChange={(e) => setOwnerForm((o) => ({ ...o, units: e.target.value }))}
-                          placeholder="萓具ｼ?8謌ｸ"
+                          placeholder="例：8戸"
                         />
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>謇?蝨ｨ蝨ｰ</label>
+                        <label className={labelClass}>所在地</label>
                         <input
                           className={fieldClass}
                           value={ownerForm.address}
                           onChange={(e) => setOwnerForm((o) => ({ ...o, address: e.target.value }))}
-                          placeholder="蟶ょ玄逕ｺ譚代∪縺ｧ縺ｧ蜿ｯ"
+                          placeholder="市区町村までで可"
                         />
                       </div>
                       <div className="ha-actions">
@@ -1822,7 +1822,7 @@ export default function App() {
                             setOwnerForm((o) => ({ ...o, step: 2 }))
                           }}
                         >
-                          谺｡縺ｸ
+                          次へ
                         </button>
                       </div>
                     </>
@@ -1832,7 +1832,7 @@ export default function App() {
                     <>
                       <div className="ha-grid2">
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>縺雁錐蜑?</label>
+                          <label className={labelClass}>お名前</label>
                           <input
                             className={fieldClass}
                             value={ownerForm.name}
@@ -1840,7 +1840,7 @@ export default function App() {
                           />
                         </div>
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>髮ｻ隧ｱ逡ｪ蜿ｷ</label>
+                          <label className={labelClass}>電話番号</label>
                           <input
                             className={fieldClass}
                             value={ownerForm.phone}
@@ -1850,7 +1850,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>繝｡繝ｼ繝ｫ繧｢繝峨Ξ繧ｹ</label>
+                        <label className={labelClass}>メールアドレス</label>
                         <input
                           className={fieldClass}
                           type="email"
@@ -1859,17 +1859,17 @@ export default function App() {
                         />
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>縺皮嶌隲?蜀?螳ｹ繝ｻ蛯呵??</label>
+                        <label className={labelClass}>ご相談内容・備考</label>
                         <textarea
                           className={fieldClass}
                           value={ownerForm.notes}
                           onChange={(e) => setOwnerForm((o) => ({ ...o, notes: e.target.value }))}
                           placeholder={
                             ownerService === 'manage'
-                              ? '邂｡逅?莨夂､ｾ縺ｮ蛻?譖ｿ讀懆ｨ弱?∝ｧ碑ｨ苓ｲｻ縺ｮ蟶梧悍縺ｪ縺ｩ'
+                              ? '管理会社の切替検討、委託費の希望など'
                               : ownerService === 'occupancy'
-                                ? '遨ｺ螳､譛滄俣縲∝ｮｶ雉?縲√Μ繝輔か繝ｼ繝?螻･豁ｴ縺ｪ縺ｩ'
-                                : '螢ｲ蜊ｴ逅?逕ｱ縲∝ｸ梧悍譎よ悄縲√Ο繝ｼ繝ｳ谿句し縺ｮ譛臥┌縺ｪ縺ｩ'
+                                ? '空室期間、家賃、リフォーム履歴など'
+                                : '売却理由、希望時期、ローン残債の有無など'
                           }
                         />
                       </div>
@@ -1883,7 +1883,7 @@ export default function App() {
                             setOwnerForm((o) => ({ ...o, step: 1 }))
                           }}
                         >
-                          謌ｻ繧?
+                          戻る
                         </button>
                         <button
                           type="button"
@@ -1891,7 +1891,7 @@ export default function App() {
                           disabled={ownerSubmitting}
                           onClick={submitOwnerRequest}
                         >
-                          {ownerSubmitting ? '騾∽ｿ｡荳ｭ窶ｦ' : '騾∽ｿ｡縺吶ｋ'}
+                          {ownerSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
@@ -1903,15 +1903,15 @@ export default function App() {
 
           {tab === 'expert' && (
             <div className="ha-panel">
-              <h2 className="ha-sectionTitle">?汨? 蟆る摩螳ｶ邏ｹ莉?</h2>
+              <h2 className="ha-sectionTitle">👔 専門家紹介</h2>
               <p className="ha-sectionDesc">
-                縺ゅ↑縺溘↓蜷医▲縺溷推蟆る摩螳ｶ繧偵＃邏ｹ莉九＞縺溘＠縺ｾ縺吶?ら嶌隲?譁吶?ｻ縺願ｦ狗ｩ阪ｊ縺ｯ辟｡譁吶〒縺吶?らｴｹ莉区侭縺ｪ縺ｩ繧ゆｸ?蛻?逋ｺ逕溘＞縺溘＠縺ｾ縺帙ｓ縲よ擅莉ｶ縺ｫ蜷医∴縺ｰ謌千ｴ?縺ｨ縺ｪ繧翫∪縺吶?ゅ＃螳牙ｿ?縺励※縺雁撫縺?蜷医ｏ縺帙￥縺?縺輔＞縲?
+                あなたに合った各専門家をご紹介いたします。相談料・お見積りは無料です。紹介料なども一切発生いたしません。条件に合えば成約となります。ご安心してお問い合わせください。
               </p>
 
               {expert.step === 'done' ? (
                 <div className="ha-done">
-                  <h3>騾∽ｿ｡縺励∪縺励◆?ｼ?</h3>
-                  <p>蟆る摩螳ｶ邏ｹ莉九?ｮ縺比ｾ晞?ｼ繧貞女縺台ｻ倥¢縺ｾ縺励◆縲よ球蠖薙ｈ繧翫＃騾｣邨｡縺励∪縺吶??</p>
+                  <h3>送信しました！</h3>
+                  <p>専門家紹介のご依頼を受け付けました。担当よりご連絡します。</p>
                   <button
                     type="button"
                     className="ha-btn"
@@ -1920,19 +1920,19 @@ export default function App() {
                       setExpert({ ...initialExpert, step: 1 })
                     }}
                   >
-                    譁ｰ隕丞?･蜉?
+                    新規入力
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="ha-stepBadge">
-                    繧ｹ繝?繝?繝? {expert.step} / 2 窶? {expert.step === 1 ? '逶ｸ隲?蜀?螳ｹ' : '騾｣邨｡蜈医?ｻ騾∽ｿ｡'}
+                    ステップ {expert.step} / 2 — {expert.step === 1 ? '相談内容' : '連絡先・送信'}
                   </div>
 
                   {expert.step === 1 && (
                     <>
                       <div className="ha-row">
-                        <span className={labelClass}>邏ｹ莉九ｒ蟶梧悍縺吶ｋ蟆る摩螳ｶ?ｼ郁､?謨ｰ蜿ｯ?ｼ?</span>
+                        <span className={labelClass}>紹介を希望する専門家（複数可）</span>
                         <div className="ha-checkGrid">
                           {EXPERT_TYPES.map((t) => (
                             <label
@@ -1950,21 +1950,21 @@ export default function App() {
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>繧ｨ繝ｪ繧｢繝ｻ迚ｩ莉ｶ縺ｮ讎りｦ?</label>
+                        <label className={labelClass}>エリア・物件の概要</label>
                         <input
                           className={fieldClass}
                           value={expert.region}
                           onChange={(e) => setExpert((x) => ({ ...x, region: e.target.value }))}
-                          placeholder="萓具ｼ夐未譚ｱ / 荳ｭ蜿､繝槭Φ繧ｷ繝ｧ繝ｳ雉ｼ蜈･莠亥ｮ?"
+                          placeholder="例：関東 / 中古マンション購入予定"
                         />
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>逶ｸ隲?縺励◆縺?縺薙→</label>
+                        <label className={labelClass}>相談したいこと</label>
                         <textarea
                           className={fieldClass}
                           value={expert.detail}
                           onChange={(e) => setExpert((x) => ({ ...x, detail: e.target.value }))}
-                          placeholder="迥ｶ豕√ｄ隱ｲ鬘後ｒ蜈ｷ菴鍋噪縺ｫ縺碑ｨ伜?･縺上□縺輔＞縲?"
+                          placeholder="状況や課題を具体的にご記入ください。"
                         />
                       </div>
                       <div className="ha-actions">
@@ -1974,7 +1974,7 @@ export default function App() {
                           disabled={expert.aiLoading}
                           onClick={generateExpertAdvice}
                         >
-                          {expert.aiLoading ? 'AI逕滓?蝉ｸｭ窶ｦ' : 'AI繧｢繝峨ヰ繧､繧ｹ繧堤函謌?'}
+                          {expert.aiLoading ? 'AI生成中…' : 'AIアドバイスを生成'}
                         </button>
                         <button
                           type="button"
@@ -1984,14 +1984,14 @@ export default function App() {
                             setExpert((x) => ({ ...x, step: 2 }))
                           }}
                         >
-                          谺｡縺ｸ?ｼ磯?｣邨｡蜈茨ｼ?
+                          次へ（連絡先）
                         </button>
                       </div>
                       {expert.aiError ? <div className="ha-error">{expert.aiError}</div> : null}
                       {expert.aiAdvice ? (
                         <div>
                           <div className={labelClass} style={{ marginTop: 16 }}>
-                            AI繧｢繝峨ヰ繧､繧ｹ?ｼ亥盾閠??ｼ?
+                            AIアドバイス（参考）
                           </div>
                           <div className="ha-aiBox">{expert.aiAdvice}</div>
                         </div>
@@ -2006,11 +2006,11 @@ export default function App() {
                           {expert.aiAdvice}
                         </div>
                       ) : (
-                        <p className="ha-sectionDesc">繧ｹ繝?繝?繝?1縺ｧ逕滓?舌＠縺蘗I繧｢繝峨ヰ繧､繧ｹ縺後％縺薙↓陦ｨ遉ｺ縺輔ｌ縺ｾ縺吶??</p>
+                        <p className="ha-sectionDesc">ステップ1で生成したAIアドバイスがここに表示されます。</p>
                       )}
                       <div className="ha-grid2">
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>縺雁錐蜑?</label>
+                          <label className={labelClass}>お名前</label>
                           <input
                             className={fieldClass}
                             value={expert.name}
@@ -2018,7 +2018,7 @@ export default function App() {
                           />
                         </div>
                         <div className="ha-row" style={{ marginBottom: 0 }}>
-                          <label className={labelClass}>髮ｻ隧ｱ逡ｪ蜿ｷ</label>
+                          <label className={labelClass}>電話番号</label>
                           <input
                             className={fieldClass}
                             value={expert.phone}
@@ -2027,7 +2027,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>繝｡繝ｼ繝ｫ繧｢繝峨Ξ繧ｹ</label>
+                        <label className={labelClass}>メールアドレス</label>
                         <input
                           className={fieldClass}
                           type="email"
@@ -2036,7 +2036,7 @@ export default function App() {
                         />
                       </div>
                       <div className="ha-row">
-                        <label className={labelClass}>蛯呵??</label>
+                        <label className={labelClass}>備考</label>
                         <textarea
                           className={fieldClass}
                           value={expert.notes}
@@ -2053,7 +2053,7 @@ export default function App() {
                             setExpert((x) => ({ ...x, step: 1 }))
                           }}
                         >
-                          謌ｻ繧?
+                          戻る
                         </button>
                         <button
                           type="button"
@@ -2061,7 +2061,7 @@ export default function App() {
                           disabled={expertSubmitting}
                           onClick={submitExpertRequest}
                         >
-                          {expertSubmitting ? '騾∽ｿ｡荳ｭ窶ｦ' : '騾∽ｿ｡縺吶ｋ'}
+                          {expertSubmitting ? '送信中…' : '送信する'}
                         </button>
                       </div>
                     </>
@@ -2070,50 +2070,48 @@ export default function App() {
           )}
 
           {tab === 'member' && (
-          <div className="auth-overlay">
-            <div className="auth-modal">
+            <div className="ha-panel" style={{ padding: 0 }}>
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel />
             </div>
-        )}
-          </div>
+          )}
 
           {tab === 'agency' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               {!agencyType && (
                 <div style={{ padding: '40px 24px' }}>
-                  <h2 style={{ color: '#1a3a5c', fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>?沛暦ｸ? 讌ｭ閠?讒伜髄縺代し繝ｼ繝薙せ</h2>
-                  <p style={{ color: '#666', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>縺泌茜逕ｨ逕ｨ騾斐ｒ縺企∈縺ｳ縺上□縺輔＞</p>
+                  <h2 style={{ color: '#1a3a5c', fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>🏗️ 業者様向けサービス</h2>
+                  <p style={{ color: '#666', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>ご利用用途をお選びください</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 560, margin: '0 auto' }}>
                     <div style={{ border: '2px solid #1a3a5c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
                       onClick={() => window.location.href = '/agency'}>
-                      <div style={{ fontSize: 32, marginBottom: 10 }}>?沛?</div>
-                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>荳榊虚逕｣讌ｭ閠?讒?</div>
+                      <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
+                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>不動産業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
-                        迚ｩ莉ｶ縺ｮ逋ｻ骭ｲ繝ｻ謗ｲ霈峨?ｻ邂｡逅?縺後〒縺阪∪縺吶?ょｰら畑繝?繝?繧ｷ繝･繝懊?ｼ繝峨↓縺ｦ迚ｩ莉ｶ諠?蝣ｱ繧偵＃逋ｻ骭ｲ縺?縺溘□縺代∪縺吶??
+                        物件の登録・掲載・管理ができます。専用ダッシュボードにて物件情報をご登録いただけます。
                       </div>
                       <div style={{ display: 'inline-block', padding: '10px 24px', background: '#1a3a5c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        莨壼藤逋ｻ骭ｲ縺ｯ縺薙■繧? 竊?
+                        会員登録はこちら →
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
-                        縺吶〒縺ｫ逋ｻ骭ｲ貂医∩縺ｮ譁ｹ縺ｯ
-                        <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }}>縺薙■繧峨°繧峨Ο繧ｰ繧､繝ｳ 竊?</a>
+                        すでに登録済みの方は
+                        <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
                       </div>
                     </div>
                     <div style={{ border: '2px solid #c9a84c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
                       onClick={() => window.location.href = '/partner'}>
-                      <div style={{ fontSize: 32, marginBottom: 10 }}>?沛｢</div>
-                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>縺昴?ｮ莉悶?ｮ讌ｭ閠?讒?</div>
+                      <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
+                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>その他の業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
-                        繝ｪ繝輔か繝ｼ繝?繝ｻ螟匁ｧ九?ｻ蜿ｸ豕墓嶌螢ｫ繝ｻ遞守炊螢ｫ繝ｻ驥題檮讖滄未縺ｪ縺ｩ縲∝ｽ薙し繧､繝医∈縺ｮ蠎?蜻頑軸霈峨ｒ縺泌ｸ梧悍縺ｮ譁ｹ縺ｯ縺薙■繧峨??
+                        リフォーム・外構・司法書士・税理士・金融機関など、当サイトへの広告掲載をご希望の方はこちら。
                       </div>
-                      <div style={{ color: '#888', fontSize: 12, marginBottom: 16 }}>窶ｻ 蠎?蜻翫?壹?ｼ繧ｸ縺ｯ縺薙■繧峨〒菴懈?舌＠縲∝ｽ薙し繧､繝医↓謗ｲ霈峨＞縺溘＠縺ｾ縺?</div>
+                      <div style={{ color: '#888', fontSize: 12, marginBottom: 16 }}>※ 広告ページはこちらで作成し、当サイトに掲載いたします</div>
                       <div style={{ display: 'inline-block', padding: '10px 24px', background: '#c9a84c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        莨壼藤逋ｻ骭ｲ縺ｯ縺薙■繧? 竊?
+                        会員登録はこちら →
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
-                        縺吶〒縺ｫ逋ｻ骭ｲ貂医∩縺ｮ譁ｹ縺ｯ
-                        <a href="/agency" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>縺薙■繧峨°繧峨Ο繧ｰ繧､繝ｳ 竊?</a>
+                        すでに登録済みの方は
+                        <a href="/agency" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
                       </div>
                     </div>
                   </div>
@@ -2124,28 +2122,28 @@ export default function App() {
                   <div style={{ background: '#1a3a5c', borderRadius: '12px 12px 0 0', padding: '20px 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                       <div>
-                        <div style={{ color: '#c9a84c', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>荳榊虚逕｣讌ｭ閠?讒伜髄縺?</div>
-                        <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>?沛? 荳榊虚逕｣讌ｭ閠?讒伜ｰら畑繝?繝?繧ｷ繝･繝懊?ｼ繝?</div>
-                        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 4 }}>迚ｩ莉ｶ縺ｮ逋ｻ骭ｲ繝ｻ邂｡逅?繝ｻ蜈ｬ髢玖ｨｭ螳壹′縺ｧ縺阪∪縺?</div>
+                        <div style={{ color: '#c9a84c', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>不動産業者様向け</div>
+                        <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>🏠 不動産業者様専用ダッシュボード</div>
+                        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 4 }}>物件の登録・管理・公開設定ができます</div>
                       </div>
                       <a href="/agency" style={{ display: 'inline-block', padding: '12px 24px', background: '#f5a623', color: '#1a3a5c', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                        繝?繝?繧ｷ繝･繝懊?ｼ繝峨∈ 竊?
+                        ダッシュボードへ →
                       </a>
                     </div>
                   </div>
                   <div style={{ padding: '12px 24px' }}>
-                    <button onClick={() => setAgencyType(null)} style={{ background: 'none', border: 'none', color: '#1a3a5c', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>竊? 驕ｸ謚樒判髱｢縺ｫ謌ｻ繧?</button>
+                    <button onClick={() => setAgencyType(null)} style={{ background: 'none', border: 'none', color: '#1a3a5c', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>← 選択画面に戻る</button>
                   </div>
                   <AgencyForm />
                 </div>
               )}
               {agencyType === 'other' && (
                 <div style={{ padding: '32px 24px' }}>
-                  <button onClick={() => setAgencyType(null)} style={{ background: 'none', border: 'none', color: '#1a3a5c', fontSize: 13, cursor: 'pointer', textDecoration: 'underline', marginBottom: 24, display: 'block' }}>竊? 驕ｸ謚樒判髱｢縺ｫ謌ｻ繧?</button>
-                  <h2 style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>?沛｢ 蠎?蜻頑軸霈峨?ｮ縺顔筏縺苓ｾｼ縺ｿ</h2>
+                  <button onClick={() => setAgencyType(null)} style={{ background: 'none', border: 'none', color: '#1a3a5c', fontSize: 13, cursor: 'pointer', textDecoration: 'underline', marginBottom: 24, display: 'block' }}>← 選択画面に戻る</button>
+                  <h2 style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>🏢 広告掲載のお申し込み</h2>
                   <p style={{ color: '#555', fontSize: 13, lineHeight: 1.8, marginBottom: 24 }}>
-                    繝ｪ繝輔か繝ｼ繝?繝ｻ螟匁ｧ九?ｻ蜿ｸ豕墓嶌螢ｫ繝ｻ遞守炊螢ｫ繝ｻ驥題檮讖滄未縺ｪ縺ｩ縲∝推讌ｭ遞ｮ縺ｮ讌ｭ閠?讒倥?ｮ蠎?蜻翫ｒ蠖薙し繧､繝医↓謗ｲ霈峨＞縺溘＠縺ｾ縺吶??
-                    縺ｾ縺壹?ｯ莨壼藤逋ｻ骭ｲ繧偵♀鬘倥＞縺?縺溘＠縺ｾ縺吶?よ球蠖楢??繧医ｊ縺秘?｣邨｡縺輔○縺ｦ縺?縺溘□縺阪∪縺吶??
+                    リフォーム・外構・司法書士・税理士・金融機関など、各業種の業者様の広告を当サイトに掲載いたします。
+                    まずは会員登録をお願いいたします。担当者よりご連絡させていただきます。
                   </p>
                   <AgencyForm />
                 </div>
@@ -2184,35 +2182,35 @@ export default function App() {
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <h2 className="ha-sectionTitle">?沛假ｸ? 繧ｳ繝溘Η繝九ユ繧｣</h2>
+                <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <select value={rankSort} onChange={(e) => setRankSort(e.target.value)}
                     style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', color: '#555', cursor: 'pointer' }}>
-                    <option value="empathy">?汳? 蜈ｱ諢滄??</option>
-                    <option value="likes">?汨? 縺?縺?縺ｭ鬆?</option>
-                    <option value="new">?氣? 譁ｰ逹?鬆?</option>
+                    <option value="empathy">💗 共感順</option>
+                    <option value="likes">👍 いいね順</option>
+                    <option value="new">🆕 新着順</option>
                   </select>
                   <button type="button" onClick={() => setTab('properties')}
                     style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    ?沛? 迚ｩ莉ｶ諠?蝣ｱ
+                    🏠 物件情報
                   </button>
                   <button type="button" onClick={() => setTab('vendors')}
                     style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    ?汨ｷ 讌ｭ閠?荳?隕ｧ繝ｻ豈碑ｼ?
+                    👷 業者一覧・比較
                   </button>
                 </div>
               </div>
               <p className="ha-sectionDesc">
-                荳榊虚逕｣縺ｮ菴馴ｨ楢ｫ?繧?謔ｩ縺ｿ繧貞?ｱ譛峨〒縺阪∪縺吶?よ兜遞ｿ蜀?螳ｹ縺ｯ繧ｵ繝ｼ繝薙せ蜈ｨ菴薙〒蜈ｱ譛峨＆繧後∪縺吶??
+                不動産の体験談や悩みを共有できます。投稿内容はサービス全体で共有されます。
               </p>
 
               <div className="ha-postForm">
-              {/* 謚慕ｨｿ繝偵Φ繝? */}
+              {/* 投稿ヒント */}
               <div style={{ background: '#fffbe6', border: '1px solid #f0d060', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-                ?汳｡ <strong>謚慕ｨｿ繝?繝ｳ繝励Ξ?ｼ?</strong>縲後??縲?縺ｧ蠕梧ｔ縺励∪縺励◆縲阪?後??縲?縺ｧ謳阪＠縺ｾ縺励◆縲榊ｽ｢蠑上′蜈ｱ諢溘ｒ蜻ｼ縺ｳ縺ｾ縺呻ｼ?
+                💡 <strong>投稿テンプレ：</strong>「〇〇で後悔しました」「〇〇で損しました」形式が共感を呼びます！
               </div>
                 <div className="ha-row">
-                  <label className={labelClass}>繧ｿ繧､繝医Ν</label>
+                  <label className={labelClass}>タイトル</label>
                   <input
                     className={fieldClass}
                     value={communityDraft.title}
@@ -2220,7 +2218,7 @@ export default function App() {
                   />
                 </div>
                 <div className="ha-row">
-                  <label className={labelClass}>譛ｬ譁?</label>
+                  <label className={labelClass}>本文</label>
                   <textarea
                     className={fieldClass}
                     value={communityDraft.body}
@@ -2228,30 +2226,30 @@ export default function App() {
                   />
                 </div>
                 <div className="ha-row">
-                  <label className={labelClass}>縺雁錐蜑搾ｼ井ｻｻ諢擾ｼ?</label>
+                  <label className={labelClass}>お名前（任意）</label>
                   <input
                     className={fieldClass}
                     value={communityDraft.author}
                     onChange={(e) => setCommunityDraft((d) => ({ ...d, author: e.target.value }))}
-                    placeholder="遨ｺ谺?縺ｪ繧牙諺蜷?"
+                    placeholder="空欄なら匿名"
                   />
                 </div>
               </div>
               <div className="ha-row">
-                <label className={labelClass}>?汳ｸ 謳阪＠縺滄?鷹｡搾ｼ井ｻｻ諢擾ｼ?</label>
+                <label className={labelClass}>💸 損した金額（任意）</label>
                 <input
                   className={fieldClass}
                   value={communityDraft.lossAmount || ''}
                   onChange={(e) => setCommunityDraft((d) => ({ ...d, lossAmount: e.target.value }))}
-                  placeholder="萓具ｼ夂ｴ?100荳?蜀?"
+                  placeholder="例：約100万円"
                 />
                 <button type="button" className="ha-btn" onClick={addPost} style={{ marginTop: 20 }}>
-                  謚慕ｨｿ縺吶ｋ
+                  投稿する
                 </button>
               </div>
 
               {posts.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: 14 }}>縺ｾ縺?謚慕ｨｿ縺後≠繧翫∪縺帙ｓ縲よ怙蛻昴?ｮ菴馴ｨ楢ｫ?繧呈兜遞ｿ縺励※縺ｿ縺ｾ縺励ｇ縺?縲?</p>
+                <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
               ) : (
                 posts.map((post) => (
                   <article key={post.id} className="ha-post" style={{ color: '#1a1a1a' }}>
@@ -2259,13 +2257,13 @@ export default function App() {
                       <h4 style={{ margin: 0, flex: 1 }}>{post.title}</h4>
                       {post.lossAmount && (
                         <span style={{ fontSize: 11, fontWeight: 700, background: '#fff5f5', color: '#c0392b', border: '1px solid #ffd5d5', padding: '2px 8px', borderRadius: 10, marginLeft: 8, whiteSpace: 'nowrap' }}>
-                          ?汳ｸ {post.lossAmount}
+                          💸 {post.lossAmount}
                         </span>
                       )}
                     </div>
                     <div className="ha-postBody">{post.body}</div>
                     <div className="ha-postMeta">
-                      {post.author} 繝ｻ {new Date(post.createdAt).toLocaleString('ja-JP')}
+                      {post.author} ・ {new Date(post.createdAt).toLocaleString('ja-JP')}
                     </div>
                     <div className="ha-reactions">
                       <button
@@ -2274,7 +2272,7 @@ export default function App() {
                         data-on={post.likedByMe}
                         onClick={() => toggleLike(post.id)}
                       >
-                        ?汨? 縺?縺?縺ｭ {post.likes}
+                        👍 いいね {post.likes}
                       </button>
                       <button
                         type="button"
@@ -2282,7 +2280,7 @@ export default function App() {
                         data-on={post.empathyByMe}
                         onClick={() => toggleEmpathy(post.id)}
                       >
-                        ?汳? 蜈ｱ諢? {post.empathy}
+                        💗 共感 {post.empathy}
                       </button>
                       <button
                         type="button"
@@ -2290,7 +2288,7 @@ export default function App() {
                         style={{ padding: '6px 10px', fontSize: 12 }}
                         onClick={() => setExpandedPost((id) => (id === post.id ? null : post.id))}
                       >
-                        {expandedPost === post.id ? '髢峨§繧?' : '繧ｳ繝｡繝ｳ繝医?ｻAI'}
+                        {expandedPost === post.id ? '閉じる' : 'コメント・AI'}
                       </button>
                     </div>
 
@@ -2298,7 +2296,7 @@ export default function App() {
                       <div className="ha-comments">
                         {post.aiComment ? (
                           <div className="ha-aiComment">
-                            <strong style={{ color: 'var(--accent)' }}>AI繧ｳ繝｡繝ｳ繝?</strong>
+                            <strong style={{ color: 'var(--accent)' }}>AIコメント</strong>
                             {'\n\n'}
                             {post.aiComment}
                           </div>
@@ -2310,12 +2308,12 @@ export default function App() {
                             disabled={aiLoadingPostId === post.id}
                             onClick={() => generateAiComment(post)}
                           >
-                            {aiLoadingPostId === post.id ? 'AI逕滓?蝉ｸｭ窶ｦ' : 'AI繧ｳ繝｡繝ｳ繝医ｒ逕滓??'}
+                            {aiLoadingPostId === post.id ? 'AI生成中…' : 'AIコメントを生成'}
                           </button>
                         </div>
                         {post.comments.map((c) => (
                           <div key={c.id} className="ha-comment">
-                            <strong>{c.author}</strong> ﾂｷ {new Date(c.createdAt).toLocaleString('ja-JP')}
+                            <strong>{c.author}</strong> · {new Date(c.createdAt).toLocaleString('ja-JP')}
                             {'\n'}
                             {c.text}
                           </div>
@@ -2323,7 +2321,7 @@ export default function App() {
                         <div className="ha-row" style={{ marginTop: 10 }}>
                           <input
                             className={fieldClass}
-                            placeholder="繧ｳ繝｡繝ｳ繝医ｒ蜈･蜉?"
+                            placeholder="コメントを入力"
                             value={commentDrafts[post.id] || ''}
                             onChange={(e) =>
                               setCommentDrafts((d) => ({ ...d, [post.id]: e.target.value }))
@@ -2331,7 +2329,7 @@ export default function App() {
                           />
                         </div>
                         <button type="button" className="ha-btn ha-btnGhost" onClick={() => addComment(post.id)}>
-                          繧ｳ繝｡繝ｳ繝医ｒ謚慕ｨｿ
+                          コメントを投稿
                         </button>
                       </div>
                     )}
@@ -2343,7 +2341,7 @@ export default function App() {
         </main>
       </div>
 
-        {/* 繝輔ャ繧ｿ繝ｼ */}
+        {/* フッター */}
         <footer style={{
           background: '#1a3a5c',
           color: 'rgba(255,255,255,0.7)',
@@ -2352,15 +2350,15 @@ export default function App() {
           textAlign: 'center',
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c', marginBottom: 12 }}>
-            荳榊虚逕｣AI繧ｳ繝ｳ繧ｷ繧ｧ繝ｫ繧ｸ繝･
+            不動産AIコンシェルジュ
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 20px', marginBottom: 16 }}>
             {[
-              { label: '蛻ｩ逕ｨ繧ｬ繧､繝?', tab: 'guide' },
-              { label: '蛻ｩ逕ｨ隕冗ｴ?', tab: 'terms' },
-              { label: '繝励Λ繧､繝舌す繝ｼ繝昴Μ繧ｷ繝ｼ', tab: 'privacy' },
-              { label: '迚ｹ螳壼膚蜿門ｼ墓ｳ輔↓蝓ｺ縺･縺剰｡ｨ險?', tab: 'tokusho' },
-              { label: '讌ｭ閠?繝ｻ蟆る摩螳ｶ蜷代¢蛻ｩ逕ｨ隕冗ｴ?', tab: 'partner_terms' },
+              { label: '利用ガイド', tab: 'guide' },
+              { label: '利用規約', tab: 'terms' },
+              { label: 'プライバシーポリシー', tab: 'privacy' },
+              { label: '特定商取引法に基づく表記', tab: 'tokusho' },
+              { label: '業者・専門家向け利用規約', tab: 'partner_terms' },
             ].map((item) => (
               <button
                 key={item.tab}
@@ -2382,7 +2380,7 @@ export default function App() {
             ))}
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-            ﾂｩ 2024 GINTETSU荳榊虚逕｣譬ｪ蠑丈ｼ夂､ｾ縲?All rights reserved.
+            © 2024 GINTETSU不動産株式会社　All rights reserved.
           </div>
         </footer>
     </>
