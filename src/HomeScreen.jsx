@@ -832,7 +832,7 @@ export default function HomeScreen({ onNavigate }) {
               <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
-                {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : null}
+                <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               <CommunityStrip onNavigate={navigate} />
             </div>
             <div style={{ padding: "0 20px 0 16px" }}>

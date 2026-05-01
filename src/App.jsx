@@ -236,6 +236,18 @@ export default function App() {
 
   const [tab, setTab] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e) => {
+      if (!e.target.closest('.ha-menu-wrapper')) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [menuOpen])
   const [agencyType, setAgencyType] = useState(null)
 
   /* ---- AIチャット ---- */
@@ -1257,7 +1269,7 @@ export default function App() {
               </button>
             )}
             {/* ハンバーガーメニュー */}
-            <div style={{ position: 'relative' }}>
+            <div className='ha-menu-wrapper' style={{ position: 'relative' }}>
               <button
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
