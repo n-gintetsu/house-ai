@@ -2073,12 +2073,7 @@ export default function App() {
           )}
 
           {tab === 'member' && (
-                <div className="auth-overlay">
-                  <div className="auth-modal">
-                    <PremiumUpgradeBanner user={user} isPremium={isPremium} />
-                    <AuthPanel />
-                  </div>
-                </div>
+            <div />
           )}
 
           {tab === 'agency' && (

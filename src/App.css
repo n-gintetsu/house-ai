@@ -209,6 +209,7 @@
   padding: 28px 24px 40px;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+  z-index: 10000;
   animation: sheetSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 @keyframes sheetSlideUp {
