@@ -12,6 +12,7 @@ import InvestmentDrill from './InvestmentDrill'
 import InvestmentSimulator from './InvestmentSimulator'
 import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
+import TikTokPropertyFeed from './TikTokPropertyFeed'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 const AI_CHAT_FREE_LIMIT = 5
@@ -237,6 +238,8 @@ export default function App() {
   const [tab, setTab] = useState('home')
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  const [properties, setProperties] = useState([])
   useEffect(() => {
     if (!menuOpen) return
     const handler = (e) => {
@@ -249,6 +252,16 @@ export default function App() {
       document.removeEventListener('touchstart', handler)
     }
   }, [menuOpen])
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+  useEffect(() => {
+    if (tab !== 'properties') return
+    supabase.from('properties').select('*').eq('status', 'published').order('created_at', { ascending: false })
+      .then(({ data }) => setProperties(data || []))
+  }, [tab])
   const [agencyType, setAgencyType] = useState(null)
 
   /* ---- AIチャット ---- */
@@ -1373,7 +1386,10 @@ export default function App() {
         <main className="ha-main">
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <PropertiesPage user={user} onNavigate={(view) => setTab(view)} />
+              {isMobile
+                ? <TikTokPropertyFeed properties={properties} />
+                : <PropertiesPage user={user} onNavigate={(view) => setTab(view)} />
+              }
             </div>
           )}
           {tab === 'vendors' && (
