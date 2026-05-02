@@ -154,6 +154,12 @@ export default function MemberDashboard({ user, onNavigate, onLogout }) {
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  useEffect(() => {
+    const handler = (e) => setActiveTab(e.detail.tab)
+    window.addEventListener('member-tab', handler)
+    return () => window.removeEventListener('member-tab', handler)
+  }, [])
+
   const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト'
   const memberType = user?.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'
   const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' }) : ''

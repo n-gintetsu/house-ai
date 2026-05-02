@@ -204,7 +204,7 @@ function AIModal({ property, onClose }) {
 
   return ReactDOM.createPortal(
     <div className="tt-overlay" onClick={onClose}>
-      <div className="tt-sheet tt-ai-sheet" onClick={e => e.stopPropagation()}>
+      <div className="tt-sheet tt-ai-sheet" style={{ height: '80dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div className="tt-sheet-handle" />
         <div className="tt-sheet-header">
           <span>🤖 AI不動産相談</span>

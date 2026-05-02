@@ -1386,7 +1386,10 @@ export default function App() {
         <main className="ha-main" style={tab === 'properties' ? { margin: 0, border: 'none', borderRadius: 0, overflow: 'hidden', minHeight: '100dvh', boxShadow: 'none' } : {}}>
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <TikTokPropertyFeed properties={properties} user={user} onDM={() => setTab('member')} />
+              <TikTokPropertyFeed properties={properties} user={user} onDM={() => {
+                setShowAuthSheet(true);
+                setTimeout(() => window.dispatchEvent(new CustomEvent('member-tab', { detail: { tab: 'dm' } })), 150);
+              }} />
             </div>
           )}
           {tab === 'vendors' && (
