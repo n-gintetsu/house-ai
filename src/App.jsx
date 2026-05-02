@@ -1250,7 +1250,7 @@ export default function App() {
             {user ? (
               <button
                 type="button"
-                onClick={() => setTab('member')}
+                onClick={() => setShowAuthSheet(true)}
                 style={{ background: 'rgba(201,168,76,0.15)', border: '1.5px solid #c9a84c', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#c9a84c', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}
               >
                 <span style={{ fontSize: 16 }}>👤</span>
@@ -1263,7 +1263,7 @@ export default function App() {
                 type="button"
                 className="ha-btn"
                 style={{ whiteSpace: 'nowrap', background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 12, padding: '7px 14px' }}
-                onClick={() => setTab('member')}
+                onClick={() => setShowAuthSheet(true)}
               >
                 会員登録 / ログイン
               </button>
@@ -2342,6 +2342,15 @@ export default function App() {
               )}
             </div>
           )}
+        {showAuthSheet && (
+          <>
+            <div className="auth-overlay" onClick={() => setShowAuthSheet(false)} />
+            <div className="auth-modal">
+              <PremiumUpgradeBanner user={user} isPremium={isPremium} />
+              <AuthPanel onClose={() => setShowAuthSheet(false)} />
+            </div>
+          </>
+        )}
         </main>
       </div>
 
