@@ -1383,7 +1383,7 @@ export default function App() {
 
 
 
-        <main className="ha-main">
+        <main className="ha-main" style={tab === 'properties' ? { margin: 0, border: 'none', borderRadius: 0, overflow: 'hidden', minHeight: '100dvh', boxShadow: 'none' } : {}}>
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <TikTokPropertyFeed properties={properties} />
@@ -2364,7 +2364,7 @@ export default function App() {
       </div>
 
         {/* フッター */}
-        <footer style={{
+        {tab !== 'properties' && <footer style={{
           background: '#1a3a5c',
           color: 'rgba(255,255,255,0.7)',
           padding: '24px 20px 32px',
@@ -2404,7 +2404,7 @@ export default function App() {
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
             © 2024 GINTETSU不動産株式会社　All rights reserved.
           </div>
-        </footer>
+        </footer>}
     </>
   )
 }

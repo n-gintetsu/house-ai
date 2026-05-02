@@ -287,6 +287,7 @@ export default function TikTokPropertyFeed({ properties }) {
     if (filter === "すべて") return true
     if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買'
     if (filter === "賃貸") return p.deal_type === 'rent' || p.deal_type === '賃貸'
+    if (filter === "投資") return p.deal_type === 'investment' || (p.property_type && p.property_type.includes('投資'))
     return true
   });
 
@@ -294,7 +295,7 @@ export default function TikTokPropertyFeed({ properties }) {
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
       <div className="tt-filter-bar">
-        {["すべて", "売買", "賃貸"].map(f => (
+        {["すべて", "売買", "賃貸", "投資"].map(f => (
           <button
             key={f}
             className={`tt-filter-btn${filter === f ? " active" : ""}`}
