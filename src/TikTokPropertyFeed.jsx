@@ -242,12 +242,140 @@ function AIModal({ property, onClose }) {
   );
 }
 
+// ── 物件詳細モーダル ──────────────────────────────────
+const DETAIL_FIELDS = [
+  { label: '土地面積', key: 'land_area' },
+  { label: '地目', key: 'land_category' },
+  { label: '用途地域', key: 'use_district' },
+  { label: '建ぺい率', key: 'building_coverage' },
+  { label: '容積率', key: 'floor_area_ratio' },
+  { label: '接道状況', key: 'road_access' },
+  { label: '都市計画', key: 'city_planning' },
+  { label: '引渡', key: 'handover' },
+  { label: '取引態様', key: 'transaction_type' },
+  { label: '土地権利', key: 'land_rights' },
+  { label: '地勢', key: 'topography' },
+  { label: '土地持分', key: 'land_share' },
+  { label: '私道負担', key: 'private_road' },
+  { label: '国土法', key: 'national_land_law' },
+  { label: '農地法', key: 'agricultural_land_law' },
+  { label: '埋蔵文化財', key: 'buried_cultural_property' },
+  { label: '土壌汚染', key: 'soil_contamination' },
+];
+
+function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
+  const [imgIdx, setImgIdx] = useState(0);
+
+  const images = Array.isArray(property.image_urls) && property.image_urls.length > 0
+    ? property.image_urls
+    : property.image_url
+      ? [property.image_url]
+      : [];
+
+  let details = {};
+  try {
+    details = typeof property.details === 'string'
+      ? JSON.parse(property.details)
+      : (property.details || {});
+  } catch {}
+
+  const dealLabel = { rent: '賃貸', sale: '売買', '賃貸': '賃貸', '売買': '売買' }[property.deal_type] ?? property.deal_type;
+  const priceLabel = (property.deal_type === 'rent' || property.deal_type === '賃貸')
+    ? `¥${Number(property.rent).toLocaleString()}/月`
+    : `${Number(property.price).toLocaleString()}万円`;
+
+  const address = details.address || property.address || '';
+  const access = details.access || property.station || '';
+  const area = details.area || details.land_area || property.size || '';
+  const detailRows = DETAIL_FIELDS.map(f => ({ label: f.label, value: details[f.key] })).filter(r => r.value);
+
+  return ReactDOM.createPortal(
+    <div className="tt-overlay" onClick={onClose}>
+      <div className="pd-modal" onClick={e => e.stopPropagation()}>
+        {/* ヘッダー */}
+        <div className="pd-header">
+          <button className="pd-close-btn" onClick={onClose}>✕</button>
+          <span className="pd-header-title">{property.title}</span>
+          <button className="pd-share-btn"
+            onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}>
+            ↗️
+          </button>
+        </div>
+
+        {/* スクロールエリア */}
+        <div className="pd-scroll">
+          {/* 写真スライダー */}
+          {images.length > 0 && (
+            <>
+              <div className="pd-slider">
+                <img className="pd-slider-img" src={images[imgIdx]} alt={property.title} />
+                {images.length > 1 && (
+                  <>
+                    <button className="pd-slider-btn prev"
+                      onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}>‹</button>
+                    <button className="pd-slider-btn next"
+                      onClick={() => setImgIdx(i => (i + 1) % images.length)}>›</button>
+                  </>
+                )}
+              </div>
+              {images.length > 1 && (
+                <div className="pd-dots">
+                  {images.map((_, i) => (
+                    <div key={i} className={`pd-dot${i === imgIdx ? ' active' : ''}`} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* 物件基本情報 */}
+          <div className="pd-body">
+            <p className="pd-price">{priceLabel}</p>
+            <span className={`tt-badge-type type-${dealLabel}`} style={{ marginBottom: 8, display: 'inline-block' }}>{dealLabel}</span>
+            <h2 className="pd-title">{property.title}</h2>
+            <div className="pd-meta-list">
+              {address && <p className="pd-meta-item">📍 {address}</p>}
+              {access && <p className="pd-meta-item">🚃 {access}</p>}
+              {area && <p className="pd-meta-item">🏠 {area}</p>}
+            </div>
+
+            {/* 物件詳細テーブル */}
+            {detailRows.length > 0 && (
+              <>
+                <p className="pd-section-title">■ 物件詳細</p>
+                <table className="pd-detail-table">
+                  <tbody>
+                    {detailRows.map(r => (
+                      <tr key={r.label}>
+                        <td>{r.label}</td>
+                        <td>{r.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 固定フッター */}
+        <div className="pd-footer">
+          <button className="pd-btn-ai" onClick={() => { onClose(); onAIConsult(); }}>🤖 AIに相談</button>
+          <button className="pd-btn-dm" onClick={() => { onClose(); onDM(); }}>✉️ DMを送る</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ── 1スライド ─────────────────────────────────────────
-function TikTokSlide({ property, user }) {
+function TikTokSlide({ property, user, onDM }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(property.likeCount ?? Math.floor(Math.random() * 40 + 5));
   const [showComments, setShowComments] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
 
   const toggleLike = e => {
     e.stopPropagation();
@@ -317,14 +445,22 @@ function TikTokSlide({ property, user }) {
       {/* 下部CTAボタン */}
       <button
         className="tiktok-detail"
-        onClick={e => { e.stopPropagation(); setShowAI(true); }}
+        onClick={e => { e.stopPropagation(); setShowDetail(true); }}
       >
-        🤖 この物件をAIに相談する
+        詳細を見る →
       </button>
 
       {/* モーダル */}
       {showComments && <CommentModal property={property} onClose={() => setShowComments(false)} user={user} />}
       {showAI && <AIModal property={property} onClose={() => setShowAI(false)} />}
+      {showDetail && (
+        <PropertyDetailModal
+          property={property}
+          onClose={() => setShowDetail(false)}
+          onAIConsult={() => setShowAI(true)}
+          onDM={onDM ?? (() => {})}
+        />
+      )}
     </section>
   );
 }
@@ -374,7 +510,7 @@ const SAMPLE_PROPERTIES = [
 ];
 
 // ── メインエクスポート ─────────────────────────────────
-export default function TikTokPropertyFeed({ properties, user }) {
+export default function TikTokPropertyFeed({ properties, user, onDM }) {
   const [filter, setFilter] = useState("すべて");
   const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p => {
     if (filter === "すべて") return true
@@ -403,7 +539,7 @@ export default function TikTokPropertyFeed({ properties, user }) {
       <div className="tiktok-feed">
         {data.length === 0
           ? <div className="tt-empty">該当する物件がありません</div>
-          : data.map(p => <TikTokSlide key={p.id} property={p} user={user} />)
+          : data.map(p => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} />)
         }
       </div>
     </>
