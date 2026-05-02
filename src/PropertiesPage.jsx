@@ -355,6 +355,7 @@ export default function PropertiesPage({ user, onNavigate }) {
   const [viewMode, setViewMode] = useState('swipe')
   const [compareList, setCompareList] = useState([])
   const [showCompare, setShowCompare] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
   const containerRef = useRef(null)
   const touchStartY = useRef(null)
   const mouseStartY = useRef(null)
@@ -422,11 +423,81 @@ export default function PropertiesPage({ user, onNavigate }) {
     return () => window.removeEventListener('keydown', handler)
   }, [currentIndex, properties.length])
 
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   if (loading) return (
     <div style={{ background: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#fff', fontSize: 14 }}>読み込み中...</p>
     </div>
   )
+
+  if (isMobile) {
+    if (properties.length === 0) return (
+      <div style={{ background: '#eef3f8', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#14395b', gap: 12 }}>
+        <div style={{ fontSize: 48 }}>🏠</div>
+        <p style={{ fontSize: 16, fontWeight: 700 }}>掲載中の物件はありません</p>
+        <p style={{ fontSize: 13, color: '#64748b' }}>フィルターを変えて探してみましょう</p>
+      </div>
+    )
+    return (
+      <>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '12px 16px', display: 'flex', gap: 8, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)' }}>
+          <button onClick={() => onNavigate?.('home')} style={{ padding: '5px 12px', background: 'rgba(255,255,255,0.85)', color: '#1a3a5c', border: 'none', borderRadius: 20, fontSize: 12, cursor: 'pointer' }}>← 戻る</button>
+          {['all', 'sale', 'rent'].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              style={{ padding: '5px 12px', background: filter === f ? '#fff' : 'rgba(255,255,255,0.85)', color: '#1a3a5c', border: 'none', borderRadius: 20, fontSize: 12, fontWeight: filter === f ? 700 : 400, cursor: 'pointer' }}>
+              {f === 'all' ? 'すべて' : f === 'sale' ? '売買' : '賃貸'}
+            </button>
+          ))}
+        </div>
+        <div className="property-feed">
+          {properties.map(p => {
+            const imageUrl = p.images?.[0] || p.image_url || null
+            const typeLabel = p.property_type === 'sale' ? '売買' : p.property_type === 'rent' ? '賃貸' : '物件'
+            const { grade, gradeColor } = calcAIScore(p)
+            const inCompare = !!compareList.find(c => c.id === p.id)
+            return (
+              <div key={p.id} className="property-slide">
+                <div className="property-image-wrap">
+                  {imageUrl ? (
+                    <img className="property-image" src={imageUrl} alt={p.title}
+                      onError={e => { e.target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80' }} />
+                  ) : (
+                    <div className="property-no-image"><div>🏠<br />画像なし</div></div>
+                  )}
+                  <div className="property-actions">
+                    <button onClick={() => handleSave(p.id)}>{saved.has(p.id) ? '❤️' : '🤍'}</button>
+                    <button onClick={() => handleCompare(p)}>{inCompare ? '✓' : '⊕'}</button>
+                    <button onClick={() => navigator.share?.({ title: p.title, url: window.location.href })}>↗️</button>
+                  </div>
+                  <div className="property-info">
+                    <div className="property-tags">
+                      <span>{typeLabel}</span>
+                      <span style={{ background: gradeColor, color: '#fff' }}>AI {grade}</span>
+                    </div>
+                    <h3>{p.title || '物件名未設定'}</h3>
+                    <div style={{ color: '#c9a84c', fontSize: 20, fontWeight: 700 }}>
+                      {p.price ? `${p.price.toLocaleString()}万円` : p.rent ? `¥${p.rent.toLocaleString()}/月` : '価格未定'}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>
+                      {[p.address && `📍 ${p.address}`, p.layout && `🏠 ${p.layout}`, p.area && `📐 ${p.area}㎡`].filter(Boolean).join('  ')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <button className="property-fixed-cta" onClick={handleChat}>💬 AIに相談する</button>
+        <CompareBar compareList={compareList} onOpen={() => setShowCompare(true)} onRemove={handleRemoveCompare} />
+        {showCompare && <CompareModal compareList={compareList} onClose={() => setShowCompare(false)} onChat={handleChat} />}
+      </>
+    )
+  }
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', position: 'relative' }}>
