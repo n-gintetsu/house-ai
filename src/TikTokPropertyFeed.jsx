@@ -280,9 +280,7 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
   } catch {}
 
   const dealLabel = { rent: '賃貸', sale: '売買', '賃貸': '賃貸', '売買': '売買' }[property.deal_type] ?? property.deal_type;
-  const priceLabel = (property.deal_type === 'rent' || property.deal_type === '賃貸')
-    ? `¥${Number(property.rent).toLocaleString()}/月`
-    : `${Number(property.price).toLocaleString()}万円`;
+  const priceLabel = formatPrice(property);
 
   const address = details.address || property.address || '';
   const access = details.access || property.station || '';
@@ -369,8 +367,19 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
   );
 }
 
+// ── 価格フォーマット ───────────────────────────────────
+const formatPrice = (property) => {
+  if ((property.deal_type === 'rent' || property.deal_type === '賃貸') && property.rent) {
+    return `¥${Number(property.rent).toLocaleString()}/月`;
+  }
+  if (property.price) {
+    return `${Number(property.price).toLocaleString()}万円`;
+  }
+  return '価格応相談';
+};
+
 // ── 1スライド ─────────────────────────────────────────
-function TikTokSlide({ property, user, onDM }) {
+function TikTokSlide({ property, user, onDM, index, total }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(property.likeCount ?? Math.floor(Math.random() * 40 + 5));
   const [showComments, setShowComments] = useState(false);
@@ -384,9 +393,7 @@ function TikTokSlide({ property, user, onDM }) {
   };
 
   const dealLabel = { rent: '賃貸', sale: '売買', '賃貸': '賃貸', '売買': '売買' }[property.deal_type] ?? property.deal_type
-  const priceLabel = (property.deal_type === 'rent' || property.deal_type === '賃貸')
-    ? `¥${Number(property.rent).toLocaleString()}/月`
-    : `${Number(property.price).toLocaleString()}万円`
+  const priceLabel = formatPrice(property)
 
   return (
     <section className="tiktok-slide">
@@ -396,13 +403,20 @@ function TikTokSlide({ property, user, onDM }) {
       {/* グラデーションオーバーレイ */}
       <div className="tiktok-overlay" />
 
+      {/* 物件番号インジケーター */}
+      {total > 1 && (
+        <div style={{ position: 'absolute', top: 'max(56px, calc(env(safe-area-inset-top) + 56px))', right: 18, zIndex: 5, background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '4px 10px', borderRadius: 999, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+          {index + 1}/{total}
+        </div>
+      )}
+
       {/* 物件情報（画像の上） */}
       <div className="tiktok-info">
         <div className="tiktok-badges">
           <span className={`tt-badge-type type-${dealLabel}`}>{dealLabel}</span>
           {property.ai_rank && <span className="tt-badge-ai">🤖 AI {property.ai_rank}</span>}
         </div>
-        <h2>{property.title}</h2>
+        <h2 style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{property.title}</h2>
         <p className="price">{priceLabel}</p>
         {property.station && <p className="tt-station">📍 {property.station}</p>}
         {property.size && <p className="tt-size">🏠 {property.size}</p>}
@@ -418,7 +432,7 @@ function TikTokSlide({ property, user, onDM }) {
           >
             {liked ? "❤️" : "🤍"}
           </button>
-          <span className="tt-action-label">{likeCount}</span>
+          <span className="tt-action-label">保存</span>
         </div>
         <div className="tt-action-item">
           <button
@@ -428,7 +442,7 @@ function TikTokSlide({ property, user, onDM }) {
           >
             💬
           </button>
-          <span className="tt-action-label">{property.commentCount ?? 3}</span>
+          <span className="tt-action-label">質問</span>
         </div>
         <div className="tt-action-item">
           <button
@@ -539,7 +553,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM }) {
       <div className="tiktok-feed">
         {data.length === 0
           ? <div className="tt-empty">該当する物件がありません</div>
-          : data.map(p => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} />)
+          : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} index={i} total={data.length} />)
         }
       </div>
     </>

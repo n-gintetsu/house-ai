@@ -1387,8 +1387,12 @@ export default function App() {
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <TikTokPropertyFeed properties={properties} user={user} onDM={() => {
-                setShowAuthSheet(true);
-                setTimeout(() => window.dispatchEvent(new CustomEvent('member-tab', { detail: { tab: 'dm' } })), 150);
+                if (user) {
+                  setShowAuthSheet(true);
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('member-tab', { detail: { tab: 'dm' } })), 150);
+                } else {
+                  setShowAuthSheet(true);
+                }
               }} />
             </div>
           )}
