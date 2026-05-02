@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
+import './TikTokPropertyFeed.css'
 
 // ── NGワード ─────────────────────────────────────────
 const NG_WORDS = ["個人情報", "詐欺", "死ね", "営業", "勧誘", "LINE教えて", "電話番号"];
