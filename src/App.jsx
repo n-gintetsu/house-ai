@@ -2347,7 +2347,7 @@ export default function App() {
             <div className="auth-overlay" onClick={() => setShowAuthSheet(false)} />
             <div className="auth-modal">
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
-              <AuthPanel onClose={() => setShowAuthSheet(false)} />
+              <AuthPanel />
             </div>
           </>
         )}
