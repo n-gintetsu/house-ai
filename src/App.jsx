@@ -1386,10 +1386,7 @@ export default function App() {
         <main className="ha-main">
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              {isMobile
-                ? <TikTokPropertyFeed properties={properties} />
-                : <PropertiesPage user={user} onNavigate={(view) => setTab(view)} />
-              }
+              <TikTokPropertyFeed properties={properties} />
             </div>
           )}
           {tab === 'vendors' && (

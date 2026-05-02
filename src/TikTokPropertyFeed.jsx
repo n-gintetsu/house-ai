@@ -162,10 +162,15 @@ function TikTokSlide({ property }) {
     setLikeCount(n => liked ? n - 1 : n + 1);
   };
 
+  const dealLabel = { rent: '賃貸', sale: '売買', '賃貸': '賃貸', '売買': '売買' }[property.deal_type] ?? property.deal_type
+  const priceLabel = (property.deal_type === 'rent' || property.deal_type === '賃貸')
+    ? `¥${Number(property.rent).toLocaleString()}/月`
+    : `${Number(property.price).toLocaleString()}万円`
+
   return (
     <section className="tiktok-slide">
       {/* 背景画像 */}
-      <img className="tiktok-image" src={property.image} alt={property.title} loading="lazy" />
+      <img className="tiktok-image" src={property.image_url} alt={property.title} loading="lazy" />
 
       {/* グラデーションオーバーレイ */}
       <div className="tiktok-overlay" />
@@ -173,11 +178,11 @@ function TikTokSlide({ property }) {
       {/* 物件情報（画像の上） */}
       <div className="tiktok-info">
         <div className="tiktok-badges">
-          <span className={`tt-badge-type type-${property.dealType}`}>{property.dealType}</span>
-          {property.aiRank && <span className="tt-badge-ai">🤖 AI {property.aiRank}</span>}
+          <span className={`tt-badge-type type-${dealLabel}`}>{dealLabel}</span>
+          {property.ai_rank && <span className="tt-badge-ai">🤖 AI {property.ai_rank}</span>}
         </div>
         <h2>{property.title}</h2>
-        <p className="price">{property.price}</p>
+        <p className="price">{priceLabel}</p>
         {property.station && <p className="tt-station">📍 {property.station}</p>}
         {property.size && <p className="tt-size">🏠 {property.size}</p>}
       </div>
@@ -234,53 +239,56 @@ function TikTokSlide({ property }) {
 // ── サンプルデータ ────────────────────────────────────
 const SAMPLE_PROPERTIES = [
   {
-    id: 1, dealType: "賃貸", aiRank: "B+",
+    id: 1, deal_type: "賃貸", ai_rank: "B+",
     title: "さいたま市 築浅賃貸アパート",
-    price: "¥85,000/月",
+    price: null, rent: 85000,
     station: "大宮駅 徒歩8分", size: "1LDK / 42㎡",
-    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
-    likeCount: 18, commentCount: 5, yield: null, rent: "85,000円/月",
+    image_url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+    likeCount: 18, commentCount: 5,
   },
   {
-    id: 2, dealType: "売買", aiRank: "A",
+    id: 2, deal_type: "売買", ai_rank: "A",
     title: "川口市 中古一戸建て",
-    price: "3,200万円",
+    price: 3200, rent: null,
     station: "川口駅 徒歩12分", size: "4LDK / 95㎡",
-    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
-    likeCount: 24, commentCount: 8, yield: null, rent: null,
+    image_url: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+    likeCount: 24, commentCount: 8,
   },
   {
-    id: 3, dealType: "売買", aiRank: "A+",
+    id: 3, deal_type: "売買", ai_rank: "A+",
     title: "大宮駅徒歩3分 新築マンション",
-    price: "4,580万円",
+    price: 4580, rent: null,
     station: "大宮駅 徒歩3分", size: "2LDK / 65㎡",
-    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
-    likeCount: 41, commentCount: 12, yield: null, rent: null,
+    image_url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    likeCount: 41, commentCount: 12,
   },
   {
-    id: 4, dealType: "売買", aiRank: "B",
+    id: 4, deal_type: "売買", ai_rank: "B",
     title: "大宮区 収益マンション一棟",
-    price: "1億2,800万円",
+    price: 12800, rent: null,
     station: "大宮駅 徒歩7分", size: "8世帯 / 1棟",
-    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
-    likeCount: 33, commentCount: 7, yield: "5.8", rent: null,
+    image_url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+    likeCount: 33, commentCount: 7, yield: "5.8",
   },
   {
-    id: 5, dealType: "賃貸", aiRank: "B+",
+    id: 5, deal_type: "賃貸", ai_rank: "B+",
     title: "浦和区 駅近リノベ物件",
-    price: "¥65,000/月",
+    price: null, rent: 65000,
     station: "浦和駅 徒歩5分", size: "1K / 28㎡",
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-    likeCount: 27, commentCount: 4, yield: null, rent: "65,000円/月",
+    image_url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    likeCount: 27, commentCount: 4,
   },
 ];
 
 // ── メインエクスポート ─────────────────────────────────
 export default function TikTokPropertyFeed({ properties }) {
   const [filter, setFilter] = useState("すべて");
-  const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p =>
-    filter === "すべて" ? true : p.dealType === filter
-  );
+  const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p => {
+    if (filter === "すべて") return true
+    if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買'
+    if (filter === "賃貸") return p.deal_type === 'rent' || p.deal_type === '賃貸'
+    return true
+  });
 
   return (
     <>
