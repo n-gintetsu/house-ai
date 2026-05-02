@@ -2072,10 +2072,12 @@ export default function App() {
           )}
 
           {tab === 'member' && (
-            <div className="ha-panel" style={{ padding: 0 }}>
-              <PremiumUpgradeBanner user={user} isPremium={isPremium} />
-              <AuthPanel />
-            </div>
+                <div className="auth-overlay">
+                  <div className="auth-modal">
+                    <PremiumUpgradeBanner user={user} isPremium={isPremium} />
+                    <AuthPanel />
+                  </div>
+                </div>
           )}
 
           {tab === 'agency' && (
