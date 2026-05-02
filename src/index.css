@@ -57,7 +57,7 @@
 html, body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: clip;
   margin: 0;
 }
 
@@ -68,7 +68,7 @@ body {
 #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: clip;
 }
 
 img, video {
