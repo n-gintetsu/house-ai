@@ -1386,7 +1386,7 @@ export default function App() {
         <main className="ha-main" style={tab === 'properties' ? { margin: 0, border: 'none', borderRadius: 0, overflow: 'hidden', minHeight: '100dvh', boxShadow: 'none' } : {}}>
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <TikTokPropertyFeed properties={properties} />
+              <TikTokPropertyFeed properties={properties} user={user} />
             </div>
           )}
           {tab === 'vendors' && (
