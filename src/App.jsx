@@ -235,6 +235,7 @@ export default function App() {
   )
 
   const [tab, setTab] = useState('home')
+  const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => {
     if (!menuOpen) return
