@@ -116,6 +116,14 @@ async function callClaudeApi({ system, messages }) {
   return typeof data?.text === 'string' ? data.text : ''
 }
 
+const labelStyle = {
+  display: 'block',
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#374151',
+  marginBottom: 6,
+}
+
 export default function Community({ user }) {
   const [posts, setPosts] = useState(() => {
     const saved = loadCommunity()
@@ -240,14 +248,14 @@ export default function Community({ user }) {
   }, [])
 
   return (
-    <div style={{ paddingBottom: showForm ? 0 : 80 }}>
+    <div style={{ paddingBottom: showForm ? 0 : 80, color: '#1e293b' }}>
       {/* ヘッダー */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-        <h2 className="ha-sectionTitle">🏘️ 体験談コミュニティ</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0 }}>🏘️ 体験談コミュニティ</h2>
         <select
           value={rankSort}
           onChange={(e) => setRankSort(e.target.value)}
-          style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', color: '#555', cursor: 'pointer' }}
+          style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', color: '#374151', cursor: 'pointer', background: '#fff' }}
         >
           <option value="empathy">💗 共感順</option>
           <option value="likes">👍 いいね順</option>
@@ -255,7 +263,9 @@ export default function Community({ user }) {
         </select>
       </div>
 
-      <p className="ha-sectionDesc">不動産の体験談・失敗談・成功話を共有できます。あなたの経験が誰かの役に立ちます。</p>
+      <p style={{ fontSize: 13, color: '#475569', marginBottom: 14, lineHeight: 1.6 }}>
+        不動産の体験談・失敗談・成功話を共有できます。あなたの経験が誰かの役に立ちます。
+      </p>
 
       {/* カテゴリタブ */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 12 }}>
@@ -264,7 +274,7 @@ export default function Community({ user }) {
           style={{
             padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
             background: activeCategory === 'all' ? '#1a3a5c' : '#f0f4f8',
-            color: activeCategory === 'all' ? '#fff' : '#555',
+            color: activeCategory === 'all' ? '#fff' : '#374151',
           }}
         >
           すべて
@@ -276,7 +286,7 @@ export default function Community({ user }) {
             style={{
               padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
               background: activeCategory === cat.id ? '#1a3a5c' : '#f0f4f8',
-              color: activeCategory === cat.id ? '#fff' : '#555',
+              color: activeCategory === cat.id ? '#fff' : '#374151',
             }}
           >
             {cat.label}
@@ -286,16 +296,16 @@ export default function Community({ user }) {
 
       {/* 投稿フォーム */}
       {showForm && (
-        <div style={{ background: '#fff', border: '1px solid rgba(26,58,92,0.15)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 style={{ margin: 0, fontSize: 15, color: '#1a3a5c', fontWeight: 750 }}>✏️ 体験談を投稿する</h3>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#aaa' }}>✕</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
           </div>
           <div style={{ background: '#fffbe6', border: '1px solid #f0d060', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
             💡 <strong>テンプレ：</strong>「〇〇で後悔しました」「〇〇で損しました」形式が共感を呼びます！
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 4 }}>カテゴリ</label>
+            <label style={labelStyle}>カテゴリ</label>
             <select
               className="ha-field"
               value={draft.category}
@@ -307,7 +317,7 @@ export default function Community({ user }) {
             </select>
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 4 }}>タイトル</label>
+            <label style={labelStyle}>タイトル</label>
             <input
               className="ha-field"
               value={draft.title}
@@ -316,7 +326,7 @@ export default function Community({ user }) {
             />
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 4 }}>本文</label>
+            <label style={labelStyle}>本文</label>
             <textarea
               className="ha-field"
               value={draft.body}
@@ -326,7 +336,7 @@ export default function Community({ user }) {
             />
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 4 }}>💸 損した金額（任意）</label>
+            <label style={labelStyle}>💸 損した金額（任意）</label>
             <input
               className="ha-field"
               value={draft.lossAmount}
@@ -335,7 +345,7 @@ export default function Community({ user }) {
             />
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 4 }}>お名前（任意）</label>
+            <label style={labelStyle}>お名前（任意）</label>
             <input
               className="ha-field"
               value={draft.author}
@@ -345,7 +355,7 @@ export default function Community({ user }) {
             />
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', cursor: 'pointer' }}>
               <input type="checkbox" checked={draft.anon} onChange={(e) => setDraft((d) => ({ ...d, anon: e.target.checked }))} />
               匿名で投稿する
             </label>
@@ -358,30 +368,28 @@ export default function Community({ user }) {
 
       {/* 投稿一覧 */}
       {sortedPosts.length === 0 ? (
-        <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
+        <p style={{ color: '#475569', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
       ) : (
         sortedPosts.map((post) => (
-          <article key={post.id} className="ha-post" style={{ color: '#1a1a1a' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                {CATEGORIES.find((c) => c.id === post.category) && (
-                  <span style={{ fontSize: 11, background: '#f0f4f8', color: '#555', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
-                    {CATEGORIES.find((c) => c.id === post.category).label}
-                  </span>
-                )}
-                {post.lossAmount && (
-                  <span style={{ fontSize: 11, fontWeight: 700, background: '#fff5f5', color: '#c0392b', border: '1px solid #ffd5d5', padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
-                    💸 {post.lossAmount}
-                  </span>
-                )}
-              </div>
+          <article key={post.id} className="ha-post" style={{ color: '#1e293b', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: '14px 14px 10px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+              {CATEGORIES.find((c) => c.id === post.category) && (
+                <span style={{ fontSize: 11, background: '#f0f4f8', color: '#334155', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
+                  {CATEGORIES.find((c) => c.id === post.category).label}
+                </span>
+              )}
+              {post.lossAmount && (
+                <span style={{ fontSize: 11, fontWeight: 700, background: '#fff5f5', color: '#c0392b', border: '1px solid #ffd5d5', padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                  💸 {post.lossAmount}
+                </span>
+              )}
             </div>
-            <h4 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 750 }}>{post.title}</h4>
-            <div className="ha-postBody">{post.body}</div>
-            <div className="ha-postMeta">
+            <h4 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 750, color: '#1e293b', lineHeight: 1.4 }}>{post.title}</h4>
+            <p style={{ margin: '0 0 8px', fontSize: 13, color: '#1e293b', lineHeight: 1.65 }}>{post.body}</p>
+            <p style={{ margin: '0 0 10px', fontSize: 11, color: '#64748b' }}>
               {post.anon ? '匿名' : (post.author_name || post.author || '匿名')} ・{' '}
               {new Date(post.createdAt || post.created_at).toLocaleDateString('ja-JP')}
-            </div>
+            </p>
             <div className="ha-reactions">
               <button type="button" className="ha-reactBtn" data-on={post.likedByMe} onClick={() => toggleLike(post.id)}>
                 👍 {post.likes}
@@ -400,10 +408,10 @@ export default function Community({ user }) {
             </div>
 
             {expandedPost === post.id && (
-              <div className="ha-comments">
+              <div className="ha-comments" style={{ marginTop: 12 }}>
                 {post.aiComment ? (
-                  <div className="ha-aiComment">
-                    <strong style={{ color: 'var(--accent)' }}>AIコメント</strong>
+                  <div className="ha-aiComment" style={{ color: '#1e293b' }}>
+                    <strong style={{ color: '#1a3a5c' }}>AIコメント</strong>
                     {'\n\n'}
                     {post.aiComment}
                   </div>
@@ -419,8 +427,9 @@ export default function Community({ user }) {
                   </button>
                 </div>
                 {post.comments.map((c) => (
-                  <div key={c.id} className="ha-comment">
-                    <strong>{c.author}</strong> · {new Date(c.createdAt).toLocaleString('ja-JP')}
+                  <div key={c.id} className="ha-comment" style={{ color: '#1e293b' }}>
+                    <strong style={{ color: '#1e293b' }}>{c.author}</strong>
+                    <span style={{ color: '#64748b' }}> · {new Date(c.createdAt).toLocaleString('ja-JP')}</span>
                     {'\n'}
                     {c.text}
                   </div>

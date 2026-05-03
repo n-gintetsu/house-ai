@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import MemberDashboard from './MemberDashboard'
 
@@ -97,36 +97,22 @@ export default function AuthPanel({ onLoginSuccess }) {
   const fieldStyle = {
     width: '100%',
     boxSizing: 'border-box',
-    padding: '11px 12px',
-    borderRadius: 12,
-    border: '1px solid rgba(26, 58, 92, 0.1)',
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: '1.5px solid #e2e8f0',
     background: '#ffffff',
-    color: '#222222',
+    color: '#1e293b',
     fontSize: 16,
     outline: 'none',
     fontFamily: 'inherit',
   }
 
-  const btnStyle = {
-    appearance: 'none',
-    border: '1px solid rgba(26, 58, 92, 0.25)',
-    background: 'rgba(26, 58, 92, 0.08)',
-    color: '#1a3a5c',
-    padding: '10px 16px',
-    borderRadius: 12,
-    fontWeight: 750,
-    cursor: loading ? 'not-allowed' : 'pointer',
-    fontSize: 16,
-    opacity: loading ? 0.6 : 1,
-    width: '100%',
-    marginTop: 8,
-  }
-
-  const primaryBtnStyle = {
-    ...btnStyle,
-    background: '#1a3a5c',
-    color: '#fff',
-    border: 'none',
+  const labelStyle = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: '#374151',
+    marginBottom: 6,
   }
 
   if (mode === 'loggedIn' && user) {
@@ -134,7 +120,6 @@ export default function AuthPanel({ onLoginSuccess }) {
       <MemberDashboard
         user={user}
         onNavigate={(tab) => {
-          // App.jsx の setTab を呼ぶために window イベントを使う
           window.dispatchEvent(new CustomEvent('navigate', { detail: { tab } }))
         }}
         onLogout={handleLogout}
@@ -143,27 +128,36 @@ export default function AuthPanel({ onLoginSuccess }) {
   }
 
   return (
-    <div style={{ width: '100%' }}>
-      <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', marginBottom: 6 }}>
-        👤 {mode === 'login' ? 'ログイン' : '会員登録'}
+    <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', background: '#f8fafc', padding: '24px 20px', boxSizing: 'border-box' }}>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', marginBottom: 4, marginTop: 0 }}>
+        {mode === 'login' ? 'ログイン' : '新規会員登録'}
       </h2>
-      <p style={{ fontSize: 13, color: '#777', marginBottom: 20 }}>
+      <p style={{ fontSize: 13, color: '#475569', marginBottom: 20, marginTop: 0 }}>
         {mode === 'login'
           ? '会員の方はメールアドレスとパスワードでログインしてください'
           : '新規会員登録をして、すべての機能をご利用ください'}
       </p>
 
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,58,92,0.15)' }}>
+      {/* タブ */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, background: '#f1f5f9', borderRadius: 10, padding: 4 }}>
         <button
-          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 16,
-            background: mode === 'login' ? '#1a3a5c' : '#f8fafc', color: mode === 'login' ? '#fff' : '#777' }}
+          style={{
+            flex: 1, padding: '9px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 15,
+            borderRadius: 8, transition: 'all 0.15s',
+            background: mode === 'login' ? '#1a3a5c' : 'transparent',
+            color: mode === 'login' ? '#fff' : '#64748b',
+          }}
           onClick={() => { setMode('login'); setError(''); setSuccess('') }}
         >
           ログイン
         </button>
         <button
-          style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 16,
-            background: mode === 'register' ? '#1a3a5c' : '#f8fafc', color: mode === 'register' ? '#fff' : '#777' }}
+          style={{
+            flex: 1, padding: '9px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 15,
+            borderRadius: 8, transition: 'all 0.15s',
+            background: mode === 'register' ? '#1a3a5c' : 'transparent',
+            color: mode === 'register' ? '#fff' : '#64748b',
+          }}
           onClick={() => { setMode('register'); setError(''); setSuccess('') }}
         >
           新規登録
@@ -171,30 +165,30 @@ export default function AuthPanel({ onLoginSuccess }) {
       </div>
 
       {success && (
-        <div style={{ padding: '12px 14px', borderRadius: 12, background: '#ecfdf5', border: '1px solid #6ee7b7', color: '#065f46', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: '#ecfdf5', border: '1px solid #6ee7b7', color: '#065f46', fontSize: 13, marginBottom: 16 }}>
           {success}
         </div>
       )}
 
       {error && (
-        <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,100,100,0.45)', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
           {error}
         </div>
       )}
 
       {mode === 'register' && (
         <>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>お名前</label>
-            <input style={{ fontSize: 16 }}
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>お名前</label>
+            <input
               style={fieldStyle}
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="例：山田 太郎"
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>会員種別</label>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>会員種別</label>
             <select
               style={fieldStyle}
               value={form.userType}
@@ -207,9 +201,9 @@ export default function AuthPanel({ onLoginSuccess }) {
         </>
       )}
 
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>メールアドレス</label>
-        <input style={{ fontSize: 16 }}
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>メールアドレス</label>
+        <input
           style={fieldStyle}
           type="email"
           value={form.email}
@@ -219,11 +213,11 @@ export default function AuthPanel({ onLoginSuccess }) {
         />
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <label style={{ display: 'block', fontSize: 12, color: '#777', marginBottom: 6 }}>
-          パスワード{mode === 'register' && <span style={{ color: '#aaa' }}>（6文字以上）</span>}
+      <div style={{ marginBottom: 22 }}>
+        <label style={labelStyle}>
+          パスワード{mode === 'register' && <span style={{ color: '#94a3b8', fontWeight: 400 }}>（6文字以上）</span>}
         </label>
-        <input style={{ fontSize: 16 }}
+        <input
           style={fieldStyle}
           type="password"
           value={form.password}
@@ -234,28 +228,42 @@ export default function AuthPanel({ onLoginSuccess }) {
       </div>
 
       <button
-        style={primaryBtnStyle}
+        style={{
+          width: '100%', height: 52, border: 'none', borderRadius: 12,
+          background: '#1a3a5c', color: '#fff',
+          fontSize: 16, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer',
+          opacity: loading ? 0.7 : 1,
+        }}
         disabled={loading}
         onClick={mode === 'login' ? handleLogin : handleRegister}
       >
         {loading ? '処理中...' : mode === 'login' ? 'ログイン' : '会員登録する'}
       </button>
 
-      <div style={{ marginTop: 16, textAlign: 'center' }}>
-        <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: 16 }} />
-        <button
-          style={{ ...btnStyle, background: '#fff', border: '1px solid #e5e7eb', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-          onClick={handleGoogleLogin}
-          disabled={loading}
-        >
-          <span style={{ fontSize: 18 }}>G</span> Googleでログイン（準備中）
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
+        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>または</span>
+        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
       </div>
 
-      <p style={{ fontSize: 12, color: '#aaa', textAlign: 'center', marginTop: 16 }}>
+      <button
+        style={{
+          width: '100%', height: 48, border: '1.5px solid #e2e8f0', borderRadius: 12,
+          background: '#fff', color: '#374151',
+          fontSize: 15, fontWeight: 600, cursor: 'not-allowed',
+          opacity: 0.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}
+        disabled
+      >
+        <span style={{ fontSize: 18, fontWeight: 800, color: '#4285F4' }}>G</span>
+        Googleでログイン（準備中）
+      </button>
+
+      <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', marginTop: 20 }}>
         {mode === 'login' ? 'アカウントをお持ちでない方は' : 'すでにアカウントをお持ちの方は'}
         <button
-          style={{ background: 'none', border: 'none', color: '#1a3a5c', cursor: 'pointer', fontSize: 12, fontWeight: 700, textDecoration: 'underline' }}
+          style={{ background: 'none', border: 'none', color: '#1a3a5c', cursor: 'pointer', fontSize: 13, fontWeight: 700, textDecoration: 'underline', padding: '0 2px' }}
           onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess('') }}
         >
           {mode === 'login' ? '新規登録' : 'ログイン'}
