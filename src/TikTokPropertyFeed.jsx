@@ -242,6 +242,76 @@ function AIModal({ property, onClose }) {
   );
 }
 
+// ── DMモーダル ────────────────────────────────────────
+function DMModal({ property, user, onClose }) {
+  const [message, setMessage] = useState(
+    `「${property.title}」について相談したいです。`
+  );
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    console.log('DM送信:', {
+      propertyId: property.id,
+      propertyTitle: property.title,
+      userId: user?.id,
+      message,
+    });
+    alert('DMを送信しました');
+    onClose();
+  };
+
+  return ReactDOM.createPortal(
+    <div className="tt-overlay" onClick={onClose}>
+      <div className="tt-sheet" onClick={e => e.stopPropagation()}>
+        <div className="tt-sheet-handle" />
+        <div className="tt-sheet-header">
+          <span>✉️ DMを送る</span>
+          <button className="tt-sheet-close" onClick={onClose}>✕</button>
+        </div>
+        <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
+          <div className="tt-ai-chip" style={{ marginBottom: 16 }}>
+            <span className="tt-ai-chip-label">対象物件</span>
+            <span className="tt-ai-chip-title">{property.title}</span>
+          </div>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            placeholder="相談内容を入力してください"
+            style={{
+              width: '100%',
+              minHeight: 130,
+              border: '1.5px solid #e2e8f0',
+              borderRadius: 12,
+              padding: 14,
+              fontSize: 16,
+              boxSizing: 'border-box',
+              resize: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+          <p style={{ fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>
+            ※ 個人情報の記載はご遠慮ください
+          </p>
+        </div>
+        <div className="tt-form" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={handleSend}
+            disabled={!message.trim()}
+            style={{
+              width: '100%', height: 52, border: 'none',
+              borderRadius: 999, background: '#14395b',
+              color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+            }}
+          >
+            送信する
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ── 物件詳細モーダル ──────────────────────────────────
 const DETAIL_FIELDS = [
   { label: '土地面積', key: 'land_area' },
@@ -397,6 +467,7 @@ function TikTokSlide({ property, user, onDM, index, total }) {
   const [showComments, setShowComments] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showDM, setShowDM] = useState(false);
 
   const toggleLike = e => {
     e.stopPropagation();
@@ -483,8 +554,15 @@ function TikTokSlide({ property, user, onDM, index, total }) {
         <PropertyDetailModal
           property={property}
           onClose={() => setShowDetail(false)}
-          onAIConsult={() => setShowAI(true)}
-          onDM={onDM ?? (() => {})}
+          onAIConsult={() => { setShowDetail(false); setShowAI(true); }}
+          onDM={() => { setShowDetail(false); setShowDM(true); }}
+        />
+      )}
+      {showDM && (
+        <DMModal
+          property={property}
+          user={user}
+          onClose={() => setShowDM(false)}
         />
       )}
     </section>
