@@ -66,7 +66,7 @@ function CommentModal({ property, onClose, user }) {
 
   return ReactDOM.createPortal(
     <div className="tt-overlay" onClick={onClose}>
-      <div className="tt-sheet" style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+      <div className="tt-sheet" onClick={e => e.stopPropagation()}>
         <div className="tt-sheet-handle" />
         <div className="tt-sheet-header">
           <span>💬 コメント</span>
