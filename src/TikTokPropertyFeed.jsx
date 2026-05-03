@@ -337,11 +337,11 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
   const [imgIdx, setImgIdx] = useState(0);
   const touchStartX = useRef(null);
 
-  const images = Array.isArray(property.image_urls) && property.image_urls.length > 0
+  const images = property.image_urls?.length > 0
     ? property.image_urls
     : property.image_url
-      ? [property.image_url]
-      : [];
+    ? [property.image_url]
+    : [];
 
   let details = {};
   try {
@@ -360,23 +360,37 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
 
   return ReactDOM.createPortal(
     <div className="tt-overlay" onClick={onClose}>
-      <div className="pd-modal" onClick={e => e.stopPropagation()}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: '90dvh',
+          background: '#fff',
+          borderRadius: '20px 20px 0 0',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 10001,
+          overflow: 'hidden',
+        }}
+      >
         {/* ヘッダー */}
-        <div className="pd-header">
-          <button className="pd-close-btn" onClick={onClose}>✕</button>
-          <span className="pd-header-title">{property.title}</span>
-          <button className="pd-share-btn"
-            onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}>
-            ↗️
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 14, cursor: 'pointer', color: '#64748b', flexShrink: 0 }}>✕</button>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{property.title}</span>
+          <button style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', flexShrink: 0 }}
+            onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}>↗️</button>
         </div>
 
-        {/* スクロールエリア */}
-        <div className="pd-scroll">
+        {/* スクロール領域 */}
+        <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {/* 写真スライダー */}
           {images.length > 0 && (
             <>
-              <div className="pd-slider"
+              <div
+                style={{ position: 'relative', width: '100%', height: 250, background: '#0f172a', overflow: 'hidden' }}
                 onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
                 onTouchEnd={(e) => {
                   if (touchStartX.current === null) return;
@@ -388,47 +402,47 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
                   touchStartX.current = null;
                 }}
               >
-                <img className="pd-slider-img" src={images[imgIdx]} alt={property.title} />
+                <img src={images[imgIdx]} alt={property.title} style={{ width: '100%', height: 250, objectFit: 'cover', display: 'block' }} />
                 {images.length > 1 && (
                   <>
-                    <button className="pd-slider-btn prev"
-                      onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}>‹</button>
-                    <button className="pd-slider-btn next"
-                      onClick={() => setImgIdx(i => (i + 1) % images.length)}>›</button>
+                    <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
+                      style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>‹</button>
+                    <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
+                      style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>›</button>
                   </>
                 )}
               </div>
               {images.length > 1 && (
-                <div className="pd-dots">
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '8px 0' }}>
                   {images.map((_, i) => (
-                    <div key={i} className={`pd-dot${i === imgIdx ? ' active' : ''}`} />
+                    <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === imgIdx ? '#1a3a5c' : '#cbd5e1' }} />
                   ))}
                 </div>
               )}
             </>
           )}
 
-          {/* 物件基本情報 */}
-          <div className="pd-body">
-            <p className="pd-price">{priceLabel}</p>
-            <span className={`tt-badge-type type-${dealLabel}`} style={{ marginBottom: 8, display: 'inline-block' }}>{dealLabel}</span>
-            <h2 className="pd-title">{property.title}</h2>
-            <div className="pd-meta-list">
-              {address && <p className="pd-meta-item">📍 {address}</p>}
-              {access && <p className="pd-meta-item">🚃 {access}</p>}
-              {area && <p className="pd-meta-item">🏠 {area}</p>}
+          {/* 物件情報 */}
+          <div style={{ padding: 16 }}>
+            <p style={{ fontSize: 24, fontWeight: 900, color: '#c9a84c', margin: '0 0 6px' }}>{priceLabel}</p>
+            <span style={{ display: 'inline-block', marginBottom: 8, padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#f1f5f9', color: '#14395b' }}>{dealLabel}</span>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', margin: '0 0 12px', lineHeight: 1.4 }}>{property.title}</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+              {address && <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>📍 {address}</p>}
+              {access && <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>🚃 {access}</p>}
+              {area && <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>🏠 {area}</p>}
             </div>
 
-            {/* 物件詳細テーブル */}
+            {/* 詳細テーブル */}
             {detailRows.length > 0 && (
               <>
-                <p className="pd-section-title">■ 物件詳細</p>
-                <table className="pd-detail-table">
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', margin: '0 0 8px' }}>■ 物件詳細</p>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <tbody>
                     {detailRows.map(r => (
-                      <tr key={r.label}>
-                        <td>{r.label}</td>
-                        <td>{r.value}</td>
+                      <tr key={r.label} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '8px 4px', color: '#64748b', width: '40%' }}>{r.label}</td>
+                        <td style={{ padding: '8px 4px', color: '#1e293b' }}>{r.value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -438,10 +452,16 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
           </div>
         </div>
 
-        {/* 固定フッター */}
-        <div className="pd-footer">
-          <button className="pd-btn-ai" onClick={() => { onClose(); onAIConsult(); }}>🤖 AIに相談</button>
-          <button className="pd-btn-dm" onClick={() => { onClose(); onDM(); }}>✉️ DMを送る</button>
+        {/* フッター */}
+        <div style={{ display: 'flex', gap: 10, padding: '12px 16px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <button onClick={() => { onClose(); onAIConsult(); }}
+            style={{ flex: 1, height: 52, border: 'none', borderRadius: 12, background: '#1a3a5c', color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+            🤖 AIに相談
+          </button>
+          <button onClick={() => { onClose(); onDM(); }}
+            style={{ flex: 1, height: 52, borderRadius: 12, background: '#fff', color: '#1a3a5c', border: '2px solid #1a3a5c', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+            ✉️ DMを送る
+          </button>
         </div>
       </div>
     </div>,
