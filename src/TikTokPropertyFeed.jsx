@@ -589,6 +589,13 @@ function TikTokSlide({ property, user, onDM, index, total }) {
   );
 }
 
+// ── サンプル業者データ ────────────────────────────────
+const SAMPLE_AGENCIES = [
+  { id: 1, name: 'GINTETSU不動産', initial: 'G', count: 12, followed: true },
+  { id: 2, name: '大宮不動産センター', initial: '大', count: 8, followed: false },
+  { id: 3, name: 'さいたま住宅販売', initial: 'さ', count: 5, followed: false },
+];
+
 // ── サンプルデータ ────────────────────────────────────
 const SAMPLE_PROPERTIES = [
   {
@@ -637,18 +644,124 @@ const SAMPLE_PROPERTIES = [
 export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate }) {
   const [filter, setFilter] = useState("すべて");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [agencies, setAgencies] = useState(SAMPLE_AGENCIES);
+  const feedRef = useRef(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p => {
-    if (filter === "すべて") return true
-    if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買'
-    if (filter === "賃貸") return p.deal_type === 'rent' || p.deal_type === '賃貸'
-    if (filter === "投資") return p.deal_type === 'investment' || (p.property_type && p.property_type.includes('投資'))
-    return true
-  });
+
+  const toggleFollow = (id) => {
+    setAgencies(prev => prev.map(a => a.id === id ? { ...a, followed: !a.followed } : a));
+  };
+
+  const allProperties = properties?.length > 0 ? properties : SAMPLE_PROPERTIES;
+  const data = allProperties
+    .filter(p => {
+      if (filter === "すべて") return true;
+      if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買';
+      if (filter === "賃貸") return p.deal_type === 'rent' || p.deal_type === '賃貸';
+      if (filter === "投資") return p.deal_type === 'investment' || (p.property_type && p.property_type.includes('投資'));
+      return true;
+    })
+    .filter(p => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        p.title?.toLowerCase().includes(q) ||
+        p.address?.toLowerCase().includes(q) ||
+        p.station?.toLowerCase().includes(q) ||
+        JSON.stringify(p.details || {}).toLowerCase().includes(q)
+      );
+    });
+
+  if (!isMobile) {
+    return (
+      <div className="tt-pc-wrapper">
+        {/* 左余白（ダーク） */}
+        <div className="tt-pc-left" />
+
+        {/* 中央：縦長フィード */}
+        <div className="tt-pc-center">
+          {/* フィルターバー */}
+          <div className="tt-filter-bar tt-filter-bar-pc">
+            <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>← 戻る</button>
+            {["すべて", "売買", "賃貸", "投資"].map(f => (
+              <button key={f} className={`tt-filter-btn${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>{f}</button>
+            ))}
+          </div>
+          {/* フィード本体 */}
+          <div className="tiktok-feed tt-feed-pc" ref={feedRef}>
+            {data.length === 0
+              ? <div className="tt-empty">該当する物件がありません</div>
+              : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} index={i} total={data.length} />)
+            }
+          </div>
+        </div>
+
+        {/* 右サイドバー */}
+        <div className="tt-pc-sidebar">
+          {/* 検索バー */}
+          <div className="tt-sidebar-section">
+            <div className="tt-sidebar-label">物件を探す</div>
+            <input
+              className="tt-search-input"
+              placeholder="🔍 エリア・駅名・物件名"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ fontSize: 16 }}
+            />
+          </div>
+
+          {/* フィルター */}
+          <div className="tt-sidebar-section">
+            <div className="tt-sidebar-label">絞り込み</div>
+            <div className="tt-sidebar-filters">
+              {["すべて", "売買", "賃貸", "投資"].map(f => (
+                <button key={f} className={`tt-sidebar-filter-btn${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>{f}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* フォロー中の業者 */}
+          <div className="tt-sidebar-section">
+            <div className="tt-sidebar-label">業者をフォロー</div>
+            <div className="tt-agency-list">
+              {agencies.map(a => (
+                <div key={a.id} className="tt-agency-item">
+                  <div className="tt-agency-avatar">{a.initial}</div>
+                  <div className="tt-agency-info">
+                    <div className="tt-agency-name">{a.name}</div>
+                    <div className="tt-agency-count">物件{a.count}件</div>
+                  </div>
+                  <button
+                    className={`tt-follow-btn${a.followed ? " followed" : ""}`}
+                    onClick={() => toggleFollow(a.id)}
+                  >
+                    {a.followed ? "フォロー中" : "+ フォロー"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI相談CTA */}
+          <div className="tt-sidebar-ai">
+            <div className="tt-sidebar-ai-icon">🤖</div>
+            <div className="tt-sidebar-ai-title">AI不動産相談</div>
+            <div className="tt-sidebar-ai-sub">価格・利回り・ローンを無料診断</div>
+            <button className="tt-sidebar-ai-btn" onClick={() => {}}>無料で相談する</button>
+          </div>
+        </div>
+
+        {/* 右余白（ダーク） */}
+        <div className="tt-pc-right" />
+      </div>
+    );
+  }
 
   return (
     <>

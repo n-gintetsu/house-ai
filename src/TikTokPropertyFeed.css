@@ -403,3 +403,180 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+
+/* ============================================================
+   PCレイアウト（B案：TikTok本家風）
+   ============================================================ */
+.tt-pc-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+  background: #0f172a;
+  overflow: hidden;
+}
+.tt-pc-left, .tt-pc-right {
+  flex: 1;
+  background: #0f172a;
+  min-width: 40px;
+}
+.tt-pc-center {
+  width: 400px;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.tt-feed-pc {
+  flex: 1;
+  height: 100%;
+}
+.tt-filter-bar-pc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+.tt-pc-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #fff;
+  border-left: 0.5px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  padding: 20px 16px;
+  box-sizing: border-box;
+}
+.tt-sidebar-section {
+  margin-bottom: 24px;
+}
+.tt-sidebar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tt-search-input {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  color: #1e293b;
+  background: #f8fafc;
+  font-size: 14px;
+}
+.tt-search-input:focus {
+  outline: none;
+  border-color: #14395b;
+}
+.tt-sidebar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tt-sidebar-filter-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tt-sidebar-filter-btn.active {
+  background: #14395b;
+  color: #fff;
+  border-color: #14395b;
+}
+.tt-agency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tt-agency-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tt-agency-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #14395b;
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.tt-agency-info {
+  flex: 1;
+  min-width: 0;
+}
+.tt-agency-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-agency-count {
+  font-size: 10px;
+  color: #94a3b8;
+}
+.tt-follow-btn {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1.5px solid #14395b;
+  background: #fff;
+  color: #14395b;
+  transition: all 0.15s;
+}
+.tt-follow-btn.followed {
+  background: #14395b;
+  color: #fff;
+}
+.tt-sidebar-ai {
+  background: #0f172a;
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+  margin-top: auto;
+}
+.tt-sidebar-ai-icon { font-size: 28px; margin-bottom: 8px; }
+.tt-sidebar-ai-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.tt-sidebar-ai-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+.tt-sidebar-ai-btn {
+  background: #c9a84c;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
