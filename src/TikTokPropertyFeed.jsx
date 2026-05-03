@@ -382,6 +382,8 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
     ? [property.image_url]
     : [];
 
+  const isMobileModal = window.innerWidth <= 768;
+
   let details = {};
   try {
     details = typeof property.details === 'string'
@@ -430,21 +432,50 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
         {/* スクロール領域 */}
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {/* 写真エリア */}
-          {showFullSlider ? (
+          {isMobileModal ? (
+            /* A案：スマホ - 4:3シンプルスライダー */
+            <div
+              style={{ position: 'relative', aspectRatio: '4/3', background: '#0f172a', overflow: 'hidden' }}
+              onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (touchStartX.current === null) return;
+                const diff = touchStartX.current - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 40) {
+                  if (diff > 0) setImgIdx(i => (i + 1) % images.length);
+                  else setImgIdx(i => (i - 1 + images.length) % images.length);
+                }
+                touchStartX.current = null;
+              }}
+            >
+              {images[0] ? (
+                <img src={images[imgIdx]} alt="物件" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#f1f5f9' }}>
+                  <span style={{ fontSize: 36 }}>🏠</span>
+                  <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600 }}>準備中</span>
+                </div>
+              )}
+              {images.length > 1 && (
+                <>
+                  <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
+                    style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>‹</button>
+                  <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>›</button>
+                  <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4 }}>
+                    {images.map((_, i) => (
+                      <div key={i} style={{ width: i === imgIdx ? 16 : 6, height: 4, borderRadius: 2, background: i === imgIdx ? '#fff' : 'rgba(255,255,255,0.4)', transition: 'width 0.2s' }} />
+                    ))}
+                  </div>
+                  <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 10 }}>
+                    {imgIdx + 1}/{images.length}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : showFullSlider ? (
+            /* B案PC：フルスライダー */
             <div style={{ position: 'relative' }}>
-              <div
-                style={{ position: 'relative', width: '100%', height: 250, background: '#0f172a', overflow: 'hidden' }}
-                onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-                onTouchEnd={(e) => {
-                  if (touchStartX.current === null) return;
-                  const diff = touchStartX.current - e.changedTouches[0].clientX;
-                  if (Math.abs(diff) > 40) {
-                    if (diff > 0) setImgIdx(i => (i + 1) % images.length);
-                    else setImgIdx(i => (i - 1 + images.length) % images.length);
-                  }
-                  touchStartX.current = null;
-                }}
-              >
+              <div style={{ position: 'relative', width: '100%', height: 250, background: '#0f172a', overflow: 'hidden' }}>
                 <img src={images[imgIdx]} alt={property.title} style={{ width: '100%', height: 250, objectFit: 'cover', display: 'block' }} />
                 {images.length > 1 && (
                   <>
@@ -456,12 +487,7 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
                 )}
                 <button
                   onClick={() => setShowFullSlider(false)}
-                  style={{
-                    position: 'absolute', top: 8, left: 8, zIndex: 10,
-                    background: 'rgba(0,0,0,0.5)', color: '#fff',
-                    border: 'none', borderRadius: 999, padding: '4px 10px',
-                    fontSize: 11, cursor: 'pointer',
-                  }}
+                  style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 11, cursor: 'pointer' }}
                 >
                   ← 一覧
                 </button>
@@ -475,77 +501,38 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
               )}
             </div>
           ) : (
+            /* B案PC：グリッド */
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '2fr 1fr',
-                gridTemplateRows: '130px 130px',
-                gap: 2,
-                background: '#e2e8f0',
-                cursor: 'pointer',
-              }}
+              style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '130px 130px', gap: 2, background: '#e2e8f0', cursor: 'pointer' }}
               onClick={() => images.length > 1 && setShowFullSlider(true)}
             >
               {images[0] ? (
-                <img
-                  src={images[0]}
-                  alt="メイン"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', gridRow: 'span 2' }}
-                />
+                <img src={images[0]} alt="メイン" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', gridRow: 'span 2' }} />
               ) : (
-                <div style={{
-                  gridRow: 'span 2',
-                  background: '#f1f5f9',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 6,
-                }}>
+                <div style={{ gridRow: 'span 2', background: '#f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <span style={{ fontSize: 28 }}>🏠</span>
                   <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>準備中</span>
                 </div>
               )}
               {images[1] ? (
-                <img
-                  src={images[1]}
-                  alt="サブ1"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
+                <img src={images[1]} alt="サブ1" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : (
-                <div style={{
-                  background: '#f8fafc',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 4,
-                }}>
+                <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <span style={{ fontSize: 18 }}>📷</span>
                   <span style={{ fontSize: 10, color: '#cbd5e1', fontWeight: 600 }}>準備中</span>
                 </div>
               )}
               {images[2] ? (
                 <div style={{ position: 'relative' }}>
-                  <img
-                    src={images[2]}
-                    alt="サブ2"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
+                  <img src={images[2]} alt="サブ2" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {images.length > 3 && (
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'rgba(0,0,0,0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: 16, fontWeight: 800,
-                    }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 800 }}>
                       +{images.length - 3}枚
                     </div>
                   )}
                 </div>
               ) : (
-                <div style={{
-                  background: '#f8fafc',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 4,
-                }}>
+                <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <span style={{ fontSize: 18 }}>📷</span>
                   <span style={{ fontSize: 10, color: '#cbd5e1', fontWeight: 600 }}>準備中</span>
                 </div>
