@@ -583,6 +583,9 @@ function TikTokSlide({ property, user, onDM, index, total }) {
   const [showAI, setShowAI] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showDM, setShowDM] = useState(false);
+  const [showAgency, setShowAgency] = useState(false);
+
+  const agencyData = SAMPLE_AGENCIES?.[0] ?? { id: 1, name: 'GINTETSU不動産', initial: 'G', count: 12, followed: false };
 
   const toggleLike = e => {
     e.stopPropagation();
@@ -624,6 +627,16 @@ function TikTokSlide({ property, user, onDM, index, total }) {
       <div className="tiktok-actions">
         <div className="tt-action-item">
           <button
+            className="tt-action-btn tt-action-btn-agency"
+            onClick={(e) => { e.stopPropagation(); setShowAgency(true); }}
+            aria-label="業者情報"
+          >
+            <div className="tt-agency-mini-avatar">{agencyData.initial}</div>
+          </button>
+          <span className="tt-action-label">業者</span>
+        </div>
+        <div className="tt-action-item">
+          <button
             className={`tt-action-btn${liked ? " liked" : ""}`}
             onClick={toggleLike}
             aria-label="お気に入り"
@@ -663,6 +676,14 @@ function TikTokSlide({ property, user, onDM, index, total }) {
       </button>
 
       {/* モーダル */}
+      {showAgency && (
+        <AgencyDetailModal
+          agency={agencyData}
+          properties={[property]}
+          onClose={() => setShowAgency(false)}
+          onDM={onDM}
+        />
+      )}
       {showComments && <CommentModal property={property} onClose={() => setShowComments(false)} user={user} />}
       {showAI && <AIModal property={property} onClose={() => setShowAI(false)} />}
       {showDetail && (
