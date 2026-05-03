@@ -580,3 +580,81 @@
   cursor: pointer;
   width: 100%;
 }
+
+/* ── 業者詳細モーダル ── */
+.tt-agency-sheet { height: 85dvh; }
+.tt-agency-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+.tt-agency-modal-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #14395b;
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.tt-agency-modal-info { flex: 1; min-width: 0; }
+.tt-agency-modal-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.tt-agency-modal-count {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.tt-agency-props-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  padding: 12px 16px 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tt-agency-prop-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f8fafc;
+  align-items: center;
+}
+.tt-agency-prop-img {
+  width: 72px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+.tt-agency-prop-info { flex: 1; min-width: 0; }
+.tt-agency-prop-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.tt-agency-prop-price {
+  font-size: 13px;
+  font-weight: 800;
+  color: #c9a84c;
+  margin-bottom: 2px;
+}
+.tt-agency-prop-station {
+  font-size: 11px;
+  color: #94a3b8;
+}

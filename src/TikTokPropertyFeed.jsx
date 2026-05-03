@@ -381,7 +381,11 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 14, cursor: 'pointer', color: '#64748b', flexShrink: 0 }}>✕</button>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{property.title}</span>
           <button style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', flexShrink: 0 }}
-            onClick={() => navigator.share?.({ title: property.title, url: window.location.href })}>↗️</button>
+            onClick={() => {
+              const shareUrl = `${window.location.origin}?property=${property.id}`;
+              if (navigator.share) { navigator.share({ title: property.title, text: property.title, url: shareUrl }); }
+              else { navigator.clipboard?.writeText(shareUrl); }
+            }}>↗️</button>
         </div>
 
         {/* スクロール領域 */}
@@ -479,6 +483,59 @@ const formatPrice = (property) => {
   }
   return '価格応相談';
 };
+
+// ── 業者詳細モーダル ──────────────────────────────────
+function AgencyDetailModal({ agency, properties, onClose, onDM }) {
+  return ReactDOM.createPortal(
+    <div className="tt-overlay" onClick={onClose}>
+      <div className="tt-sheet tt-agency-sheet" onClick={e => e.stopPropagation()}>
+        <div className="tt-sheet-handle" />
+        <div className="tt-sheet-header">
+          <span>🏢 業者詳細</span>
+          <button className="tt-sheet-close" onClick={onClose}>✕</button>
+        </div>
+
+        {/* 業者プロフィール */}
+        <div className="tt-agency-profile-header">
+          <div className="tt-agency-modal-avatar">{agency.initial}</div>
+          <div className="tt-agency-modal-info">
+            <div className="tt-agency-modal-name">{agency.name}</div>
+            <div className="tt-agency-modal-count">掲載物件 {agency.count}件</div>
+          </div>
+          <button className="tt-follow-btn" style={{ flexShrink: 0 }}>
+            {agency.followed ? "フォロー中" : "+ フォロー"}
+          </button>
+        </div>
+
+        {/* 物件リスト */}
+        <div className="tt-comment-list">
+          <div className="tt-agency-props-label">掲載物件</div>
+          {properties.slice(0, 4).map(p => (
+            <div key={p.id} className="tt-agency-prop-item">
+              <img src={p.image_url} alt={p.title} className="tt-agency-prop-img" />
+              <div className="tt-agency-prop-info">
+                <div className="tt-agency-prop-title">{p.title}</div>
+                <div className="tt-agency-prop-price">{formatPrice(p)}</div>
+                {p.station && <div className="tt-agency-prop-station">📍 {p.station}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* DM送信ボタン */}
+        <div className="tt-form" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={() => { onClose(); onDM?.(); }}
+            style={{ width: '100%', height: 52, border: 'none', borderRadius: 999, background: '#14395b', color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
+          >
+            ✉️ DMで問い合わせ
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 // ── 1スライド ─────────────────────────────────────────
 function TikTokSlide({ property, user, onDM, index, total }) {
@@ -604,6 +661,11 @@ const SAMPLE_PROPERTIES = [
     price: null, rent: 85000,
     station: "大宮駅 徒歩8分", size: "1LDK / 42㎡",
     image_url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+    image_urls: [
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
+    ],
     likeCount: 18, commentCount: 5,
   },
   {
@@ -612,6 +674,11 @@ const SAMPLE_PROPERTIES = [
     price: 3200, rent: null,
     station: "川口駅 徒歩12分", size: "4LDK / 95㎡",
     image_url: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+    image_urls: [
+      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+      "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80",
+    ],
     likeCount: 24, commentCount: 8,
   },
   {
@@ -620,6 +687,11 @@ const SAMPLE_PROPERTIES = [
     price: 4580, rent: null,
     station: "大宮駅 徒歩3分", size: "2LDK / 65㎡",
     image_url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    image_urls: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+    ],
     likeCount: 41, commentCount: 12,
   },
   {
@@ -628,6 +700,10 @@ const SAMPLE_PROPERTIES = [
     price: 12800, rent: null,
     station: "大宮駅 徒歩7分", size: "8世帯 / 1棟",
     image_url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+    image_urls: [
+      "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+      "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=800&q=80",
+    ],
     likeCount: 33, commentCount: 7, yield: "5.8",
   },
   {
@@ -636,6 +712,10 @@ const SAMPLE_PROPERTIES = [
     price: null, rent: 65000,
     station: "浦和駅 徒歩5分", size: "1K / 28㎡",
     image_url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    image_urls: [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
+    ],
     likeCount: 27, commentCount: 4,
   },
 ];
@@ -646,6 +726,9 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchQuery, setSearchQuery] = useState('');
   const [agencies, setAgencies] = useState(SAMPLE_AGENCIES);
+  const [selectedAgency, setSelectedAgency] = useState(null);
+  const [showSidebarAI, setShowSidebarAI] = useState(false);
+  const [aiConsultProperty, setAiConsultProperty] = useState(null);
   const feedRef = useRef(null);
 
   useEffect(() => {
@@ -731,7 +814,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
             <div className="tt-sidebar-label">業者をフォロー</div>
             <div className="tt-agency-list">
               {agencies.map(a => (
-                <div key={a.id} className="tt-agency-item">
+                <div key={a.id} className="tt-agency-item" style={{ cursor: 'pointer' }} onClick={() => setSelectedAgency(a)}>
                   <div className="tt-agency-avatar">{a.initial}</div>
                   <div className="tt-agency-info">
                     <div className="tt-agency-name">{a.name}</div>
@@ -753,9 +836,25 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
             <div className="tt-sidebar-ai-icon">🤖</div>
             <div className="tt-sidebar-ai-title">AI不動産相談</div>
             <div className="tt-sidebar-ai-sub">価格・利回り・ローンを無料診断</div>
-            <button className="tt-sidebar-ai-btn" onClick={() => {}}>無料で相談する</button>
+            <button className="tt-sidebar-ai-btn" onClick={() => { const first = data[0]; if (first) { setAiConsultProperty(first); setShowSidebarAI(true); } }}>無料で相談する</button>
           </div>
         </div>
+
+        {/* 業者詳細・AI相談モーダル */}
+        {selectedAgency && (
+          <AgencyDetailModal
+            agency={selectedAgency}
+            properties={data}
+            onClose={() => setSelectedAgency(null)}
+            onDM={onDM}
+          />
+        )}
+        {showSidebarAI && aiConsultProperty && (
+          <AIModal
+            property={aiConsultProperty}
+            onClose={() => { setShowSidebarAI(false); setAiConsultProperty(null); }}
+          />
+        )}
 
         {/* 右余白（ダーク） */}
         <div className="tt-pc-right" />
