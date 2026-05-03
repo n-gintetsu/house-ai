@@ -13,6 +13,7 @@ import InvestmentSimulator from './InvestmentSimulator'
 import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
+import MemberDashboard from './MemberDashboard'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 const AI_CHAT_FREE_LIMIT = 5
@@ -2092,7 +2093,28 @@ export default function App() {
           )}
 
           {tab === 'member' && (
-            <div />
+            user ? (
+              <MemberDashboard
+                user={user}
+                onNavigate={setTab}
+                onLogout={async () => {
+                  await supabase.auth.signOut()
+                  setUser(null)
+                  window.__houseAiUser = null
+                  setTab('home')
+                }}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
+                <p style={{ color: '#64748b', fontSize: 14 }}>会員専用ページです。ログインしてください。</p>
+                <button
+                  style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 32px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                  onClick={() => setShowAuthSheet(true)}
+                >
+                  ログイン・会員登録
+                </button>
+              </div>
+            )
           )}
 
           {tab === 'agency' && (
