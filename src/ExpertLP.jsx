@@ -1,276 +1,340 @@
-import React, { useState } from "react";
+import { useState, useRef } from 'react'
 
-const C = {
-  navy: "#1a3a5c",
-  gold: "#c9a84c",
-  bg: "#f4f6f9",
-  card: "#ffffff",
-  border: "#e2e8f0",
-  title: "#1a2a3a",
-  desc: "#64748b",
-  red: "#e53e3e",
-};
-
-const MERITS = [
-  { icon: "🤖", text: "AIが相談内容を整理してから送客" },
-  { icon: "🎯", text: "対応エリア・得意分野でマッチング" },
-  { icon: "👤", text: "プロフィール掲載で信頼獲得" },
-  { icon: "💬", text: "DMで直接やり取り可能" },
-  { icon: "📅", text: "初回相談・面談につなげやすい" },
-];
+const NAVY = '#1a3a5c'
+const GOLD = '#c9a84c'
+const WHITE = '#ffffff'
+const GRAY = '#f5f5f5'
+const TEXT = '#1e293b'
 
 const CASES = [
-  { icon: "🏠", label: "相続", text: "「親の不動産をどうすればいいか分からない」" },
-  { icon: "💰", label: "税金", text: "「売却時の税金が不安」" },
-  { icon: "📋", label: "登記", text: "「名義変更や相続登記を相談したい」" },
-  { icon: "⚠️", label: "契約トラブル", text: "「契約内容や違約金が不安」" },
-  { icon: "🏚️", label: "空き家", text: "「空き家を売る・貸す・管理したい」" },
-  { icon: "📈", label: "投資", text: "「法人化・節税・資産形成を相談したい」" },
-];
+  { icon: '🏠', title: '相続', desc: '親の不動産をどうすればいいか分からない' },
+  { icon: '💰', title: '税金', desc: '売却時の税金が不安' },
+  { icon: '📝', title: '登記', desc: '名義変更や登記手続きが分からない' },
+  { icon: '⚠️', title: '契約トラブル', desc: '契約内容や違約金が不安' },
+  { icon: '🏚️', title: '空き家', desc: '空き家の活用・売却方法が知りたい' },
+  { icon: '📈', title: '投資', desc: '不動産投資のリスクを専門家に聞きたい' },
+  { icon: '🔨', title: 'リフォーム', desc: 'リフォーム費用と価値向上について' },
+  { icon: '🤝', title: '売却相談', desc: '相場より高く売るためのアドバイスが欲しい' },
+]
 
 const STEPS = [
-  { n: 1, text: "専門家会員登録" },
-  { n: 2, text: "対応分野・エリアを登録" },
-  { n: 3, text: "AIが相談内容を分類" },
-  { n: 4, text: "条件に合う専門家へマッチング" },
-  { n: 5, text: "ユーザーとDM・相談開始" },
-];
+  { num: 1, title: '無料掲載申請', desc: 'フォームから申請' },
+  { num: 2, title: '運営審査', desc: '内容確認・審査' },
+  { num: 3, title: 'プロフィール公開', desc: 'サイトに掲載開始' },
+  { num: 4, title: 'AIが相談を分類', desc: 'ユーザーの悩みを自動整理' },
+  { num: 5, title: '専門家へ相談導線', desc: '条件に合う専門家を紹介' },
+  { num: 6, title: 'DM・面談へ', desc: 'やり取りスタート' },
+]
 
 const FAQS = [
-  { q: "登録すれば必ず案件が来ますか？", a: "案件発生を保証するものではありません。" },
-  { q: "対応エリアは指定できますか？", a: "はい。対応可能地域を設定できます。" },
-  { q: "無料プランはありますか？", a: "はい。まずは無料掲載から始められます。" },
-  { q: "ユーザーとはどう連絡しますか？", a: "サイト内DMまたは指定の連絡方法でやり取りできます。" },
-  { q: "解約できますか？", a: "所定の手続きでいつでも解約可能です。" },
-];
+  { q: '無料で登録できますか？', a: 'はい。まずは無料掲載申請から始められます。' },
+  { q: '登録すれば必ず案件が来ますか？', a: '案件発生を保証するものではありません。掲載後の相談状況は専門家様の対応エリア・分野等によります。' },
+  { q: '有料プランは必須ですか？', a: 'いいえ。無料掲載から始められます。反応を見ながら必要に応じてアップグレードをご検討ください。' },
+  { q: 'いつ有料プランに変更できますか？', a: '掲載後、必要に応じていつでもアップグレードできます。' },
+  { q: 'ユーザーとはどう連絡しますか？', a: 'サイト内DMまたは運営指定の方法でやり取りできます。' },
+]
 
-const QUAL_OPTIONS = ["弁護士","司法書士","税理士","行政書士","土地家屋調査士","FP","建築士","不動産鑑定士","その他"];
-const FIELD_OPTIONS = ["相続","税金・節税","登記","契約トラブル","空き家","投資・資産形成","リフォーム","その他"];
+const QUAL_OPTIONS = ['弁護士', '司法書士', '税理士', '行政書士', '宅地建物取引士', 'ファイナンシャルプランナー', 'その他']
+
+const initialForm = {
+  name: '', office: '', email: '', phone: '',
+  qual: '', area: '', field: '', url: '', profile: '',
+}
 
 export default function ExpertLP({ onNavigate }) {
-  const [form, setForm] = useState({
-    name: "", office: "", qual: "", fields: [], area: "", email: "", phone: "", url: "", profile: "", plan: "free"
-  });
-  const [submitted, setSubmitted] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null);
+  const [form, setForm] = useState(initialForm)
+  const [submitted, setSubmitted] = useState(false)
+  const [openIndex, setOpenIndex] = useState(null)
 
-  const toggleField = (f) => {
-    setForm((p) => ({
-      ...p,
-      fields: p.fields.includes(f) ? p.fields.filter((x) => x !== f) : [...p.fields, f],
-    }));
-  };
+  const formSection = useRef(null)
+  const flowSection = useRef(null)
+
+  const scrollToForm = () => formSection.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToFlow = () => flowSection.current?.scrollIntoView({ behavior: 'smooth' })
 
   const handleSubmit = () => {
-    if (!form.name || !form.email || !form.qual) return;
-    setSubmitted(true);
-  };
+    setSubmitted(true)
+  }
 
-  const scrollToForm = (plan) => {
-    if (plan) setForm((p) => ({ ...p, plan }));
-    document.getElementById("expert-form")?.scrollIntoView({ behavior: "smooth" });
-  };
-  const scrollToPlan = () => {
-    document.getElementById("expert-plan")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
+  const fieldStyle = {
+    width: '100%', boxSizing: 'border-box',
+    padding: '12px 14px', borderRadius: 10,
+    border: '1.5px solid #dde3ec', background: WHITE,
+    color: TEXT, fontSize: 16, fontFamily: 'inherit', outline: 'none',
+  }
+  const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }
+
+  /* ── 送信完了 ── */
   if (submitted) {
     return (
-      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
-        <div>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.navy, marginBottom: 12 }}>申請を受け付けました</h2>
-          <p style={{ color: C.desc, lineHeight: 1.8, marginBottom: 24 }}>
-            申請ありがとうございます。<br />内容確認後、運営よりご連絡いたします。
-          </p>
-          <button onClick={() => onNavigate && onNavigate("home")}
-            style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 12, padding: "12px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-            トップへ戻る
-          </button>
-        </div>
+      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 20px', textAlign: 'center', background: WHITE }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: NAVY, marginBottom: 12 }}>申請ありがとうございます</h2>
+        <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.8, marginBottom: 28, maxWidth: 400 }}>
+          まずは無料掲載の審査を行います。掲載後、相談状況を見ながら有料プランへアップグレードできます。
+        </p>
+        <button
+          onClick={() => onNavigate('member')}
+          style={{ background: GOLD, color: WHITE, border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
+        >
+          マイページで確認する
+        </button>
       </div>
-    );
+    )
   }
 
   return (
-    <div style={{ fontFamily: "'Noto Sans JP', sans-serif", background: C.bg, paddingBottom: 80 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet" />
+    <div style={{ color: TEXT, fontFamily: 'inherit' }}>
 
-      {/* ファーストビュー */}
-      <div style={{ background: C.navy, padding: "48px 24px 40px", textAlign: "center" }}>
-        <p style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>EXPERT NETWORK</p>
-        <h1 style={{ color: "#fff", fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP', serif", lineHeight: 1.6, marginBottom: 16 }}>
-          不動産相談に強い<br />専門家を募集しています
+      {/* ① ファーストビュー */}
+      <section style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, padding: '56px 20px 48px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: GOLD, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 12 }}>不動産専門家のための集客プラットフォーム</p>
+        <h1 style={{ color: WHITE, fontSize: 22, fontWeight: 800, lineHeight: 1.6, margin: '0 auto 16px', maxWidth: 480 }}>
+          不動産相談に強い専門家を<br />無料掲載できます
         </h1>
-        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, lineHeight: 1.8, marginBottom: 28 }}>
-          AIがユーザーの悩みを整理し、<br />
-          専門家が必要な相談だけをマッチングします。
+        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.8, margin: '0 auto 28px', maxWidth: 420 }}>
+          AIがユーザーの悩みを整理し、相続・税金・登記・契約トラブルなど、専門家が必要な相談だけをマッチングします。
         </p>
-        <button onClick={scrollToForm}
-          style={{ background: C.gold, color: C.navy, border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12, display: "block", margin: "0 auto 12px" }}>
-          無料で掲載申請する
-        </button>
-        <button onClick={scrollToPlan}
-          style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 50, padding: "10px 28px", fontSize: 13, cursor: "pointer", marginTop: 10, display: "block", margin: "10px auto 0" }}>
-          料金プランを見る
-        </button>
-      </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+          <button
+            onClick={scrollToForm}
+            style={{ background: GOLD, color: WHITE, border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
+          >
+            無料で掲載申請する
+          </button>
+          <button
+            onClick={scrollToFlow}
+            style={{ background: 'transparent', color: WHITE, border: `2px solid ${WHITE}`, borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+          >
+            仕組みを見る
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+          ※無料掲載から始められます　※案件発生を保証するものではありません
+        </p>
+      </section>
 
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 16px" }}>
-
-        {/* 相談ジャンル */}
-        <div style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: "center" }}>こんな相談が届きます</h2>
-          <p style={{ fontSize: 12, color: C.desc, textAlign: "center", marginBottom: 20 }}>AIが整理した相談意欲の高いユーザーをご紹介します</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {CASES.map((c) => (
-              <div key={c.label} style={{ background: C.bg, borderRadius: 12, padding: "14px 12px", border: `1px solid ${C.border}` }}>
-                <div style={{ fontSize: 22, marginBottom: 4 }}>{c.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, marginBottom: 4 }}>{c.label}</div>
-                <div style={{ fontSize: 11, color: C.desc, lineHeight: 1.6 }}>{c.text}</div>
+      {/* ② どんな相談が届くか */}
+      <section style={{ padding: '48px 16px', background: WHITE }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: NAVY, textAlign: 'center', marginBottom: 8 }}>こんな不動産相談が届きます</h2>
+        <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', marginBottom: 24 }}>AIが整理した、相談意欲の高いユーザーのみをマッチング</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, maxWidth: 720, margin: '0 auto' }}>
+          {CASES.map((c) => (
+            <div key={c.title} style={{ background: GRAY, borderRadius: 12, padding: '16px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 24, flexShrink: 0 }}>{c.icon}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{c.title}</div>
+                <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>{c.desc}</div>
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ③ 無料登録でできること */}
+      <section style={{ padding: '48px 16px', background: GRAY }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: NAVY, textAlign: 'center', marginBottom: 8 }}>まずは無料掲載から始められます</h2>
+        <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', marginBottom: 24 }}>最初から有料契約は不要です。まずは掲載して反応を確認できます。</p>
+        <div style={{ background: WHITE, borderRadius: 16, padding: '24px 20px', maxWidth: 480, margin: '0 auto 24px' }}>
+          {[
+            '専門家プロフィール掲載',
+            '対応分野の登録',
+            '対応エリアの登録',
+            '一部相談案件の閲覧',
+            'ユーザーからの問い合わせ受付',
+            '運営審査後に掲載',
+          ].map((item) => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: TEXT }}>
+              <span style={{ fontSize: 18 }}>✅</span>
+              {item}
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <button
+            onClick={scrollToForm}
+            style={{ background: GOLD, color: WHITE, border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
+          >
+            無料で掲載申請する
+          </button>
+        </div>
+      </section>
+
+      {/* ④ マッチングの流れ */}
+      <section ref={flowSection} style={{ padding: '48px 16px', background: WHITE }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: NAVY, textAlign: 'center', marginBottom: 32 }}>相談紹介までの流れ</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 480, margin: '0 auto' }}>
+          {STEPS.map((s, i) => (
+            <div key={s.num} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: i % 2 === 0 ? NAVY : GOLD,
+                color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 800,
+              }}>
+                {s.num}
+              </div>
+              <div style={{ flex: 1, background: GRAY, borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>{s.title}</div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ⑤ 料金プラン */}
+      <section style={{ padding: '48px 16px', background: GRAY }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: NAVY, textAlign: 'center', marginBottom: 8 }}>もっと相談機会を増やしたい方へ</h2>
+        <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', marginBottom: 28 }}>反応を見ながら、有料プランへアップグレードできます。</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 480, margin: '0 auto' }}>
+
+          {/* フリー */}
+          <div style={{ background: WHITE, borderRadius: 16, padding: '24px 20px', border: '1.5px solid #e2e8f0' }}>
+            <div style={{ display: 'inline-block', background: GRAY, color: '#64748b', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, marginBottom: 12 }}>まずはこちら</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>フリープラン</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: TEXT, marginBottom: 16 }}>0円</div>
+            {['プロフィール掲載', '対応分野登録', '対応エリア登録', '一部案件閲覧', '問い合わせ制限あり'].map((f) => (
+              <div key={f} style={{ fontSize: 13, color: '#475569', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>・ {f}</div>
             ))}
+            <button onClick={scrollToForm} style={{ marginTop: 18, width: '100%', background: GOLD, color: WHITE, border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+              無料で始める
+            </button>
+          </div>
+
+          {/* スタンダード */}
+          <div style={{ background: WHITE, borderRadius: 16, padding: '24px 20px', border: `2px solid ${GOLD}` }}>
+            <div style={{ display: 'inline-block', background: '#fff8e6', color: '#92650a', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, marginBottom: 12 }}>相談機会を増やしたい方向け</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>スタンダード</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: TEXT, marginBottom: 16 }}>9,800円<span style={{ fontSize: 14, fontWeight: 400 }}>/月</span></div>
+            {['プロフィール掲載', '案件通知', 'DM機能', '月15件まで相談受付', '検索/AI推薦対象'].map((f) => (
+              <div key={f} style={{ fontSize: 13, color: '#475569', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>・ {f}</div>
+            ))}
+            <button onClick={scrollToForm} style={{ marginTop: 18, width: '100%', background: NAVY, color: WHITE, border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+              アップグレードする
+            </button>
+          </div>
+
+          {/* プレミアム */}
+          <div style={{ background: NAVY, borderRadius: 16, padding: '24px 20px' }}>
+            <div style={{ display: 'inline-block', background: GOLD, color: WHITE, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, marginBottom: 12 }}>本格的に集客したい方向け</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>プレミアム</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: WHITE, marginBottom: 16 }}>29,800円<span style={{ fontSize: 14, fontWeight: 400 }}>/月</span></div>
+            {['AI優先推薦', '特集掲載', '案件優先通知', '相談件数上限アップ', 'レビュー掲載', '専門家ページ強化'].map((f) => (
+              <div key={f} style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>・ {f}</div>
+            ))}
+            <button onClick={scrollToForm} style={{ marginTop: 18, width: '100%', background: GOLD, color: WHITE, border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+              プレミアムを見る
+            </button>
           </div>
         </div>
+      </section>
 
-        {/* メリット */}
-        <div style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: "center" }}>営業せずに、相談意欲の高い<br />見込み客と出会える</h2>
-          <p style={{ fontSize: 12, color: C.desc, textAlign: "center", marginBottom: 20 }}>AI時代の新しい専門家集客</p>
-          {MERITS.map((m) => (
-            <div key={m.text} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{m.icon}</span>
-              <span style={{ fontSize: 13, color: C.title, fontWeight: 600 }}>{m.text}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* 仕組み */}
-        <div style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 20, textAlign: "center" }}>ご紹介までの流れ</h2>
-          {STEPS.map((s, i) => (
-            <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: i < STEPS.length - 1 ? 0 : 0 }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: C.navy, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-                  {s.n}
-                </div>
-                {i < STEPS.length - 1 && <div style={{ width: 2, height: 24, background: C.border }} />}
-              </div>
-              <div style={{ paddingBottom: i < STEPS.length - 1 ? 24 : 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: C.title, margin: 0 }}>{s.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 料金プラン */}
-        <div id="expert-plan" style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 20, textAlign: "center" }}>料金プラン</h2>
-          {[
-            { key: "free", name: "フリープラン", price: "0円", items: ["プロフィール掲載", "一部案件閲覧", "問い合わせ制限あり"], color: C.border, textColor: C.title },
-            { key: "standard", name: "スタンダード", price: "9,800円/月", items: ["プロフィール掲載", "案件通知", "DM機能", "月15件まで相談受付", "検索/AI推薦対象"], color: C.navy, textColor: "#fff" },
-            { key: "premium", name: "プレミアム", price: "29,800円/月", items: ["AI優先推薦", "特集掲載", "案件優先通知", "相談件数上限アップ", "専門家ページ強化", "レビュー掲載"], color: C.gold, textColor: C.navy },
-          ].map((plan) => (
-            <div key={plan.key} onClick={() => setForm((p) => ({ ...p, plan: plan.key }))}
-              style={{ border: `2px solid ${form.plan === plan.key ? C.gold : C.border}`, borderRadius: 14, padding: "16px", marginBottom: 12, cursor: "pointer", background: form.plan === plan.key ? "#fffbf0" : "#fff", transition: "all 0.2s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.navy }}>{plan.name}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: C.gold }}>{plan.price}</span>
-              </div>
-              {plan.items.map((item) => (
-                <div key={item} style={{ fontSize: 12, color: C.desc, paddingLeft: 4, marginBottom: 2 }}>✓ {item}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* 登録フォーム */}
-        <div id="expert-form" style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: "center" }}>専門家会員として申請する</h2>
-          <p style={{ fontSize: 12, color: C.desc, textAlign: "center", marginBottom: 20 }}>申請後、内容確認のうえご連絡いたします</p>
-
-          {[
-            { key: "name", label: "氏名 *", placeholder: "山田 太郎" },
-            { key: "office", label: "事務所名", placeholder: "山田法律事務所" },
-            { key: "area", label: "対応エリア", placeholder: "例：埼玉県全域、さいたま市近郊" },
-            { key: "email", label: "メールアドレス *", placeholder: "example@example.com" },
-            { key: "phone", label: "電話番号", placeholder: "090-0000-0000" },
-            { key: "url", label: "公式サイトURL", placeholder: "https://..." },
-          ].map((f) => (
-            <div key={f.key} style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, color: C.desc, display: "block", marginBottom: 4 }}>{f.label}</label>
-              <input value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
-                placeholder={f.placeholder}
-                style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 16, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title, boxSizing: "border-box" }} />
-            </div>
-          ))}
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 12, color: C.desc, display: "block", marginBottom: 6 }}>資格種別 *</label>
-            <select value={form.qual} onChange={(e) => setForm((p) => ({ ...p, qual: e.target.value }))}
-              style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 16, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title, background: "#fff" }}>
+      {/* ⑥ 登録フォーム */}
+      <section ref={formSection} style={{ padding: '48px 16px', background: NAVY }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: WHITE, textAlign: 'center', marginBottom: 8 }}>無料掲載申請フォーム</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', marginBottom: 28 }}>内容確認後、運営よりご連絡いたします。</p>
+        <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={labelStyle}>氏名</label>
+            <input style={fieldStyle} type="text" value={form.name} onChange={setField('name')} placeholder="山田 太郎" />
+          </div>
+          <div>
+            <label style={labelStyle}>事務所名</label>
+            <input style={fieldStyle} type="text" value={form.office} onChange={setField('office')} placeholder="山田法律事務所" />
+          </div>
+          <div>
+            <label style={labelStyle}>メールアドレス</label>
+            <input style={fieldStyle} type="email" value={form.email} onChange={setField('email')} placeholder="example@office.jp" />
+          </div>
+          <div>
+            <label style={labelStyle}>電話番号</label>
+            <input style={fieldStyle} type="tel" value={form.phone} onChange={setField('phone')} placeholder="03-0000-0000" />
+          </div>
+          <div>
+            <label style={labelStyle}>資格種別</label>
+            <select style={fieldStyle} value={form.qual} onChange={setField('qual')}>
               <option value="">選択してください</option>
               {QUAL_OPTIONS.map((q) => <option key={q} value={q}>{q}</option>)}
             </select>
           </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 12, color: C.desc, display: "block", marginBottom: 6 }}>対応分野（複数可）</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {FIELD_OPTIONS.map((f) => (
-                <button key={f} onClick={() => toggleField(f)}
-                  style={{ background: form.fields.includes(f) ? C.navy : "#fff", color: form.fields.includes(f) ? "#fff" : C.title, border: `1.5px solid ${form.fields.includes(f) ? C.navy : C.border}`, borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
-                  {f}
-                </button>
-              ))}
-            </div>
+          <div>
+            <label style={labelStyle}>対応エリア</label>
+            <input style={fieldStyle} type="text" value={form.area} onChange={setField('area')} placeholder="例：東京都・神奈川県" />
           </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 12, color: C.desc, display: "block", marginBottom: 4 }}>プロフィール文</label>
-            <textarea value={form.profile} onChange={(e) => setForm((p) => ({ ...p, profile: e.target.value }))}
-              placeholder="得意分野や実績などをご記入ください"
+          <div>
+            <label style={labelStyle}>対応分野</label>
+            <input style={fieldStyle} type="text" value={form.field} onChange={setField('field')} placeholder="例：相続・税金・登記" />
+          </div>
+          <div>
+            <label style={labelStyle}>公式サイトURL</label>
+            <input style={fieldStyle} type="url" value={form.url} onChange={setField('url')} placeholder="https://your-office.jp" />
+          </div>
+          <div>
+            <label style={labelStyle}>プロフィール文</label>
+            <textarea
+              style={{ ...fieldStyle, resize: 'vertical' }}
+              value={form.profile}
+              onChange={setField('profile')}
               rows={4}
-              style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 16, outline: "none", fontFamily: "'Noto Sans JP', sans-serif", color: C.title, resize: "vertical", boxSizing: "border-box" }} />
+              placeholder="専門分野や得意な相談内容を記入してください"
+            />
           </div>
-
-          <button onClick={handleSubmit}
-            style={{ width: "100%", background: C.navy, color: "#fff", border: "none", borderRadius: 12, padding: "15px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
-            審査申請を送信する
+          <button
+            onClick={handleSubmit}
+            style={{ width: '100%', height: 52, background: GOLD, color: WHITE, border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
+          >
+            無料掲載を申請する
           </button>
-          <p style={{ fontSize: 11, color: C.desc, textAlign: "center", marginTop: 8 }}>※ 営業連絡は一切ありません</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 1.8 }}>
+            ※申請内容を確認後、掲載可否をご連絡します<br />
+            ※案件発生を保証するものではありません<br />
+            ※営業連絡は一切ありません
+          </p>
         </div>
+      </section>
 
-        {/* FAQ */}
-        <div style={{ background: C.card, borderRadius: 16, padding: "28px 20px", margin: "20px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.navy, marginBottom: 20, textAlign: "center" }}>よくある質問</h2>
-          {FAQS.map((f, i) => (
-            <div key={i} style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 12, marginBottom: 12 }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{ width: "100%", background: "none", border: "none", textAlign: "left", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", padding: 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.navy, fontFamily: "'Noto Sans JP', sans-serif" }}>Q. {f.q}</span>
-                <span style={{ color: C.gold, fontSize: 18, flexShrink: 0, marginLeft: 8 }}>{openFaq === i ? "−" : "+"}</span>
+      {/* ⑦ FAQ */}
+      <section style={{ padding: '48px 16px', background: WHITE }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: NAVY, textAlign: 'center', marginBottom: 24 }}>よくある質問</h2>
+        <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {FAQS.map((faq, i) => (
+            <div key={i} style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                style={{
+                  width: '100%', background: openIndex === i ? '#f0f4f8' : WHITE,
+                  border: 'none', padding: '14px 16px', textAlign: 'left', cursor: 'pointer',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                  fontSize: 14, fontWeight: 700, color: NAVY,
+                }}
+              >
+                <span>Q. {faq.q}</span>
+                <span style={{ flexShrink: 0, fontSize: 16, color: GOLD }}>{openIndex === i ? '▲' : '▼'}</span>
               </button>
-              {openFaq === i && (
-                <p style={{ fontSize: 13, color: C.desc, lineHeight: 1.7, margin: "10px 0 0", paddingLeft: 4 }}>A. {f.a}</p>
+              {openIndex === i && (
+                <div style={{ padding: '12px 16px 14px', fontSize: 13, color: '#475569', lineHeight: 1.7, borderTop: '1px solid #e2e8f0' }}>
+                  A. {faq.a}
+                </div>
               )}
             </div>
           ))}
         </div>
+      </section>
 
-        {/* 最終CTA */}
-        <div style={{ background: C.navy, borderRadius: 16, padding: "28px 20px", margin: "20px 0", textAlign: "center" }}>
-          <h2 style={{ color: "#fff", fontSize: 17, fontWeight: 700, marginBottom: 8 }}>まずは無料掲載から始める</h2>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginBottom: 20, lineHeight: 1.7 }}>
-            相談意欲の高い見込み客と出会える<br />AI時代の新しい専門家集客
-          </p>
-          <button onClick={scrollToForm}
-            style={{ background: C.gold, color: C.navy, border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-            専門家会員として登録する
-          </button>
-        </div>
+      {/* ⑧ 最終CTA */}
+      <section style={{ padding: '48px 20px', background: `linear-gradient(135deg, ${GOLD} 0%, #a87c2a 100%)`, textAlign: 'center' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: WHITE, marginBottom: 24 }}>まずは無料掲載申請から始めましょう</h2>
+        <button
+          onClick={scrollToForm}
+          style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 12, padding: '14px 36px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
+        >
+          無料で掲載申請する
+        </button>
+      </section>
 
-      </div>
     </div>
-  );
+  )
 }
