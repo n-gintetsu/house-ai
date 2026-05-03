@@ -182,7 +182,7 @@ function CommentModal({ property, onClose, user }) {
             <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>コメントするにはログインが必要です</p>
             <button
               style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 32px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-              onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('navigate', { detail: { tab: 'member' } })); }}
+              onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('show-auth-sheet', {})); }}
             >
               ログイン・会員登録
             </button>
@@ -210,8 +210,14 @@ function AIModal({ property, onClose }) {
     setInput("");
     setMsgs(p => [...p, { role: "user", text: q }]);
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    setMsgs(p => [...p, { role: "ai", text: aiReply(q, property) }]);
+    const res = await fetch('/api/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q, property, history: msgs.filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) }),
+    });
+    const data = await res.json();
+    const reply = data.reply || 'エラーが発生しました。もう一度お試しください。';
+    setMsgs(p => [...p, { role: "ai", text: reply }]);
     setLoading(false);
     setTimeout(() => listRef.current?.scrollTo({ top: 9999, behavior: "smooth" }), 100);
   }, [input, loading, property]);
@@ -233,7 +239,7 @@ function AIModal({ property, onClose }) {
           {msgs.map((m, i) => (
             <div key={i} className={`tt-ai-msg ${m.role}`}>
               {m.role === "ai" && <span className="tt-ai-avatar">🤖</span>}
-              <div className="tt-ai-bubble">{m.text}</div>
+              <div className="tt-ai-bubble" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{m.text}</div>
             </div>
           ))}
           {loading && (
@@ -259,6 +265,11 @@ function AIModal({ property, onClose }) {
                 }
               }} />
             <button className="tt-send" onClick={send} disabled={!input.trim() || loading}>送信</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, padding: '8px 12px 4px', borderTop: '1px solid #f0f0f0' }}>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('open-dm', { detail: { property } }))} style={{ flex: 1, padding: '10px 4px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📩 問い合わせる</button>
+            <button onClick={() => {}} style={{ flex: 1, padding: '10px 4px', background: '#f5f5f5', color: '#333', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🔍 比較する</button>
+            <button onClick={() => { setInput('他の物件と比べてどうですか？'); }} style={{ flex: 1, padding: '10px 4px', background: '#f0f4ff', color: '#1a3a5c', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🤖 さらに聞く</button>
           </div>
         </div>
       </div>
