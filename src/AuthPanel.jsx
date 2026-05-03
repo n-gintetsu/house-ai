@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 import MemberDashboard from './MemberDashboard'
 
-export default function AuthPanel() {
+export default function AuthPanel({ onLoginSuccess }) {
   const [mode, setMode] = useState('login')
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -31,6 +31,7 @@ export default function AuthPanel() {
       if (error) throw error
       setUser(data.user)
       setMode('loggedIn')
+      onLoginSuccess?.()
     } catch (err) {
       setError('ログインに失敗しました。メールアドレスとパスワードを確認してください。')
     } finally {

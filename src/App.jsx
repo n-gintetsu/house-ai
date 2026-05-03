@@ -14,8 +14,8 @@ import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
 import MemberDashboard from './MemberDashboard'
+import Community from './Community'
 
-const STORAGE_KEY = 'house-ai-community-v1'
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
 
@@ -41,9 +41,6 @@ const DEFAULT_SYSTEM_PROMPT =
 
 const EXPERT_AI_SYSTEM =
   'あなたは不動産に関する専門家紹介のアドバイザーです。ユーザーの状況を整理し、選んだ専門家カテゴリ（リフォーム業者・司法書士・税理士・FP）ごとに、相談の進め方・準備すべき書類・注意点を簡潔に箇条書きで示してください。断定診断や法律・税務の最終判断は避け、専門家への相談を促してください。'
-
-const COMMUNITY_AI_SYSTEM =
-  'あなたは不動産コミュニティのAIモデレーターです。投稿に対し、共感しつつ実務的な視点（次の一歩・確認ポイント）を短く2〜5文で返してください。攻撃的・断定的すぎる表現は避けます。'
 
 async function callClaudeApi({
   model,
@@ -106,39 +103,6 @@ function toNumberOrNull(v) {
 function toIntOrNull(v) {
   const n = toNumberOrNull(v)
   return n === null ? null : Math.trunc(n)
-}
-
-function normalizePost(p) {
-  if (!p || typeof p !== 'object') return null
-  return {
-    ...p,
-    likes: typeof p.likes === 'number' ? p.likes : 0,
-    empathy: typeof p.empathy === 'number' ? p.empathy : 0,
-    likedByMe: !!p.likedByMe,
-    empathyByMe: !!p.empathyByMe,
-    comments: Array.isArray(p.comments) ? p.comments : [],
-    aiComment: typeof p.aiComment === 'string' ? p.aiComment : '',
-  }
-}
-
-function loadCommunity() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.map(normalizePost).filter(Boolean)
-  } catch {
-    return []
-  }
-}
-
-function saveCommunity(posts) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts))
-  } catch {
-    // ignore
-  }
 }
 
 const TABS = [
@@ -226,9 +190,12 @@ export default function App() {
     // MemberDashboard からのナビゲーションイベント
     const handleNav = (e) => setTab(e.detail.tab)
     window.addEventListener('navigate', handleNav)
+    const handleShowAuth = () => setShowAuthSheet(true)
+    window.addEventListener('show-auth-sheet', handleShowAuth)
     return () => {
       listener.subscription.unsubscribe()
       window.removeEventListener('navigate', handleNav)
+      window.removeEventListener('show-auth-sheet', handleShowAuth)
     }
   }, [])
   const model = useMemo(
@@ -517,152 +484,6 @@ export default function App() {
       setExpertSubmitError('送信に失敗しました。もう一度お試しください。')
     } finally {
       setExpertSubmitting(false)
-    }
-  }
-
-  /* ---- コミュニティ ---- */
-  const [posts, setPosts] = useState(() => loadCommunity())
-  const [communityDraft, setCommunityDraft] = useState({
-    title: '',
-    body: '',
-    author: '',
-    lossAmount: '',
-    category: 'other',
-  })
-  const [expandedPost, setExpandedPost] = useState(null)
-  const [commentDrafts, setCommentDrafts] = useState({})
-  const [aiLoadingPostId, setAiLoadingPostId] = useState(null)
-  const [rankSort, setRankSort] = useState('empathy')
-
-  useEffect(() => {
-    saveCommunity(posts)
-  }, [posts])
-
-  const addPost = async () => {
-    const title = communityDraft.title.trim()
-    const body = communityDraft.body.trim()
-    if (!title || !body) return
-    const payload = {
-      category: communityDraft.category || 'other',
-      title,
-      body,
-      anon: communityDraft.anon || false,
-      author_name: communityDraft.anon ? null : (communityDraft.author || null),
-      likes: 0,
-      empathy: 0,
-    }
-    const { data, error } = await supabase.from('community_posts').insert(payload).select()
-    if (error) { console.error(error); return }
-    const post = {
-      ...data[0],
-      id: data[0].id,
-      title: data[0].title,
-      body,
-      author: communityDraft.author.trim() || '匿名',
-      createdAt: Date.now(),
-      likes: 0,
-      empathy: 0,
-      likedByMe: false,
-      empathyByMe: false,
-      comments: [],
-      aiComment: '',
-    }
-    setPosts((p) => [post, ...p])
-    setCommunityDraft({ title: '', body: '', author: '' })
-  }
-
-  const toggleLike = (id) => {
-    setPosts((list) =>
-      list.map((p) => {
-        if (p.id !== id) return p
-        const next = !p.likedByMe
-        return {
-          ...p,
-          likedByMe: next,
-          likes: Math.max(0, p.likes + (next ? 1 : -1)),
-        }
-      }),
-    )
-  }
-
-  const toggleEmpathy = (id) => {
-    setPosts((list) =>
-      list.map((p) => {
-        if (p.id !== id) return p
-        const next = !p.empathyByMe
-        return {
-          ...p,
-          empathyByMe: next,
-          empathy: Math.max(0, p.empathy + (next ? 1 : -1)),
-        }
-      }),
-    )
-  }
-
-  const addComment = (postId) => {
-    const text = (commentDrafts[postId] || '').trim()
-    if (!text) return
-    setPosts((list) =>
-      list.map((p) => {
-        if (p.id !== postId) return p
-        return {
-          ...p,
-          comments: [
-            ...p.comments,
-            {
-              id: uid(),
-              author: 'ユーザー',
-              text,
-              createdAt: Date.now(),
-            },
-          ],
-        }
-      }),
-    )
-    setCommentDrafts((d) => ({ ...d, [postId]: '' }))
-  }
-
-  const submitPost = async () => {
-    if (!newPost.title.trim() || !newPost.body.trim()) return
-    const payload = {
-      category: newPost.category,
-      title: newPost.title,
-      body: newPost.body,
-      anon: newPost.anon,
-      author_name: newPost.anon ? null : newPost.authorName,
-      likes: 0,
-      empathy: 0,
-    }
-    const { data, error } = await supabase.from('community_posts').insert(payload).select()
-    if (error) { console.error(error); return }
-    setPosts((list) => [{ ...data[0], likedByMe: false, empathyByMe: false, comments: [] }, ...list])
-    setNewPost({ category: 'buy', title: '', body: '', anon: false, authorName: '' })
-  }
-
-  const loadPosts = async () => {
-    const { data, error } = await supabase.from('community_posts').select('*').order('created_at', { ascending: false })
-    if (error) { console.error(error); return }
-    setPosts((data || []).map((p) => ({ ...p, likedByMe: false, empathyByMe: false, comments: [] })))
-  }
-
-  const generateAiComment = async (post) => {
-    setAiLoadingPostId(post.id)
-    try {
-      const userText = `タイトル: ${post.title}\n本文:\n${post.body}`
-      const text = await callClaudeUserMessage(model, COMMUNITY_AI_SYSTEM, userText, 600)
-      setPosts((list) =>
-        list.map((p) => (p.id === post.id ? { ...p, aiComment: text } : p)),
-      )
-    } catch {
-      setPosts((list) =>
-        list.map((p) =>
-          p.id === post.id
-            ? { ...p, aiComment: 'AIコメントの生成に失敗しました。もう一度お試しください。' }
-            : p,
-        ),
-      )
-    } finally {
-      setAiLoadingPostId(null)
     }
   }
 
@@ -2222,161 +2043,7 @@ export default function App() {
 
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <h2 className="ha-sectionTitle">🏘️ コミュニティ</h2>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <select value={rankSort} onChange={(e) => setRankSort(e.target.value)}
-                    style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', color: '#555', cursor: 'pointer' }}>
-                    <option value="empathy">💗 共感順</option>
-                    <option value="likes">👍 いいね順</option>
-                    <option value="new">🆕 新着順</option>
-                  </select>
-                  <button type="button" onClick={() => setTab('properties')}
-                    style={{ padding: '5px 10px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    🏠 物件情報
-                  </button>
-                  <button type="button" onClick={() => setTab('vendors')}
-                    style={{ padding: '5px 10px', background: '#c9a84c', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    👷 業者一覧・比較
-                  </button>
-                </div>
-              </div>
-              <p className="ha-sectionDesc">
-                不動産の体験談や悩みを共有できます。投稿内容はサービス全体で共有されます。
-              </p>
-
-              <div className="ha-postForm">
-              {/* 投稿ヒント */}
-              <div style={{ background: '#fffbe6', border: '1px solid #f0d060', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-                💡 <strong>投稿テンプレ：</strong>「〇〇で後悔しました」「〇〇で損しました」形式が共感を呼びます！
-              </div>
-                <div className="ha-row">
-                  <label className={labelClass}>タイトル</label>
-                  <input
-                    className={fieldClass}
-                    value={communityDraft.title}
-                    onChange={(e) => setCommunityDraft((d) => ({ ...d, title: e.target.value }))}
-                  />
-                </div>
-                <div className="ha-row">
-                  <label className={labelClass}>本文</label>
-                  <textarea
-                    className={fieldClass}
-                    value={communityDraft.body}
-                    onChange={(e) => setCommunityDraft((d) => ({ ...d, body: e.target.value }))}
-                  />
-                </div>
-                <div className="ha-row">
-                  <label className={labelClass}>お名前（任意）</label>
-                  <input
-                    className={fieldClass}
-                    value={communityDraft.author}
-                    onChange={(e) => setCommunityDraft((d) => ({ ...d, author: e.target.value }))}
-                    placeholder="空欄なら匿名"
-                  />
-                </div>
-              </div>
-              <div className="ha-row">
-                <label className={labelClass}>💸 損した金額（任意）</label>
-                <input
-                  className={fieldClass}
-                  value={communityDraft.lossAmount || ''}
-                  onChange={(e) => setCommunityDraft((d) => ({ ...d, lossAmount: e.target.value }))}
-                  placeholder="例：約100万円"
-                />
-                <button type="button" className="ha-btn" onClick={addPost} style={{ marginTop: 20 }}>
-                  投稿する
-                </button>
-              </div>
-
-              {posts.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
-              ) : (
-                posts.map((post) => (
-                  <article key={post.id} className="ha-post" style={{ color: '#1a1a1a' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                      <h4 style={{ margin: 0, flex: 1 }}>{post.title}</h4>
-                      {post.lossAmount && (
-                        <span style={{ fontSize: 11, fontWeight: 700, background: '#fff5f5', color: '#c0392b', border: '1px solid #ffd5d5', padding: '2px 8px', borderRadius: 10, marginLeft: 8, whiteSpace: 'nowrap' }}>
-                          💸 {post.lossAmount}
-                        </span>
-                      )}
-                    </div>
-                    <div className="ha-postBody">{post.body}</div>
-                    <div className="ha-postMeta">
-                      {post.author} ・ {new Date(post.createdAt).toLocaleString('ja-JP')}
-                    </div>
-                    <div className="ha-reactions">
-                      <button
-                        type="button"
-                        className="ha-reactBtn"
-                        data-on={post.likedByMe}
-                        onClick={() => toggleLike(post.id)}
-                      >
-                        👍 いいね {post.likes}
-                      </button>
-                      <button
-                        type="button"
-                        className="ha-reactBtn"
-                        data-on={post.empathyByMe}
-                        onClick={() => toggleEmpathy(post.id)}
-                      >
-                        💗 共感 {post.empathy}
-                      </button>
-                      <button
-                        type="button"
-                        className="ha-btn ha-btnGhost"
-                        style={{ padding: '6px 10px', fontSize: 12 }}
-                        onClick={() => setExpandedPost((id) => (id === post.id ? null : post.id))}
-                      >
-                        {expandedPost === post.id ? '閉じる' : 'コメント・AI'}
-                      </button>
-                    </div>
-
-                    {expandedPost === post.id && (
-                      <div className="ha-comments">
-                        {post.aiComment ? (
-                          <div className="ha-aiComment">
-                            <strong style={{ color: 'var(--accent)' }}>AIコメント</strong>
-                            {'\n\n'}
-                            {post.aiComment}
-                          </div>
-                        ) : null}
-                        <div className="ha-actions" style={{ marginTop: 10 }}>
-                          <button
-                            type="button"
-                            className="ha-btn"
-                            disabled={aiLoadingPostId === post.id}
-                            onClick={() => generateAiComment(post)}
-                          >
-                            {aiLoadingPostId === post.id ? 'AI生成中…' : 'AIコメントを生成'}
-                          </button>
-                        </div>
-                        {post.comments.map((c) => (
-                          <div key={c.id} className="ha-comment">
-                            <strong>{c.author}</strong> · {new Date(c.createdAt).toLocaleString('ja-JP')}
-                            {'\n'}
-                            {c.text}
-                          </div>
-                        ))}
-                        <div className="ha-row" style={{ marginTop: 10 }}>
-                          <input
-                            className={fieldClass}
-                            placeholder="コメントを入力"
-                            value={commentDrafts[post.id] || ''}
-                            onChange={(e) =>
-                              setCommentDrafts((d) => ({ ...d, [post.id]: e.target.value }))
-                            }
-                          />
-                        </div>
-                        <button type="button" className="ha-btn ha-btnGhost" onClick={() => addComment(post.id)}>
-                          コメントを投稿
-                        </button>
-                      </div>
-                    )}
-                  </article>
-                ))
-              )}
+              <Community user={user} />
             </div>
           )}
         {showAuthSheet && (
@@ -2384,7 +2051,7 @@ export default function App() {
             <div className="auth-overlay" onClick={() => setShowAuthSheet(false)} />
             <div className="auth-modal">
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
-              <AuthPanel />
+              <AuthPanel onLoginSuccess={() => setShowAuthSheet(false)} />
             </div>
           </>
         )}
