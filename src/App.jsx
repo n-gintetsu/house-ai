@@ -1389,9 +1389,6 @@ export default function App() {
               <TikTokPropertyFeed properties={properties} user={user} onNavigate={setTab} onDM={() => {
                 if (user) {
                   setTab('member');
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('member-tab', { detail: { tab: 'dm' } }));
-                  }, 150);
                 } else {
                   setShowAuthSheet(true);
                 }
