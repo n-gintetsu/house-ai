@@ -204,9 +204,9 @@ function AIModal({ property, onClose }) {
   const listRef = useRef(null);
   const lastEnterRef = useRef(null);
 
-  const send = useCallback(async () => {
-    if (!input.trim() || loading) return;
-    const q = input.trim();
+  const send = useCallback(async (forceText) => {
+    const q = forceText ?? input.trim();
+    if (!q || loading) return;
     setInput("");
     setMsgs(p => [...p, { role: "user", text: q }]);
     setLoading(true);
@@ -267,8 +267,8 @@ function AIModal({ property, onClose }) {
             <button className="tt-send" onClick={send} disabled={!input.trim() || loading}>送信</button>
           </div>
           <div style={{ display: 'flex', gap: 8, padding: '8px 12px 4px', borderTop: '1px solid #f0f0f0' }}>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('open-dm', { detail: { property } }))} style={{ flex: 1, padding: '10px 4px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📩 問い合わせる</button>
-            <button onClick={() => {}} style={{ flex: 1, padding: '10px 4px', background: '#f5f5f5', color: '#333', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🔍 比較する</button>
+            <button onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('open-dm', { detail: { property } })); }} style={{ flex: 1, padding: '10px 4px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📩 問い合わせる</button>
+            <button onClick={() => send('他の物件と比べてどうですか？おすすめの比較ポイントを教えてください。')} style={{ flex: 1, padding: '10px 4px', background: '#f5f5f5', color: '#333', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🔍 比較する</button>
             <button onClick={() => { setInput('他の物件と比べてどうですか？'); }} style={{ flex: 1, padding: '10px 4px', background: '#f0f4ff', color: '#1a3a5c', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🤖 さらに聞く</button>
           </div>
         </div>
