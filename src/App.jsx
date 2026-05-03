@@ -15,6 +15,7 @@ import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
 import MemberDashboard from './MemberDashboard'
 import Community from './Community'
+import ExpertDashboard from './ExpertDashboard'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -2042,7 +2043,11 @@ export default function App() {
             </div>
           )}
 
-          {tab === 'expertdashboard' && <div style={{ padding: 40, textAlign: 'center', color: '#1a3a5c' }}><h2>専門家ダッシュボード（準備中）</h2></div>}
+          {tab === 'expertdashboard' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <ExpertDashboard onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
 
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
