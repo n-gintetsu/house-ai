@@ -373,6 +373,7 @@ const DETAIL_FIELDS = [
 
 function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
   const [imgIdx, setImgIdx] = useState(0);
+  const [showFullSlider, setShowFullSlider] = useState(false);
   const touchStartX = useRef(null);
 
   const images = property.image_urls?.length > 0
@@ -428,37 +429,93 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
 
         {/* スクロール領域 */}
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          {/* 写真スライダー */}
+          {/* 写真エリア */}
           {images.length > 0 && (
             <>
-              <div
-                style={{ position: 'relative', width: '100%', height: 250, background: '#0f172a', overflow: 'hidden' }}
-                onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-                onTouchEnd={(e) => {
-                  if (touchStartX.current === null) return;
-                  const diff = touchStartX.current - e.changedTouches[0].clientX;
-                  if (Math.abs(diff) > 40) {
-                    if (diff > 0) setImgIdx(i => (i + 1) % images.length);
-                    else setImgIdx(i => (i - 1 + images.length) % images.length);
-                  }
-                  touchStartX.current = null;
-                }}
-              >
-                <img src={images[imgIdx]} alt={property.title} style={{ width: '100%', height: 250, objectFit: 'cover', display: 'block' }} />
-                {images.length > 1 && (
-                  <>
-                    <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
-                      style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>‹</button>
-                    <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
-                      style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>›</button>
-                  </>
-                )}
-              </div>
-              {images.length > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '8px 0' }}>
-                  {images.map((_, i) => (
-                    <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === imgIdx ? '#1a3a5c' : '#cbd5e1' }} />
-                  ))}
+              {showFullSlider || images.length === 1 ? (
+                <div style={{ position: 'relative' }}>
+                  <div
+                    style={{ position: 'relative', width: '100%', height: 250, background: '#0f172a', overflow: 'hidden' }}
+                    onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+                    onTouchEnd={(e) => {
+                      if (touchStartX.current === null) return;
+                      const diff = touchStartX.current - e.changedTouches[0].clientX;
+                      if (Math.abs(diff) > 40) {
+                        if (diff > 0) setImgIdx(i => (i + 1) % images.length);
+                        else setImgIdx(i => (i - 1 + images.length) % images.length);
+                      }
+                      touchStartX.current = null;
+                    }}
+                  >
+                    <img src={images[imgIdx]} alt={property.title} style={{ width: '100%', height: 250, objectFit: 'cover', display: 'block' }} />
+                    {images.length > 1 && (
+                      <>
+                        <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
+                          style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>‹</button>
+                        <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
+                          style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 18, cursor: 'pointer', zIndex: 2 }}>›</button>
+                      </>
+                    )}
+                    {showFullSlider && (
+                      <button
+                        onClick={() => setShowFullSlider(false)}
+                        style={{
+                          position: 'absolute', top: 8, left: 8, zIndex: 10,
+                          background: 'rgba(0,0,0,0.5)', color: '#fff',
+                          border: 'none', borderRadius: 999, padding: '4px 10px',
+                          fontSize: 11, cursor: 'pointer',
+                        }}
+                      >
+                        ← 一覧
+                      </button>
+                    )}
+                  </div>
+                  {images.length > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '8px 0' }}>
+                      {images.map((_, i) => (
+                        <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === imgIdx ? '#1a3a5c' : '#cbd5e1' }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '130px 130px', gap: 2, background: '#e2e8f0', cursor: 'pointer' }}
+                  onClick={() => setShowFullSlider(true)}
+                >
+                  <img
+                    src={images[0]}
+                    alt="メイン"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', gridRow: 'span 2' }}
+                  />
+                  {images[1] && (
+                    <img
+                      src={images[1]}
+                      alt="サブ1"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  )}
+                  {images[2] ? (
+                    <div style={{ position: 'relative' }}>
+                      <img
+                        src={images[2]}
+                        alt="サブ2"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                      {images.length > 3 && (
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          background: 'rgba(0,0,0,0.5)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: 18, fontWeight: 800,
+                        }}>
+                          +{images.length - 3}枚
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ background: '#1e3a5f' }} />
+                  )}
                 </div>
               )}
             </>
