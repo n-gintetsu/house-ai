@@ -42,6 +42,7 @@ function CommentModal({ property, onClose, user }) {
   const [reportTarget, setReportTarget] = useState(null);
   const [reportDone, setReportDone] = useState(false);
   const listRef = useRef(null);
+  const lastEnterRef = useRef(null);
 
   const submit = useCallback(async () => {
     if (!text.trim()) return;
@@ -160,7 +161,19 @@ function CommentModal({ property, onClose, user }) {
               安心して使えるコメント欄にするため、個人情報・誹謗中傷・根拠のない断定は投稿できません。
             </p>
             <div className="tt-input-row">
-              <textarea className="tt-textarea" placeholder="コメントを入力…（個人情報・営業投稿は禁止）" value={text} onChange={e => setText(e.target.value)} rows={2} style={{ fontSize: 16 }} />
+              <textarea className="tt-textarea" placeholder="コメントを入力…（個人情報・営業投稿は禁止）" value={text} onChange={e => setText(e.target.value)} rows={2} style={{ fontSize: 16 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    const now = Date.now();
+                    if (lastEnterRef.current && now - lastEnterRef.current < 500) {
+                      e.preventDefault();
+                      lastEnterRef.current = null;
+                      submit();
+                    } else {
+                      lastEnterRef.current = now;
+                    }
+                  }
+                }} />
               <button className="tt-send" onClick={submit} disabled={!text.trim()}>送信</button>
             </div>
           </div>
@@ -189,6 +202,7 @@ function AIModal({ property, onClose }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const listRef = useRef(null);
+  const lastEnterRef = useRef(null);
 
   const send = useCallback(async () => {
     if (!input.trim() || loading) return;
@@ -232,7 +246,18 @@ function AIModal({ property, onClose }) {
         <div className="tt-form">
           <div className="tt-input-row">
             <textarea className="tt-textarea" placeholder="例：この物件は買いですか？利回りは？" value={input} onChange={e => setInput(e.target.value)} rows={2} style={{ fontSize: 16 }}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  const now = Date.now();
+                  if (lastEnterRef.current && now - lastEnterRef.current < 500) {
+                    e.preventDefault();
+                    lastEnterRef.current = null;
+                    send();
+                  } else {
+                    lastEnterRef.current = now;
+                  }
+                }
+              }} />
             <button className="tt-send" onClick={send} disabled={!input.trim() || loading}>送信</button>
           </div>
         </div>
@@ -247,6 +272,7 @@ function DMModal({ property, user, onClose }) {
   const [message, setMessage] = useState(
     `「${property.title}」について相談したいです。`
   );
+  const lastEnterRef = useRef(null);
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -287,6 +313,18 @@ function DMModal({ property, user, onClose }) {
               boxSizing: 'border-box',
               resize: 'none',
               fontFamily: 'inherit',
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                const now = Date.now();
+                if (lastEnterRef.current && now - lastEnterRef.current < 500) {
+                  e.preventDefault();
+                  lastEnterRef.current = null;
+                  handleSend();
+                } else {
+                  lastEnterRef.current = now;
+                }
+              }
             }}
           />
           <p style={{ fontSize: 11, color: '#94a3b8', margin: '8px 0 0' }}>
