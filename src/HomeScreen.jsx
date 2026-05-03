@@ -849,16 +849,18 @@ export default function HomeScreen({ onNavigate }) {
         )}
 
         {/* 裏導線 */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, padding: "20px 16px 0", flexWrap: "wrap" }}>
-          {[
-            { label: "業者の方はこちら", tab: "agency" },
-            { label: "専門家の方はこちら", tab: "expertlp" },
-            { label: "物件を見る", tab: "properties" },
-          ].map((l) => (
-            <button key={l.label} onClick={() => navigate(l.tab)} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>
-              {l.label}
-            </button>
-          ))}
+        <div style={{ padding: "32px 16px 0", textAlign: "center" }}>
+          <div style={{ marginBottom: 24 }}>
+            <button onClick={() => navigate("agency")} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>業者の方はこちら</button>
+            <span style={{ margin: "0 12px", color: "#ccc" }}>|</span>
+            <button onClick={() => navigate("properties")} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>物件を見る</button>
+          </div>
+          <div style={{ background: "linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)", borderRadius: 16, padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
+            <p style={{ color: "#c9a84c", fontSize: 12, fontWeight: 700, margin: "0 0 4px", letterSpacing: 1 }}>🔔 営業なし・AIが相談を整理して送客</p>
+            <p style={{ color: "white", fontSize: 13, margin: "0 0 16px", lineHeight: 1.6 }}>AIがユーザーの悩みを整理し、<br />専門家が必要な相談だけをお届けします</p>
+            <button onClick={() => navigate("expertlp")} style={{ background: "#c9a84c", border: "none", borderRadius: 10, padding: "14px 28px", color: "#1a3a5c", fontSize: 15, fontWeight: 800, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: 0.5 }}>無料で相談が届く｜専門家登録はこちら →</button>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, margin: "10px 0 0" }}>※無料掲載から始められます　※案件発生を保証するものではありません</p>
+          </div>
         </div>
       </main>
 
