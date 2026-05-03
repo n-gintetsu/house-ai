@@ -265,6 +265,7 @@ const DETAIL_FIELDS = [
 
 function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
   const [imgIdx, setImgIdx] = useState(0);
+  const touchStartX = useRef(null);
 
   const images = Array.isArray(property.image_urls) && property.image_urls.length > 0
     ? property.image_urls
@@ -305,7 +306,18 @@ function PropertyDetailModal({ property, onClose, onAIConsult, onDM }) {
           {/* 写真スライダー */}
           {images.length > 0 && (
             <>
-              <div className="pd-slider">
+              <div className="pd-slider"
+                onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  if (touchStartX.current === null) return;
+                  const diff = touchStartX.current - e.changedTouches[0].clientX;
+                  if (Math.abs(diff) > 40) {
+                    if (diff > 0) setImgIdx(i => (i + 1) % images.length);
+                    else setImgIdx(i => (i - 1 + images.length) % images.length);
+                  }
+                  touchStartX.current = null;
+                }}
+              >
                 <img className="pd-slider-img" src={images[imgIdx]} alt={property.title} />
                 {images.length > 1 && (
                   <>
@@ -524,8 +536,9 @@ const SAMPLE_PROPERTIES = [
 ];
 
 // ── メインエクスポート ─────────────────────────────────
-export default function TikTokPropertyFeed({ properties, user, onDM }) {
+export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate }) {
   const [filter, setFilter] = useState("すべて");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p => {
     if (filter === "すべて") return true
     if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買'
@@ -538,6 +551,12 @@ export default function TikTokPropertyFeed({ properties, user, onDM }) {
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
       <div className="tt-filter-bar">
+        {!isMobile && (
+          <button className="tt-back-btn" onClick={() => window.history.back()}>← 戻る</button>
+        )}
+        {isMobile && (
+          <button className="tt-home-btn" onClick={() => onNavigate?.('home')}>🏠</button>
+        )}
         {["すべて", "売買", "賃貸", "投資"].map(f => (
           <button
             key={f}
