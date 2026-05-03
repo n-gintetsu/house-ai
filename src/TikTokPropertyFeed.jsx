@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import './TikTokPropertyFeed.css'
 
@@ -539,6 +539,11 @@ const SAMPLE_PROPERTIES = [
 export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate }) {
   const [filter, setFilter] = useState("すべて");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const data = (properties?.length > 0 ? properties : SAMPLE_PROPERTIES).filter(p => {
     if (filter === "すべて") return true
     if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買'
