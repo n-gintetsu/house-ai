@@ -41,7 +41,7 @@ const initialForm = {
   qual: '', area: '', field: '', url: '', profile: '',
 }
 
-export default function ExpertLP({ onNavigate }) {
+export default function ExpertLP({ onNavigate, onExpertLogin }) {
   const [form, setForm] = useState(initialForm)
   const [submitted, setSubmitted] = useState(false)
   const [openIndex, setOpenIndex] = useState(null)
@@ -111,9 +111,17 @@ export default function ExpertLP({ onNavigate }) {
             仕組みを見る
           </button>
         </div>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 16 }}>
           ※無料掲載から始められます　※案件発生を保証するものではありません
         </p>
+        <div style={{ textAlign: 'center' }}>
+          <button
+            onClick={() => onNavigate ? onNavigate('expertdashboard') : onExpertLogin?.()}
+            style={{ background: WHITE, color: NAVY, border: `2px solid ${NAVY}`, borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          >
+            専門家ログインはこちら
+          </button>
+        </div>
       </section>
 
       {/* ② どんな相談が届くか */}

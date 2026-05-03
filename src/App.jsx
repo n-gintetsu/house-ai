@@ -112,6 +112,7 @@ const TABS = [
   { id: 'sell', label: '売却査定', icon: '🏷️' },
   { id: 'owner', label: '賃貸経営者様向け', icon: '🏢' },
   { id: 'expert', label: '専門家紹介', icon: '👔' },
+  { id: 'expertdashboard', label: '専門家DB', icon: '📊' },
   { id: 'community', label: 'コミュニティ', icon: '🏘️' },
   { id: 'agency', label: '業者様向け', icon: '🏗️' },
   { id: 'column', label: '💰 お得情報', icon: '💰' },
@@ -2037,9 +2038,11 @@ export default function App() {
 
           {tab === 'expertlp' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <ExpertLP onNavigate={(view) => setTab(view)} />
+              <ExpertLP onNavigate={(view) => setTab(view)} onExpertLogin={() => setTab('expertdashboard')} />
             </div>
           )}
+
+          {tab === 'expertdashboard' && <div style={{ padding: 40, textAlign: 'center', color: '#1a3a5c' }}><h2>専門家ダッシュボード（準備中）</h2></div>}
 
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
