@@ -634,12 +634,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
       <div className="tt-filter-bar">
-        {!isMobile && (
-          <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>← 戻る</button>
-        )}
-        {isMobile && (
-          <button className="tt-home-btn" onClick={() => onNavigate?.('home')}>🏠</button>
-        )}
+        <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>← 戻る</button>
         {["すべて", "売買", "賃貸", "投資"].map(f => (
           <button
             key={f}
