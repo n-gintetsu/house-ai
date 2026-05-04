@@ -210,10 +210,20 @@ function AIModal({ property, onClose }) {
     setInput("");
     setMsgs(p => [...p, { role: "user", text: q }]);
     setLoading(true);
+    const safeHistory = msgs
+      .filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0)
+      .map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: String(m.text || '') }));
+    const safeProperty = property ? {
+      title: String(property.title || ''),
+      price: property.price ? Number(property.price) : null,
+      rent: property.rent ? Number(property.rent) : null,
+      address: String(property.address || ''),
+      deal_type: String(property.deal_type || ''),
+    } : null;
     const res = await fetch('/api/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q, property: property ? { title: property.title, price: property.price, rent: property.rent, address: property.address, deal_type: property.deal_type } : null, history: msgs.filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) }),
+      body: JSON.stringify({ message: String(q || ''), property: safeProperty, history: safeHistory }),
     });
     const data = await res.json();
     const reply = data.reply || 'エラーが発生しました。もう一度お試しください。';
