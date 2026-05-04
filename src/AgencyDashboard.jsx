@@ -314,6 +314,8 @@ export default function AgencyDashboard() {
   const [editingProperty, setEditingProperty] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [editMsg, setEditMsg] = useState('')
+  const [cases, setCases] = useState([])
+  const [casesLoading, setCasesLoading] = useState(false)
 
   const initForm = () => ({
     title: '', catchcopy: '', price: '', image_url: '', image_urls: [], is_public: true,
@@ -354,6 +356,22 @@ export default function AgencyDashboard() {
     setMyProperties(data || [])
     setListLoading(false)
   }
+
+  async function fetchCases() {
+    setCasesLoading(true)
+    const { data } = await supabase
+      .from('case_distributions')
+      .select('*')
+      .eq('agency_email', user?.email)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    setCases(data || [])
+    setCasesLoading(false)
+  }
+
+  useEffect(() => {
+    if (screen === 'inquiries') fetchCases()
+  }, [screen])
 
   async function handleSubmit() {
     if (!form.title.trim() || !form.address.trim()) {
@@ -673,11 +691,42 @@ export default function AgencyDashboard() {
                 </div>
               ))}
             </div>
-            <div style={{ background: '#fff8f0', border: '1.5px solid #f59e0b', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
-              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#92400e' }}>🔥 この物件に3件の反応があります</p>
-              <p style={{ margin: '0 0 12px', fontSize: 13, color: '#b45309' }}>スタンダードプランで反響通知・DM機能が使えます</p>
-              <button onClick={() => setScreen('plan')} style={{ background: '#f59e0b', border: 'none', borderRadius: 8, padding: '10px 20px', color: 'white', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>反響をもっと増やす →</button>
-            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1a3a5c', margin: '24px 0 12px' }}>📬 新着案件</h3>
+            {casesLoading ? (
+              <p style={{ color: '#64748b' }}>読み込み中...</p>
+            ) : cases.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: 12, padding: 24, textAlign: 'center', color: '#64748b', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <p style={{ fontSize: 32, margin: '0 0 8px' }}>📭</p>
+                <p style={{ fontSize: 14, fontWeight: 700 }}>まだ案件はありません</p>
+                <p style={{ fontSize: 12 }}>ユーザーがAI相談をすると自動で届きます</p>
+              </div>
+            ) : (
+              cases.map((c, i) => (
+                <div key={c.id} style={{ background: i < 3 ? 'white' : undefined, filter: i >= 3 ? 'blur(3px)' : 'none', pointerEvents: i >= 3 ? 'none' : 'auto', borderRadius: 12, padding: '16px 20px', marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                        <span style={{ background: '#1a3a5c', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{c.category}</span>
+                        {c.is_boosted && <span style={{ background: '#10b981', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>🚀 優先</span>}
+                        {c.competitor_count > 0 && <span style={{ background: '#fff8f0', color: '#92400e', border: '1px solid #f59e0b', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>他{c.competitor_count}社にも送信</span>}
+                      </div>
+                      <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{c.summary || '相談内容あり'}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>📍 {c.area || '未指定'} · {new Date(c.created_at).toLocaleString('ja-JP')}</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <span style={{ background: c.status === 'new' ? '#fee2e2' : '#f1f5f9', color: c.status === 'new' ? '#991b1b' : '#64748b', borderRadius: 4, padding: '4px 10px', fontSize: 11, fontWeight: 700 }}>{c.status === 'new' ? '新着' : '確認済'}</span>
+                      <button style={{ background: '#1a3a5c', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>対応する</button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            {cases.length >= 3 && (
+              <div style={{ background: 'white', borderRadius: 12, padding: '16px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginTop: 8 }}>
+                <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#1a3a5c' }}>さらに{cases.length - 3}件の案件があります</p>
+                <button onClick={() => setScreen('plan')} style={{ background: '#c9a84c', border: 'none', borderRadius: 8, padding: '10px 24px', color: '#1a3a5c', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>スタンダードで全て閲覧 →</button>
+              </div>
+            )}
           </div>
         )}
 
