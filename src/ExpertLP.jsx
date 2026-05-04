@@ -89,7 +89,13 @@ export default function ExpertLP({ onNavigate, onExpertLogin }) {
     <div style={{ color: TEXT, fontFamily: 'inherit' }}>
 
       {/* ① ファーストビュー */}
-      <section style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, padding: '56px 20px 48px', textAlign: 'center' }}>
+      <section style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, padding: '56px 20px 48px', textAlign: 'center', position: 'relative' }}>
+        <button
+          onClick={() => onNavigate ? onNavigate('home') : null}
+          style={{ position: 'absolute', top: 16, left: 16, background: 'none', border: 'none', color: WHITE, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          ← 戻る
+        </button>
         <p style={{ fontSize: 12, color: GOLD, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 12 }}>不動産専門家のための集客プラットフォーム</p>
         <h1 style={{ color: WHITE, fontSize: 22, fontWeight: 800, lineHeight: 1.6, margin: '0 auto 16px', maxWidth: 480 }}>
           不動産相談に強い専門家を<br />無料掲載できます
