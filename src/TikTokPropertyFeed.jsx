@@ -226,7 +226,7 @@ function AIModal({ property, onClose }) {
       body: JSON.stringify({ message: String(q || ''), property: safeProperty, history: safeHistory }),
     });
     const data = await res.json();
-    const reply = data.reply || 'エラーが発生しました。もう一度お試しください。';
+    const reply = String(data.reply || data.message || data.content || 'エラーが発生しました');
     setMsgs(p => [...p, { role: "ai", text: reply }]);
     // 案件配信
     fetch('/api/distribute-case', {
@@ -261,7 +261,7 @@ function AIModal({ property, onClose }) {
           {msgs.map((m, i) => (
             <div key={i} className={`tt-ai-msg ${m.role}`}>
               {m.role === "ai" && <span className="tt-ai-avatar">🤖</span>}
-              <div className="tt-ai-bubble" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{m.text}</div>
+              <div className="tt-ai-bubble" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{String(m.text || '')}</div>
             </div>
           ))}
           {loading && (
