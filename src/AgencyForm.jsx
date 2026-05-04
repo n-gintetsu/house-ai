@@ -81,7 +81,13 @@ export default function AgencyForm() {
       setDone(true)
     } catch (err) {
       console.error(err)
-      setSubmitError(err.message || '送信に失敗しました。もう一度お試しください。')
+      if (err.message?.includes('User already registered') || err.message?.includes('already registered')) {
+        setSubmitError('このメールアドレスはすでに登録されています。')
+      } else if (err.message?.includes('agency_user_id')) {
+        setSubmitError('登録処理でエラーが発生しました。管理者にお問い合わせください。')
+      } else {
+        setSubmitError('送信に失敗しました。もう一度お試しください。')
+      }
     } finally {
       setSubmitting(false)
     }
