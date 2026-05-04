@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 
 const NAVY = '#1a3a5c'
 const GOLD = '#c9a84c'
@@ -49,6 +49,13 @@ export default function ExpertLP({ onNavigate, onExpertLogin }) {
   const formSection = useRef(null)
   const flowSection = useRef(null)
 
+  const [scrolled, setScrolled] = React.useState(false);
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToForm = () => formSection.current?.scrollIntoView({ behavior: 'smooth' })
   const scrollToFlow = () => flowSection.current?.scrollIntoView({ behavior: 'smooth' })
 
@@ -88,14 +95,42 @@ export default function ExpertLP({ onNavigate, onExpertLogin }) {
   return (
     <div style={{ color: TEXT, fontFamily: 'inherit' }}>
 
-      {/* ① ファーストビュー */}
-      <section style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, padding: '56px 20px 48px', textAlign: 'center', position: 'relative' }}>
-        <button
-          onClick={() => onNavigate ? onNavigate('home') : null}
-          style={{ position: 'absolute', top: 16, left: 16, background: 'none', border: 'none', color: WHITE, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          ← 戻る
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        background: scrolled ? 'rgba(26,58,92,0.97)' : 'rgba(26,58,92,0.0)',
+        backdropFilter: scrolled ? 'blur(8px)' : 'none',
+        borderBottom: scrolled ? '1px solid rgba(201,168,76,0.3)' : 'none',
+        padding: '12px 20px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        transition: 'all 0.3s ease',
+      }}>
+        <button onClick={() => onNavigate('home')} style={{
+          background: 'none', border: 'none', color: scrolled ? 'white' : 'rgba(255,255,255,0)',
+          fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
+          display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.3s',
+        }}>
+          🏛️ 不動産AIコンシェルジュ
         </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => onNavigate('home')} style={{
+            background: 'none', border: scrolled ? '1px solid rgba(255,255,255,0.4)' : 'none',
+            borderRadius: 8, padding: '7px 14px', color: scrolled ? 'rgba(255,255,255,0.8)' : 'transparent',
+            fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.3s',
+          }}>
+            ホームへ
+          </button>
+          <button onClick={() => formSection.current?.scrollIntoView({ behavior: 'smooth' })} style={{
+            background: '#c9a84c', border: 'none', borderRadius: 8, padding: '7px 16px',
+            color: '#1a3a5c', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
+            opacity: scrolled ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: scrolled ? 'auto' : 'none',
+          }}>
+            無料登録する ↓
+          </button>
+        </div>
+      </div>
+
+      {/* ① ファーストビュー */}
+      <section style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, padding: '56px 20px 48px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: GOLD, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 12 }}>不動産専門家のための集客プラットフォーム</p>
         <h1 style={{ color: WHITE, fontSize: 22, fontWeight: 800, lineHeight: 1.6, margin: '0 auto 16px', maxWidth: 480 }}>
           不動産相談に強い専門家を<br />無料掲載できます
