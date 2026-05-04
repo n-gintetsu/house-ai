@@ -213,7 +213,7 @@ function AIModal({ property, onClose }) {
     const res = await fetch('/api/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q, property, history: msgs.filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) }),
+      body: JSON.stringify({ message: q, property: property ? { title: property.title, price: property.price, rent: property.rent, address: property.address, deal_type: property.deal_type } : null, history: msgs.filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) }),
     });
     const data = await res.json();
     const reply = data.reply || 'エラーが発生しました。もう一度お試しください。';
