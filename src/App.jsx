@@ -16,6 +16,7 @@ import TikTokPropertyFeed from './TikTokPropertyFeed'
 import MemberDashboard from './MemberDashboard'
 import Community from './Community'
 import ExpertDashboard from './ExpertDashboard'
+import ExpertRegister from './ExpertRegister'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -114,6 +115,7 @@ const TABS = [
   { id: 'owner', label: '賃貸経営者様向け', icon: '🏢' },
   { id: 'expert', label: '専門家紹介', icon: '👔' },
   { id: 'expertdashboard', label: '専門家DB', icon: '📊' },
+  { id: 'expertregister', label: '専門家登録', icon: '📝' },
   { id: 'community', label: 'コミュニティ', icon: '🏘️' },
   { id: 'agency', label: '業者様向け', icon: '🏗️' },
   { id: 'column', label: '💰 お得情報', icon: '💰' },
@@ -2048,6 +2050,8 @@ export default function App() {
               <ExpertDashboard onNavigate={(view) => setTab(view)} />
             </div>
           )}
+
+          {tab === 'expertregister' && <ExpertRegister onNavigate={setTab} />}
 
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
