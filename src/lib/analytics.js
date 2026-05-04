@@ -13,10 +13,15 @@ function getSessionId() {
 
 export async function trackEvent(eventType, metadata = {}) {
   try {
+    const safeMetadata = JSON.parse(JSON.stringify(metadata, (key, value) => {
+      if (value instanceof Element || value instanceof HTMLElement || value instanceof Node) return undefined;
+      if (typeof value === 'function') return undefined;
+      return value;
+    }));
     await supabase.from('analytics_events').insert([{
       event_type: eventType,
       session_id: getSessionId(),
-      metadata,
+      metadata: safeMetadata,
     }]);
   } catch (e) {
     console.warn('track error', e);
