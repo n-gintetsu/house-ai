@@ -465,6 +465,8 @@ export default function AgencyDashboard() {
                 { icon: '🏷️', label: '売買物件管理', sub: '登録・変更・成約・削除', action: () => { setDealCategory('sale'); setScreen('sale') } },
                 { icon: '🏠', label: '賃貸物件管理', sub: '登録・変更・成約・削除', action: () => { setDealCategory('rent'); setScreen('rent') } },
                 { icon: '📋', label: '自社登録物件一覧', sub: '登録済み物件を確認', action: () => { setScreen('list'); loadMyProperties() } },
+                { icon: '📬', label: '反響管理', sub: '問い合わせ・AI相談・お気に入り状況を確認', action: () => setScreen('inquiries') },
+                { icon: '💰', label: 'プラン管理', sub: '掲載数や表示順位を強化', action: () => setScreen('plan') },
               ].map(item => (
                 <div key={item.label} onClick={item.action} style={{ background: '#fff', borderRadius: 14, padding: 24, textAlign: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'transform 0.1s', border: '2px solid transparent' }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
@@ -648,6 +650,68 @@ export default function AgencyDashboard() {
               <button onClick={() => setForm(initForm())} style={{ padding: '12px 20px', background: 'transparent', color: '#777', border: '1px solid #ddd', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}>
                 リセット
               </button>
+            </div>
+          </div>
+        )}
+
+        {screen === 'inquiries' && (
+          <div style={{ padding: '0 0 40px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <button onClick={() => setScreen('menu')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>←</button>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c', margin: 0 }}>📬 反響管理</h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: '問い合わせ', value: 3, unit: '件', color: '#3b82f6' },
+                { label: 'AI相談', value: 7, unit: '件', color: '#8b5cf6' },
+                { label: 'お気に入り', value: 12, unit: '件', color: '#ec4899' },
+                { label: '閲覧数', value: 89, unit: 'PV', color: '#10b981' },
+              ].map(item => (
+                <div key={item.label} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderTop: `4px solid ${item.color}`, textAlign: 'center' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#64748b' }}>{item.label}</p>
+                  <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: item.color }}>{item.value}<span style={{ fontSize: 14, fontWeight: 400 }}>{item.unit}</span></p>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: '#fff8f0', border: '1.5px solid #f59e0b', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
+              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#92400e' }}>🔥 この物件に3件の反応があります</p>
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: '#b45309' }}>スタンダードプランで反響通知・DM機能が使えます</p>
+              <button onClick={() => setScreen('plan')} style={{ background: '#f59e0b', border: 'none', borderRadius: 8, padding: '10px 20px', color: 'white', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>反響をもっと増やす →</button>
+            </div>
+          </div>
+        )}
+
+        {screen === 'plan' && (
+          <div style={{ padding: '0 0 40px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <button onClick={() => setScreen('menu')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>←</button>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c', margin: 0 }}>💰 プラン管理</h2>
+            </div>
+            <div style={{ background: 'white', borderRadius: 12, padding: '16px 20px', marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>現在のプラン</p>
+                <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 800, color: '#1a3a5c' }}>フリープラン</p>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>物件掲載3件まで・基本機能のみ</p>
+              </div>
+              <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>無料</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              {[
+                { name: 'スタンダード', price: '9,800円/月', color: '#1a3a5c', bg: 'white', border: '2px solid #c9a84c', features: ['掲載数増加（20件）', '反響通知', 'DM機能', 'AI推薦対象', '検索優先表示'], cta: 'アップグレードする', ctaBg: '#1a3a5c', ctaColor: 'white' },
+                { name: 'プレミアム', price: '29,800円/月', color: 'white', bg: '#1a3a5c', border: 'none', features: ['優先表示', '特集掲載', 'トップ掲載', '詳細分析', '一括査定案件優先参加'], cta: 'プレミアムを見る', ctaBg: '#c9a84c', ctaColor: '#1a3a5c' },
+              ].map(plan => (
+                <div key={plan.name} style={{ background: plan.bg, border: plan.border, borderRadius: 16, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: plan.color === 'white' ? 'white' : '#1a3a5c' }}>{plan.name}</p>
+                  <p style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 800, color: '#c9a84c' }}>{plan.price}</p>
+                  {plan.features.map(f => (
+                    <p key={f} style={{ margin: '4px 0', fontSize: 13, color: plan.color === 'white' ? 'rgba(255,255,255,0.8)' : '#64748b' }}>✅ {f}</p>
+                  ))}
+                  <button style={{ width: '100%', marginTop: 16, background: plan.ctaBg, color: plan.ctaColor, border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>{plan.cta}</button>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16, background: '#fff8f0', border: '1px solid #f59e0b', borderRadius: 10, padding: '12px 16px' }}>
+              <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>💡 詳細情報（宅建業免許・対応エリア・取扱種別）を入力するとAI推薦・優先表示が強化されます</p>
             </div>
           </div>
         )}

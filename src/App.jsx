@@ -1954,10 +1954,10 @@ export default function App() {
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
                       <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>不動産業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
-                        物件の登録・掲載・管理ができます。専用ダッシュボードにて物件情報をご登録いただけます。
+                        売買・賃貸物件を無料で掲載できます。AIマッチング・物件フィード・TikTok風フィードで集客をサポートします。
                       </div>
                       <div style={{ display: 'inline-block', padding: '10px 24px', background: '#1a3a5c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        会員登録はこちら →
+                        無料で物件掲載を始める
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
                         すでに登録済みの方は

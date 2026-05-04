@@ -2,15 +2,14 @@ import { useState } from 'react'
 import { supabase } from './lib/supabase'
 
 const BUSINESS_TYPES = [
-  '不動産会社',
-  'リフォーム・リノベーション',
-  '外構・エクステリア',
-  '司法書士・行政書士',
-  '税理士・会計士',
-  '金融機関・ローン',
-  'ハウスクリーニング',
+  '不動産会社（売買）',
+  '不動産会社（賃貸）',
+  '不動産会社（売買・賃貸）',
+  '不動産会社（投資）',
   'その他',
 ]
+
+const DEAL_TYPE_OPTIONS = ['売買', '賃貸', '投資', '買取', '管理']
 
 export default function AgencyForm() {
   const [step, setStep] = useState(1)
@@ -21,16 +20,29 @@ export default function AgencyForm() {
   const [form, setForm] = useState({
     company_name: '',
     contact_name: '',
-    phone: '',
     email: '',
-    business_type: '',
+    phone: '',
+    password: '',
+    business_type: '不動産会社（売買・賃貸）',
     area: '',
     service_description: '',
+    license_number: '',
+    deal_types: [],
     address: '',
+    url: '',
   })
 
   function update(key, val) {
     setForm(f => ({ ...f, [key]: val }))
+  }
+
+  function toggleDealType(type) {
+    setForm(f => ({
+      ...f,
+      deal_types: f.deal_types.includes(type)
+        ? f.deal_types.filter(t => t !== type)
+        : [...f.deal_types, type],
+    }))
   }
 
   async function handleSubmit() {
@@ -38,7 +50,19 @@ export default function AgencyForm() {
     setSubmitError('')
     setSubmitting(true)
     try {
-      const { error } = await supabase.from('agency_registrations').insert(form)
+      const { error } = await supabase.from('agency_registrations').insert({
+        company_name: form.company_name,
+        contact_name: form.contact_name,
+        email: form.email,
+        phone: form.phone,
+        business_type: form.business_type,
+        area: form.area,
+        service_description: form.service_description,
+        license_number: form.license_number,
+        deal_types: form.deal_types,
+        address: form.address,
+        url: form.url,
+      })
       if (error) throw error
 
       await fetch('/api/sendmail', {
@@ -107,7 +131,11 @@ export default function AgencyForm() {
           内容を確認後、担当者よりご連絡いたします。<br />
           しばらくお待ちください。
         </p>
-        <button style={ghostBtnStyle} onClick={() => { setDone(false); setStep(1); setForm({ company_name: '', contact_name: '', phone: '', email: '', business_type: '', area: '', service_description: '', address: '' }) }}>
+        <button style={ghostBtnStyle} onClick={() => {
+          setDone(false)
+          setStep(1)
+          setForm({ company_name: '', contact_name: '', email: '', phone: '', password: '', business_type: '不動産会社（売買・賃貸）', area: '', service_description: '', license_number: '', deal_types: [], address: '', url: '' })
+        }}>
           新規登録
         </button>
       </div>
@@ -116,71 +144,77 @@ export default function AgencyForm() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 750, color: '#1a3a5c', margin: '0 0 4px' }}>
-        🏢 業者様向け会員登録
+      <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1a3a5c', margin: '0 0 4px' }}>
+        🏠 不動産業者 無料登録
       </h2>
       <p style={{ fontSize: 13, color: '#777', margin: '0 0 20px', lineHeight: 1.6 }}>
-        不動産・リフォーム・金融機関など、業者様の登録フォームです。<br />
-        登録後、担当者よりご連絡いたします。
+        登録後すぐに物件を掲載できます。
       </p>
 
       {/* ステップバッジ */}
       <div style={{ display: 'inline-block', fontSize: 11, color: '#1a3a5c', border: '1px solid rgba(26,58,92,0.15)', padding: '4px 10px', borderRadius: 8, marginBottom: 16 }}>
-        ステップ {step} / 2 　{step === 1 ? '会社情報' : 'サービス・PR情報'}
+        ステップ {step} / 2　{step === 1 ? '基本情報' : '詳細情報'}
       </div>
 
       {step === 1 && (
         <>
           <div style={rowStyle}>
             <label style={labelStyle}>会社名 <span style={{ color: '#e53e3e' }}>*</span></label>
-            <input style={fieldStyle} value={form.company_name} onChange={e => update('company_name', e.target.value)} placeholder="例：株式会社〇〇" />
+            <input style={fieldStyle} value={form.company_name} onChange={e => update('company_name', e.target.value)} placeholder="例：株式会社○○" />
           </div>
           <div style={rowStyle}>
             <label style={labelStyle}>担当者名 <span style={{ color: '#e53e3e' }}>*</span></label>
             <input style={fieldStyle} value={form.contact_name} onChange={e => update('contact_name', e.target.value)} placeholder="例：山田 太郎" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div>
-              <label style={labelStyle}>電話番号 <span style={{ color: '#e53e3e' }}>*</span></label>
-              <input style={fieldStyle} value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="例：048-000-0000" inputMode="tel" />
-            </div>
-            <div>
-              <label style={labelStyle}>メールアドレス <span style={{ color: '#e53e3e' }}>*</span></label>
-              <input style={fieldStyle} type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="例：info@example.com" />
-            </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>メールアドレス <span style={{ color: '#e53e3e' }}>*</span></label>
+            <input style={fieldStyle} type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="例：info@example.com" />
+          </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>電話番号 <span style={{ color: '#e53e3e' }}>*</span></label>
+            <input style={fieldStyle} value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="例：048-000-0000" inputMode="tel" />
+          </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>パスワード <span style={{ color: '#e53e3e' }}>*</span></label>
+            <input style={fieldStyle} type="password" value={form.password} onChange={e => update('password', e.target.value)} placeholder="8文字以上" />
           </div>
           <div style={rowStyle}>
             <label style={labelStyle}>業種</label>
             <select style={fieldStyle} value={form.business_type} onChange={e => update('business_type', e.target.value)}>
-              <option value="">選択してください</option>
               {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div style={rowStyle}>
-            <label style={labelStyle}>会社所在地</label>
-            <input style={fieldStyle} value={form.address} onChange={e => update('address', e.target.value)} placeholder="例：埼玉県さいたま市大宮区〇〇" />
-          </div>
+          {submitError && <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,100,100,0.45)', color: '#dc2626', fontSize: 13 }}>{submitError}</div>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <button
-              style={btnStyle}
+              style={{ ...btnStyle, flex: 1 }}
               onClick={() => {
-                if (!form.company_name.trim() || !form.contact_name.trim() || !form.phone.trim() || !form.email.trim()) {
-                  setSubmitError('会社名・担当者名・電話番号・メールアドレスは必須です')
+                if (!form.company_name.trim() || !form.contact_name.trim() || !form.email.trim() || !form.phone.trim()) {
+                  setSubmitError('会社名・担当者名・メールアドレス・電話番号は必須です')
+                  return
+                }
+                if (form.password.length < 8) {
+                  setSubmitError('パスワードは8文字以上で入力してください')
                   return
                 }
                 setSubmitError('')
                 setStep(2)
               }}
             >
-              次へ
+              無料登録して物件を掲載する
             </button>
           </div>
-          {submitError && <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,100,100,0.45)', color: '#dc2626', fontSize: 13 }}>{submitError}</div>}
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 12, lineHeight: 1.8 }}>
+            ※掲載内容は運営確認のうえ公開される場合があります。※無料で始められます。※有料プランは登録後に必要に応じて利用できます。
+          </p>
         </>
       )}
 
       {step === 2 && (
         <>
+          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 16px', lineHeight: 1.6 }}>
+            アップグレード時に詳細情報を入力するとAI推薦・優先表示が強化されます
+          </p>
           <div style={rowStyle}>
             <label style={labelStyle}>対応エリア</label>
             <input style={fieldStyle} value={form.area} onChange={e => update('area', e.target.value)} placeholder="例：埼玉県全域・東京都内" />
@@ -194,11 +228,38 @@ export default function AgencyForm() {
               placeholder="提供サービスの内容、強み、実績などをご記入ください"
             />
           </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>宅建業免許番号</label>
+            <input style={fieldStyle} value={form.license_number} onChange={e => update('license_number', e.target.value)} placeholder="例：埼玉県知事(1)第○○号" />
+          </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>取扱種別</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+              {DEAL_TYPE_OPTIONS.map(type => (
+                <label key={type} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#333', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.deal_types.includes(type)}
+                    onChange={() => toggleDealType(type)}
+                  />
+                  {type}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>会社所在地</label>
+            <input style={fieldStyle} value={form.address} onChange={e => update('address', e.target.value)} placeholder="例：埼玉県さいたま市大宮区○○" />
+          </div>
+          <div style={rowStyle}>
+            <label style={labelStyle}>会社サイトURL</label>
+            <input style={fieldStyle} type="url" value={form.url} onChange={e => update('url', e.target.value)} placeholder="https://example.com" />
+          </div>
           {submitError && <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,100,100,0.45)', color: '#dc2626', fontSize: 13 }}>{submitError}</div>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <button style={ghostBtnStyle} onClick={() => { setSubmitError(''); setStep(1) }}>戻る</button>
-            <button style={btnStyle} disabled={submitting} onClick={handleSubmit}>
-              {submitting ? '送信中…' : '登録申請する'}
+            <button style={{ ...btnStyle, flex: 1 }} disabled={submitting} onClick={handleSubmit}>
+              {submitting ? '送信中…' : '登録を完了する'}
             </button>
           </div>
         </>
