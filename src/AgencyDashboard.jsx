@@ -316,6 +316,7 @@ export default function AgencyDashboard() {
   const [editMsg, setEditMsg] = useState('')
   const [cases, setCases] = useState([])
   const [casesLoading, setCasesLoading] = useState(false)
+  const [currentPlan, setCurrentPlan] = useState(null)
 
   const initForm = () => ({
     title: '', catchcopy: '', price: '', image_url: '', image_urls: [], is_public: true,
@@ -368,6 +369,20 @@ export default function AgencyDashboard() {
     setCases(data || [])
     setCasesLoading(false)
   }
+
+  async function fetchCurrentPlan() {
+    if (!user?.email) return
+    const { data } = await supabase
+      .from('agency_registrations')
+      .select('plan')
+      .eq('email', user.email)
+      .single()
+    setCurrentPlan(data?.plan || 'free')
+  }
+
+  useEffect(() => {
+    if (user) fetchCurrentPlan()
+  }, [user])
 
   useEffect(() => {
     if (screen === 'inquiries') fetchCases()
@@ -736,14 +751,23 @@ export default function AgencyDashboard() {
               <button onClick={() => setScreen('menu')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>←</button>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c', margin: 0 }}>💰 プラン管理</h2>
             </div>
-            <div style={{ background: 'white', borderRadius: 12, padding: '16px 20px', marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>現在のプラン</p>
-                <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 800, color: '#1a3a5c' }}>フリープラン</p>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>物件掲載3件まで・基本機能のみ</p>
-              </div>
-              <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>無料</span>
-            </div>
+            {(() => {
+              const planLabel = currentPlan === 'premium' ? 'プレミアムプラン' : currentPlan === 'standard' ? 'スタンダードプラン' : 'フリープラン'
+              const planSub = currentPlan === 'premium' ? '優先表示・特集掲載・詳細分析' : currentPlan === 'standard' ? '物件掲載20件・反響通知・DM機能' : '物件掲載3件まで・基本機能のみ'
+              const planBadge = currentPlan === 'premium' ? '29,800円/月' : currentPlan === 'standard' ? '9,800円/月' : '無料'
+              const badgeBg = currentPlan === 'premium' ? '#1a3a5c' : currentPlan === 'standard' ? '#e8f0fe' : '#f1f5f9'
+              const badgeColor = currentPlan === 'premium' ? '#c9a84c' : currentPlan === 'standard' ? '#1a3a5c' : '#64748b'
+              return (
+                <div style={{ background: 'white', borderRadius: 12, padding: '16px 20px', marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>現在のプラン</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 800, color: '#1a3a5c' }}>{planLabel}</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>{planSub}</p>
+                  </div>
+                  <span style={{ background: badgeBg, color: badgeColor, borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>{planBadge}</span>
+                </div>
+              )
+            })()}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
               {[
                 { name: 'スタンダード', price: '9,800円/月', color: '#1a3a5c', bg: 'white', border: '2px solid #c9a84c', features: ['掲載数増加（20件）', '反響通知', 'DM機能', 'AI推薦対象', '検索優先表示'], cta: 'アップグレードする', ctaBg: '#1a3a5c', ctaColor: 'white' },

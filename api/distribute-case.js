@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     if (!Array.isArray(agencies)) agencies = [];
 
     // 未承認でも全業者を対象（登録済み全員）
-    const agAllRes = await fetch(`${SUPABASE_URL}/rest/v1/agency_registrations?select=id,email,area,business_type,created_at`, { headers });
+    const agAllRes = await fetch(`${SUPABASE_URL}/rest/v1/agency_registrations?select=id,email,area,business_type,created_at,plan`, { headers });
     let allAgencies = await agAllRes.json();
     if (!Array.isArray(allAgencies)) allAgencies = [];
 
@@ -36,6 +36,9 @@ export default async function handler(req, res) {
       if (ag.email) score += 10;
       // 新規ブースト（7日以内）
       if (isNew) score += 40;
+      // プランブースト
+      if (ag.plan === 'premium') score += 50;
+      else if (ag.plan === 'standard') score += 20;
 
       return { ...ag, score, is_boosted: isNew };
     });
