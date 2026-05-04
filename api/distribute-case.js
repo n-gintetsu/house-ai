@@ -22,11 +22,30 @@ export default async function handler(req, res) {
       return res.json({ distributed: 0, message: '配信対象の業者がいません' });
     }
 
+    // 返信率集計（case_distributions の status='read' 件数 / 総配信数）
+    const cdStatsRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/case_distributions?select=agency_email,status`,
+      { headers }
+    );
+    let cdStats = await cdStatsRes.json();
+    if (!Array.isArray(cdStats)) cdStats = [];
+
+    const replyRateMap = {};
+    for (const row of cdStats) {
+      if (!row.agency_email) continue;
+      if (!replyRateMap[row.agency_email]) replyRateMap[row.agency_email] = { total: 0, read: 0 };
+      replyRateMap[row.agency_email].total++;
+      if (row.status === 'read') replyRateMap[row.agency_email].read++;
+    }
+
     // スコア計算
     const now = new Date();
     const scored = allAgencies.map(ag => {
       let score = 0;
       const isNew = ag.created_at && (now - new Date(ag.created_at)) < 7 * 24 * 60 * 60 * 1000;
+      const stats = replyRateMap[ag.email] || { total: 0, read: 0 };
+      const rate = stats.total > 0 ? (stats.read / stats.total) * 100 : 0;
+      const is_recommended = rate >= 80;
 
       // エリアマッチ
       if (area && ag.area && ag.area.includes(area.slice(0, 3))) score += 50;
@@ -39,8 +58,11 @@ export default async function handler(req, res) {
       // プランブースト
       if (ag.plan === 'premium') score += 50;
       else if (ag.plan === 'standard') score += 20;
+      // 返信率ブースト
+      if (is_recommended) score += 30;
+      else if (rate >= 60) score += 10;
 
-      return { ...ag, score, is_boosted: isNew };
+      return { ...ag, score, is_boosted: isNew, is_recommended };
     });
 
     // スコア降順ソート・上位5社

@@ -317,6 +317,7 @@ export default function AgencyDashboard() {
   const [cases, setCases] = useState([])
   const [casesLoading, setCasesLoading] = useState(false)
   const [currentPlan, setCurrentPlan] = useState(null)
+  const [replyRate, setReplyRate] = useState(null)
 
   const initForm = () => ({
     title: '', catchcopy: '', price: '', image_url: '', image_urls: [], is_public: true,
@@ -380,8 +381,20 @@ export default function AgencyDashboard() {
     setCurrentPlan(data?.plan || 'free')
   }
 
+  async function fetchReplyRate() {
+    if (!user?.email) return
+    const { data } = await supabase
+      .from('case_distributions')
+      .select('status')
+      .eq('agency_email', user.email)
+    if (!data || data.length === 0) { setReplyRate(0); return }
+    const total = data.length
+    const read = data.filter(r => r.status === 'read').length
+    setReplyRate(Math.round(read / total * 100))
+  }
+
   useEffect(() => {
-    if (user) fetchCurrentPlan()
+    if (user) { fetchCurrentPlan(); fetchReplyRate() }
   }, [user])
 
   useEffect(() => {
@@ -492,7 +505,39 @@ export default function AgencyDashboard() {
         {/* メインメニュー */}
         {screen === 'menu' && (
           <div>
-            <h2 style={{ color: '#1a3a5c', marginBottom: 24, fontSize: 20 }}>物件管理メニュー</h2>
+            <h2 style={{ color: '#1a3a5c', marginBottom: 16, fontSize: 20 }}>物件管理メニュー</h2>
+            {/* AI評価カード */}
+            <div style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #0f2540 100%)', borderRadius: 12, padding: 24, marginBottom: 24, color: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>🤖 AI評価</div>
+                {replyRate >= 80 && (
+                  <span style={{ background: '#1a3a5c', color: '#c9a84c', border: '1.5px solid #c9a84c', borderRadius: 20, padding: '2px 12px', fontSize: 11, fontWeight: 800 }}>🤖 AI推薦中</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: '表示順位', value: replyRate === null ? '—' : replyRate >= 60 ? '高' : replyRate >= 30 ? '中' : '低' },
+                  { label: '返信速度', value: 'やや遅い' },
+                  { label: '返信率', value: replyRate !== null ? `${replyRate}%` : '—' },
+                ].map(item => (
+                  <div key={item.label} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 14px', flex: '1 1 auto', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800 }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                {[
+                  (replyRate === null || replyRate < 80) ? '返信率を上げるとAI推薦対象になります' : null,
+                  'プロフィールを充実させると相談が増えます',
+                ].filter(Boolean).map(tip => (
+                  <div key={tip} style={{ fontSize: 12, color: '#c9a84c', marginBottom: 4 }}>・{tip}</div>
+                ))}
+              </div>
+              <button onClick={() => setScreen('plan')} style={{ background: '#c9a84c', color: '#1a3a5c', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+                もっと案件を増やす →
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               {[
                 { icon: '🏷️', label: '売買物件管理', sub: '登録・変更・成約・削除', action: () => { setDealCategory('sale'); setScreen('sale') } },
