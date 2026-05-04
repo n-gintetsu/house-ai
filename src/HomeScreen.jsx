@@ -853,10 +853,9 @@ export default function HomeScreen({ onNavigate }) {
 
         {/* 裏導線 */}
         <div style={{ padding: "32px 16px 0", textAlign: "center" }}>
-          <div style={{ marginBottom: 24 }}>
-            <button onClick={() => navigate("agency")} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>業者の方はこちら</button>
-            <span style={{ margin: "0 12px", color: "#ccc" }}>|</span>
-            <button onClick={() => navigate("properties")} style={{ background: "none", border: "none", color: "#333", fontSize: 13, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", textDecoration: "underline", fontWeight: 600 }}>物件を見る</button>
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
+            <button onClick={() => navigate("agency")} style={{ background: "#c9a84c", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(201,168,76,0.4)" }}>業者の方はこちら →</button>
+            <button onClick={() => navigate("properties")} style={{ background: "#ff6b35", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(255,107,53,0.4)" }}>物件を見る →</button>
           </div>
           <div style={{ background: "linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)", borderRadius: 16, padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
             <p style={{ color: "#c9a84c", fontSize: 12, fontWeight: 700, margin: "0 0 4px", letterSpacing: 1 }}>🔔 営業なし・AIが相談を整理して送客</p>
