@@ -7,6 +7,14 @@ const TEXT = '#1e293b'
 
 const MOCK_STATS = { views: 128, consultations: 5, replyRate: 80, closed: 2 }
 
+const MOCK_TRIGGERS = {
+  firstConsultation: true,
+  missedConsultations: 3,
+  displayRank: 47,
+  freeQuotaUsed: 5,
+  freeQuotaMax: 5,
+};
+
 const MOCK_CONSULTATIONS = [
   { id: 1, category: '相続', summary: '親の不動産をどうすればいいか分からない', area: 'さいたま市', urgency: '高', time: '10分前' },
   { id: 2, category: '税金', summary: '売却時の譲渡所得税の計算方法が知りたい', area: '東京都', urgency: '中', time: '1時間前' },
@@ -58,6 +66,21 @@ function ConsultationCard({ item, style }) {
 function SectionDashboard({ isPremium, setActiveSection }) {
   return (
     <div>
+      {/* 成功体験演出カード */}
+      <div style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a4a7c 100%)', borderRadius: 16, padding: '20px 24px', marginBottom: 16, color: 'white' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 20 }}>🎉</span>
+          <span style={{ fontSize: 15, fontWeight: 800 }}>初めての相談が届きました！</span>
+        </div>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', margin: '0 0 12px', lineHeight: 1.6 }}>
+          あなたのプロフィール閲覧数：<strong style={{ color: '#c9a84c' }}>12回</strong>、相談：<strong style={{ color: '#c9a84c' }}>1件</strong><br />
+          スタンダードプランなら<strong style={{ color: '#c9a84c', fontSize: 16 }}>3倍</strong>届く可能性があります
+        </p>
+        <button onClick={() => setActiveSection('plan')} style={{ background: '#c9a84c', border: 'none', borderRadius: 8, padding: '10px 20px', color: '#1a3a5c', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+          優先表示で相談数アップ →
+        </button>
+      </div>
+
       {/* ① サマリーカード */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
@@ -75,6 +98,20 @@ function SectionDashboard({ isPremium, setActiveSection }) {
             <div style={{ fontSize: 32, fontWeight: 800, color: NAVY }}>{s.value}<span style={{ fontSize: 16 }}>{s.unit}</span></div>
           </div>
         ))}
+      </div>
+
+      {/* 表示順位トリガー */}
+      <div style={{ background: 'white', borderRadius: 12, padding: '16px 20px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>現在の表示順位</p>
+          <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 800, color: '#1a3a5c' }}>
+            {MOCK_TRIGGERS.displayRank}<span style={{ fontSize: 14, fontWeight: 400 }}>位</span>
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>スタンダードで<strong style={{ color: '#c9a84c' }}>優先表示</strong>されます</p>
+        </div>
+        <button onClick={() => setActiveSection('plan')} style={{ background: '#f0f4ff', border: '1.5px solid #1a3a5c', borderRadius: 8, padding: '8px 16px', color: '#1a3a5c', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          順位を上げる →
+        </button>
       </div>
 
       {/* ② AI評価カード */}
@@ -150,6 +187,19 @@ function SectionDashboard({ isPremium, setActiveSection }) {
         )}
       </div>
 
+      {/* 取り逃しトリガー */}
+      <div style={{ background: '#fff8f0', border: '1.5px solid #f59e0b', borderRadius: 12, padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#92400e' }}>
+            😢 他の専門家に<strong style={{ fontSize: 16, color: '#d97706' }}>{MOCK_TRIGGERS.missedConsultations}件</strong>の相談が送信されました
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#b45309' }}>優先表示で取り逃しを減らせます</p>
+        </div>
+        <button onClick={() => setActiveSection('plan')} style={{ background: '#f59e0b', border: 'none', borderRadius: 8, padding: '8px 16px', color: 'white', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          優先表示にする →
+        </button>
+      </div>
+
       {/* ⑤ アップグレード誘導カード */}
       <div style={{
         background: `linear-gradient(135deg, ${GOLD} 0%, #a87c2a 100%)`,
@@ -205,17 +255,22 @@ function SectionConsultations() {
 
 function SectionMessages({ setActiveSection }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, textAlign: 'center', gap: 16 }}>
-      <div style={{ fontSize: 48 }}>💬</div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>DM機能</div>
-      <p style={{ fontSize: 13, color: '#64748b', maxWidth: 300, lineHeight: 1.6 }}>
-        DM送信はスタンダード以上で利用できます
-      </p>
-      <button
-        onClick={() => setActiveSection('plan')}
-        style={{ background: GOLD, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
-      >
-        スタンダードにアップグレード
+    <div style={{ background: 'white', borderRadius: 16, padding: '40px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+      <span style={{ fontSize: 48 }}>💬</span>
+      <h3 style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 800, margin: '12px 0 8px' }}>DM機能</h3>
+      <div style={{ background: '#fff8f0', border: '1.5px solid #f59e0b', borderRadius: 10, padding: '16px', margin: '16px auto', maxWidth: 320 }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#92400e', fontWeight: 700 }}>🔒 DM送信はスタンダード以上で解放</p>
+        <p style={{ margin: '8px 0 0', fontSize: 12, color: '#b45309' }}>ユーザーから直接連絡が届くようになります</p>
+      </div>
+      <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', margin: '0 auto 20px', maxWidth: 320, textAlign: 'left' }}>
+        <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, color: '#1a3a5c' }}>スタンダードで解放される機能：</p>
+        <p style={{ margin: '4px 0', fontSize: 12, color: '#64748b' }}>✅ ユーザーへのDM送信</p>
+        <p style={{ margin: '4px 0', fontSize: 12, color: '#64748b' }}>✅ 既読確認</p>
+        <p style={{ margin: '4px 0', fontSize: 12, color: '#64748b' }}>✅ 月15件まで相談受付</p>
+        <p style={{ margin: '4px 0', fontSize: 12, color: '#64748b' }}>✅ AI優先表示</p>
+      </div>
+      <button onClick={() => setActiveSection('plan')} style={{ background: '#c9a84c', border: 'none', borderRadius: 10, padding: '14px 32px', color: '#1a3a5c', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+        アップグレードしてDMを使う →
       </button>
     </div>
   )
