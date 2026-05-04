@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import './TikTokPropertyFeed.css'
+import { trackEvent } from './lib/analytics'
 
 // ── NGワード ─────────────────────────────────────────
 const NG_WORDS = [
@@ -718,6 +719,9 @@ function TikTokSlide({ property, user, onDM, index, total }) {
 
   const toggleLike = e => {
     e.stopPropagation();
+    if (!liked) {
+      trackEvent('favorite_add', { property_id: property.id, title: property.title, area: property.address || '', category: property.deal_type || '' });
+    }
     setLiked(v => !v);
     setLikeCount(n => liked ? n - 1 : n + 1);
   };
@@ -799,7 +803,7 @@ function TikTokSlide({ property, user, onDM, index, total }) {
       {/* 下部CTAボタン */}
       <button
         className="tiktok-detail"
-        onClick={e => { e.stopPropagation(); setShowDetail(true); }}
+        onClick={e => { e.stopPropagation(); setShowDetail(true); trackEvent('property_view', { property_id: property.id, title: property.title, area: property.address || '', category: property.deal_type || '' }); }}
       >
         詳細を見る →
       </button>
