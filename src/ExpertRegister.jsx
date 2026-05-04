@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
+import { trackEvent } from './lib/analytics';
 
 const NAVY = '#1a3a5c';
 const GOLD = '#c9a84c';
@@ -12,6 +13,8 @@ export default function ExpertRegister({ onNavigate }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => { trackEvent('page_view', { page: 'expert_register' }); }, []);
 
   async function handleSubmit() {
     if (!name || !email) {
@@ -26,6 +29,7 @@ export default function ExpertRegister({ onNavigate }) {
     if (err) {
       setError(err.message);
     } else {
+      trackEvent('expert_register_complete', { area, field });
       setSubmitted(true);
     }
     setLoading(false);

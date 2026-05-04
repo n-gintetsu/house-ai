@@ -19,6 +19,7 @@ const TABS = [
   { id: 'community', label: '🏘️ コミュニティ' },
   { id: 'owners', label: '🔑 オーナー依頼' },
   { id: 'ads', label: '📢 広告管理' },
+  { id: 'growth', label: '📊 グロース分析' },
 ]
 
 
@@ -335,6 +336,38 @@ export default function AdminDashboard() {
   const [community, setCommunity] = useState([])
   const [owners, setOwners] = useState([])
   const [loading, setLoading] = useState(false)
+  const [growthData, setGrowthData] = useState(null)
+
+  async function fetchGrowthData() {
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const since1d = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: events } = await supabase.from('analytics_events').select('*').gte('created_at', since7d);
+    const { data: experts } = await supabase.from('expert_registrations').select('*');
+
+    if (!events) return;
+
+    const pageViews = events.filter(e => e.event_type === 'page_view' && e.metadata?.page === 'home');
+    const registerClicks = events.filter(e => e.event_type === 'expert_register_click');
+    const registerCompletes = events.filter(e => e.event_type === 'expert_register_complete');
+    const pageViews1d = events.filter(e => e.event_type === 'page_view' && e.metadata?.page === 'home' && e.created_at >= since1d);
+
+    const uniqueSessions = new Set(pageViews.map(e => e.session_id)).size;
+    const clickRate = uniqueSessions > 0 ? Math.round((registerClicks.length / uniqueSessions) * 100) : 0;
+    const registerRate = registerClicks.length > 0 ? Math.round((registerCompletes.length / registerClicks.length) * 100) : 0;
+    const totalExperts = experts?.length || 0;
+
+    setGrowthData({
+      uniqueSessions,
+      pageViews1d: new Set(pageViews1d.map(e => e.session_id)).size,
+      registerClicks: registerClicks.length,
+      registerCompletes: registerCompletes.length,
+      clickRate,
+      registerRate,
+      totalExperts,
+      recentEvents: events.slice(-20).reverse(),
+    });
+  }
 
   async function loadAll() {
     setLoading(true)
@@ -358,7 +391,7 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (authed) loadAll()
+    if (authed) { loadAll(); fetchGrowthData(); }
   }, [authed])
 
   async function deletePost(id) {
@@ -608,6 +641,83 @@ export default function AdminDashboard() {
             <div>
               <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📢 広告管理</h2>
               <AdManagement supabaseAdmin={supabaseAdmin} />
+            </div>
+          )}
+
+          {tab === 'growth' && (
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c', marginBottom: 24 }}>📊 グロース分析（過去7日間）</h2>
+              {!growthData ? (
+                <p style={{ color: '#64748b' }}>データ読み込み中...</p>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
+                    {[
+                      { label: 'ユニーク訪問数', value: growthData.uniqueSessions, unit: '人', color: '#3b82f6' },
+                      { label: '登録ボタンクリック', value: growthData.registerClicks, unit: '回', color: '#8b5cf6' },
+                      { label: '登録完了数', value: growthData.registerCompletes, unit: '件', color: '#10b981' },
+                      { label: 'クリック率', value: growthData.clickRate, unit: '%', color: '#f59e0b' },
+                      { label: '登録完了率', value: growthData.registerRate, unit: '%', color: '#ef4444' },
+                      { label: '専門家総数', value: growthData.totalExperts, unit: '人', color: '#1a3a5c' },
+                    ].map(item => (
+                      <div key={item.label} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderTop: `4px solid ${item.color}` }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 12, color: '#64748b' }}>{item.label}</p>
+                        <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: item.color }}>{item.value}<span style={{ fontSize: 14, fontWeight: 400 }}>{item.unit}</span></p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1a3a5c', marginBottom: 16 }}>🤖 AI改善提案</h3>
+                    {growthData.clickRate < 5 && (
+                      <div style={{ background: '#fff8f0', border: '1px solid #f59e0b', borderRadius: 8, padding: '12px 16px', marginBottom: 8 }}>
+                        <p style={{ margin: 0, fontSize: 13, color: '#92400e' }}>⚠️ <strong>クリック率が低い（{growthData.clickRate}%）</strong>：トップページのCTAボタンの文言・色・位置を改善してください</p>
+                      </div>
+                    )}
+                    {growthData.registerRate < 30 && growthData.registerClicks > 0 && (
+                      <div style={{ background: '#fff0f0', border: '1px solid #ef4444', borderRadius: 8, padding: '12px 16px', marginBottom: 8 }}>
+                        <p style={{ margin: 0, fontSize: 13, color: '#991b1b' }}>⚠️ <strong>登録完了率が低い（{growthData.registerRate}%）</strong>：登録フォームの項目数・文言を見直してください</p>
+                      </div>
+                    )}
+                    {growthData.clickRate >= 5 && growthData.registerRate >= 30 && (
+                      <div style={{ background: '#f0fff4', border: '1px solid #10b981', borderRadius: 8, padding: '12px 16px' }}>
+                        <p style={{ margin: 0, fontSize: 13, color: '#065f46' }}>✅ <strong>KPIは良好です！</strong>このまま流入数を増やすことに注力してください</p>
+                      </div>
+                    )}
+                    {growthData.uniqueSessions === 0 && (
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 16px' }}>
+                        <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>📊 まだデータが蓄積中です。訪問者が増えると分析が表示されます</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1a3a5c', marginBottom: 16 }}>📋 最近のイベントログ</h3>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>イベント</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>セッションID</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>日時</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {growthData.recentEvents.map((e, i) => (
+                            <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                              <td style={{ padding: '8px 12px' }}>
+                                <span style={{ background: '#f0f4ff', color: '#1a3a5c', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>{e.event_type}</span>
+                              </td>
+                              <td style={{ padding: '8px 12px', color: '#94a3b8', fontFamily: 'monospace', fontSize: 11 }}>{e.session_id?.slice(0, 8)}...</td>
+                              <td style={{ padding: '8px 12px', color: '#64748b' }}>{new Date(e.created_at).toLocaleString('ja-JP')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

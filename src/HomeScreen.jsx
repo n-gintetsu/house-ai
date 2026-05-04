@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { AffiliateCard } from './AffiliateCard';
 import { supabase } from "./lib/supabase";
+import { trackEvent } from './lib/analytics';
 
 // ============================================================
 // HomeScreen.jsx — CV最大化版 + 会員登録ロック機能
@@ -721,6 +722,8 @@ export default function HomeScreen({ onNavigate }) {
     });
   }, []);
 
+  useEffect(() => { trackEvent('page_view', { page: 'home' }); }, []);
+
   // レスポンシブ判定
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -858,7 +861,7 @@ export default function HomeScreen({ onNavigate }) {
           <div style={{ background: "linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)", borderRadius: 16, padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
             <p style={{ color: "#c9a84c", fontSize: 12, fontWeight: 700, margin: "0 0 4px", letterSpacing: 1 }}>🔔 営業なし・AIが相談を整理して送客</p>
             <p style={{ color: "white", fontSize: 13, margin: "0 0 16px", lineHeight: 1.6 }}>AIがユーザーの悩みを整理し、<br />専門家が必要な相談だけをお届けします</p>
-            <button onClick={() => navigate("expertregister")} style={{ background: "#c9a84c", border: "none", borderRadius: 10, padding: "14px 28px", color: "#1a3a5c", fontSize: 15, fontWeight: 800, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: 0.5 }}>無料で相談が届く｜専門家登録はこちら →</button>
+            <button onClick={() => { trackEvent('expert_register_click'); navigate("expertregister"); }} style={{ background: "#c9a84c", border: "none", borderRadius: 10, padding: "14px 28px", color: "#1a3a5c", fontSize: 15, fontWeight: 800, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: 0.5 }}>無料で相談が届く｜専門家登録はこちら →</button>
             <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, margin: "10px 0 0" }}>※無料掲載から始められます　※案件発生を保証するものではありません</p>
           </div>
         </div>
