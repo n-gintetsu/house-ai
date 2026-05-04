@@ -50,7 +50,14 @@ export default function AgencyForm() {
     setSubmitError('')
     setSubmitting(true)
     try {
-      const { error } = await supabase.from('agency_registrations').insert({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      })
+      if (authError) throw authError
+
+      const { error: insertError } = await supabase.from('agency_registrations').insert({
+        agency_user_id: authData.user?.id,
         company_name: form.company_name,
         contact_name: form.contact_name,
         email: form.email,
@@ -63,7 +70,7 @@ export default function AgencyForm() {
         address: form.address,
         url: form.url,
       })
-      if (error) throw error
+      if (insertError) throw insertError
 
       await fetch('/api/sendmail', {
         method: 'POST',
@@ -74,7 +81,7 @@ export default function AgencyForm() {
       setDone(true)
     } catch (err) {
       console.error(err)
-      setSubmitError('送信に失敗しました。もう一度お試しください。')
+      setSubmitError(err.message || '送信に失敗しました。もう一度お試しください。')
     } finally {
       setSubmitting(false)
     }
