@@ -224,8 +224,8 @@ function AIModal({ property, onClose }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         category: property?.deal_type === 'rent' ? '賃貸' : '売買',
-        area: property?.address?.slice(0, 4) || '',
-        summary: q,
+        area: (property?.address || '').slice(0, 4),
+        summary: String(q || ''),
         session_id: sessionStorage.getItem('ha_session_id') || '',
         case_type: 'ai_consultation',
       }),
