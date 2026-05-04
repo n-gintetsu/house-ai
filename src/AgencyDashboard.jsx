@@ -301,6 +301,13 @@ function ImageUploader({ onUploaded, currentUrl }) {
   )
 }
 
+const NOTIF_MSGS = [
+  '🔔 新しい相談が届きました（10分前）',
+  '⚡ 他の業者が返信しました',
+  '👀 あなたの情報が閲覧されました',
+  '🏆 今週の人気相談が更新されました',
+]
+
 export default function AgencyDashboard() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -318,6 +325,7 @@ export default function AgencyDashboard() {
   const [casesLoading, setCasesLoading] = useState(false)
   const [currentPlan, setCurrentPlan] = useState(null)
   const [replyRate, setReplyRate] = useState(null)
+  const [notifIndex, setNotifIndex] = useState(0)
 
   const initForm = () => ({
     title: '', catchcopy: '', price: '', image_url: '', image_urls: [], is_public: true,
@@ -394,12 +402,17 @@ export default function AgencyDashboard() {
   }
 
   useEffect(() => {
-    if (user) { fetchCurrentPlan(); fetchReplyRate() }
+    if (user) { fetchCurrentPlan(); fetchReplyRate(); fetchCases() }
   }, [user])
 
   useEffect(() => {
     if (screen === 'inquiries') fetchCases()
   }, [screen])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNotifIndex(i => (i + 1) % NOTIF_MSGS.length), 3000)
+    return () => clearInterval(timer)
+  }, [])
 
   async function handleSubmit() {
     if (!form.title.trim() || !form.address.trim()) {
@@ -505,7 +518,36 @@ export default function AgencyDashboard() {
         {/* メインメニュー */}
         {screen === 'menu' && (
           <div>
-            <h2 style={{ color: '#1a3a5c', marginBottom: 16, fontSize: 20 }}>物件管理メニュー</h2>
+            <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}`}</style>
+            <h2 style={{ color: '#1a3a5c', marginBottom: 12, fontSize: 20 }}>物件管理メニュー</h2>
+
+            {/* ① 反響ステータスバー */}
+            {(() => {
+              const cnt = cases.length
+              const stars = '★'.repeat(Math.min(cnt, 5)) + '☆'.repeat(Math.max(0, 5 - cnt))
+              const nextMsg = cnt >= 5 ? '最高レベル達成！' : `あと${5 - cnt}件で${'★'.repeat(cnt + 1)}`
+              return (
+                <div style={{ background: '#1a3a5c', borderRadius: 12, padding: '14px 20px', marginBottom: 10, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 13, marginBottom: 4 }}>
+                      現在の反響レベル：<span style={{ color: '#c9a84c', fontSize: 18, fontWeight: 800, letterSpacing: 2 }}>{stars}</span>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginLeft: 8 }}>（{nextMsg}）</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#c9a84c' }}>スタンダードで反響が2.8倍になります</div>
+                  </div>
+                  <button onClick={() => setScreen('plan')} style={{ background: '#c9a84c', color: '#1a3a5c', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    反響を増やす →
+                  </button>
+                </div>
+              )
+            })()}
+
+            {/* ② リアルタイム通知バー */}
+            <div style={{ background: '#f0f4ff', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', flexShrink: 0, display: 'inline-block', animation: 'blink 1s ease-in-out infinite' }} />
+              <span style={{ fontSize: 13, color: '#1a3a5c', fontWeight: 600 }}>{NOTIF_MSGS[notifIndex]}</span>
+            </div>
+
             {/* AI評価カード */}
             <div style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #0f2540 100%)', borderRadius: 12, padding: 24, marginBottom: 24, color: '#fff' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -538,6 +580,8 @@ export default function AgencyDashboard() {
                 もっと案件を増やす →
               </button>
             </div>
+
+            {/* メニューカード */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               {[
                 { icon: '🏷️', label: '売買物件管理', sub: '登録・変更・成約・削除', action: () => { setDealCategory('sale'); setScreen('sale') } },
@@ -555,6 +599,20 @@ export default function AgencyDashboard() {
                   <div style={{ fontSize: 12, color: '#777' }}>{item.sub}</div>
                 </div>
               ))}
+            </div>
+
+            {/* ③ 成長ゲージ */}
+            <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginTop: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#1a3a5c' }}>今週の反響：{cases.length}件</div>
+                {cases.length >= 7
+                  ? <span style={{ color: '#10b981', fontSize: 13, fontWeight: 700 }}>🎉 今週の平均を超えました！</span>
+                  : <span style={{ color: '#64748b', fontSize: 12 }}>あと{7 - cases.length}件で平均以上</span>
+                }
+              </div>
+              <div style={{ background: '#e2e8f0', borderRadius: 99, height: 10, overflow: 'hidden' }}>
+                <div style={{ background: 'linear-gradient(90deg, #1a3a5c, #c9a84c)', height: '100%', borderRadius: 99, width: `${Math.min(cases.length / 7 * 100, 100)}%`, transition: 'width 0.6s ease' }} />
+              </div>
             </div>
           </div>
         )}
@@ -734,10 +792,17 @@ export default function AgencyDashboard() {
 
         {screen === 'inquiries' && (
           <div style={{ padding: '0 0 40px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <button onClick={() => setScreen('menu')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>←</button>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c', margin: 0 }}>📬 反響管理</h2>
             </div>
+
+            {/* ⑤ 取り逃し演出バナー */}
+            <div style={{ background: '#fff3cd', borderLeft: '4px solid #f59e0b', borderRadius: '0 10px 10px 0', padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>⚠️ あなたに合う相談が他の業者に送信されました</span>
+              <button onClick={() => setScreen('plan')} style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>優先表示する</button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
               {[
                 { label: '問い合わせ', value: 3, unit: '件', color: '#3b82f6' },
@@ -751,6 +816,7 @@ export default function AgencyDashboard() {
                 </div>
               ))}
             </div>
+
             <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1a3a5c', margin: '24px 0 12px' }}>📬 新着案件</h3>
             {casesLoading ? (
               <p style={{ color: '#64748b' }}>読み込み中...</p>
@@ -764,13 +830,28 @@ export default function AgencyDashboard() {
               cases.map((c, i) => (
                 <div key={c.id} style={{ background: i < 3 ? 'white' : undefined, filter: i >= 3 ? 'blur(3px)' : 'none', pointerEvents: i >= 3 ? 'none' : 'auto', borderRadius: 12, padding: '16px 20px', marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-                    <div>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                         <span style={{ background: '#1a3a5c', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{c.category}</span>
                         {c.is_boosted && <span style={{ background: '#10b981', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>🚀 優先</span>}
                         {c.competitor_count > 0 && <span style={{ background: '#fff8f0', color: '#92400e', border: '1px solid #f59e0b', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>他{c.competitor_count}社にも送信</span>}
+                        {/* ④ 残り枠 */}
+                        {c.competitor_count >= 3
+                          ? <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 700 }}>残り枠：あと1社</span>
+                          : c.competitor_count === 2
+                          ? <span style={{ fontSize: 11, color: '#ea580c', fontWeight: 700 }}>残り枠：あと2社</span>
+                          : c.competitor_count === 1
+                          ? <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>残り枠：あと3社</span>
+                          : null
+                        }
                       </div>
                       <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{c.summary || '相談内容あり'}</p>
+                      {/* ⑥ プレッシャーバッジ */}
+                      {i % 2 === 0 && (
+                        <p style={{ margin: '0 0 4px', fontSize: 11, color: '#dc2626', fontWeight: 600 }}>
+                          {i % 4 === 0 ? '🔥 人気の相談です（応募多数）' : '⏰ 対応が遅れると他社に取られます'}
+                        </p>
+                      )}
                       <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>📍 {c.area || '未指定'} · {new Date(c.created_at).toLocaleString('ja-JP')}</p>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -785,6 +866,21 @@ export default function AgencyDashboard() {
               <div style={{ background: 'white', borderRadius: 12, padding: '16px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginTop: 8 }}>
                 <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#1a3a5c' }}>さらに{cases.length - 3}件の案件があります</p>
                 <button onClick={() => setScreen('plan')} style={{ background: '#c9a84c', border: 'none', borderRadius: 8, padding: '10px 24px', color: '#1a3a5c', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>スタンダードで全て閲覧 →</button>
+              </div>
+            )}
+
+            {/* ⑦ 課金誘導ブロック */}
+            {currentPlan === 'free' && (
+              <div style={{ position: 'sticky', bottom: 0, background: '#fff', borderRadius: 12, padding: '20px 24px', boxShadow: '0 -4px 24px rgba(0,0,0,0.12)', marginTop: 16, border: '2px solid #c9a84c' }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#1a3a5c', marginBottom: 12 }}>もっと相談を増やしませんか？</div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+                  {['案件通知', 'DM解放', 'AI優先表示', '表示順位UP'].map(f => (
+                    <span key={f} style={{ fontSize: 12, color: '#1a3a5c', fontWeight: 600 }}>✔ {f}</span>
+                  ))}
+                </div>
+                <button onClick={() => setScreen('plan')} style={{ width: '100%', background: '#c9a84c', color: '#1a3a5c', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+                  スタンダードにアップグレード
+                </button>
               </div>
             )}
           </div>
