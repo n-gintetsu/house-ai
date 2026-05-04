@@ -208,6 +208,11 @@ export default function App() {
   )
 
   const [tab, setTab] = useState('home')
+  const prevTab = useRef('home')
+  useEffect(() => {
+    if (tab === 'properties') window.scrollTo(0, 0)
+    prevTab.current = tab
+  }, [tab])
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
@@ -1075,7 +1080,7 @@ export default function App() {
         }
       `}</style>
 
-      <div className="ha-app">
+      <div className="ha-app" style={tab === 'properties' ? { paddingBottom: 0 } : {}}>
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo" aria-hidden="true">
