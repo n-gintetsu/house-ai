@@ -251,16 +251,17 @@ function AIModal({ property, onClose }) {
       }),
     }).catch(() => {});
     setLoading(false);
+    setInput("");
     setTimeout(() => listRef.current?.scrollTo({ top: 9999, behavior: "smooth" }), 100);
   }, [input, loading, property]);
 
   return ReactDOM.createPortal(
-    <div className="tt-overlay" onClick={onClose}>
+    <div className="tt-overlay" onClick={() => { setInput(''); onClose(); }}>
       <div className="tt-sheet tt-ai-sheet" style={{ height: '80dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div className="tt-sheet-handle" />
         <div className="tt-sheet-header">
           <span>🤖 AI不動産相談</span>
-          <button className="tt-sheet-close" onClick={onClose}>✕</button>
+          <button className="tt-sheet-close" onClick={() => { setInput(''); onClose(); }}>✕</button>
         </div>
         <div className="tt-ai-chip">
           <span className="tt-ai-chip-label">対象物件</span>
