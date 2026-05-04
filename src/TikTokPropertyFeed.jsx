@@ -265,7 +265,13 @@ function AIModal({ property, onClose }) {
         <div className="tt-ai-chip">
           <span className="tt-ai-chip-label">対象物件</span>
           <span className="tt-ai-chip-title">{property.title}</span>
-          <span className="tt-ai-chip-price">{property.price}</span>
+          <span className="tt-ai-chip-price">
+            {(property.deal_type === 'rent' || property.deal_type === '賃貸') && property.rent
+              ? `${Number(property.rent).toLocaleString()}万円/月`
+              : property.price
+              ? `${Number(property.price).toLocaleString()}万円`
+              : ''}
+          </span>
         </div>
         <div className="tt-comment-list" ref={listRef}>
           {msgs.map((m, i) => (
