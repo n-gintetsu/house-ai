@@ -286,7 +286,7 @@ function AIModal({ property, onClose }) {
                   }
                 }
               }} />
-            <button className="tt-send" onClick={send} disabled={!input.trim() || loading}>送信</button>
+            <button className="tt-send" onClick={() => send()} disabled={!input.trim() || loading}>送信</button>
           </div>
           <div style={{ display: 'flex', gap: 8, padding: '8px 12px 4px', borderTop: '1px solid #f0f0f0' }}>
             <button onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('open-dm', { detail: { property } })); }} style={{ flex: 1, padding: '10px 4px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>📩 問い合わせる</button>
