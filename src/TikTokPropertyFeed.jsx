@@ -194,6 +194,16 @@ function CommentModal({ property, onClose, user }) {
   );
 }
 
+function formatAIText(text) {
+  const escaped = String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br/>');
+}
+
 // ── AI相談モーダル ────────────────────────────────────
 function AIModal({ property, onClose }) {
   const [msgs, setMsgs] = useState([
@@ -261,7 +271,10 @@ function AIModal({ property, onClose }) {
           {msgs.map((m, i) => (
             <div key={i} className={`tt-ai-msg ${m.role}`}>
               {m.role === "ai" && <span className="tt-ai-avatar">🤖</span>}
-              <div className="tt-ai-bubble" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{String(m.text || '')}</div>
+              {m.role === 'ai'
+                ? <div className="tt-ai-bubble" style={{ lineHeight: '1.7' }} dangerouslySetInnerHTML={{ __html: formatAIText(m.text) }} />
+                : <div className="tt-ai-bubble" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{String(m.text || '')}</div>
+              }
             </div>
           ))}
           {loading && (
