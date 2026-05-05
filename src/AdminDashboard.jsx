@@ -282,8 +282,16 @@ function MembersPanel({ supabaseAdmin }) {
 
   async function handleDeleteUser(id, email) {
     if (!window.confirm(`${email} を削除しますか？この操作は取り消せません。`)) return
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(id)
-    if (error) { alert('削除に失敗しました: ' + error.message); return }
+    const res = await fetch('/api/delete-user', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ userId: id }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert('削除に失敗しました: ' + (data.error || res.status))
+      return
+    }
     setMembers(list => list.filter(m => m.id !== id))
   }
 
