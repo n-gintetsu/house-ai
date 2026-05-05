@@ -936,6 +936,8 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
   }, [user]);
   const TABS = ["すべて", "売買", "賃貸", "投資"];
   const [filter, setFilter] = useState("すべて");
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const touchStartX = useRef(null);
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {
@@ -1088,7 +1090,11 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
   return (
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
-      <div className="tt-filter-bar" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div
+        className="tt-filter-bar"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>←</button>
         {TABS.map(f => (
           <button
@@ -1099,7 +1105,59 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
             {f}
           </button>
         ))}
+        <button
+          className="tt-filter-btn"
+          onClick={() => setShowSearch(v => !v)}
+          style={{ opacity: showSearch ? 1 : 0.6, fontSize: 16 }}
+        >
+          🔍
+        </button>
       </div>
+
+      {/* 検索パネル（スマホ） */}
+      {showSearch && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0,
+          background: 'rgba(10,20,40,0.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          zIndex: 200,
+          padding: 'max(56px, calc(env(safe-area-inset-top) + 56px)) 16px 24px',
+          animation: 'bottomSheetIn 0.25s ease',
+        }}>
+          <button
+            onClick={() => setShowSearch(false)}
+            style={{ position: 'absolute', top: 'max(14px, env(safe-area-inset-top))', right: 16, background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', opacity: 0.8 }}
+          >×</button>
+          <input
+            value={searchInput}
+            onChange={e => { setSearchInput(e.target.value); setSearchQuery(e.target.value); }}
+            placeholder="🔍 エリア・駅名・物件名"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
+              borderRadius: 10, padding: '12px 14px', color: '#fff', fontSize: 15,
+              outline: 'none', marginBottom: 16,
+            }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {TABS.map(f => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setShowSearch(false); }}
+                style={{
+                  background: filter === f ? '#fff' : 'rgba(255,255,255,0.15)',
+                  color: filter === f ? '#1a3a5c' : '#fff',
+                  border: 'none', borderRadius: 999,
+                  padding: '8px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* TikTokフィード本体 */}
       <div className="tiktok-feed">
