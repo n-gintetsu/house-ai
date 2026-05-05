@@ -501,7 +501,7 @@ export default function AgencyDashboard() {
           </p>
           <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('show-auth-sheet'))}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.dispatchEvent(new CustomEvent('show-auth-sheet')); }}
               style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
             >
               ログインする
