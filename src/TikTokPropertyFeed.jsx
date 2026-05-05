@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import './TikTokPropertyFeed.css'
 import { trackEvent } from './lib/analytics'
+import { supabase } from './lib/supabase'
 
 // ── NGワード ─────────────────────────────────────────
 const NG_WORDS = [
@@ -717,13 +718,26 @@ function TikTokSlide({ property, user, onDM, index, total }) {
 
   const agencyData = SAMPLE_AGENCIES?.[0] ?? { id: 1, name: 'GINTETSU不動産', initial: 'G', count: 12, followed: false };
 
-  const toggleLike = e => {
+  const toggleLike = async (e) => {
     e.stopPropagation();
-    if (!liked) {
-      trackEvent('favorite_add', { property_id: property.id, title: property.title, area: property.address || '', category: property.deal_type || '' });
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
+      return;
     }
-    setLiked(v => !v);
-    setLikeCount(n => liked ? n - 1 : n + 1);
+    try {
+      if (liked) {
+        const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('property_id', property.id)
+        if (error) { console.error('delete error:', error); return }
+      } else {
+        const { error } = await supabase.from('favorites').insert({ user_id: user.id, property_id: property.id })
+        if (error) { console.error('insert error:', error); return }
+        trackEvent('favorite_add', { property_id: property.id, title: property.title, area: property.address || '', category: property.deal_type || '' });
+      }
+      setLiked(v => !v);
+      setLikeCount(n => liked ? n - 1 : n + 1);
+    } catch(err) {
+      console.error('toggleLike error:', err)
+    }
   };
 
   const dealLabel = { rent: '賃貸', sale: '売買', '賃貸': '賃貸', '売買': '売買' }[property.deal_type] ?? property.deal_type
