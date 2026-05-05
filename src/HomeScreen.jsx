@@ -707,10 +707,10 @@ function FixedCTA({ onStartChat, isMobile, scrolled }) {
 function ScrollCTA({ user, scrolled }) {
   if (!scrolled || user) return null;
   return (
-    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#ff6b35", boxShadow: "0 -2px 12px rgba(0,0,0,0.15)", zIndex: 7000, display: "flex", gap: 8 }}>
+    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#fff", boxShadow: "0 -2px 12px rgba(0,0,0,0.15)", zIndex: 7000, display: "flex", gap: 8 }}>
       <button
         onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
-        style={{ flex: 1, background: "#fff", color: "#ff6b35", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
+        style={{ flex: 1, background: "#ff6b35", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
       >
         🤖 無料でAI相談する
       </button>
