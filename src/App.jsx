@@ -233,7 +233,9 @@ export default function App() {
   useEffect(() => {
     if (!menuOpen) return
     const handler = (e) => {
-      if (!e.target.closest('.ha-menu-wrapper')) setMenuOpen(false)
+      if (!e.target.closest('.ha-menu-wrapper') && !e.target.closest('.ha-menu-item')) {
+        setMenuOpen(false)
+      }
     }
     document.addEventListener('mousedown', handler)
     document.addEventListener('touchstart', handler)
@@ -1153,7 +1155,7 @@ export default function App() {
             </div>
             {menuOpen && ReactDOM.createPortal(
               <div style={{ position: 'fixed', top: 0, right: 0, width: 200, height: '100vh', background: 'red', zIndex: 99999 }}>
-                <button onClick={() => { alert('clicked!'); setTab('properties'); setMenuOpen(false); }}>
+                <button className="ha-menu-item" onClick={() => { alert('clicked!'); setTab('properties'); setMenuOpen(false); }}>
                   物件情報テスト
                 </button>
               </div>,
