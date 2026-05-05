@@ -409,6 +409,14 @@ export default function AdminDashboard() {
 
   async function deleteAgency(id) {
     if (!window.confirm('本当に削除しますか？')) return
+    const target = agencies.find(a => a.id === id)
+    if (target?.agency_user_id) {
+      await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ userId: target.agency_user_id }),
+      })
+    }
     await supabase.from('agency_registrations').delete().eq('id', id)
     setAgencies(list => list.filter(a => a.id !== id))
     setSelectedAgency(null)
