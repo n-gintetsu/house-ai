@@ -324,6 +324,26 @@ export default function AgencyDashboard() {
   const [cases, setCases] = useState([])
   const [casesLoading, setCasesLoading] = useState(false)
   const [currentPlan, setCurrentPlan] = useState(null)
+  const [isUpgrading, setIsUpgrading] = useState(false)
+
+  const handleUpgrade = async (priceId) => {
+    if (!user) return
+    setIsUpgrading(true)
+    try {
+      const res = await fetch('/api/stripe-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email, priceId }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else alert('決済ページの読み込みに失敗しました')
+    } catch {
+      alert('決済ページの読み込みに失敗しました')
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
   const [replyRate, setReplyRate] = useState(null)
   const [notifIndex, setNotifIndex] = useState(0)
 
@@ -911,8 +931,8 @@ export default function AgencyDashboard() {
             })()}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
               {[
-                { name: 'スタンダード', price: '9,800円/月', color: '#1a3a5c', bg: 'white', border: '2px solid #c9a84c', features: ['掲載数増加（20件）', '反響通知', 'DM機能', 'AI推薦対象', '検索優先表示'], cta: 'アップグレードする', ctaBg: '#1a3a5c', ctaColor: 'white' },
-                { name: 'プレミアム', price: '29,800円/月', color: 'white', bg: '#1a3a5c', border: 'none', features: ['優先表示', '特集掲載', 'トップ掲載', '詳細分析', '一括査定案件優先参加'], cta: 'プレミアムを見る', ctaBg: '#c9a84c', ctaColor: '#1a3a5c' },
+                { name: 'スタンダード', price: '9,800円/月', color: '#1a3a5c', bg: 'white', border: '2px solid #c9a84c', features: ['掲載数増加（20件）', '反響通知', 'DM機能', 'AI推薦対象', '検索優先表示'], cta: 'アップグレードする', ctaBg: '#1a3a5c', ctaColor: 'white', priceId: 'price_1TJwQTJTXophddHtrVM8QERl' },
+                { name: 'プレミアム', price: '29,800円/月', color: 'white', bg: '#1a3a5c', border: 'none', features: ['優先表示', '特集掲載', 'トップ掲載', '詳細分析', '一括査定案件優先参加'], cta: 'プレミアムを見る', ctaBg: '#c9a84c', ctaColor: '#1a3a5c', priceId: 'price_1TJwQTJTXophddHtrVM8QERl' },
               ].map(plan => (
                 <div key={plan.name} style={{ background: plan.bg, border: plan.border, borderRadius: 16, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
                   <p style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: plan.color === 'white' ? 'white' : '#1a3a5c' }}>{plan.name}</p>
@@ -920,7 +940,13 @@ export default function AgencyDashboard() {
                   {plan.features.map(f => (
                     <p key={f} style={{ margin: '4px 0', fontSize: 13, color: plan.color === 'white' ? 'rgba(255,255,255,0.8)' : '#64748b' }}>✅ {f}</p>
                   ))}
-                  <button style={{ width: '100%', marginTop: 16, background: plan.ctaBg, color: plan.ctaColor, border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>{plan.cta}</button>
+                  <button
+                    onClick={() => handleUpgrade(plan.priceId)}
+                    disabled={isUpgrading}
+                    style={{ width: '100%', marginTop: 16, background: plan.ctaBg, color: plan.ctaColor, border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: isUpgrading ? 'not-allowed' : 'pointer', opacity: isUpgrading ? 0.7 : 1 }}
+                  >
+                    {isUpgrading ? '処理中...' : plan.cta}
+                  </button>
                 </div>
               ))}
             </div>

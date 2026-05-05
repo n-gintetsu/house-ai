@@ -276,7 +276,7 @@ function SectionMessages({ setActiveSection }) {
   )
 }
 
-function SectionPlan({ isPremium, setActiveSection }) {
+function SectionPlan({ isPremium, setActiveSection, handleUpgrade, isUpgrading }) {
   const plans = [
     {
       name: 'フリープラン', price: '0円', badge: 'まずはこちら',
@@ -291,6 +291,7 @@ function SectionPlan({ isPremium, setActiveSection }) {
       bg: '#fff', border: `2px solid ${GOLD}`, textColor: TEXT,
       features: ['プロフィール掲載', '案件通知', 'DM機能', '月15件まで相談受付', '検索/AI推薦対象'],
       btnLabel: 'アップグレードする', btnBg: NAVY, btnColor: '#fff', isCurrent: false,
+      priceId: 'price_1TJwQTJTXophddHtrVM8QERl',
     },
     {
       name: 'プレミアム', price: '29,800円/月', badge: '本格的に集客したい方向け',
@@ -298,6 +299,7 @@ function SectionPlan({ isPremium, setActiveSection }) {
       bg: NAVY, border: 'none', textColor: '#fff',
       features: ['AI優先推薦', '特集掲載', '案件優先通知', '相談件数上限アップ', 'レビュー掲載', '専門家ページ強化'],
       btnLabel: 'プレミアムを見る', btnBg: GOLD, btnColor: '#fff', isCurrent: false,
+      priceId: 'price_1TJwQTJTXophddHtrVM8QERl',
     },
   ]
   return (
@@ -315,8 +317,12 @@ function SectionPlan({ isPremium, setActiveSection }) {
             {p.features.map((f) => (
               <div key={f} style={{ fontSize: 13, color: p.textColor === TEXT ? '#475569' : 'rgba(255,255,255,0.75)', padding: '6px 0', borderBottom: `1px solid ${p.textColor === TEXT ? '#f1f5f9' : 'rgba(255,255,255,0.1)'}` }}>・ {f}</div>
             ))}
-            <button style={{ marginTop: 18, width: '100%', background: p.btnBg, color: p.btnColor, border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 800, cursor: p.isCurrent ? 'default' : 'pointer', opacity: p.isCurrent ? 0.6 : 1 }} disabled={p.isCurrent}>
-              {p.btnLabel}
+            <button
+              onClick={() => !p.isCurrent && handleUpgrade && handleUpgrade(p.priceId)}
+              disabled={p.isCurrent || isUpgrading}
+              style={{ marginTop: 18, width: '100%', background: p.btnBg, color: p.btnColor, border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 800, cursor: (p.isCurrent || isUpgrading) ? 'not-allowed' : 'pointer', opacity: (p.isCurrent || isUpgrading) ? 0.6 : 1 }}
+            >
+              {isUpgrading && !p.isCurrent ? '処理中...' : p.btnLabel}
             </button>
           </div>
         ))}
@@ -361,6 +367,7 @@ export default function ExpertDashboard({ onNavigate, onUpgrade }) {
   const [activeSection, setActiveSection] = useState('dashboard')
   const [isPremium] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isUpgrading, setIsUpgrading] = useState(false)
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768)
@@ -368,11 +375,31 @@ export default function ExpertDashboard({ onNavigate, onUpgrade }) {
     return () => window.removeEventListener('resize', handler)
   }, [])
 
+  const handleUpgrade = async (priceId) => {
+    const user = window.__houseAiUser
+    if (!user) return
+    setIsUpgrading(true)
+    try {
+      const res = await fetch('/api/stripe-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email, priceId }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else alert('決済ページの読み込みに失敗しました')
+    } catch {
+      alert('決済ページの読み込みに失敗しました')
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
   const renderMain = () => {
     if (activeSection === 'dashboard') return <SectionDashboard isPremium={isPremium} setActiveSection={setActiveSection} />
     if (activeSection === 'consultations') return <SectionConsultations />
     if (activeSection === 'messages') return <SectionMessages setActiveSection={setActiveSection} />
-    if (activeSection === 'plan') return <SectionPlan isPremium={isPremium} setActiveSection={setActiveSection} />
+    if (activeSection === 'plan') return <SectionPlan isPremium={isPremium} setActiveSection={setActiveSection} handleUpgrade={handleUpgrade} isUpgrading={isUpgrading} />
     if (activeSection === 'profile') return <SectionProfile />
     return null
   }
