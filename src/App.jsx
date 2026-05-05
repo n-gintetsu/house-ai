@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
 import AuthPanel from './AuthPanel'
 import AgencyForm from './AgencyForm'
@@ -2063,14 +2064,15 @@ export default function App() {
               <Community user={user} />
             </div>
           )}
-        {showAuthSheet && (
+        {showAuthSheet && ReactDOM.createPortal(
           <>
             <div className="auth-overlay" onClick={() => setShowAuthSheet(false)} />
             <div className="auth-modal">
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel onLoginSuccess={() => setShowAuthSheet(false)} />
             </div>
-          </>
+          </>,
+          document.body
         )}
         </main>
       </div>
