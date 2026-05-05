@@ -53,6 +53,7 @@ export default function AgencyForm() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: { data: { user_type: 'agency' } },
       })
       if (authError) throw authError
 

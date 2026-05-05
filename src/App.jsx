@@ -187,10 +187,15 @@ export default function App() {
         window.__houseAiUser = data.session.user
       }
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null
       setUser(u)
       window.__houseAiUser = u
+      if (event === 'SIGNED_IN' && u) {
+        const userType = u.user_metadata?.user_type
+        if (userType === 'agency') setTab('agency')
+        else if (userType === 'partner') window.location.href = '/partner'
+      }
     })
     // MemberDashboard からのナビゲーションイベント
     const handleNav = (e) => setTab(e.detail.tab)
@@ -2034,7 +2039,7 @@ export default function App() {
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
                         すでに登録済みの方は
-                        <a href="/agency" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
+                        <a href="/partner" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
                       </div>
                     </div>
                   </div>
