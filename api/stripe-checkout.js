@@ -7,10 +7,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { userId, email } = req.body
+  const { userId, email, priceId } = req.body
 
-  if (!userId || !email) {
-    return res.status(400).json({ error: 'userId and email are required' })
+  if (!userId || !email || !priceId) {
+    return res.status(400).json({ error: 'userId, email and priceId are required' })
   }
 
   try {
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       mode: 'subscription',
       line_items: [
         {
-          price: 'price_1TJwQTJTXophddHtrVM8QERl',
+          price: priceId,
           quantity: 1,
         },
       ],

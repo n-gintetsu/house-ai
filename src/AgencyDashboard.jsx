@@ -328,10 +328,12 @@ export default function AgencyDashboard() {
   const [currentPlan, setCurrentPlan] = useState(null)
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
+  const [upgradeError, setUpgradeError] = useState('')
 
   const handleUpgrade = async (priceId) => {
     if (!user) return
     setIsUpgrading(true)
+    setUpgradeError('')
     try {
       const res = await fetch('/api/stripe-checkout', {
         method: 'POST',
@@ -340,9 +342,13 @@ export default function AgencyDashboard() {
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
-      else alert('決済ページの読み込みに失敗しました')
+      else {
+        setUpgradeError('決済ページを開けませんでした。しばらく経ってから再度お試しください。')
+        setTimeout(() => setUpgradeError(''), 3000)
+      }
     } catch {
-      alert('決済ページの読み込みに失敗しました')
+      setUpgradeError('決済ページを開けませんでした。しばらく経ってから再度お試しください。')
+      setTimeout(() => setUpgradeError(''), 3000)
     } finally {
       setIsUpgrading(false)
     }
@@ -973,6 +979,11 @@ export default function AgencyDashboard() {
                 </div>
               ))}
             </div>
+            {upgradeError && (
+              <div style={{ marginTop: 12, padding: '10px 16px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 10 }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#dc2626' }}>⚠️ {upgradeError}</p>
+              </div>
+            )}
             <div style={{ marginTop: 16, background: '#fff8f0', border: '1px solid #f59e0b', borderRadius: 10, padding: '12px 16px' }}>
               <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>💡 詳細情報（宅建業免許・対応エリア・取扱種別）を入力するとAI推薦・優先表示が強化されます</p>
             </div>
