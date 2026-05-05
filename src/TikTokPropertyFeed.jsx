@@ -1163,7 +1163,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
       )}
 
       {/* TikTokフィード本体 */}
-      <div className="tiktok-feed">
+      <div className="tiktok-feed" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {data.length === 0
           ? <div className="tt-empty">該当する物件がありません</div>
           : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} favorites={favorites} onDM={onDM} index={i} total={data.length} />)
