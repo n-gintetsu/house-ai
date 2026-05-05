@@ -35,15 +35,58 @@ function EmptyState({ icon, text, sub, btnLabel, onBtn }) {
 // ============================================================
 // お気に入りタブ
 // ============================================================
-function FavoritesTab({ onNavigate }) {
-  return (
+function FavoritesTab({ user, onNavigate }) {
+  const [properties, setProperties] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return }
+    async function load() {
+      const { data: favs } = await supabase
+        .from('favorites').select('property_id').eq('user_id', user.id)
+      if (!favs || favs.length === 0) { setLoading(false); return }
+      const ids = favs.map(f => f.property_id)
+      const { data: props } = await supabase
+        .from('properties').select('id, title, price, rent, image_url, deal_type, address').in('id', ids)
+      setProperties(props || [])
+      setLoading(false)
+    }
+    load()
+  }, [user])
+
+  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: C.desc, fontSize: 13 }}>読み込み中...</div>
+
+  if (properties.length === 0) return (
     <EmptyState
       icon="🏠"
       text="まだお気に入り物件がありません"
-      sub={"気になる物件を保存するとここに表示されます。"}
+      sub="気になる物件を保存するとここに表示されます。"
       btnLabel="物件を探す"
       onBtn={() => onNavigate('properties')}
     />
+  )
+
+  return (
+    <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {properties.map(p => {
+        const displayPrice = p.deal_type === 'rent'
+          ? (p.rent ? `${(p.rent / 10000).toFixed(1)}万円/月` : '価格未定')
+          : (p.price ? `${(p.price / 10000).toFixed(0)}万円` : '価格未定')
+        return (
+          <div key={p.id} style={{ display: 'flex', gap: 12, background: C.bg, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}` }}>
+            {p.image_url
+              ? <img src={p.image_url} alt={p.title} style={{ width: 96, height: 80, objectFit: 'cover', flexShrink: 0 }} />
+              : <div style={{ width: 96, height: 80, background: '#dde4ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>🏠</div>
+            }
+            <div style={{ padding: '10px 12px 10px 0', flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
+              {p.address && <p style={{ fontSize: 11, color: C.desc, margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.address}</p>}
+              <p style={{ fontSize: 14, fontWeight: 800, color: C.navy, margin: 0 }}>{displayPrice}</p>
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -181,7 +224,7 @@ export default function MemberDashboard({ user, onNavigate, onLogout }) {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'favorites': return <FavoritesTab onNavigate={onNavigate} />
+      case 'favorites': return <FavoritesTab user={user} onNavigate={onNavigate} />
       case 'follows': return <FollowsTab onNavigate={onNavigate} />
       case 'saved': return <SavedTab onNavigate={onNavigate} />
       case 'chat': return <ChatHistoryTab onNavigate={onNavigate} />
