@@ -407,6 +407,13 @@ export default function AdminDashboard() {
     setAgencies(list => list.map(a => a.id === id ? { ...a, status } : a))
   }
 
+  async function deleteAgency(id) {
+    if (!window.confirm('本当に削除しますか？')) return
+    await supabase.from('agency_registrations').delete().eq('id', id)
+    setAgencies(list => list.filter(a => a.id !== id))
+    setSelectedAgency(null)
+  }
+
   async function updateValuationStatus(id, status) {
     await supabase.from('valuations').update({ status }).eq('id', id)
     setValuations(list => list.map(v => v.id === id ? { ...v, status } : v))
@@ -780,6 +787,7 @@ export default function AdminDashboard() {
                 {selectedAgency.status !== 'rejected' && (
                   <button onClick={() => { updateAgencyStatus(selectedAgency.id, 'rejected'); setSelectedAgency(prev => ({ ...prev, status: 'rejected' })); }} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>却下</button>
                 )}
+                <button onClick={() => deleteAgency(selectedAgency.id)} style={{ padding: '8px 18px', background: '#7f1d1d', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>削除</button>
               </div>
             </div>
           </div>
