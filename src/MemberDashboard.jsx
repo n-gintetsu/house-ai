@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
 
 const C = {
@@ -184,11 +185,173 @@ function NextActionCard({ onNavigate }) {
 }
 
 // ============================================================
+// オーバーレイ共通
+// ============================================================
+const overlayStyle = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+  zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  padding: '16px',
+}
+const sheetStyle = {
+  background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480,
+  maxHeight: '85dvh', overflowY: 'auto', padding: '28px 24px',
+  position: 'relative', boxSizing: 'border-box',
+}
+
+// ============================================================
+// 会員情報編集モーダル
+// ============================================================
+function EditProfileModal({ user, onClose }) {
+  const [name, setName] = useState(user?.user_metadata?.name || '')
+  const [phone, setPhone] = useState(user?.user_metadata?.phone || '')
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const save = async () => {
+    setSaving(true)
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, name, phone, updated_at: new Date().toISOString() })
+    if (error) { setMsg('保存に失敗しました'); setSaving(false); return }
+    await supabase.auth.updateUser({ data: { name, phone } })
+    setMsg('保存しました')
+    setSaving(false)
+  }
+
+  return ReactDOM.createPortal(
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={sheetStyle} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#666' }}>×</button>
+        <p style={{ fontSize: 16, fontWeight: 800, color: C.navy, margin: '0 0 20px' }}>✏️ 会員情報編集</p>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 12, color: C.desc, display: 'block', marginBottom: 4 }}>お名前</label>
+          <input value={name} onChange={e => setName(e.target.value)}
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16, outline: 'none' }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 12, color: C.desc, display: 'block', marginBottom: 4 }}>メールアドレス</label>
+          <input value={user?.email || ''} disabled
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16, background: '#f8fafc', color: C.desc }} />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 12, color: C.desc, display: 'block', marginBottom: 4 }}>電話番号</label>
+          <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="例：090-1234-5678"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16, outline: 'none' }} />
+        </div>
+        {msg && <p style={{ fontSize: 13, color: msg.includes('失敗') ? C.red : C.green, marginBottom: 12 }}>{msg}</p>}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, background: '#f1f5f9', color: C.title, border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>キャンセル</button>
+          <button onClick={save} disabled={saving} style={{ flex: 1, background: C.navy, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            {saving ? '保存中...' : '保存する'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ============================================================
+// 通知設定モーダル
+// ============================================================
+function NotificationModal({ onClose }) {
+  const load = (key, def) => {
+    try { const v = localStorage.getItem(key); return v === null ? def : v === 'true' } catch { return def }
+  }
+  const [newProp, setNewProp] = useState(() => load('notif_new_property', true))
+  const [favUpdate, setFavUpdate] = useState(() => load('notif_fav_update', false))
+
+  const toggle = (key, val, setter) => {
+    setter(val)
+    try { localStorage.setItem(key, String(val)) } catch {}
+  }
+
+  const Toggle = ({ value, onChange }) => (
+    <div onClick={() => onChange(!value)} style={{
+      width: 48, height: 26, borderRadius: 13, background: value ? C.navy : '#cbd5e1',
+      position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s',
+    }}>
+      <div style={{
+        position: 'absolute', top: 3, left: value ? 24 : 3,
+        width: 20, height: 20, borderRadius: '50%', background: '#fff',
+        transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+      }} />
+    </div>
+  )
+
+  return ReactDOM.createPortal(
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={sheetStyle} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#666' }}>×</button>
+        <p style={{ fontSize: 16, fontWeight: 800, color: C.navy, margin: '0 0 20px' }}>🔔 通知設定</p>
+        {[
+          { label: '新着物件通知', sub: '条件に合う物件が追加されたときに通知', value: newProp, onChange: v => toggle('notif_new_property', v, setNewProp) },
+          { label: 'お気に入り更新通知', sub: 'お気に入り物件の情報が変更されたときに通知', value: favUpdate, onChange: v => toggle('notif_fav_update', v, setFavUpdate) },
+        ].map(item => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: `1px solid ${C.border}` }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: C.title, margin: '0 0 2px' }}>{item.label}</p>
+              <p style={{ fontSize: 11, color: C.desc, margin: 0 }}>{item.sub}</p>
+            </div>
+            <Toggle value={item.value} onChange={item.onChange} />
+          </div>
+        ))}
+        <button onClick={onClose} style={{ width: '100%', marginTop: 20, background: C.navy, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>閉じる</button>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ============================================================
+// 利用ガイドモーダル
+// ============================================================
+function GuideModal({ onClose }) {
+  const guides = [
+    { icon: '🤖', title: 'AI相談', desc: 'トップページのAI相談チャットで、物件選びの悩みを相談できます。3ターン無料でご利用いただけます。' },
+    { icon: '🏢', title: '物件フィード', desc: 'TikTok風の縦スクロールで物件を閲覧できます。ハートボタンでお気に入り保存、左右スワイプでカテゴリ切り替えができます。' },
+    { icon: '❤️', title: 'お気に入り', desc: 'マイページのお気に入りタブに保存した物件が表示されます。ログイン後に利用できます。' },
+    { icon: '💬', title: '体験談コミュニティ', desc: '実際の不動産取引の体験談を読んだり、匿名で投稿したりできます。' },
+    { icon: '🤝', title: '専門家相談', desc: '司法書士・税理士・FP・リフォーム業者への相談依頼ができます。紹介料は一切かかりません。' },
+  ]
+  return ReactDOM.createPortal(
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={sheetStyle} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#666' }}>×</button>
+        <p style={{ fontSize: 16, fontWeight: 800, color: C.navy, margin: '0 0 20px' }}>📖 house-ai 利用ガイド</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {guides.map(g => (
+            <div key={g.title} style={{ display: 'flex', gap: 12, padding: '12px', background: C.bg, borderRadius: 10 }}>
+              <span style={{ fontSize: 24, flexShrink: 0 }}>{g.icon}</span>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: '0 0 4px' }}>{g.title}</p>
+                <p style={{ fontSize: 12, color: C.desc, margin: 0, lineHeight: 1.6 }}>{g.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button onClick={onClose} style={{ width: '100%', marginTop: 20, background: C.navy, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>閉じる</button>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ============================================================
 // メインダッシュボード
 // ============================================================
 export default function MemberDashboard({ user, onNavigate, onLogout }) {
   const [activeTab, setActiveTab] = useState('favorites')
   const [isMobile, setIsMobile] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showNotification, setShowNotification] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
+
+  const menuItems = [
+    { label: '会員情報編集', icon: '✏️', onClick: () => setShowEditProfile(true) },
+    { label: '通知設定', icon: '🔔', onClick: () => setShowNotification(true) },
+    { label: '利用ガイド', icon: '📖', onClick: () => setShowGuide(true) },
+  ]
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -305,12 +468,8 @@ export default function MemberDashboard({ user, onNavigate, onLogout }) {
             {/* 会員情報編集 */}
             <div style={{ background: C.card, borderRadius: 16, padding: '16px', border: `1px solid ${C.border}` }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: C.navy, margin: '0 0 12px' }}>⚙️ メニュー</p>
-              {[
-                { label: '会員情報編集', icon: '✏️' },
-                { label: '通知設定', icon: '🔔' },
-                { label: '利用ガイド', icon: '📖' },
-              ].map((item) => (
-                <button key={item.label}
+              {menuItems.map((item) => (
+                <button key={item.label} onClick={item.onClick}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', borderBottom: `1px solid ${C.border}`, padding: '10px 0', cursor: 'pointer', color: C.title, fontSize: 13 }}>
                   <span>{item.icon}</span>
                   <span>{item.label}</span>
@@ -340,6 +499,10 @@ export default function MemberDashboard({ user, onNavigate, onLogout }) {
           ))}
         </div>
       )}
+
+      {showEditProfile && <EditProfileModal user={user} onClose={() => setShowEditProfile(false)} />}
+      {showNotification && <NotificationModal onClose={() => setShowNotification(false)} />}
+      {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
     </div>
   )
 }
