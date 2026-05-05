@@ -2108,7 +2108,7 @@ export default function App() {
       </div>
 
         {/* ボトムナビゲーション */}
-        <nav style={{
+        {tab !== 'properties' && <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           height: 64,
           background: '#fff',
@@ -2148,7 +2148,7 @@ export default function App() {
               </button>
             );
           })}
-        </nav>
+        </nav>}
 
         {/* フッター */}
         {tab !== 'properties' && <footer style={{
