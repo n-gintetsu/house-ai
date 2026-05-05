@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
+import AuthPanel from './AuthPanel'
 
 const NAVY = '#1a3a5c'
 const GOLD = '#c9a84c'
@@ -369,6 +371,7 @@ export default function ExpertDashboard({ onNavigate, onUpgrade }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [user, setUser] = useState(window.__houseAiUser || null)
+  const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768)
@@ -406,31 +409,43 @@ export default function ExpertDashboard({ onNavigate, onUpgrade }) {
 
   if (!user) {
     return (
-      <div style={{ minHeight: '100vh', background: '#eef2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 40, width: 360, boxShadow: '0 4px 24px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>👔</div>
-          <h2 style={{ color: '#1a3a5c', marginBottom: 4, fontSize: 20 }}>専門家ダッシュボード</h2>
-          <p style={{ color: '#777', fontSize: 13, marginBottom: 24 }}>ログインしてご利用ください</p>
-          <p style={{ color: '#555', fontSize: 12, background: '#f8fafc', borderRadius: 8, padding: 12 }}>
-            ※ 審査済みの専門家アカウントのみログイン可能です。<br />
-            登録をご希望の方は「専門家紹介」ページよりお申込みください。
-          </p>
-          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.dispatchEvent(new CustomEvent('show-auth-sheet')); }}
-              style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
-            >
-              ログインする
-            </button>
-            <button
-              onClick={() => window.location.href = '/'}
-              style={{ padding: '10px 24px', background: 'transparent', color: '#1a3a5c', border: '1px solid #1a3a5c', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
-            >
-              サイトトップに戻る
-            </button>
+      <>
+        <div style={{ minHeight: '100vh', background: '#eef2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 40, width: 360, boxShadow: '0 4px 24px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>👔</div>
+            <h2 style={{ color: '#1a3a5c', marginBottom: 4, fontSize: 20 }}>専門家ダッシュボード</h2>
+            <p style={{ color: '#777', fontSize: 13, marginBottom: 24 }}>ログインしてご利用ください</p>
+            <p style={{ color: '#555', fontSize: 12, background: '#f8fafc', borderRadius: 8, padding: 12 }}>
+              ※ 審査済みの専門家アカウントのみログイン可能です。<br />
+              登録をご希望の方は「専門家紹介」ページよりお申込みください。
+            </p>
+            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowLogin(true); }}
+                style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
+              >
+                ログインする
+              </button>
+              <button
+                onClick={() => window.location.href = '/'}
+                style={{ padding: '10px 24px', background: 'transparent', color: '#1a3a5c', border: '1px solid #1a3a5c', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
+              >
+                サイトトップに戻る
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+        {showLogin && ReactDOM.createPortal(
+          <>
+            <div onClick={() => setShowLogin(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderRadius: '24px 24px 0 0', padding: '32px 24px 48px', zIndex: 10000, maxHeight: '90dvh', overflowY: 'auto' }}>
+              <button onClick={() => setShowLogin(false)} style={{ position: 'absolute', top: 16, right: 16, fontSize: 24, background: 'none', border: 'none', cursor: 'pointer', color: '#666', lineHeight: 1 }}>×</button>
+              <AuthPanel onLoginSuccess={() => setShowLogin(false)} />
+            </div>
+          </>,
+          document.body
+        )}
+      </>
     )
   }
 
