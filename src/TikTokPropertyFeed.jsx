@@ -934,7 +934,18 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
     supabase.from('favorites').select('property_id').eq('user_id', user.id)
       .then(({ data }) => setFavorites((data || []).map(f => f.property_id)));
   }, [user]);
+  const TABS = ["すべて", "売買", "賃貸", "投資"];
   const [filter, setFilter] = useState("すべて");
+  const touchStartX = useRef(null);
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    const idx = TABS.indexOf(filter);
+    if (diff < -50 && idx < TABS.length - 1) setFilter(TABS[idx + 1]);
+    else if (diff > 50 && idx > 0) setFilter(TABS[idx - 1]);
+    touchStartX.current = null;
+  };
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchQuery, setSearchQuery] = useState('');
   const [agencies, setAgencies] = useState(SAMPLE_AGENCIES);
@@ -983,8 +994,8 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
         <div className="tt-pc-center">
           {/* フィルターバー */}
           <div className="tt-filter-bar tt-filter-bar-pc">
-            <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>← 戻る</button>
-            {["すべて", "売買", "賃貸", "投資"].map(f => (
+            <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>←</button>
+            {TABS.map(f => (
               <button key={f} className={`tt-filter-btn${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>{f}</button>
             ))}
           </div>
@@ -1077,9 +1088,9 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
   return (
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
-      <div className="tt-filter-bar">
-        <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>← 戻る</button>
-        {["すべて", "売買", "賃貸", "投資"].map(f => (
+      <div className="tt-filter-bar" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>←</button>
+        {TABS.map(f => (
           <button
             key={f}
             className={`tt-filter-btn${filter === f ? " active" : ""}`}
