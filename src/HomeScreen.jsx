@@ -854,7 +854,7 @@ export default function HomeScreen({ onNavigate }) {
         {/* 裏導線 */}
         <div style={{ padding: "32px 16px 0", textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
-            <button onClick={() => navigate("agency")} style={{ background: "#c9a84c", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(201,168,76,0.4)" }}>業者の方はこちら →</button>
+            <button onClick={() => onNavigate("agency")} style={{ background: "#c9a84c", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(201,168,76,0.4)" }}>業者の方はこちら →</button>
             <button onClick={() => navigate("properties")} style={{ background: "#ff6b35", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(255,107,53,0.4)" }}>物件を見る →</button>
             <button onClick={() => navigate("community")} style={{ background: "#00a651", color: "#fff", border: "none", borderRadius: 50, padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 15px rgba(0,166,81,0.4)" }}>体験談を見る →</button>
           </div>
