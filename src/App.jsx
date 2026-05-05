@@ -1081,7 +1081,7 @@ export default function App() {
         }
       `}</style>
 
-      <div className="ha-app" style={tab === 'properties' ? { paddingBottom: 0 } : {}}>
+      <div className="ha-app" style={tab === 'properties' ? { paddingBottom: 0 } : { paddingBottom: 64 }}>
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo" aria-hidden="true">
@@ -2093,6 +2093,45 @@ export default function App() {
         )}
         </main>
       </div>
+
+        {/* ボトムナビゲーション */}
+        <nav style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          height: 64,
+          background: '#fff',
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          zIndex: 8000,
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}>
+          {[
+            { icon: '🏠', label: 'ホーム', id: 'home' },
+            { icon: '🏢', label: '物件', id: 'properties' },
+            { icon: '💬', label: '体験談', id: 'community' },
+            { icon: '❤️', label: 'お気に入り', id: 'favorites' },
+            { icon: '👤', label: 'マイページ', id: 'member' },
+          ].map(({ icon, label, id }) => {
+            const isActive = tab === id || (id === 'member' && tab === 'member') || (id === 'favorites' && tab === 'member');
+            const handleClick = () => {
+              if ((id === 'favorites' || id === 'member') && !user) {
+                window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
+              } else {
+                setTab(id === 'favorites' ? 'member' : id);
+              }
+            };
+            return (
+              <button key={id} onClick={handleClick} style={{
+                flex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 2, padding: '6px 0',
+                color: isActive ? '#1a3a5c' : '#94a3b8',
+              }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 400 }}>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
         {/* フッター */}
         {tab !== 'properties' && <footer style={{

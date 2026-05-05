@@ -454,10 +454,10 @@ export default function Community({ user }) {
       {/* 固定投稿ボタン（フォーム非表示時） */}
       {!showForm && (
         <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
+          position: 'fixed', bottom: 64, left: 0, right: 0,
           background: 'linear-gradient(to top, #fff 70%, transparent)',
-          padding: '16px 16px max(16px, env(safe-area-inset-bottom))',
-          zIndex: 100,
+          padding: '16px 16px 16px',
+          zIndex: 7000,
         }}>
           <button
             type="button"
