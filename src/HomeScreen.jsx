@@ -704,14 +704,20 @@ function FixedCTA({ onStartChat, isMobile, scrolled }) {
   );
 }
 
-function ScrollCTA({ onNavigate, user, scrolled }) {
+function ScrollCTA({ user, scrolled }) {
   if (!scrolled || user) return null;
   return (
-    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#fff", boxShadow: "0 -2px 12px rgba(0,0,0,0.1)", zIndex: 7000, display: "flex", gap: 8 }}>
-      <button onClick={() => onNavigate("properties")} style={{ flex: 1, background: "#ff6b35", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
+    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#ff6b35", boxShadow: "0 -2px 12px rgba(0,0,0,0.15)", zIndex: 7000, display: "flex", gap: 8 }}>
+      <button
+        onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
+        style={{ flex: 1, background: "#fff", color: "#ff6b35", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
+      >
         🤖 無料でAI相談する
       </button>
-      <button onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))} style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
+      <button
+        onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))}
+        style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
+      >
         ✅ 無料会員登録（簡単3ステップ）
       </button>
     </div>
@@ -808,7 +814,7 @@ export default function HomeScreen({ onNavigate }) {
           // スマホ：1カラム縦積み
           <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
             {/* AIチャット */}
-            <div ref={chatRef}>
+            <div id="ai-consult-section" ref={chatRef}>
               {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               ) : (
@@ -888,7 +894,7 @@ export default function HomeScreen({ onNavigate }) {
       </main>
 
       <FixedCTA onStartChat={handleStartChat} isMobile={isMobile} scrolled={scrolled} />
-      <ScrollCTA onNavigate={navigate} user={user} scrolled={scrolled} />
+      <ScrollCTA user={user} scrolled={scrolled} />
     </div>
   );
 }

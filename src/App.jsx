@@ -2109,15 +2109,17 @@ export default function App() {
             { icon: '🏠', label: 'ホーム', id: 'home' },
             { icon: '🏢', label: '物件', id: 'properties' },
             { icon: '💬', label: '体験談', id: 'community' },
-            { icon: '❤️', label: 'お気に入り', id: 'favorites' },
+            { icon: '🤝', label: '専門家相談', id: 'expert' },
             { icon: '👤', label: 'マイページ', id: 'member' },
           ].map(({ icon, label, id }) => {
-            const isActive = tab === id || (id === 'member' && tab === 'member') || (id === 'favorites' && tab === 'member');
+            const isActive = tab === id || (id === 'member' && tab === 'member');
             const handleClick = () => {
-              if ((id === 'favorites' || id === 'member') && !user) {
+              if ((id === 'expert' || id === 'member') && !user) {
                 window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
+              } else if (id === 'expert') {
+                setTab('expertregister');
               } else {
-                setTab(id === 'favorites' ? 'member' : id);
+                setTab(id);
               }
             };
             return (
