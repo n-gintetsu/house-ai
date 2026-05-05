@@ -1161,47 +1161,51 @@ export default function App() {
                   right: 12,
                   background: '#1a3a5c',
                   borderRadius: 14,
-                  padding: '12px 8px',
+                  padding: '8px',
                   zIndex: 9999,
-                  minWidth: 200,
+                  width: 240,
                   maxHeight: '70vh',
                   overflowY: 'auto',
                   boxShadow: '0 8px 32px rgba(26,58,92,0.25)',
                 }}>
                   {[
-                    { id: 'properties', label: '🏠 物件情報' },
-                    { id: 'vendors',    label: '👷 業者一覧' },
-                    { id: 'chat',       label: '💬 AIチャット' },
-                    { id: 'sell',       label: '🏷️ 売却査定' },
-                    { id: 'owner',      label: '🏢 賃貸経営者様向け' },
-                    { id: 'expert',     label: '👔 専門家紹介' },
-                    { id: 'community',  label: '🏘️ コミュニティ' },
-                    { id: 'agency',     label: '🏗️ 業者様向け' },
-                    { id: 'column',     label: '💰 お得情報' },
-                    { id: 'drill',      label: '📊 投資ドリル' },
-                    { id: 'simulator',  label: '🧮 投資シミュレーター' },
-                    { id: 'member',     label: '👤 会員専用' },
+                    { id: 'properties', icon: '🏠', label: '物件情報' },
+                    { id: 'vendors',    icon: '👷', label: '業者一覧' },
+                    { id: 'chat',       icon: '💬', label: 'AIチャット' },
+                    { id: 'sell',       icon: '🏷️', label: '売却査定' },
+                    { id: 'owner',      icon: '🏢', label: '賃貸経営者様向け' },
+                    { id: 'expert',     icon: '👔', label: '専門家紹介' },
+                    { id: 'community',  icon: '🏘️', label: 'コミュニティ' },
+                    { id: 'agency',     icon: '🏗️', label: '業者様向け' },
+                    { id: 'column',     icon: '💰', label: 'お得情報' },
+                    { id: 'drill',      icon: '📊', label: '投資ドリル' },
+                    { id: 'simulator',  icon: '🧮', label: '投資シミュレーター' },
+                    { id: 'member',     icon: '👤', label: '会員専用' },
                   ].map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => { setTab(item.id); setMenuOpen(false); }}
                       style={{
-                        display: 'block',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
                         width: '100%',
+                        boxSizing: 'border-box',
                         background: tab === item.id ? 'rgba(255,255,255,0.15)' : 'transparent',
                         border: 'none',
                         borderRadius: 8,
-                        padding: '10px 14px',
+                        padding: '10px 16px',
                         color: '#fff',
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: tab === item.id ? 700 : 400,
                         cursor: 'pointer',
                         textAlign: 'left',
                         fontFamily: 'inherit',
                       }}
                     >
-                      {item.label}
+                      <span style={{ fontSize: 16, minWidth: 20, textAlign: 'center' }}>{item.icon}</span>
+                      <span>{item.label}</span>
                     </button>
                   ))}
                   {user && (
@@ -1213,9 +1217,10 @@ export default function App() {
                         window.__houseAiUser = null
                         setMenuOpen(false)
                       }}
-                      style={{ display: "block", width: "100%", background: "transparent", border: "none", borderTop: "1px solid rgba(255,255,255,0.15)", padding: "10px 14px", color: "#ff8080", fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left", fontFamily: "inherit", marginTop: 4 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.15)', padding: '10px 16px', color: '#ff8080', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', marginTop: 4 }}
                     >
-                      🚪 ログアウト
+                      <span style={{ fontSize: 16, minWidth: 20, textAlign: 'center' }}>🚪</span>
+                      <span>ログアウト</span>
                     </button>
                   )}
                 </div>
