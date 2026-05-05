@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import ReactDOM from "react-dom";
 import './TikTokPropertyFeed.css'
 import { trackEvent } from './lib/analytics'
@@ -945,8 +945,8 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     const idx = TABS.indexOf(filter);
-    if (diff > 50 && idx < TABS.length - 1) setFilter(TABS[idx + 1]);
-    if (diff < -50 && idx > 0) setFilter(TABS[idx - 1]);
+    if (diff > 50 && idx < TABS.length - 1) startTransition(() => setFilter(TABS[idx + 1]));
+    if (diff < -50 && idx > 0) startTransition(() => setFilter(TABS[idx - 1]));
     touchStartX.current = null;
   };
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -1163,7 +1163,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
       )}
 
       {/* TikTokフィード本体 */}
-      <div className="tiktok-feed" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="tiktok-feed" style={{ willChange: 'transform' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {data.length === 0
           ? <div className="tt-empty">該当する物件がありません</div>
           : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} favorites={favorites} onDM={onDM} index={i} total={data.length} />)
