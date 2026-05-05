@@ -11,8 +11,9 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-  if (error) return res.status(500).json({ error: error.message });
+  const { data, error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  console.log('deleteUser result:', JSON.stringify({ data, error }));
+  if (error) return res.status(500).json({ error: error.message, details: JSON.stringify(error) });
 
   await supabaseAdmin.from('profiles').delete().eq('id', userId);
 
