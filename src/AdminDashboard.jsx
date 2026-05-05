@@ -449,6 +449,7 @@ export default function AdminDashboard() {
   ]
 
   return (
+    <>
     <div style={{ minHeight: '100vh', background: '#eef2f7', fontFamily: 'sans-serif' }}>
       {/* ヘッダー */}
       <div style={{ background: '#1a3a5c', color: '#fff', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -857,6 +858,7 @@ function AdManagement({ supabaseAdmin }) {
     </div>
 
     {/* 業者詳細モーダル */}
+
     {selectedAgency && ReactDOM.createPortal(
       <div onClick={() => setSelectedAgency(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
         <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
@@ -919,5 +921,6 @@ function AdManagement({ supabaseAdmin }) {
       </div>,
       document.body
     )}
+    </>
   )
 }
