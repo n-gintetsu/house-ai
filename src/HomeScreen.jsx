@@ -693,16 +693,6 @@ function MiniTicker() {
 // ============================================================
 // 固定底部CTA（スマホのみ表示）
 // ============================================================
-function FixedCTA({ onStartChat, isMobile, scrolled }) {
-  if (!isMobile || scrolled) return null;
-  return (
-    <div style={{ position: "fixed", bottom: 74, left: "50%", transform: "translateX(-50%)", zIndex: 1000, width: "calc(100% - 32px)", maxWidth: 360 }}>
-      <button onClick={onStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.4)", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 8 }}>
-        💬 無料でAI相談する
-      </button>
-    </div>
-  );
-}
 
 function ScrollCTA({ user, scrolled }) {
   const [visible, setVisible] = useState(true)
@@ -905,7 +895,6 @@ export default function HomeScreen({ onNavigate }) {
         </div>
       </main>
 
-      <FixedCTA onStartChat={handleStartChat} isMobile={isMobile} scrolled={scrolled} />
       <ScrollCTA user={user} scrolled={scrolled} />
     </div>
   );

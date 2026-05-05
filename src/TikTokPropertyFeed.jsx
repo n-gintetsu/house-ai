@@ -938,14 +938,15 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
   const [filter, setFilter] = useState("すべて");
   const [showSearch, setShowSearch] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const tabRef = useRef(null);
   const touchStartX = useRef(null);
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
     const idx = TABS.indexOf(filter);
-    if (diff < -50 && idx < TABS.length - 1) setFilter(TABS[idx + 1]);
-    else if (diff > 50 && idx > 0) setFilter(TABS[idx - 1]);
+    if (diff > 50 && idx < TABS.length - 1) setFilter(TABS[idx + 1]);
+    if (diff < -50 && idx > 0) setFilter(TABS[idx - 1]);
     touchStartX.current = null;
   };
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -1091,7 +1092,9 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
     <>
       {/* フィルターバー（フィードの外・絶対配置） */}
       <div
+        ref={tabRef}
         className="tt-filter-bar"
+        style={{ touchAction: 'pan-y' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
