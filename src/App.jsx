@@ -1154,11 +1154,110 @@ export default function App() {
               </button>
             </div>
             {menuOpen && ReactDOM.createPortal(
-              <div style={{ position: 'fixed', top: 0, right: 0, width: 200, height: '100vh', background: 'red', zIndex: 99999 }}>
-                <button className="ha-menu-item" onClick={() => { alert('clicked!'); setTab('properties'); setMenuOpen(false); }}>
-                  物件情報テスト
-                </button>
-              </div>,
+              <>
+                {/* オーバーレイ */}
+                <div
+                  onClick={() => setMenuOpen(false)}
+                  style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }}
+                />
+                {/* ドロワー */}
+                <div onClick={(e) => e.stopPropagation()} style={{
+                  position: 'fixed', top: 0, right: 0, bottom: 0,
+                  width: 260,
+                  background: '#1a3a5c',
+                  zIndex: 9999,
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transform: 'translateX(0)',
+                  transition: 'transform 0.3s ease',
+                  boxShadow: '-4px 0 24px rgba(0,0,0,0.3)',
+                }}>
+                  {/* ヘッダー */}
+                  <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      {user ? (
+                        <>
+                          <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: '0 0 2px' }}>
+                            {user.user_metadata?.name || 'ユーザー'}
+                          </p>
+                          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: 0 }}>{user.email}</p>
+                        </>
+                      ) : (
+                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: 0 }}>不動産AIコンシェルジュ</p>
+                      )}
+                    </div>
+                    <button
+                      className="ha-menu-item"
+                      onClick={() => setMenuOpen(false)}
+                      style={{ background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', opacity: 0.8, lineHeight: 1, padding: 4 }}
+                    >×</button>
+                  </div>
+
+                  {/* メニュー項目 */}
+                  <div style={{ flex: 1 }}>
+                    {[
+                      { id: 'properties', icon: '🏠', label: '物件情報' },
+                      { id: 'vendors',    icon: '👷', label: '業者一覧' },
+                      { id: 'chat',       icon: '💬', label: 'AIチャット' },
+                      { id: 'sell',       icon: '🏷️', label: '売却査定' },
+                      { id: 'owner',      icon: '🏢', label: '賃貸経営者様向け' },
+                      { id: 'expert',     icon: '👔', label: '専門家紹介' },
+                      { id: 'community',  icon: '🏘️', label: 'コミュニティ' },
+                      { id: 'agency',     icon: '🏗️', label: '業者様向け' },
+                      { id: 'column',     icon: '💰', label: 'お得情報' },
+                      { id: 'drill',      icon: '📊', label: '投資ドリル' },
+                      { id: 'simulator',  icon: '🧮', label: '投資シミュレーター' },
+                      { id: 'member',     icon: '👤', label: '会員専用' },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="ha-menu-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setTab(item.id);
+                          setMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 14,
+                          width: '100%', boxSizing: 'border-box',
+                          background: tab === item.id ? 'rgba(255,255,255,0.12)' : 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          padding: '14px 20px',
+                          color: '#fff', fontSize: 15,
+                          fontWeight: tab === item.id ? 700 : 400,
+                          cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                          pointerEvents: 'auto',
+                        }}
+                      >
+                        <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* ログアウト */}
+                  {user && (
+                    <button
+                      type="button"
+                      className="ha-menu-item"
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        setUser(null)
+                        window.__houseAiUser = null
+                        setMenuOpen(false)
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.15)', padding: '14px 20px', color: '#ff8080', fontSize: 15, fontWeight: 700, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                    >
+                      <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>🚪</span>
+                      <span>ログアウト</span>
+                    </button>
+                  )}
+                </div>
+              </>,
               document.body
             )}
           </div>
