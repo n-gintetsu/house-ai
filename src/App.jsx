@@ -1210,7 +1210,7 @@ export default function App() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => { setTab(item.id); setMenuOpen(false); }}
+                        onClick={() => { console.log('clicked:', item.id); setTab(item.id); setMenuOpen(false); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 14,
                           width: '100%', boxSizing: 'border-box',
