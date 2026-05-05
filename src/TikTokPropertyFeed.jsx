@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, startTransition } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition, useMemo } from "react";
 import ReactDOM from "react-dom";
 import './TikTokPropertyFeed.css'
 import { trackEvent } from './lib/analytics'
@@ -967,8 +967,12 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
     setAgencies(prev => prev.map(a => a.id === id ? { ...a, followed: !a.followed } : a));
   };
 
-  const allProperties = properties?.length > 0 ? properties : SAMPLE_PROPERTIES;
-  const data = allProperties
+  const [allProperties, setAllProperties] = useState(() => properties?.length > 0 ? properties : SAMPLE_PROPERTIES);
+  useEffect(() => {
+    setAllProperties(properties?.length > 0 ? properties : SAMPLE_PROPERTIES);
+  }, [properties]);
+
+  const data = useMemo(() => allProperties
     .filter(p => {
       if (filter === "すべて") return true;
       if (filter === "売買") return p.deal_type === 'sale' || p.deal_type === '売買';
@@ -985,7 +989,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
         p.station?.toLowerCase().includes(q) ||
         JSON.stringify(p.details || {}).toLowerCase().includes(q)
       );
-    });
+    }), [allProperties, filter, searchQuery]);
 
   if (!isMobile) {
     return (
@@ -1102,7 +1106,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
           className="tt-back-btn"
           onClick={() => onNavigate?.('home')}
           onTouchStart={handleTouchStart}
-          onTouchEnd={(e) => { const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
+          onTouchEnd={(e) => { e.stopPropagation(); const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
         >←</button>
         {TABS.map(f => (
           <button
@@ -1117,7 +1121,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
           className="tt-filter-btn"
           onClick={() => setShowSearch(v => !v)}
           onTouchStart={handleTouchStart}
-          onTouchEnd={(e) => { const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
+          onTouchEnd={(e) => { e.stopPropagation(); const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
           style={{ opacity: showSearch ? 1 : 0.6, fontSize: 16 }}
         >
           🔍
