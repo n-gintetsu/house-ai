@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 
@@ -331,6 +332,7 @@ export default function AdminDashboard() {
   // データ
   const [members, setMembers] = useState([])
   const [agencies, setAgencies] = useState([])
+  const [selectedAgency, setSelectedAgency] = useState(null)
   const [valuations, setValuations] = useState([])
   const [experts, setExperts] = useState([])
   const [community, setCommunity] = useState([])
@@ -517,7 +519,10 @@ export default function AdminDashboard() {
             <div>
               <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🏢 企業様管理（{agencies.length}件）</h2>
               {agencies.length === 0 ? <p style={{ color: '#777' }}>登録はありません</p> : agencies.map(a => (
-                <div key={a.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div key={a.id} onClick={() => setSelectedAgency(a)} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{a.company_name}</div>
@@ -526,16 +531,12 @@ export default function AdminDashboard() {
                       {a.service_description && <div style={{ fontSize: 12, color: '#777', marginTop: 4 }}>{a.service_description}</div>}
                       <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{a.created_at ? new Date(a.created_at).toLocaleString('ja-JP') : ''}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700,
-                        background: a.status === 'approved' ? '#dcfce7' : a.status === 'rejected' ? '#fee2e2' : '#fef9c3',
-                        color: a.status === 'approved' ? '#16a34a' : a.status === 'rejected' ? '#dc2626' : '#92400e'
-                      }}>
-                        {a.status === 'approved' ? '✅ 承認済' : a.status === 'rejected' ? '❌ 却下' : '⏳ 審査中'}
-                      </span>
-                      {a.status !== 'approved' && <button onClick={() => updateAgencyStatus(a.id, 'approved')} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>承認</button>}
-                      {a.status !== 'rejected' && <button onClick={() => updateAgencyStatus(a.id, 'rejected')} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>却下</button>}
-                    </div>
+                    <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, flexShrink: 0,
+                      background: a.status === 'approved' ? '#dcfce7' : a.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+                      color: a.status === 'approved' ? '#16a34a' : a.status === 'rejected' ? '#dc2626' : '#92400e'
+                    }}>
+                      {a.status === 'approved' ? '✅ 承認済' : a.status === 'rejected' ? '❌ 却下' : '⏳ 審査中'}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -854,5 +855,69 @@ function AdManagement({ supabaseAdmin }) {
       )}
 
     </div>
+
+    {/* 業者詳細モーダル */}
+    {selectedAgency && ReactDOM.createPortal(
+      <div onClick={() => setSelectedAgency(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+          <button onClick={() => setSelectedAgency(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999', lineHeight: 1 }}>×</button>
+          <h3 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 18, fontWeight: 800, paddingRight: 32 }}>{selectedAgency.company_name}</h3>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
+            {[
+              { label: '担当者名', value: selectedAgency.contact_name },
+              { label: 'メール', value: selectedAgency.email },
+              { label: '電話', value: selectedAgency.phone },
+              { label: '業種', value: selectedAgency.business_type },
+              { label: 'エリア', value: selectedAgency.area },
+              { label: '宅建業免許番号', value: selectedAgency.license_number || '—' },
+              { label: '会社URL', value: selectedAgency.url || '—' },
+              { label: '登録日', value: selectedAgency.created_at ? new Date(selectedAgency.created_at).toLocaleString('ja-JP') : '—' },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontSize: 13, color: '#1e293b', fontWeight: 600, wordBreak: 'break-all' }}>{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {selectedAgency.deal_types?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: '#999', marginBottom: 6 }}>取扱種別</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {selectedAgency.deal_types.map(t => (
+                  <span key={t} style={{ background: '#f0f4ff', color: '#1a3a5c', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 600 }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedAgency.service_description && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>サービス説明</div>
+              <div style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{selectedAgency.service_description}</div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
+            <span style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+              background: selectedAgency.status === 'approved' ? '#dcfce7' : selectedAgency.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+              color: selectedAgency.status === 'approved' ? '#16a34a' : selectedAgency.status === 'rejected' ? '#dc2626' : '#92400e'
+            }}>
+              {selectedAgency.status === 'approved' ? '✅ 承認済' : selectedAgency.status === 'rejected' ? '❌ 却下' : '⏳ 審査中'}
+            </span>
+            <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+              {selectedAgency.status !== 'approved' && (
+                <button onClick={() => { updateAgencyStatus(selectedAgency.id, 'approved'); setSelectedAgency(prev => ({ ...prev, status: 'approved' })); }} style={{ padding: '8px 18px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>承認</button>
+              )}
+              {selectedAgency.status !== 'rejected' && (
+                <button onClick={() => { updateAgencyStatus(selectedAgency.id, 'rejected'); setSelectedAgency(prev => ({ ...prev, status: 'rejected' })); }} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>却下</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
   )
 }
