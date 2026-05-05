@@ -707,8 +707,8 @@ function AgencyDetailModal({ agency, properties, onClose, onDM }) {
 }
 
 // ── 1スライド ─────────────────────────────────────────
-function TikTokSlide({ property, user, onDM, index, total }) {
-  const [liked, setLiked] = useState(false);
+function TikTokSlide({ property, user, favorites, onDM, index, total }) {
+  const [liked, setLiked] = useState(() => (favorites ?? []).includes(property.id));
   const [likeCount, setLikeCount] = useState(property.likeCount ?? Math.floor(Math.random() * 40 + 5));
   const [showComments, setShowComments] = useState(false);
   const [showAI, setShowAI] = useState(false);
@@ -928,6 +928,12 @@ const SAMPLE_PROPERTIES = [
 
 // ── メインエクスポート ─────────────────────────────────
 export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate }) {
+  const [favorites, setFavorites] = useState([]);
+  useEffect(() => {
+    if (!user) { setFavorites([]); return; }
+    supabase.from('favorites').select('property_id').eq('user_id', user.id)
+      .then(({ data }) => setFavorites((data || []).map(f => f.property_id)));
+  }, [user]);
   const [filter, setFilter] = useState("すべて");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchQuery, setSearchQuery] = useState('');
@@ -986,7 +992,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
           <div className="tiktok-feed tt-feed-pc" ref={feedRef}>
             {data.length === 0
               ? <div className="tt-empty">該当する物件がありません</div>
-              : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} index={i} total={data.length} />)
+              : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} favorites={favorites} onDM={onDM} index={i} total={data.length} />)
             }
           </div>
         </div>
@@ -1088,7 +1094,7 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
       <div className="tiktok-feed">
         {data.length === 0
           ? <div className="tt-empty">該当する物件がありません</div>
-          : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} onDM={onDM} index={i} total={data.length} />)
+          : data.map((p, i) => <TikTokSlide key={p.id} property={p} user={user} favorites={favorites} onDM={onDM} index={i} total={data.length} />)
         }
       </div>
     </>
