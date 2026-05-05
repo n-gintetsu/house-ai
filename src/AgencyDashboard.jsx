@@ -499,12 +499,20 @@ export default function AgencyDashboard() {
             ※ 管理画面で承認されたアカウントのみログイン可能です。<br />
             アカウントをお持ちでない方は「業者様向け」タブよりお申込みください。
           </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            style={{ marginTop: 20, padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
-          >
-            サイトトップに戻る
-          </button>
+          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('show-auth-sheet'))}
+              style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
+            >
+              ログインする
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              style={{ padding: '10px 24px', background: 'transparent', color: '#1a3a5c', border: '1px solid #1a3a5c', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 700 }}
+            >
+              サイトトップに戻る
+            </button>
+          </div>
         </div>
       </div>
     )
