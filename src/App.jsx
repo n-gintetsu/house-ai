@@ -1159,7 +1159,7 @@ export default function App() {
                   style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }}
                 />
                 {/* ドロワー */}
-                <div style={{
+                <div onClick={(e) => e.stopPropagation()} style={{
                   position: 'fixed', top: 0, right: 0, bottom: 0,
                   width: 260,
                   background: '#1a3a5c',
@@ -1210,7 +1210,13 @@ export default function App() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => { console.log('clicked:', item.id); setTab(item.id); setMenuOpen(false); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          console.log('clicked:', item.id);
+                          setTab(item.id);
+                          setMenuOpen(false);
+                        }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 14,
                           width: '100%', boxSizing: 'border-box',
