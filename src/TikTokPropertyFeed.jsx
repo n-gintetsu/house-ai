@@ -1098,7 +1098,12 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <button className="tt-back-btn" onClick={() => onNavigate?.('home')}>←</button>
+        <button
+          className="tt-back-btn"
+          onClick={() => onNavigate?.('home')}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={(e) => { const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
+        >←</button>
         {TABS.map(f => (
           <button
             key={f}
@@ -1111,6 +1116,8 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
         <button
           className="tt-filter-btn"
           onClick={() => setShowSearch(v => !v)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={(e) => { const diff = touchStartX.current - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) handleTouchEnd(e); }}
           style={{ opacity: showSearch ? 1 : 0.6, fontSize: 16 }}
         >
           🔍
