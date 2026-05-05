@@ -216,6 +216,18 @@ export default function App() {
   }, [tab])
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isNavVisible, setIsNavVisible] = useState(true)
+  const lastScrollY = useRef(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y > lastScrollY.current + 5) setIsNavVisible(false)
+      else if (y < lastScrollY.current - 5) setIsNavVisible(true)
+      lastScrollY.current = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [properties, setProperties] = useState([])
   useEffect(() => {
@@ -2104,6 +2116,8 @@ export default function App() {
           display: 'flex',
           zIndex: 8000,
           paddingBottom: 'env(safe-area-inset-bottom)',
+          transform: isNavVisible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s ease',
         }}>
           {[
             { icon: '🏠', label: 'ホーム', id: 'home' },
