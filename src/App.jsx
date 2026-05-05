@@ -1161,7 +1161,7 @@ export default function App() {
                   right: 12,
                   background: '#1a3a5c',
                   borderRadius: 14,
-                  padding: '8px',
+                  padding: '8px 4px',
                   zIndex: 9999,
                   width: 240,
                   maxHeight: '70vh',
@@ -1195,7 +1195,7 @@ export default function App() {
                         background: tab === item.id ? 'rgba(255,255,255,0.15)' : 'transparent',
                         border: 'none',
                         borderRadius: 8,
-                        padding: '10px 16px',
+                        padding: '12px 16px',
                         color: '#fff',
                         fontSize: 14,
                         fontWeight: tab === item.id ? 700 : 400,
@@ -1217,7 +1217,7 @@ export default function App() {
                         window.__houseAiUser = null
                         setMenuOpen(false)
                       }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.15)', padding: '10px 16px', color: '#ff8080', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', marginTop: 4 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.15)', padding: '12px 16px', color: '#ff8080', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', marginTop: 4 }}
                     >
                       <span style={{ fontSize: 16, minWidth: 20, textAlign: 'center' }}>🚪</span>
                       <span>ログアウト</span>
