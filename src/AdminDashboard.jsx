@@ -263,6 +263,8 @@ function MembersPanel({ supabaseAdmin }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedMember, setSelectedMember] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -280,6 +282,13 @@ function MembersPanel({ supabaseAdmin }) {
     load()
   }, [])
 
+  async function handleSelectMember(m) {
+    setSelectedMember(m)
+    setProfile(null)
+    const { data } = await supabase.from('profiles').select('*').eq('id', m.id).single()
+    setProfile(data || {})
+  }
+
   async function handleDeleteUser(id, email) {
     if (!window.confirm(`${email} を削除しますか？この操作は取り消せません。`)) return
     const res = await fetch('/api/delete-user', {
@@ -293,6 +302,7 @@ function MembersPanel({ supabaseAdmin }) {
       return
     }
     setMembers(list => list.filter(m => m.id !== id))
+    setSelectedMember(null)
   }
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>読み込み中...</div>
@@ -302,7 +312,10 @@ function MembersPanel({ supabaseAdmin }) {
       <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>👤 会員管理（{members.length}件）</h2>
       {error && <div style={{ padding: '12px 16px', borderRadius: 12, background: '#fee2e2', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {members.length === 0 ? <p style={{ color: '#777' }}>会員はいません</p> : members.map(m => (
-        <div key={m.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div key={m.id} onClick={() => handleSelectMember(m)} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{m.user_metadata?.name || '（名前未設定）'}</div>
@@ -320,13 +333,46 @@ function MembersPanel({ supabaseAdmin }) {
               }}>
                 {m.email_confirmed_at ? '✅ 認証済' : '⏳ 未認証'}
               </span>
-              <button onClick={() => handleDeleteUser(m.id, m.email)} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+              <button onClick={e => { e.stopPropagation(); handleDeleteUser(m.id, m.email) }} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                 削除
               </button>
             </div>
           </div>
         </div>
       ))}
+
+      {selectedMember && ReactDOM.createPortal(
+        <div onClick={() => setSelectedMember(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+            <button onClick={() => setSelectedMember(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999', lineHeight: 1 }}>×</button>
+            <h3 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 18, fontWeight: 800, paddingRight: 32 }}>
+              {selectedMember.user_metadata?.name || '（名前未設定）'}
+            </h3>
+            {[
+              { label: 'メール', value: selectedMember.email },
+              { label: '種別', value: selectedMember.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員' },
+              { label: '電話番号', value: profile?.phone || selectedMember.user_metadata?.phone || '—' },
+              { label: '登録日', value: selectedMember.created_at ? new Date(selectedMember.created_at).toLocaleString('ja-JP') : '—' },
+              { label: '最終ログイン', value: selectedMember.last_sign_in_at ? new Date(selectedMember.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #f0f0f0', fontSize: 14 }}>
+                <span style={{ color: '#888', minWidth: 110, flexShrink: 0 }}>{label}</span>
+                <span style={{ color: '#1a3a5c', fontWeight: 500, wordBreak: 'break-all' }}>{value}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700,
+                background: selectedMember.email_confirmed_at ? '#dcfce7' : '#fef9c3',
+                color: selectedMember.email_confirmed_at ? '#16a34a' : '#92400e'
+              }}>
+                {selectedMember.email_confirmed_at ? '✅ メール認証済' : '⏳ メール未認証'}
+              </span>
+              <button onClick={() => handleDeleteUser(selectedMember.id, selectedMember.email)} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>削除</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
