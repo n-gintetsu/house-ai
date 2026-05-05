@@ -1221,6 +1221,7 @@ export default function App() {
                           color: '#fff', fontSize: 15,
                           fontWeight: tab === item.id ? 700 : 400,
                           cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                          pointerEvents: 'auto',
                         }}
                       >
                         <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>{item.icon}</span>
