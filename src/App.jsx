@@ -2067,7 +2067,7 @@ export default function App() {
         {showAuthSheet && ReactDOM.createPortal(
           <>
             <div className="auth-overlay" onClick={() => setShowAuthSheet(false)} />
-            <div className="auth-modal">
+            <div className="auth-modal" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, top: 'auto', width: '100%', maxWidth: '100%', transform: 'none', borderRadius: '24px 24px 0 0', zIndex: 10000 }}>
               <PremiumUpgradeBanner user={user} isPremium={isPremium} />
               <AuthPanel onLoginSuccess={() => setShowAuthSheet(false)} />
             </div>
