@@ -2086,6 +2086,7 @@ export default function App() {
               overflowY: 'auto',
               animation: 'bottomSheetIn 0.3s ease'
             }}>
+              <button onClick={() => setShowAuthSheet(false)} style={{ position: 'absolute', top: 16, right: 16, fontSize: 24, background: 'none', border: 'none', cursor: 'pointer', color: '#666', lineHeight: 1 }}>×</button>
               <AuthPanel user={user} isPremium={isPremium} onLoginSuccess={() => setShowAuthSheet(false)} />
             </div>
           </>,

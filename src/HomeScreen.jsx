@@ -693,13 +693,26 @@ function MiniTicker() {
 // ============================================================
 // 固定底部CTA（スマホのみ表示）
 // ============================================================
-function FixedCTA({ onStartChat, isMobile }) {
-  // PCではファーストビューにボタンがあるのでFixedCTAは非表示
-  if (!isMobile) return null;
+function FixedCTA({ onStartChat, isMobile, scrolled }) {
+  if (!isMobile || scrolled) return null;
   return (
-    <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 1000, width: "calc(100% - 32px)", maxWidth: 360 }}>
+    <div style={{ position: "fixed", bottom: 74, left: "50%", transform: "translateX(-50%)", zIndex: 1000, width: "calc(100% - 32px)", maxWidth: 360 }}>
       <button onClick={onStartChat} style={{ background: C.navy, color: "#fff", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif", boxShadow: "0 4px 20px rgba(26,58,92,0.4)", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 8 }}>
         💬 無料でAI相談する
+      </button>
+    </div>
+  );
+}
+
+function ScrollCTA({ onNavigate, user, scrolled }) {
+  if (!scrolled || user) return null;
+  return (
+    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#fff", boxShadow: "0 -2px 12px rgba(0,0,0,0.1)", zIndex: 7000, display: "flex", gap: 8 }}>
+      <button onClick={() => onNavigate("properties")} style={{ flex: 1, background: "#ff6b35", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
+        🤖 無料でAI相談する
+      </button>
+      <button onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))} style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
+        ✅ 無料会員登録（簡単3ステップ）
       </button>
     </div>
   );
@@ -714,7 +727,14 @@ export default function HomeScreen({ onNavigate }) {
   const [initialTag, setInitialTag] = useState(null);
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const chatRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY >= 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -867,7 +887,8 @@ export default function HomeScreen({ onNavigate }) {
         </div>
       </main>
 
-      <FixedCTA onStartChat={handleStartChat} isMobile={isMobile} />
+      <FixedCTA onStartChat={handleStartChat} isMobile={isMobile} scrolled={scrolled} />
+      <ScrollCTA onNavigate={navigate} user={user} scrolled={scrolled} />
     </div>
   );
 }
