@@ -64,12 +64,18 @@ export default function PropertyMatching({ user }) {
   async function toggleFavorite(propertyId, e) {
     if (e) e.stopPropagation()
     if (!user) { alert('お気に入り登録にはログインが必要です'); return }
-    if (favorites.includes(propertyId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('property_id', propertyId)
-      setFavorites(f => f.filter(id => id !== propertyId))
-    } else {
-      await supabase.from('favorites').insert({ user_id: user.id, property_id: propertyId })
-      setFavorites(f => [...f, propertyId])
+    try {
+      if (favorites.includes(propertyId)) {
+        const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('property_id', propertyId)
+        if (error) { console.error('delete error:', error); return }
+        setFavorites(f => f.filter(id => id !== propertyId))
+      } else {
+        const { error } = await supabase.from('favorites').insert({ user_id: user.id, property_id: propertyId })
+        if (error) { console.error('insert error:', error); return }
+        setFavorites(f => [...f, propertyId])
+      }
+    } catch(err) {
+      console.error('toggleFavorite error:', err)
     }
   }
 
