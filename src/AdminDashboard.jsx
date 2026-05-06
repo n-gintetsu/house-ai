@@ -916,6 +916,14 @@ function AdManagement({ supabaseAdmin }) {
     setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
   }
 
+  const deletePartner = async (userId, companyName) => {
+    if (!window.confirm(`「${companyName || 'このユーザー'}」を削除しますか？この操作は取り消せません。`)) return
+    await supabaseAdmin.from('partner_profiles').delete().eq('user_id', userId)
+    await supabaseAdmin.auth.admin.deleteUser(userId)
+    setPartners(list => list.filter(p => p.id !== userId))
+    setSelectedPartner(null)
+  }
+
   const fetchTicker = async () => {
     const { data } = await supabaseAdmin.from('ticker_items').select('*').order('sort_order')
     if (data) setTickerItems(data)
@@ -1116,6 +1124,11 @@ function AdManagement({ supabaseAdmin }) {
                         <button onClick={() => updatePartnerStatus(selectedPartner.id, '審査中')} style={{ padding: '8px 18px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>審査中に戻す</button>
                       )}
                     </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 16, paddingTop: 16 }}>
+                    <button onClick={() => deletePartner(selectedPartner.id, selectedPartner.user_metadata?.company_name)} style={{ background: '#fff', color: '#dc2626', border: '1px solid #dc2626', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      🗑️ このユーザーを削除
+                    </button>
                   </div>
                 </>
               )
