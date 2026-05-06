@@ -66,6 +66,9 @@ function PropertiesPanel({ supabase }) {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [isFeatured, setIsFeatured] = useState({})
   const [form, setForm] = useState({
     title: '', property_type: '', deal_type: 'rent', price: '', rent: '',
     address: '', area: '', layout: '', built_year: '',
@@ -77,7 +80,11 @@ function PropertiesPanel({ supabase }) {
   async function loadProperties() {
     setLoading(true)
     const { data } = await supabase.from('properties').select('*').order('created_at', { ascending: false })
-    setProperties(data || [])
+    const list = data || []
+    setProperties(list)
+    const featuredMap = {}
+    list.forEach(p => { featuredMap[p.id] = p.is_featured || false })
+    setIsFeatured(featuredMap)
     setLoading(false)
   }
 
@@ -120,6 +127,13 @@ function PropertiesPanel({ supabase }) {
     if (!window.confirm('この物件を削除しますか？')) return
     await supabase.from('properties').delete().eq('id', id)
     setProperties(list => list.filter(p => p.id !== id))
+  }
+
+  async function toggleFeatured(id) {
+    const current = isFeatured[id] || false
+    const { error } = await supabase.from('properties').update({ is_featured: !current }).eq('id', id)
+    if (error) { alert('おすすめ設定に失敗しました: ' + error.message); return }
+    setIsFeatured(prev => ({ ...prev, [id]: !current }))
   }
 
   const fieldStyle = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(26,58,92,0.15)', background: '#fff', color: '#222', fontSize: 13, outline: 'none', fontFamily: 'inherit' }
@@ -219,7 +233,33 @@ function PropertiesPanel({ supabase }) {
         </div>
       )}
 
-      {properties.length === 0 ? <p style={{ color: '#777' }}>物件はありません。「物件を登録」ボタンから追加してください。</p> : properties.map(p => (
+      {/* フィルターバー */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+        {[{ id: 'all', label: '全て' }, { id: 'active', label: '公開中' }, { id: 'inactive', label: '非公開' }].map(f => (
+          <button key={f.id} onClick={() => setStatusFilter(f.id)}
+            style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              background: statusFilter === f.id ? '#1a3a5c' : '#f0f0f0',
+              color: statusFilter === f.id ? '#fff' : '#555' }}>
+            {f.label}
+          </button>
+        ))}
+        <input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="タイトル・住所で検索"
+          style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.15)', fontSize: 16, outline: 'none', minWidth: 200, flex: 1 }}
+        />
+        <span style={{ fontSize: 13, color: '#777', flexShrink: 0 }}>
+          {properties.filter(p => statusFilter === 'all' ? true : p.status === statusFilter).filter(p => !searchQuery || p.title?.includes(searchQuery) || p.address?.includes(searchQuery)).length}件
+        </span>
+      </div>
+
+      {(() => {
+        const filtered = properties
+          .filter(p => statusFilter === 'all' ? true : p.status === statusFilter)
+          .filter(p => !searchQuery || p.title?.includes(searchQuery) || p.address?.includes(searchQuery))
+        if (filtered.length === 0) return <p style={{ color: '#777' }}>物件はありません。「物件を登録」ボタンから追加してください。</p>
+        return filtered.map(p => (
         <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           {p.image_url && <img src={p.image_url} alt={p.title} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 12 }} />}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
@@ -249,11 +289,18 @@ function PropertiesPanel({ supabase }) {
               <button onClick={() => toggleStatus(p.id, p.status)} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                 {p.status === 'active' ? '非公開に' : '公開する'}
               </button>
+              <button onClick={() => toggleFeatured(p.id)}
+                style={{ padding: '4px 12px', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+                  background: isFeatured[p.id] ? '#f59e0b' : '#e5e7eb',
+                  color: isFeatured[p.id] ? '#fff' : '#555' }}>
+                {isFeatured[p.id] ? '⭐ おすすめ中' : '☆ おすすめ'}
+              </button>
               <button onClick={() => deleteProperty(p.id)} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>削除</button>
             </div>
           </div>
         </div>
-      ))}
+        ))
+      })()}
     </div>
   )
 }
