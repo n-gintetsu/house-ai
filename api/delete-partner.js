@@ -8,14 +8,15 @@ export default async function handler(req, res) {
 
   const supabaseAdmin = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  await supabaseAdmin.from('partner_profiles').delete().eq('user_id', userId);
+  const { data, error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  console.log('deleteUser result:', JSON.stringify({ data, error }));
+  if (error) return res.status(500).json({ error: error.message, details: JSON.stringify(error) });
 
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-  if (error) return res.status(500).json({ error: error.message });
+  await supabaseAdmin.from('partner_profiles').delete().eq('user_id', userId);
 
   res.json({ success: true });
 }
