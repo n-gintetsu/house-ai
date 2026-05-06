@@ -1,22 +1,72 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 業者・パートナーチェック用
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
+    const supabaseAdmin = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-  const supabaseAdmin = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+    const [agencyResult, partnerResult] = await Promise.all([
+      supabaseAdmin.from('agency_registrations').select('id, company_name').eq('agency_user_id', userId).maybeSingle(),
+      supabaseAdmin.from('partner_profiles').select('id, company_name').eq('user_id', userId).maybeSingle(),
+    ]);
 
-  const { data, error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-  console.log('deleteUser result:', JSON.stringify({ data, error }));
-  if (error) return res.status(500).json({ error: error.message, details: JSON.stringify(error) });
+    return res.json({
+      hasAgency: !!agencyResult.data,
+      agencyName: agencyResult.data?.company_name || null,
+      hasPartner: !!partnerResult.data,
+      partnerName: partnerResult.data?.company_name || null,
+    });
+  }
 
-  await supabaseAdmin.from('profiles').delete().eq('id', userId);
+  if (req.method === 'POST') {
+    const { userId, action } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
-  res.json({ success: true });
+    const supabaseAdmin = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // 復活
+    if (action === 'restore') {
+      await supabaseAdmin.from('profiles').update({ deleted_at: null, account_status: 'active' }).eq('id', userId);
+      return res.json({ success: true });
+    }
+
+    // 論理削除（30日猶予）
+    if (action === 'soft') {
+      await supabaseAdmin.from('profiles').update({
+        deleted_at: new Date().toISOString(),
+        account_status: 'suspended'
+      }).eq('id', userId);
+      return res.json({ success: true });
+    }
+
+    // 完全削除（物理削除）
+    if (action === 'hard') {
+      await supabaseAdmin.from('admin_notes').delete().eq('admin_id', userId);
+      await supabaseAdmin.from('reports').delete().eq('reporter_id', userId);
+      await supabaseAdmin.from('reports').delete().eq('handled_by', userId);
+      await supabaseAdmin.from('community_posts').delete().eq('user_id', userId);
+      await supabaseAdmin.from('valuations').delete().eq('user_id', userId);
+      await supabaseAdmin.from('expert_requests').delete().eq('user_id', userId);
+      await supabaseAdmin.from('favorites').delete().eq('user_id', userId);
+      await supabaseAdmin.from('profiles').delete().eq('id', userId);
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ success: true });
+    }
+
+    return res.status(400).json({ error: 'invalid action' });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
 }

@@ -461,20 +461,53 @@ function MembersPanel({ supabaseAdmin }) {
     setProfile(data || {})
   }
 
-  async function handleDeleteUser(id, email) {
-    if (!window.confirm(`${email} を削除しますか？この操作は取り消せません。`)) return
+  const [deleteModal, setDeleteModal] = useState(null)
+  // deleteModal: { member, checking, hasAgency, agencyName, hasPartner, partnerName }
+
+  async function handleDeleteUser(member) {
+    setDeleteModal({ member, checking: true })
+    const res = await fetch(`/api/delete-user?userId=${member.id}`)
+    const data = await res.json()
+    setDeleteModal({ member, checking: false, ...data })
+  }
+
+  async function executeSoftDelete() {
+    const { member } = deleteModal
+    setDeleteModal(prev => ({ ...prev, checking: true }))
     const res = await fetch('/api/delete-user', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ userId: id }),
+      body: JSON.stringify({ userId: member.id, action: 'soft' }),
     })
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      alert('削除に失敗しました: ' + (data.error || res.status))
-      return
-    }
-    setMembers(list => list.filter(m => m.id !== id))
+    if (!res.ok) { alert('削除に失敗しました'); setDeleteModal(null); return }
+    setMembers(list => list.map(m => m.id === member.id ? { ...m, deleted_at: new Date().toISOString(), account_status: 'suspended' } : m))
+    setDeleteModal(null)
     setSelectedMember(null)
+  }
+
+  async function executeHardDelete() {
+    const { member } = deleteModal
+    setDeleteModal(prev => ({ ...prev, checking: true }))
+    const res = await fetch('/api/delete-user', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ userId: member.id, action: 'hard' }),
+    })
+    if (!res.ok) { alert('削除に失敗しました'); setDeleteModal(null); return }
+    setMembers(list => list.filter(m => m.id !== member.id))
+    setDeleteModal(null)
+    setSelectedMember(null)
+  }
+
+  async function executeRestore(member) {
+    const res = await fetch('/api/delete-user', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ userId: member.id, action: 'restore' }),
+    })
+    if (!res.ok) { alert('復活に失敗しました'); return }
+    setMembers(list => list.map(m => m.id === member.id ? { ...m, deleted_at: null, account_status: 'active' } : m))
+    setSelectedMember(prev => prev?.id === member.id ? { ...prev, deleted_at: null, account_status: 'active' } : prev)
   }
 
   async function updateMemberStatus(userId, status, reason) {
@@ -489,8 +522,60 @@ function MembersPanel({ supabaseAdmin }) {
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>読み込み中...</div>
 
+  {/* 削除確認モーダル */}
+  const deleteModalUI = deleteModal && (() => {
+    const { member, checking, hasAgency, agencyName, hasPartner, partnerName } = deleteModal
+    const daysLeft = member?.deleted_at ? Math.max(0, 30 - Math.floor((Date.now() - new Date(member.deleted_at)) / 86400000)) : null
+    return ReactDOM.createPortal(
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 480, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          {checking ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#666' }}>確認中...</div>
+          ) : member?.deleted_at ? (
+            <>
+              <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>♻️</div>
+              <h3 style={{ textAlign: 'center', margin: '0 0 8px', fontSize: 18 }}>削除予約中の会員</h3>
+              <p style={{ textAlign: 'center', color: '#666', fontSize: 14, margin: '0 0 24px' }}>
+                残り <strong style={{ color: '#e53e3e' }}>{daysLeft}日</strong> で完全削除されます
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
+                <button onClick={() => executeRestore(member)} style={{ padding: '12px', background: '#38a169', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer', fontWeight: 600 }}>✅ アカウントを復活させる</button>
+                <button onClick={executeHardDelete} style={{ padding: '12px', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer', fontWeight: 600 }}>🗑️ 今すぐ完全削除する</button>
+                <button onClick={() => setDeleteModal(null)} style={{ padding: '12px', background: '#f0f0f0', color: '#333', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer' }}>キャンセル</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>⚠️</div>
+              <h3 style={{ textAlign: 'center', margin: '0 0 8px', fontSize: 18 }}>{member?.email} を削除しますか？</h3>
+              {(hasAgency || hasPartner) && (
+                <div style={{ background: '#fff8e1', border: '1px solid #f6c342', borderRadius: 10, padding: '14px 16px', margin: '16px 0', fontSize: 14 }}>
+                  <div style={{ fontWeight: 700, color: '#b45309', marginBottom: 6 }}>⚠️ 注意：他の登録も存在します</div>
+                  {hasAgency && <div style={{ color: '#555', marginBottom: 4 }}>🏢 不動産業者：{agencyName || '登録あり'}</div>}
+                  {hasPartner && <div style={{ color: '#555' }}>🤝 広告パートナー：{partnerName || '登録あり'}</div>}
+                  <div style={{ marginTop: 8, color: '#b45309', fontSize: 13 }}>一般会員を削除してもこれらのデータは保持されます。</div>
+                </div>
+              )}
+              <div style={{ background: '#f7f7f7', borderRadius: 10, padding: '14px 16px', margin: '16px 0', fontSize: 13, color: '#555' }}>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>🕐 論理削除（推奨）</div>
+                <div>30日間は復活可能。期間経過後に自動で完全削除されます。</div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
+                <button onClick={executeSoftDelete} style={{ padding: '12px', background: '#dd6b20', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer', fontWeight: 600 }}>🕐 削除予約（30日後に完全削除）</button>
+                <button onClick={executeHardDelete} style={{ padding: '12px', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer', fontWeight: 600 }}>🗑️ 今すぐ完全削除（取り消し不可）</button>
+                <button onClick={() => setDeleteModal(null)} style={{ padding: '12px', background: '#f0f0f0', color: '#333', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer' }}>キャンセル</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>,
+      document.body
+    )
+  })()
+
   return (
     <div>
+      {deleteModalUI}
       <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>👤 会員管理（{members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').length}件）</h2>
       {error && <div style={{ padding: '12px 16px', borderRadius: 12, background: '#fee2e2', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').length === 0 ? <p style={{ color: '#777' }}>会員はいません</p> : members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').map(m => (
@@ -528,7 +613,7 @@ function MembersPanel({ supabaseAdmin }) {
               {m.account_status === 'banned' && (
                 <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: '#fee2e2', color: '#dc2626' }}>🚫 BAN</span>
               )}
-              <button onClick={e => { e.stopPropagation(); handleDeleteUser(m.id, m.email) }} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+              <button onClick={e => { e.stopPropagation(); handleDeleteUser(m) }} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                 削除
               </button>
             </div>
@@ -596,7 +681,7 @@ function MembersPanel({ supabaseAdmin }) {
                 <button onClick={() => updateMemberStatus(selectedMember.id, 'active', null)}
                   style={{ padding: '8px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>✅ 有効に戻す</button>
               )}
-              <button onClick={() => handleDeleteUser(selectedMember.id, selectedMember.email)}
+              <button onClick={() => handleDeleteUser(selectedMember)}
                 style={{ padding: '8px 16px', background: '#fff', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>🗑️ 削除</button>
             </div>
             <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 20, paddingTop: 16 }}>
