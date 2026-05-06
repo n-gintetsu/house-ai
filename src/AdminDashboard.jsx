@@ -918,8 +918,16 @@ function AdManagement({ supabaseAdmin }) {
 
   const deletePartner = async (userId, companyName) => {
     if (!window.confirm(`「${companyName || 'このユーザー'}」を削除しますか？この操作は取り消せません。`)) return
-    await supabaseAdmin.from('partner_profiles').delete().eq('user_id', userId)
-    await supabaseAdmin.auth.admin.deleteUser(userId)
+    const res = await fetch('/api/delete-partner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert('削除に失敗しました: ' + (data.error || res.status))
+      return
+    }
     setPartners(list => list.filter(p => p.id !== userId))
     setSelectedPartner(null)
   }
