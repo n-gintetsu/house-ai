@@ -877,6 +877,7 @@ function AdManagement({ supabaseAdmin }) {
   const [adItems, setAdItems] = useState([])
   const [partners, setPartners] = useState([])
   const [partnerLoading, setPartnerLoading] = useState(false)
+  const [selectedPartner, setSelectedPartner] = useState(null)
   const [activeSection, setActiveSection] = useState('ticker')
   const [form, setForm] = useState({ label: 'PR', text: '', url: '', active: true, sort_order: 0 })
   const [adForm, setAdForm] = useState({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' })
@@ -912,6 +913,7 @@ function AdManagement({ supabaseAdmin }) {
   const updatePartnerStatus = async (userId, status) => {
     await supabaseAdmin.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
     setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
+    setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
   }
 
   const fetchTicker = async () => {
@@ -1039,7 +1041,11 @@ function AdManagement({ supabaseAdmin }) {
             const statusColor = status === '掲載中' ? '#16a34a' : status === '却下' ? '#dc2626' : '#92400e'
             const statusBg = status === '掲載中' ? '#dcfce7' : status === '却下' ? '#fee2e2' : '#fef9c3'
             return (
-              <div key={p.id} style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <div key={p.id} onClick={() => setSelectedPartner(p)}
+                style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, border: '2px solid transparent', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.user_metadata?.company_name || '(会社名未設定)'}</div>
@@ -1053,13 +1059,13 @@ function AdManagement({ supabaseAdmin }) {
                     </span>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {status !== '掲載中' && (
-                        <button onClick={() => updatePartnerStatus(p.id, '掲載中')} style={{ padding: '5px 14px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>承認</button>
+                        <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '掲載中') }} style={{ padding: '5px 14px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>承認</button>
                       )}
                       {status !== '却下' && (
-                        <button onClick={() => updatePartnerStatus(p.id, '却下')} style={{ padding: '5px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>却下</button>
+                        <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '却下') }} style={{ padding: '5px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>却下</button>
                       )}
                       {status !== '審査中' && (
-                        <button onClick={() => updatePartnerStatus(p.id, '審査中')} style={{ padding: '5px 14px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>審査中に戻す</button>
+                        <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '審査中') }} style={{ padding: '5px 14px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>審査中に戻す</button>
                       )}
                     </div>
                   </div>
@@ -1068,6 +1074,55 @@ function AdManagement({ supabaseAdmin }) {
             )
           })}
         </div>
+      )}
+
+      {selectedPartner && ReactDOM.createPortal(
+        <div onClick={() => setSelectedPartner(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+            <button onClick={() => setSelectedPartner(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999', lineHeight: 1 }}>×</button>
+            <h3 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 18, fontWeight: 800, paddingRight: 32 }}>
+              {selectedPartner.user_metadata?.company_name || '(会社名未設定)'}
+            </h3>
+            {(() => {
+              const status = selectedPartner.profile?.ad_status || '審査中'
+              const statusColor = status === '掲載中' ? '#16a34a' : status === '却下' ? '#dc2626' : '#92400e'
+              const statusBg = status === '掲載中' ? '#dcfce7' : status === '却下' ? '#fee2e2' : '#fef9c3'
+              return (
+                <>
+                  {[
+                    { label: '会社名', value: selectedPartner.user_metadata?.company_name || '—' },
+                    { label: '業種', value: selectedPartner.user_metadata?.business_type || '—' },
+                    { label: 'メール', value: selectedPartner.email },
+                    { label: '登録日', value: selectedPartner.created_at ? new Date(selectedPartner.created_at).toLocaleString('ja-JP') : '—' },
+                    { label: '最終ログイン', value: selectedPartner.last_sign_in_at ? new Date(selectedPartner.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン' },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #f0f0f0', fontSize: 14 }}>
+                      <span style={{ color: '#888', minWidth: 110, flexShrink: 0 }}>{label}</span>
+                      <span style={{ color: '#1a3a5c', fontWeight: 500, wordBreak: 'break-all' }}>{value}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16, marginTop: 4, flexWrap: 'wrap' }}>
+                    <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: statusBg, color: statusColor }}>
+                      {status === '掲載中' ? '✅ 承認済' : status === '却下' ? '❌ 却下' : '⏳ 審査中'}
+                    </span>
+                    <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                      {status !== '掲載中' && (
+                        <button onClick={() => updatePartnerStatus(selectedPartner.id, '掲載中')} style={{ padding: '8px 18px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>承認</button>
+                      )}
+                      {status !== '却下' && (
+                        <button onClick={() => updatePartnerStatus(selectedPartner.id, '却下')} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>却下</button>
+                      )}
+                      {status !== '審査中' && (
+                        <button onClick={() => updatePartnerStatus(selectedPartner.id, '審査中')} style={{ padding: '8px 18px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>審査中に戻す</button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>
