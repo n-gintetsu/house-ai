@@ -477,6 +477,16 @@ function MembersPanel({ supabaseAdmin }) {
     setSelectedMember(null)
   }
 
+  async function updateMemberStatus(userId, status, reason) {
+    await supabaseAdmin.from('profiles').update({
+      account_status: status,
+      status_reason: reason,
+      status_updated_at: new Date().toISOString()
+    }).eq('id', userId)
+    setMembers(list => list.map(m => m.id === userId ? { ...m, account_status: status } : m))
+    setSelectedMember(prev => prev?.id === userId ? { ...prev, account_status: status } : prev)
+  }
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>読み込み中...</div>
 
   return (
@@ -505,13 +515,19 @@ function MembersPanel({ supabaseAdmin }) {
                 <span>最終ログイン：{m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン'}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700,
                 background: m.email_confirmed_at ? '#dcfce7' : '#fef9c3',
                 color: m.email_confirmed_at ? '#16a34a' : '#92400e'
               }}>
                 {m.email_confirmed_at ? '✅ 認証済' : '⏳ 未認証'}
               </span>
+              {m.account_status === 'suspended' && (
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: '#fff7ed', color: '#c2410c' }}>⏸ 停止中</span>
+              )}
+              {m.account_status === 'banned' && (
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: '#fee2e2', color: '#dc2626' }}>🚫 BAN</span>
+              )}
               <button onClick={e => { e.stopPropagation(); handleDeleteUser(m.id, m.email) }} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                 削除
               </button>
@@ -543,14 +559,45 @@ function MembersPanel({ supabaseAdmin }) {
                 <span style={{ color: '#1a3a5c', fontWeight: 500, wordBreak: 'break-all' }}>{value}</span>
               </div>
             ))}
-            <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700,
                 background: selectedMember.email_confirmed_at ? '#dcfce7' : '#fef9c3',
                 color: selectedMember.email_confirmed_at ? '#16a34a' : '#92400e'
               }}>
                 {selectedMember.email_confirmed_at ? '✅ メール認証済' : '⏳ メール未認証'}
               </span>
-              <button onClick={() => handleDeleteUser(selectedMember.id, selectedMember.email)} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>削除</button>
+              {selectedMember.account_status === 'suspended' && (
+                <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: '#fff7ed', color: '#c2410c' }}>⏸ 停止中</span>
+              )}
+              {selectedMember.account_status === 'banned' && (
+                <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: '#fee2e2', color: '#dc2626' }}>🚫 BAN</span>
+              )}
+              {selectedMember.account_status === 'active' && (
+                <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: '#dcfce7', color: '#16a34a' }}>✅ 有効</span>
+              )}
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {(!selectedMember.account_status || selectedMember.account_status === 'active') && (
+                <button onClick={() => {
+                  const reason = window.prompt('停止理由を入力してください')
+                  if (reason === null) return
+                  updateMemberStatus(selectedMember.id, 'suspended', reason)
+                }} style={{ padding: '8px 16px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>⏸ 一時停止</button>
+              )}
+              {selectedMember.account_status !== 'banned' && (
+                <button onClick={() => {
+                  if (!window.confirm('このユーザーをBANしますか？')) return
+                  const reason = window.prompt('BAN理由を入力してください')
+                  if (reason === null) return
+                  updateMemberStatus(selectedMember.id, 'banned', reason)
+                }} style={{ padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>🚫 BAN</button>
+              )}
+              {selectedMember.account_status && selectedMember.account_status !== 'active' && (
+                <button onClick={() => updateMemberStatus(selectedMember.id, 'active', null)}
+                  style={{ padding: '8px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>✅ 有効に戻す</button>
+              )}
+              <button onClick={() => handleDeleteUser(selectedMember.id, selectedMember.email)}
+                style={{ padding: '8px 16px', background: '#fff', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>🗑️ 削除</button>
             </div>
             <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 20, paddingTop: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginBottom: 10 }}>📝 管理者メモ</div>
