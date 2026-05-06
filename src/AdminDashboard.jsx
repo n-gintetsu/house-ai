@@ -456,6 +456,8 @@ export default function AdminDashboard() {
   const [agencyNotes, setAgencyNotes] = useState([])
   const [agencyNoteInput, setAgencyNoteInput] = useState('')
   const [allMembers, setAllMembers] = useState([])
+  const [communityFilter, setCommunityFilter] = useState('all')
+  const [communitySearch, setCommunitySearch] = useState('')
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -531,6 +533,12 @@ export default function AdminDashboard() {
     if (!window.confirm('この投稿を削除しますか？')) return
     await supabase.from('community_posts').delete().eq('id', id)
     setCommunity(list => list.filter(p => p.id !== id))
+  }
+
+  async function hidePost(id) {
+    const { error } = await supabase.from('community_posts').update({ is_public: false }).eq('id', id)
+    if (error) { alert('このカラムはまだ設定されていません'); return }
+    setCommunity(list => list.map(p => p.id === id ? { ...p, is_public: false } : p))
   }
 
   async function updateAgencyStatus(id, status) {
@@ -1075,27 +1083,73 @@ export default function AdminDashboard() {
           )}
 
           {/* コミュニティ管理 */}
-          {tab === 'community' && (
-            <div>
-              <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🏘️ コミュニティ管理（{community.length}件）</h2>
-              {community.length === 0 ? <p style={{ color: '#777' }}>投稿はありません</p> : community.map(p => (
-                <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
-                      <div style={{ fontSize: 13, color: '#555', marginTop: 4, lineHeight: 1.5 }}>{p.body?.slice(0, 100)}{p.body?.length > 100 ? '...' : ''}</div>
-                      <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
-                        投稿者：{p.author_name || '匿名'} / {p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}
+          {tab === 'community' && (() => {
+            const hasReported = p => p.is_reported || (p.report_count != null && p.report_count > 0)
+            const filtered = community.filter(p => {
+              if (communityFilter === 'reported' && !hasReported(p)) return false
+              if (communityFilter === 'hidden' && p.is_public !== false) return false
+              const q = communitySearch.toLowerCase()
+              if (q && !(p.title?.toLowerCase().includes(q) || p.author_name?.toLowerCase().includes(q))) return false
+              return true
+            })
+            return (
+              <div>
+                <h2 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 20 }}>🏘️ コミュニティ管理（{community.length}件）</h2>
+
+                {/* フィルターバー */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+                  {[{ id: 'all', label: '全て' }, { id: 'reported', label: '⚠️ 通報あり' }, { id: 'hidden', label: '🚫 非公開' }].map(f => (
+                    <button key={f.id} onClick={() => setCommunityFilter(f.id)}
+                      style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                        background: communityFilter === f.id ? '#1a3a5c' : '#f0f0f0',
+                        color: communityFilter === f.id ? '#fff' : '#555' }}>
+                      {f.label}
+                    </button>
+                  ))}
+                  <input
+                    value={communitySearch}
+                    onChange={e => setCommunitySearch(e.target.value)}
+                    placeholder="タイトル・投稿者名で検索"
+                    style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.15)', fontSize: 13, outline: 'none', minWidth: 200, flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, color: '#777' }}>{filtered.length}件</span>
+                </div>
+
+                {/* 投稿カード */}
+                {filtered.length === 0 && <p style={{ color: '#777' }}>投稿はありません</p>}
+                {filtered.map(p => (
+                  <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: hasReported(p) ? '1px solid #fca5a5' : '1px solid transparent' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</span>
+                          {p.is_public === false && <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#e5e7eb', color: '#6b7280' }}>非公開</span>}
+                          {hasReported(p) && <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fee2e2', color: '#dc2626' }}>⚠️ 通報あり</span>}
+                          {p.category && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#eff6ff', color: '#2563eb' }}>{p.category}</span>}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>{p.body?.slice(0, 100)}{p.body?.length > 100 ? '...' : ''}</div>
+                        <div style={{ fontSize: 12, color: '#aaa', marginTop: 6, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          <span>投稿者：{p.author_name || '匿名'}</span>
+                          {p.likes_count != null && <span>❤️ {p.likes_count}</span>}
+                          <span>{p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                        {p.is_public !== false && (
+                          <button onClick={() => hidePost(p.id)} style={{ padding: '6px 12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            🚫 非公開
+                          </button>
+                        )}
+                        <button onClick={() => deletePost(p.id)} style={{ padding: '6px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                          🗑️ 削除
+                        </button>
                       </div>
                     </div>
-                    <button onClick={() => deletePost(p.id)} style={{ marginLeft: 12, padding: '6px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
-                      🗑️ 削除
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )
+          })()}
 
           {/* オーナー依頼 */}
           {tab === 'owners' && (
