@@ -377,7 +377,7 @@ function PropertiesPanel({ supabase }) {
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
-                  {p.property_type && <span style={{ marginRight: 8 }}>{p.property_type}</span>}
+                  <span style={{ marginRight: 8 }}>{DEAL_LABEL[p.deal_type] || '賃貸'}</span>
                   {p.layout && <span style={{ marginRight: 8 }}>{p.layout}</span>}
                   {p.area && <span style={{ marginRight: 8 }}>{p.area}㎡</span>}
                 </div>
