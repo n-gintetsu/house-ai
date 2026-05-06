@@ -997,6 +997,84 @@ export default function TikTokPropertyFeed({ properties, user, onDM, onNavigate 
         {/* 左余白（ダーク） */}
         <div className="tt-pc-left" />
 
+        {/* 左パネル */}
+        {(() => {
+          const p = data[0];
+          if (!p) return null;
+          const isRent = p.deal_type === 'rent' || p.deal_type === '賃貸';
+          const isSale = p.deal_type === 'sale' || p.deal_type === '売買';
+          const isInvest = p.deal_type === 'investment' || p.deal_type === '投資用' || p.deal_type === '投資';
+          const mapQuery = encodeURIComponent(p.station || p.address || p.title || '');
+          const mapsUrl = `https://www.google.com/maps/search/${mapQuery}`;
+
+          let simCard = null;
+          if (isRent && p.rent) {
+            const monthly = p.rent;
+            const deposit = monthly * 2;
+            const keyMoney = monthly * 1;
+            const agency = monthly * 1;
+            const total = deposit + keyMoney + agency + monthly;
+            simCard = (
+              <div className="tt-lp-card">
+                <div className="tt-lp-card-title">🧮 初期費用</div>
+                <div className="tt-lp-sim-row"><span>敷金（2ヶ月）</span><span>{deposit.toLocaleString()}円</span></div>
+                <div className="tt-lp-sim-row"><span>礼金（1ヶ月）</span><span>{keyMoney.toLocaleString()}円</span></div>
+                <div className="tt-lp-sim-row"><span>仲介手数料</span><span>{agency.toLocaleString()}円</span></div>
+                <div className="tt-lp-sim-row"><span>前払い家賃</span><span>{monthly.toLocaleString()}円</span></div>
+                <div className="tt-lp-sim-total"><span>合計目安</span><span>約{Math.round(total / 10000)}万円</span></div>
+              </div>
+            );
+          } else if (isSale && p.price) {
+            const monthly = Math.round(Number(p.price) * 10000 * 0.8 / 420);
+            simCard = (
+              <div className="tt-lp-card">
+                <div className="tt-lp-card-title">🏦 住宅ローン試算</div>
+                <div className="tt-lp-sim-row"><span>物件価格</span><span>{Number(p.price).toLocaleString()}万円</span></div>
+                <div className="tt-lp-sim-row"><span>頭金（20%）</span><span>{Math.round(Number(p.price) * 0.2).toLocaleString()}万円</span></div>
+                <div className="tt-lp-sim-row"><span>金利 0.5%・35年</span><span></span></div>
+                <div className="tt-lp-sim-total"><span>月々目安</span><span>約{monthly.toLocaleString()}円</span></div>
+              </div>
+            );
+          } else if (isInvest) {
+            const yieldVal = p.yield || '未設定';
+            simCard = (
+              <div className="tt-lp-card">
+                <div className="tt-lp-card-title">📈 投資シミュレーター</div>
+                <div className="tt-lp-sim-row"><span>表面利回り</span><span style={{ color: '#16a34a', fontWeight: 700 }}>{yieldVal}%</span></div>
+                {p.price && <div className="tt-lp-sim-row"><span>物件価格</span><span>{Number(p.price).toLocaleString()}万円</span></div>}
+                <a href="/simulator" className="tt-lp-link-btn" style={{ marginTop: 10 }}>詳細シミュレーション →</a>
+              </div>
+            );
+          }
+
+          return (
+            <div className="tt-pc-left-panel">
+              <div className="tt-lp-card">
+                <div className="tt-lp-card-title">📍 周辺マップ</div>
+                <div className="tt-lp-station">{p.station || '駅情報なし'}</div>
+                {p.address && <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{p.address}</div>}
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="tt-lp-link-btn">Googleマップで見る →</a>
+              </div>
+
+              {simCard}
+
+              <div className="tt-lp-card">
+                <div className="tt-lp-card-title">🤝 おすすめ</div>
+                {[
+                  { label: 'リフォーム相談', icon: '🔨', href: '/partner/reform' },
+                  { label: '火災保険比較', icon: '🔥', href: '/partner/insurance' },
+                  { label: '不動産担保ローン', icon: '💰', href: '/partner/loan' },
+                ].map(item => (
+                  <a key={item.label} href={item.href} className="tt-lp-partner-row">
+                    <span>{item.icon} {item.label}</span>
+                    <span className="tt-lp-arrow">›</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* 中央：縦長フィード */}
         <div className="tt-pc-center">
           {/* フィルターバー */}
