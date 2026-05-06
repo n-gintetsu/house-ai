@@ -13,14 +13,14 @@ const ADMIN_PASSWORD = 'gintetsu2024admin'
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
-  { id: 'agencies', label: '🏢 企業管理' },
+  { id: 'vendors', label: '🏢 業者管理' },
   { id: 'properties', label: '🏠 物件管理' },
-  { id: 'valuations', label: '🏷️ 査定依頼' },
-  { id: 'experts', label: '👔 専門家依頼' },
-  { id: 'community', label: '🏘️ コミュニティ' },
-  { id: 'owners', label: '🔑 オーナー依頼' },
-  { id: 'ads', label: '📢 広告管理' },
-  { id: 'growth', label: '📊 グロース分析' },
+  { id: 'cases', label: '💬 相談・案件管理' },
+  { id: 'reports', label: '🚨 通報・トラブル管理' },
+  { id: 'billing', label: '💳 課金・プラン管理' },
+  { id: 'community', label: '🏘️ コミュニティ管理' },
+  { id: 'ads', label: '📢 広告・PR管理' },
+  { id: 'growth', label: '📈 KPI/分析' },
 ]
 
 
@@ -309,9 +309,9 @@ function MembersPanel({ supabaseAdmin }) {
 
   return (
     <div>
-      <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>👤 会員管理（{members.length}件）</h2>
+      <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>👤 会員管理（{members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').length}件）</h2>
       {error && <div style={{ padding: '12px 16px', borderRadius: 12, background: '#fee2e2', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>{error}</div>}
-      {members.length === 0 ? <p style={{ color: '#777' }}>会員はいません</p> : members.map(m => (
+      {members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').length === 0 ? <p style={{ color: '#777' }}>会員はいません</p> : members.filter(m => m.user_metadata?.user_type !== 'agency' && m.user_metadata?.user_type !== 'partner').map(m => (
         <div key={m.id} onClick={() => handleSelectMember(m)} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
           onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
           onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
@@ -404,6 +404,10 @@ export default function AdminDashboard() {
   const [owners, setOwners] = useState([])
   const [loading, setLoading] = useState(false)
   const [growthData, setGrowthData] = useState(null)
+  const [partners, setPartners] = useState([])
+  const [partnerLoading, setPartnerLoading] = useState(false)
+  const [selectedPartner, setSelectedPartner] = useState(null)
+  const [vendorSubTab, setVendorSubTab] = useState('agency')
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -461,6 +465,10 @@ export default function AdminDashboard() {
     if (authed) { loadAll(); fetchGrowthData(); }
   }, [authed])
 
+  useEffect(() => {
+    if (tab === 'vendors' && vendorSubTab === 'partner' && partners.length === 0) fetchPartners()
+  }, [tab, vendorSubTab])
+
   async function deletePost(id) {
     if (!window.confirm('この投稿を削除しますか？')) return
     await supabase.from('community_posts').delete().eq('id', id)
@@ -490,6 +498,45 @@ export default function AdminDashboard() {
   async function updateValuationStatus(id, status) {
     await supabase.from('valuations').update({ status }).eq('id', id)
     setValuations(list => list.map(v => v.id === id ? { ...v, status } : v))
+  }
+
+  async function fetchPartners() {
+    setPartnerLoading(true)
+    try {
+      const { data: authData, error } = await supabaseAdmin.auth.admin.listUsers()
+      if (error) throw error
+      const partnerUsers = (authData.users || []).filter(u => u.user_metadata?.user_type === 'partner')
+      const { data: profiles } = await supabase.from('partner_profiles').select('*')
+      const profileMap = {}
+      if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
+      setPartners(partnerUsers.map(u => ({ ...u, profile: profileMap[u.id] || null })))
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setPartnerLoading(false)
+    }
+  }
+
+  async function updatePartnerStatus(userId, status) {
+    await supabase.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
+    setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
+    setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
+  }
+
+  async function deletePartner(userId, companyName) {
+    if (!window.confirm(`「${companyName || 'このユーザー'}」を削除しますか？この操作は取り消せません。`)) return
+    const res = await fetch('/api/delete-partner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert('削除に失敗しました: ' + (data.error || res.status))
+      return
+    }
+    setPartners(list => list.filter(p => p.id !== userId))
+    setSelectedPartner(null)
   }
 
   // ログイン画面
@@ -620,6 +667,93 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* 業者管理 */}
+          {tab === 'vendors' && (
+            <div>
+              <h2 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 20 }}>🏢 業者管理</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                {[{ id: 'agency', label: '🏠 不動産業者' }, { id: 'partner', label: '📢 広告パートナー' }].map(t => (
+                  <button key={t.id} onClick={() => setVendorSubTab(t.id)}
+                    style={{ padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      background: vendorSubTab === t.id ? '#1a3a5c' : '#f0f0f0',
+                      color: vendorSubTab === t.id ? '#fff' : '#555' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {vendorSubTab === 'agency' && (
+                <div>
+                  <div style={{ color: '#777', fontSize: 13, marginBottom: 12 }}>{agencies.length}件</div>
+                  {agencies.length === 0 ? <p style={{ color: '#777' }}>登録はありません</p> : agencies.map(a => (
+                    <div key={a.id} onClick={() => setSelectedAgency(a)}
+                      style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{a.company_name}</div>
+                          <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>担当：{a.contact_name} / {a.phone} / {a.email}</div>
+                          <div style={{ fontSize: 13, color: '#555' }}>業種：{a.business_type} / エリア：{a.area}</div>
+                          {a.service_description && <div style={{ fontSize: 12, color: '#777', marginTop: 4 }}>{a.service_description}</div>}
+                          <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{a.created_at ? new Date(a.created_at).toLocaleString('ja-JP') : ''}</div>
+                        </div>
+                        <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, flexShrink: 0,
+                          background: a.status === 'approved' ? '#dcfce7' : a.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+                          color: a.status === 'approved' ? '#16a34a' : a.status === 'rejected' ? '#dc2626' : '#92400e' }}>
+                          {a.status === 'approved' ? '✅ 承認済' : a.status === 'rejected' ? '❌ 却下' : '⏳ 審査中'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {vendorSubTab === 'partner' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ color: '#777', fontSize: 13 }}>{partners.length}件</div>
+                    <button onClick={fetchPartners} style={{ background: '#f0f0f0', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, cursor: 'pointer' }}>🔄 更新</button>
+                  </div>
+                  {partnerLoading && <p style={{ color: '#777', fontSize: 13 }}>読み込み中...</p>}
+                  {!partnerLoading && partners.length === 0 && <p style={{ color: '#999', fontSize: 13 }}>パートナー業者の登録はありません</p>}
+                  {partners.map(p => {
+                    const status = p.profile?.ad_status || '審査中'
+                    const statusColor = status === '掲載中' ? '#16a34a' : status === '却下' ? '#dc2626' : '#92400e'
+                    const statusBg = status === '掲載中' ? '#dcfce7' : status === '却下' ? '#fee2e2' : '#fef9c3'
+                    return (
+                      <div key={p.id} onClick={() => setSelectedPartner(p)}
+                        style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, border: '2px solid transparent', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = '#1a3a5c'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.user_metadata?.company_name || '(会社名未設定)'}</div>
+                            <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>業種：{p.user_metadata?.business_type || '—'}</div>
+                            <div style={{ fontSize: 13, color: '#555' }}>✉️ {p.email}</div>
+                            <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>登録：{p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                            <span style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: statusBg, color: statusColor }}>
+                              {status === '掲載中' ? '✅ 承認済' : status === '却下' ? '❌ 却下' : '⏳ 審査中'}
+                            </span>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {status !== '掲載中' && <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '掲載中') }} style={{ padding: '5px 14px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>承認</button>}
+                              {status !== '却下' && <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '却下') }} style={{ padding: '5px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>却下</button>}
+                              {status !== '審査中' && <button onClick={e => { e.stopPropagation(); updatePartnerStatus(p.id, '審査中') }} style={{ padding: '5px 14px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>審査中に戻す</button>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -803,6 +937,54 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {selectedPartner && ReactDOM.createPortal(
+        <div onClick={() => setSelectedPartner(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+            <button onClick={() => setSelectedPartner(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999', lineHeight: 1 }}>×</button>
+            <h3 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 18, fontWeight: 800, paddingRight: 32 }}>
+              {selectedPartner.user_metadata?.company_name || '(会社名未設定)'}
+            </h3>
+            {(() => {
+              const status = selectedPartner.profile?.ad_status || '審査中'
+              const statusColor = status === '掲載中' ? '#16a34a' : status === '却下' ? '#dc2626' : '#92400e'
+              const statusBg = status === '掲載中' ? '#dcfce7' : status === '却下' ? '#fee2e2' : '#fef9c3'
+              return (
+                <>
+                  {[
+                    { label: '会社名', value: selectedPartner.user_metadata?.company_name || '—' },
+                    { label: '業種', value: selectedPartner.user_metadata?.business_type || '—' },
+                    { label: 'メール', value: selectedPartner.email },
+                    { label: '登録日', value: selectedPartner.created_at ? new Date(selectedPartner.created_at).toLocaleString('ja-JP') : '—' },
+                    { label: '最終ログイン', value: selectedPartner.last_sign_in_at ? new Date(selectedPartner.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン' },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #f0f0f0', fontSize: 14 }}>
+                      <span style={{ color: '#888', minWidth: 110, flexShrink: 0 }}>{label}</span>
+                      <span style={{ color: '#1a3a5c', fontWeight: 500, wordBreak: 'break-all' }}>{value}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 16, marginTop: 4, flexWrap: 'wrap' }}>
+                    <span style={{ padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: statusBg, color: statusColor }}>
+                      {status === '掲載中' ? '✅ 承認済' : status === '却下' ? '❌ 却下' : '⏳ 審査中'}
+                    </span>
+                    <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                      {status !== '掲載中' && <button onClick={() => updatePartnerStatus(selectedPartner.id, '掲載中')} style={{ padding: '8px 18px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>承認</button>}
+                      {status !== '却下' && <button onClick={() => updatePartnerStatus(selectedPartner.id, '却下')} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>却下</button>}
+                      {status !== '審査中' && <button onClick={() => updatePartnerStatus(selectedPartner.id, '審査中')} style={{ padding: '8px 18px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>審査中に戻す</button>}
+                    </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 16, paddingTop: 16 }}>
+                    <button onClick={() => deletePartner(selectedPartner.id, selectedPartner.user_metadata?.company_name)} style={{ background: '#fff', color: '#dc2626', border: '1px solid #dc2626', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      🗑️ このユーザーを削除
+                    </button>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {selectedAgency && ReactDOM.createPortal(
         <div onClick={() => setSelectedAgency(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
