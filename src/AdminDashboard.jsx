@@ -320,7 +320,14 @@ function MembersPanel({ supabaseAdmin }) {
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{m.user_metadata?.name || '（名前未設定）'}</div>
               <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>✉️ {m.email}</div>
-              <div style={{ fontSize: 13, color: '#555' }}>種別：{m.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員'}</div>
+              <div style={{ fontSize: 13, color: '#555' }}>
+                種別：{m.user_metadata?.user_type === 'partner' ? 'パートナー業者' : m.user_metadata?.user_type === 'agency' ? '不動産業者' : '一般会員'}
+                {m.user_metadata?.user_type === 'partner' && (m.user_metadata?.company_name || m.user_metadata?.business_type) && (
+                  <span style={{ marginLeft: 8, background: '#fef3c7', color: '#92400e', borderRadius: 4, padding: '1px 6px', fontSize: 11 }}>
+                    {[m.user_metadata?.company_name, m.user_metadata?.business_type].filter(Boolean).join(' / ')}
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: 11, color: '#aaa', marginTop: 4, display: 'flex', gap: 12 }}>
                 <span>登録：{m.created_at ? new Date(m.created_at).toLocaleString('ja-JP') : ''}</span>
                 <span>最終ログイン：{m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン'}</span>
@@ -350,7 +357,11 @@ function MembersPanel({ supabaseAdmin }) {
             </h3>
             {[
               { label: 'メール', value: selectedMember.email },
-              { label: '種別', value: selectedMember.user_metadata?.user_type === 'agency' ? '業者・企業会員' : '一般会員' },
+              { label: '種別', value: selectedMember.user_metadata?.user_type === 'partner' ? 'パートナー業者' : selectedMember.user_metadata?.user_type === 'agency' ? '不動産業者' : '一般会員' },
+              ...(selectedMember.user_metadata?.user_type === 'partner' ? [
+                { label: '会社名', value: selectedMember.user_metadata?.company_name || '—' },
+                { label: '業種', value: selectedMember.user_metadata?.business_type || '—' },
+              ] : []),
               { label: '電話番号', value: profile?.phone || selectedMember.user_metadata?.phone || '—' },
               { label: '登録日', value: selectedMember.created_at ? new Date(selectedMember.created_at).toLocaleString('ja-JP') : '—' },
               { label: '最終ログイン', value: selectedMember.last_sign_in_at ? new Date(selectedMember.last_sign_in_at).toLocaleString('ja-JP') : '未ログイン' },
@@ -864,6 +875,8 @@ export default function AdminDashboard() {
 function AdManagement({ supabaseAdmin }) {
   const [tickerItems, setTickerItems] = useState([])
   const [adItems, setAdItems] = useState([])
+  const [partners, setPartners] = useState([])
+  const [partnerLoading, setPartnerLoading] = useState(false)
   const [activeSection, setActiveSection] = useState('ticker')
   const [form, setForm] = useState({ label: 'PR', text: '', url: '', active: true, sort_order: 0 })
   const [adForm, setAdForm] = useState({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' })
@@ -874,6 +887,32 @@ function AdManagement({ supabaseAdmin }) {
     fetchTicker()
     fetchAds()
   }, [])
+
+  useEffect(() => {
+    if (activeSection === 'パートナー' && partners.length === 0) fetchPartners()
+  }, [activeSection])
+
+  const fetchPartners = async () => {
+    setPartnerLoading(true)
+    try {
+      const { data: authData, error } = await supabaseAdmin.auth.admin.listUsers()
+      if (error) throw error
+      const partnerUsers = (authData.users || []).filter(u => u.user_metadata?.user_type === 'partner')
+      const { data: profiles } = await supabaseAdmin.from('partner_profiles').select('*')
+      const profileMap = {}
+      if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
+      setPartners(partnerUsers.map(u => ({ ...u, profile: profileMap[u.id] || null })))
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setPartnerLoading(false)
+    }
+  }
+
+  const updatePartnerStatus = async (userId, status) => {
+    await supabaseAdmin.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
+    setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
+  }
 
   const fetchTicker = async () => {
     const { data } = await supabaseAdmin.from('ticker_items').select('*').order('sort_order')
@@ -984,6 +1023,50 @@ function AdManagement({ supabaseAdmin }) {
             ))}
             {adItems.length === 0 && <p style={{ color: '#999', fontSize: 13 }}>データがありません</p>}
           </div>
+        </div>
+      )}
+
+      {activeSection === 'パートナー' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0, fontSize: 15, color: '#1a3a5c' }}>👥 パートナー業者一覧（{partners.length}件）</h3>
+            <button onClick={fetchPartners} style={{ background: '#f0f0f0', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, cursor: 'pointer' }}>🔄 更新</button>
+          </div>
+          {partnerLoading && <p style={{ color: '#777', fontSize: 13 }}>読み込み中...</p>}
+          {!partnerLoading && partners.length === 0 && <p style={{ color: '#999', fontSize: 13 }}>パートナー業者の登録はありません</p>}
+          {partners.map(p => {
+            const status = p.profile?.ad_status || '審査中'
+            const statusColor = status === '掲載中' ? '#16a34a' : status === '却下' ? '#dc2626' : '#92400e'
+            const statusBg = status === '掲載中' ? '#dcfce7' : status === '却下' ? '#fee2e2' : '#fef9c3'
+            return (
+              <div key={p.id} style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #eee', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.user_metadata?.company_name || '(会社名未設定)'}</div>
+                    <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>業種：{p.user_metadata?.business_type || '—'}</div>
+                    <div style={{ fontSize: 13, color: '#555' }}>✉️ {p.email}</div>
+                    <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>登録：{p.created_at ? new Date(p.created_at).toLocaleString('ja-JP') : ''}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                    <span style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: statusBg, color: statusColor }}>
+                      {status === '掲載中' ? '✅ 承認済' : status === '却下' ? '❌ 却下' : '⏳ 審査中'}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {status !== '掲載中' && (
+                        <button onClick={() => updatePartnerStatus(p.id, '掲載中')} style={{ padding: '5px 14px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>承認</button>
+                      )}
+                      {status !== '却下' && (
+                        <button onClick={() => updatePartnerStatus(p.id, '却下')} style={{ padding: '5px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>却下</button>
+                      )}
+                      {status !== '審査中' && (
+                        <button onClick={() => updatePartnerStatus(p.id, '審査中')} style={{ padding: '5px 14px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>審査中に戻す</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
