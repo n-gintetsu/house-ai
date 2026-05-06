@@ -265,6 +265,25 @@ function MembersPanel({ supabaseAdmin }) {
   const [error, setError] = useState('')
   const [selectedMember, setSelectedMember] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [notes, setNotes] = useState([])
+  const [noteInput, setNoteInput] = useState('')
+
+  useEffect(() => {
+    if (selectedMember) { fetchNotes(selectedMember.id); setNoteInput('') }
+    else setNotes([])
+  }, [selectedMember])
+
+  async function fetchNotes(targetId) {
+    const { data } = await supabase.from('admin_notes').select('*').eq('target_id', targetId).order('created_at', { ascending: true })
+    setNotes(data || [])
+  }
+
+  async function addNote(targetId) {
+    if (!noteInput.trim()) return
+    await supabase.from('admin_notes').insert({ target_type: 'member', target_id: targetId, content: noteInput, admin_name: '管理者' })
+    setNoteInput('')
+    fetchNotes(targetId)
+  }
 
   useEffect(() => {
     async function load() {
@@ -380,6 +399,27 @@ function MembersPanel({ supabaseAdmin }) {
               </span>
               <button onClick={() => handleDeleteUser(selectedMember.id, selectedMember.email)} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>削除</button>
             </div>
+            <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 20, paddingTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginBottom: 10 }}>📝 管理者メモ</div>
+              <div style={{ marginBottom: 12, maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {notes.length === 0 && <p style={{ color: '#aaa', fontSize: 12, margin: 0 }}>メモはありません</p>}
+                {notes.map(n => (
+                  <div key={n.id} style={{ background: '#f8f9fa', borderRadius: 8, padding: '8px 12px' }}>
+                    <div style={{ fontSize: 11, color: '#aaa', marginBottom: 2 }}>{n.admin_name} • {n.created_at ? new Date(n.created_at).toLocaleString('ja-JP') : ''}</div>
+                    <div style={{ fontSize: 13, color: '#333' }}>{n.content}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <textarea value={noteInput} onChange={e => setNoteInput(e.target.value)}
+                  placeholder="メモを入力..." rows={2}
+                  style={{ flex: 1, padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8, fontSize: 16, resize: 'vertical', fontFamily: 'inherit' }} />
+                <button onClick={() => addNote(selectedMember.id)}
+                  style={{ padding: '8px 16px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-end' }}>
+                  メモを追加
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body
@@ -408,6 +448,13 @@ export default function AdminDashboard() {
   const [partnerLoading, setPartnerLoading] = useState(false)
   const [selectedPartner, setSelectedPartner] = useState(null)
   const [vendorSubTab, setVendorSubTab] = useState('agency')
+  const [reports, setReports] = useState([])
+  const [reportLoading, setReportLoading] = useState(false)
+  const [casesSubTab, setCasesSubTab] = useState('valuations')
+  const [billingSubTab, setBillingSubTab] = useState('agency')
+  const [expertRegs, setExpertRegs] = useState([])
+  const [agencyNotes, setAgencyNotes] = useState([])
+  const [agencyNoteInput, setAgencyNoteInput] = useState('')
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -468,6 +515,16 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (tab === 'vendors' && vendorSubTab === 'partner' && partners.length === 0) fetchPartners()
   }, [tab, vendorSubTab])
+
+  useEffect(() => {
+    if (tab === 'reports') fetchReports()
+    if (tab === 'billing' && billingSubTab === 'expert') fetchExpertRegs()
+  }, [tab, billingSubTab])
+
+  useEffect(() => {
+    if (selectedAgency) { fetchAgencyNotes(selectedAgency.id); setAgencyNoteInput('') }
+    else setAgencyNotes([])
+  }, [selectedAgency])
 
   async function deletePost(id) {
     if (!window.confirm('この投稿を削除しますか？')) return
@@ -537,6 +594,35 @@ export default function AdminDashboard() {
     }
     setPartners(list => list.filter(p => p.id !== userId))
     setSelectedPartner(null)
+  }
+
+  async function fetchReports() {
+    setReportLoading(true)
+    const { data } = await supabaseAdmin.from('reports').select('*').order('created_at', { ascending: false })
+    setReports(data || [])
+    setReportLoading(false)
+  }
+
+  async function updateReportStatus(id, status) {
+    await supabaseAdmin.from('reports').update({ status }).eq('id', id)
+    setReports(list => list.map(r => r.id === id ? { ...r, status } : r))
+  }
+
+  async function fetchExpertRegs() {
+    const { data } = await supabase.from('expert_registrations').select('*').order('created_at', { ascending: false })
+    setExpertRegs(data || [])
+  }
+
+  async function fetchAgencyNotes(targetId) {
+    const { data } = await supabase.from('admin_notes').select('*').eq('target_id', targetId).order('created_at', { ascending: true })
+    setAgencyNotes(data || [])
+  }
+
+  async function addAgencyNote(targetId, targetType) {
+    if (!agencyNoteInput.trim()) return
+    await supabase.from('admin_notes').insert({ target_type: targetType, target_id: targetId, content: agencyNoteInput, admin_name: '管理者' })
+    setAgencyNoteInput('')
+    fetchAgencyNotes(targetId)
   }
 
   // ログイン画面
@@ -802,6 +888,133 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* 相談・案件管理 */}
+          {tab === 'cases' && (
+            <div>
+              <h2 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 20 }}>💬 相談・案件管理</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                {[{ id: 'valuations', label: '🏠 査定依頼' }, { id: 'experts', label: '👔 専門家依頼' }].map(t => (
+                  <button key={t.id} onClick={() => setCasesSubTab(t.id)}
+                    style={{ padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      background: casesSubTab === t.id ? '#1a3a5c' : '#f0f0f0',
+                      color: casesSubTab === t.id ? '#fff' : '#555' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {casesSubTab === 'valuations' && (
+                <div>
+                  <div style={{ color: '#777', fontSize: 13, marginBottom: 12 }}>{valuations.length}件</div>
+                  {valuations.length === 0 ? <p style={{ color: '#777' }}>依頼はありません</p> : valuations.map(v => (
+                    <div key={v.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{v.name}</div>
+                          <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>✉️ {v.email} / {v.property_type}</div>
+                          <div style={{ fontSize: 13, color: '#555' }}>📍 {v.address}</div>
+                          <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{v.created_at ? new Date(v.created_at).toLocaleString('ja-JP') : ''}</div>
+                        </div>
+                        <div>
+                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                            background: v.status === 'done' ? '#dcfce7' : '#fef9c3',
+                            color: v.status === 'done' ? '#16a34a' : '#92400e' }}>
+                            {v.status === 'done' ? '✅ 対応済' : '⏳ 未対応'}
+                          </span>
+                          {v.status !== 'done' && <button onClick={() => updateValuationStatus(v.id, 'done')} style={{ marginLeft: 8, padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>対応済にする</button>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {casesSubTab === 'experts' && (
+                <div>
+                  <div style={{ color: '#777', fontSize: 13, marginBottom: 12 }}>{experts.length}件</div>
+                  {experts.length === 0 ? <p style={{ color: '#777' }}>依頼はありません</p> : experts.map(e => (
+                    <div key={e.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{e.name}</div>
+                      <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>カテゴリ：{e.expert_type}</div>
+                      <div style={{ fontSize: 13, color: '#555' }}>✉️ {e.email}</div>
+                      {e.situation && <div style={{ fontSize: 12, color: '#777', marginTop: 4 }}>{e.situation}</div>}
+                      <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{e.created_at ? new Date(e.created_at).toLocaleString('ja-JP') : ''}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 通報・トラブル管理 */}
+          {tab === 'reports' && (
+            <div>
+              <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🚨 通報・トラブル管理</h2>
+              {reportLoading && <p style={{ color: '#777' }}>読み込み中...</p>}
+              {!reportLoading && reports.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在通報はありません ✅</div>
+              )}
+              {reports.map(r => {
+                const statusMap = { 未確認: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未確認' }, 調査中: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, 対応済み: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, 却下: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
+                const s = statusMap[r.status] || statusMap['未確認']
+                return (
+                  <div key={r.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{r.reason || r.report_reason || '（理由未記入）'}</div>
+                        {r.target_type && <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>対象種別：{r.target_type}</div>}
+                        <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : ''}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>{s.label}</span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {r.status !== '調査中' && <button onClick={() => updateReportStatus(r.id, '調査中')} style={{ padding: '4px 10px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>調査中にする</button>}
+                          {r.status !== '対応済み' && <button onClick={() => updateReportStatus(r.id, '対応済み')} style={{ padding: '4px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>対応済み</button>}
+                          {r.status !== '却下' && <button onClick={() => updateReportStatus(r.id, '却下')} style={{ padding: '4px 10px', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>却下</button>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 課金・プラン管理 */}
+          {tab === 'billing' && (
+            <div>
+              <h2 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 20 }}>💳 課金・プラン管理</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                {[{ id: 'agency', label: '🏠 不動産業者' }, { id: 'expert', label: '👔 専門家' }].map(t => (
+                  <button key={t.id} onClick={() => setBillingSubTab(t.id)}
+                    style={{ padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      background: billingSubTab === t.id ? '#1a3a5c' : '#f0f0f0',
+                      color: billingSubTab === t.id ? '#fff' : '#555' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {(() => {
+                const planBadge = (plan) => {
+                  const p = plan || 'free'
+                  const styles = { free: { bg: '#f1f5f9', color: '#555' }, standard: { bg: '#1a3a5c', color: '#fff' }, premium: { bg: '#c9a84c', color: '#fff' } }
+                  const s = styles[p] || styles.free
+                  return <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: s.bg, color: s.color }}>{p.toUpperCase()}</span>
+                }
+                const list = billingSubTab === 'agency' ? agencies : expertRegs
+                if (billingSubTab === 'expert' && expertRegs.length === 0) return <p style={{ color: '#777', fontSize: 13 }}>読み込み中... または登録なし</p>
+                return list.length === 0 ? <p style={{ color: '#777' }}>登録はありません</p> : list.map(item => (
+                  <div key={item.id} style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: '#1a3a5c' }}>{item.company_name || item.name || '—'}</div>
+                      <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>✉️ {item.email}</div>
+                      <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{item.created_at ? new Date(item.created_at).toLocaleString('ja-JP') : ''}</div>
+                    </div>
+                    {planBadge(item.plan)}
+                  </div>
+                ))
+              })()}
+            </div>
+          )}
+
           {/* コミュニティ管理 */}
           {tab === 'community' && (
             <div>
@@ -1043,6 +1256,27 @@ export default function AdminDashboard() {
                   <button onClick={() => { updateAgencyStatus(selectedAgency.id, 'rejected'); setSelectedAgency(prev => ({ ...prev, status: 'rejected' })); }} style={{ padding: '8px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>却下</button>
                 )}
                 <button onClick={() => deleteAgency(selectedAgency.id)} style={{ padding: '8px 18px', background: '#7f1d1d', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>削除</button>
+              </div>
+            </div>
+            <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 20, paddingTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginBottom: 10 }}>📝 管理者メモ</div>
+              <div style={{ marginBottom: 12, maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {agencyNotes.length === 0 && <p style={{ color: '#aaa', fontSize: 12, margin: 0 }}>メモはありません</p>}
+                {agencyNotes.map(n => (
+                  <div key={n.id} style={{ background: '#f8f9fa', borderRadius: 8, padding: '8px 12px' }}>
+                    <div style={{ fontSize: 11, color: '#aaa', marginBottom: 2 }}>{n.admin_name} • {n.created_at ? new Date(n.created_at).toLocaleString('ja-JP') : ''}</div>
+                    <div style={{ fontSize: 13, color: '#333' }}>{n.content}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <textarea value={agencyNoteInput} onChange={e => setAgencyNoteInput(e.target.value)}
+                  placeholder="メモを入力..." rows={2}
+                  style={{ flex: 1, padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8, fontSize: 16, resize: 'vertical', fontFamily: 'inherit' }} />
+                <button onClick={() => addAgencyNote(selectedAgency.id, 'agency')}
+                  style={{ padding: '8px 16px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-end' }}>
+                  メモを追加
+                </button>
               </div>
             </div>
           </div>
