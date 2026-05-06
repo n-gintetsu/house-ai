@@ -4,13 +4,23 @@ import { supabase } from './lib/supabase'
 const navy = '#1a3a5c'
 const gold = '#c9a84c'
 
+const BUSINESS_TYPES = ['リフォーム', '外構', '司法書士', '税理士', '金融機関', 'その他']
+
+function getInitialMode() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('mode') === 'register' ? 'register' : 'login'
+}
+
 export default function PartnerDashboard() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('ads')
+  const [mode, setMode] = useState(getInitialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [businessType, setBusinessType] = useState(BUSINESS_TYPES[0])
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -63,6 +73,27 @@ export default function PartnerDashboard() {
     setLoginLoading(false)
   }
 
+  const handleRegister = async () => {
+    if (!companyName.trim()) { setLoginError('会社名を入力してください'); return }
+    setLoginLoading(true)
+    setLoginError('')
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { user_type: 'partner', company_name: companyName, business_type: businessType } }
+    })
+    if (error) setLoginError('登録に失敗しました。メールアドレスを確認してください')
+    setLoginLoading(false)
+  }
+
+  const switchMode = (newMode) => {
+    setMode(newMode)
+    setLoginError('')
+    const url = new URL(window.location.href)
+    url.searchParams.set('mode', newMode)
+    window.history.replaceState(null, '', url.toString())
+  }
+
   const handleLogout = async () => { await supabase.auth.signOut() }
 
   const handleSaveProfile = async () => {
@@ -102,13 +133,33 @@ export default function PartnerDashboard() {
 
   if (!user) return (
     <div style={{ minHeight: '100vh', background: '#eef2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 400, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 420, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🏢</div>
           <div style={{ color: navy, fontSize: 20, fontWeight: 700 }}>パートナー業者様専用</div>
-          <div style={{ color: '#888', fontSize: 13, marginTop: 4 }}>ダッシュボードにログイン</div>
+          <div style={{ color: '#888', fontSize: 13, marginTop: 4 }}>
+            {mode === 'register' ? '新規会員登録' : 'ダッシュボードにログイン'}
+          </div>
         </div>
-        <div style={{ marginBottom: 16 }}>
+
+        {mode === 'register' && (
+          <>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>会社名</label>
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="株式会社〇〇"
+                style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>業種</label>
+              <select value={businessType} onChange={e => setBusinessType(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', background: '#fff' }}>
+                {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+
+        <div style={{ marginBottom: 14 }}>
           <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>メールアドレス</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="info@example.com"
             style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
@@ -117,15 +168,36 @@ export default function PartnerDashboard() {
           <label style={{ color: navy, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>パスワード</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
             style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+            onKeyDown={e => e.key === 'Enter' && (mode === 'register' ? handleRegister() : handleLogin())} />
         </div>
+
         {loginError && <div style={{ color: '#e74c3c', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{loginError}</div>}
-        <button onClick={handleLogin} disabled={loginLoading}
-          style={{ width: '100%', padding: '12px', background: navy, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-          {loginLoading ? 'ログイン中...' : 'ログイン'}
-        </button>
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <a href="/" style={{ color: '#888', fontSize: 12 }}>← トップページに戻る</a>
+
+        {mode === 'register' ? (
+          <button onClick={handleRegister} disabled={loginLoading}
+            style={{ width: '100%', padding: '12px', background: gold, color: navy, border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+            {loginLoading ? '登録中...' : '無料で会員登録する'}
+          </button>
+        ) : (
+          <button onClick={handleLogin} disabled={loginLoading}
+            style={{ width: '100%', padding: '12px', background: navy, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+            {loginLoading ? 'ログイン中...' : 'ログイン'}
+          </button>
+        )}
+
+        <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {mode === 'register' ? (
+            <button onClick={() => switchMode('login')}
+              style={{ background: 'none', border: 'none', color: navy, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+              すでに登録済みの方はログインはこちら
+            </button>
+          ) : (
+            <button onClick={() => switchMode('register')}
+              style={{ background: 'none', border: 'none', color: navy, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+              アカウントをお持ちでない方は登録はこちら
+            </button>
+          )}
+          <a href="/" style={{ color: '#aaa', fontSize: 12 }}>← トップページに戻る</a>
         </div>
       </div>
     </div>

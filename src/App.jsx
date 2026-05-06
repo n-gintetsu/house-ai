@@ -2027,7 +2027,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ border: '2px solid #c9a84c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
-                      onClick={() => window.location.href = '/partner'}>
+                      onClick={() => window.location.href = '/partner?mode=register'}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
                       <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>その他の業者様</div>
                       <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
