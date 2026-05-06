@@ -455,6 +455,7 @@ export default function AdminDashboard() {
   const [expertRegs, setExpertRegs] = useState([])
   const [agencyNotes, setAgencyNotes] = useState([])
   const [agencyNoteInput, setAgencyNoteInput] = useState('')
+  const [allMembers, setAllMembers] = useState([])
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -509,7 +510,7 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (authed) { loadAll(); fetchGrowthData(); }
+    if (authed) { loadAll(); fetchGrowthData(); fetchAllMembers(); fetchReports(); }
   }, [authed])
 
   useEffect(() => {
@@ -613,6 +614,13 @@ export default function AdminDashboard() {
     setExpertRegs(data || [])
   }
 
+  async function fetchAllMembers() {
+    try {
+      const { data } = await supabaseAdmin.auth.admin.listUsers()
+      setAllMembers(data?.users || [])
+    } catch(e) { console.error(e) }
+  }
+
   async function fetchAgencyNotes(targetId) {
     const { data } = await supabase.from('admin_notes').select('*').eq('target_id', targetId).order('created_at', { ascending: true })
     setAgencyNotes(data || [])
@@ -704,28 +712,79 @@ export default function AdminDashboard() {
           {loading && <div style={{ textAlign: 'center', padding: 40, color: '#777' }}>読み込み中...</div>}
 
           {/* サマリー */}
-          {tab === 'summary' && (
-            <div>
-              <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📊 ダッシュボード サマリー</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 32 }}>
-                {statCards.map(c => (
-                  <div key={c.label} style={{ background: '#fff', borderRadius: 14, padding: '20px 16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderTop: `3px solid ${c.color}` }}>
-                    <div style={{ fontSize: 28, fontWeight: 800, color: c.color }}>{c.value}</div>
-                    <div style={{ fontSize: 13, color: '#777', marginTop: 4 }}>{c.label}</div>
+          {tab === 'summary' && (() => {
+            const pendingValuations = valuations.filter(v => !v.is_handled)
+            const kpiCards = [
+              { label: '総会員数', value: allMembers.length, color: '#3b82f6', icon: '👤', tabTo: 'members' },
+              { label: '不動産業者数', value: agencies.length, color: '#1a3a5c', icon: '🏠', tabTo: 'vendors' },
+              { label: '広告パートナー数', value: partners.length, color: '#7c3aed', icon: '📢', tabTo: 'vendors' },
+              { label: '未対応査定依頼', value: pendingValuations.length, color: '#f59e0b', icon: '📋', tabTo: 'cases' },
+              { label: 'コミュニティ投稿数', value: community.length, color: '#10b981', icon: '🏘️', tabTo: 'community' },
+              { label: '通報件数', value: reports.length, color: '#ef4444', icon: '🚨', tabTo: 'reports' },
+            ]
+            return (
+              <div>
+                <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📊 ダッシュボード サマリー</h2>
+
+                {/* KPIカード */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
+                  {kpiCards.map(c => (
+                    <div key={c.label} onClick={() => setTab(c.tabTo)}
+                      style={{ background: '#fff', borderRadius: 14, padding: '20px 16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderTop: `3px solid ${c.color}`, cursor: 'pointer', transition: 'transform 0.1s' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{c.icon}</div>
+                      <div style={{ fontSize: 30, fontWeight: 800, color: c.color }}>{c.value}</div>
+                      <div style={{ fontSize: 12, color: '#777', marginTop: 4 }}>{c.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* アラートバナー */}
+                {reports.length > 0 && (
+                  <div onClick={() => setTab('reports')}
+                    style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '12px 16px', marginBottom: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>🚨</span>
+                    <span style={{ fontSize: 14, color: '#dc2626', fontWeight: 700 }}>未対応の通報が{reports.length}件あります。確認してください。</span>
                   </div>
-                ))}
-              </div>
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 16 }}>📋 最新の査定依頼（5件）</h3>
-                {valuations.slice(0, 5).map(v => (
-                  <div key={v.id} style={{ padding: '10px 0', borderBottom: '1px solid #f0f4f8', fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
-                    <span><strong>{v.name}</strong> — {v.property_type} / {v.address}</span>
-                    <span style={{ color: '#777' }}>{v.created_at ? new Date(v.created_at).toLocaleDateString('ja-JP') : ''}</span>
+                )}
+                {pendingValuations.length > 0 && (
+                  <div onClick={() => setTab('cases')}
+                    style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '12px 16px', marginBottom: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>⚠️</span>
+                    <span style={{ fontSize: 14, color: '#92400e', fontWeight: 700 }}>未対応の査定依頼が{pendingValuations.length}件あります。</span>
                   </div>
-                ))}
+                )}
+
+                {/* 最新アクティビティ 2カラム */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <h3 style={{ margin: '0 0 14px', color: '#1a3a5c', fontSize: 15 }}>📋 最新の査定依頼</h3>
+                    {valuations.length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>データなし</p>}
+                    {valuations.slice(0, 5).map(v => (
+                      <div key={v.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f4f8', fontSize: 13 }}>
+                        <div style={{ fontWeight: 600, color: '#222' }}>{v.name}</div>
+                        <div style={{ color: '#777', fontSize: 12 }}>{v.property_type} / {v.address}</div>
+                        <div style={{ color: '#aaa', fontSize: 11 }}>{v.created_at ? new Date(v.created_at).toLocaleDateString('ja-JP') : ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <h3 style={{ margin: '0 0 14px', color: '#1a3a5c', fontSize: 15 }}>👤 最新の会員登録</h3>
+                    {allMembers.length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>データなし</p>}
+                    {allMembers.slice(0, 5).map(u => (
+                      <div key={u.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f4f8', fontSize: 13 }}>
+                        <div style={{ fontWeight: 600, color: '#222' }}>{u.email}</div>
+                        <div style={{ color: '#777', fontSize: 12 }}>{u.user_metadata?.user_type || '一般'}{u.user_metadata?.company_name ? ` / ${u.user_metadata.company_name}` : ''}</div>
+                        <div style={{ color: '#aaa', fontSize: 11 }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('ja-JP') : ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* 企業管理 */}
           {tab === 'agencies' && (
