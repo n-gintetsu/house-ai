@@ -60,9 +60,24 @@ function ImageUploader({ supabase, onUploaded, currentUrl }) {
 
 const PROPERTY_TYPES_ADMIN = ['マンション', '一戸建て', 'アパート', '土地', 'その他']
 const LAYOUTS_ADMIN = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上']
-const DEAL_LABEL = { rent: '賃貸', sale: '売買', both: '賃貸・売買' }
+const DEAL_LABEL = { rent: '賃貸', sale: '売買', investment: '投資用', both: '賃貸・売買' }
+const PREFECTURES = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
 
 function PropertiesPanel({ supabase }) {
+  const EMPTY_FORM = {
+    deal_type: 'rent', status: 'active', title: '', property_type: '',
+    catchcopy: '', prefecture: '', city: '', street_address: '',
+    nearest_station_line: '', nearest_station_name: '', nearest_station_walk: '',
+    layout: '', area: '', built_year: '', structure: '',
+    total_floors: '', floor_number: '', direction: '', parking: '',
+    description: '', features: '', image_url: '',
+    rent: '', management_fee: '', security_deposit: '', key_money: '',
+    available_date: '', contract_type: '', pet: '',
+    price: '', monthly_fee: '', repair_fund: '', land_area: '',
+    land_right: '', delivery_date: '', current_status: '',
+    gross_yield: '', rental_income: '', total_rooms: '',
+    occupancy_status: '', management_company: '',
+  }
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -70,12 +85,6 @@ function PropertiesPanel({ supabase }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isFeatured, setIsFeatured] = useState({})
-  const [form, setForm] = useState({
-    title: '', property_type: '', deal_type: 'rent', price: '', rent: '',
-    address: '', area: '', layout: '', built_year: '',
-    description: '', features: '', status: 'active', image_url: ''
-  })
-
   useEffect(() => { loadProperties() }, [])
 
   async function loadProperties() {
@@ -90,29 +99,54 @@ function PropertiesPanel({ supabase }) {
   }
 
   async function handleSubmit() {
-    if (!form.title.trim() || !form.address.trim()) {
-      alert('物件名と住所は必須です')
-      return
-    }
+    if (!form.title.trim()) { alert('物件名は必須です'); return }
     setSubmitting(true)
+    const address = [form.prefecture, form.city, form.street_address].filter(Boolean).join(' ')
     const payload = {
-      title: form.title,
+      title: form.title, deal_type: form.deal_type, status: form.status,
       property_type: form.property_type || null,
-      price: form.price ? parseInt(form.price) * 10000 : null,
-      rent: form.rent ? parseInt(form.rent) * 10000 : null,
-      address: form.address,
-      area: form.area ? parseFloat(form.area) : null,
+      catchcopy: form.catchcopy || null,
+      address: address || null,
+      prefecture: form.prefecture || null,
+      city: form.city || null,
+      street_address: form.street_address || null,
+      nearest_station_line: form.nearest_station_line || null,
+      nearest_station_name: form.nearest_station_name || null,
+      nearest_station_walk: form.nearest_station_walk ? parseInt(form.nearest_station_walk) : null,
       layout: form.layout || null,
+      area: form.area ? parseFloat(form.area) : null,
       built_year: form.built_year ? parseInt(form.built_year) : null,
+      structure: form.structure || null,
+      total_floors: form.total_floors ? parseInt(form.total_floors) : null,
+      floor_number: form.floor_number ? parseInt(form.floor_number) : null,
+      direction: form.direction || null,
+      parking: form.parking || null,
       description: form.description || null,
       features: form.features || null,
-      deal_type: form.deal_type || 'rent',
-      status: form.status,
       image_url: form.image_url || null,
+      rent: form.rent ? parseFloat(form.rent) * 10000 : null,
+      management_fee: form.management_fee ? parseInt(form.management_fee) : null,
+      security_deposit: form.security_deposit ? parseFloat(form.security_deposit) : null,
+      key_money: form.key_money ? parseFloat(form.key_money) : null,
+      available_date: form.available_date || null,
+      contract_type: form.contract_type || null,
+      pet: form.pet || null,
+      price: form.price ? parseInt(form.price) * 10000 : null,
+      monthly_fee: form.monthly_fee ? parseInt(form.monthly_fee) : null,
+      repair_fund: form.repair_fund ? parseInt(form.repair_fund) : null,
+      land_area: form.land_area ? parseFloat(form.land_area) : null,
+      land_right: form.land_right || null,
+      delivery_date: form.delivery_date || null,
+      current_status: form.current_status || null,
+      gross_yield: form.gross_yield ? parseFloat(form.gross_yield) : null,
+      rental_income: form.rental_income ? parseInt(form.rental_income) : null,
+      total_rooms: form.total_rooms ? parseInt(form.total_rooms) : null,
+      occupancy_status: form.occupancy_status || null,
+      management_company: form.management_company || null,
     }
     const { error } = await supabase.from('properties').insert(payload)
     if (error) { alert('登録に失敗しました: ' + error.message); setSubmitting(false); return }
-    setForm({ title: '', property_type: '', price: '', rent: '', address: '', area: '', layout: '', built_year: '', description: '', features: '', status: 'active' })
+    setForm(EMPTY_FORM)
     setShowForm(false)
     setSubmitting(false)
     loadProperties()
@@ -137,8 +171,17 @@ function PropertiesPanel({ supabase }) {
     setIsFeatured(prev => ({ ...prev, [id]: !current }))
   }
 
-  const fieldStyle = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(26,58,92,0.15)', background: '#fff', color: '#222', fontSize: 13, outline: 'none', fontFamily: 'inherit' }
-  const labelStyle = { display: 'block', fontSize: 11, color: '#777', marginBottom: 4 }
+  const F = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(26,58,92,0.15)', background: '#fff', color: '#222', fontSize: 16, outline: 'none', fontFamily: 'inherit' }
+  const L = { display: 'block', fontSize: 11, color: '#777', marginBottom: 4 }
+  const Sep = ({ label }) => (
+    <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e8edf2', paddingTop: 12, marginTop: 4 }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#1a3a5c', letterSpacing: 1 }}>{label}</span>
+    </div>
+  )
+  const isRent = form.deal_type === 'rent'
+  const isSale = form.deal_type === 'sale'
+  const isInv  = form.deal_type === 'investment'
+  const sf = v => e => setForm(p => ({ ...p, [v]: e.target.value }))
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>読み込み中...</div>
 
@@ -155,75 +198,138 @@ function PropertiesPanel({ supabase }) {
         <div style={{ background: '#f8fafc', borderRadius: 14, padding: 20, marginBottom: 24, border: '1px solid rgba(26,58,92,0.1)' }}>
           <h3 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 16 }}>新規物件登録</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={labelStyle}>取引種別 *</label>
-              <select style={fieldStyle} value={form.deal_type} onChange={e => setForm(f => ({ ...f, deal_type: e.target.value }))}>
-                <option value="rent">賃貸</option>
-                <option value="sale">売買</option>
-                <option value="both">賃貸・売買両方</option>
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>ステータス</label>
-              <select style={fieldStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
-                <option value="active">公開中</option>
-                <option value="inactive">非公開</option>
-              </select>
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>物件名 *</label>
-              <input style={fieldStyle} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：大宮駅徒歩5分 2LDKマンション" />
-            </div>
-            <div>
-              <label style={labelStyle}>物件種別</label>
-              <select style={fieldStyle} value={form.property_type} onChange={e => setForm(f => ({ ...f, property_type: e.target.value }))}>
+
+            <Sep label="基本情報" />
+            <div><label style={L}>取引種別 *</label>
+              <select style={F} value={form.deal_type} onChange={sf('deal_type')}>
+                <option value="rent">賃貸</option><option value="sale">売買</option><option value="investment">投資用</option>
+              </select></div>
+            <div><label style={L}>公開ステータス</label>
+              <select style={F} value={form.status} onChange={sf('status')}>
+                <option value="active">公開中</option><option value="inactive">非公開</option>
+              </select></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={L}>物件名 *</label>
+              <input style={F} value={form.title} onChange={sf('title')} placeholder="例：大宮駅徒歩5分 2LDKマンション" /></div>
+            <div><label style={L}>物件種別</label>
+              <select style={F} value={form.property_type} onChange={sf('property_type')}>
                 <option value="">選択</option>
-                {PROPERTY_TYPES_ADMIN.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>間取り</label>
-              <select style={fieldStyle} value={form.layout} onChange={e => setForm(f => ({ ...f, layout: e.target.value }))}>
+                {['マンション','アパート','一戸建て','土地','店舗・事務所','その他'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select></div>
+            <div><label style={L}>キャッチコピー</label>
+              <input style={F} value={form.catchcopy} onChange={sf('catchcopy')} placeholder="例：駅徒歩3分！リノベ済み物件" /></div>
+
+            <Sep label="所在地" />
+            <div><label style={L}>都道府県</label>
+              <select style={F} value={form.prefecture} onChange={sf('prefecture')}>
                 <option value="">選択</option>
-                {LAYOUTS_ADMIN.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>賃料（万円/月）</label>
-              <input style={fieldStyle} value={form.rent} onChange={e => setForm(f => ({ ...f, rent: e.target.value }))} placeholder="例：8" inputMode="numeric" />
-            </div>
-            <div>
-              <label style={labelStyle}>売却価格（万円）</label>
-              <input style={fieldStyle} value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="例：3000" inputMode="numeric" />
-            </div>
-            <div>
-              <label style={labelStyle}>専有面積（㎡）</label>
-              <input style={fieldStyle} value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder="例：65.5" inputMode="decimal" />
-            </div>
-            <div>
-              <label style={labelStyle}>築年数（年）</label>
-              <input style={fieldStyle} value={form.built_year} onChange={e => setForm(f => ({ ...f, built_year: e.target.value }))} placeholder="例：10" inputMode="numeric" />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>住所 *</label>
-              <input style={fieldStyle} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="例：埼玉県さいたま市大宮区桜木町1-1" />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>物件写真</label>
-              <ImageUploader
-                supabase={supabase}
-                onUploaded={url => setForm(f => ({ ...f, image_url: url }))}
-                currentUrl={form.image_url}
-              />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>物件説明</label>
-              <textarea style={{ ...fieldStyle, minHeight: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="物件の特徴や魅力を記入してください" />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>特徴・設備（カンマ区切り）</label>
-              <input style={fieldStyle} value={form.features} onChange={e => setForm(f => ({ ...f, features: e.target.value }))} placeholder="例：駅徒歩5分,オートロック,宅配ボックス" />
-            </div>
+                {PREFECTURES.map(p => <option key={p} value={p}>{p}</option>)}
+              </select></div>
+            <div><label style={L}>市区町村</label>
+              <input style={F} value={form.city} onChange={sf('city')} placeholder="例：さいたま市大宮区" /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={L}>番地以降</label>
+              <input style={F} value={form.street_address} onChange={sf('street_address')} placeholder="例：桜木町1-1-1" /></div>
+
+            <Sep label="交通" />
+            <div><label style={L}>最寄駅①路線名</label>
+              <input style={F} value={form.nearest_station_line} onChange={sf('nearest_station_line')} placeholder="例：JR京浜東北線" /></div>
+            <div><label style={L}>最寄駅①駅名</label>
+              <input style={F} value={form.nearest_station_name} onChange={sf('nearest_station_name')} placeholder="例：大宮駅" /></div>
+            <div><label style={L}>最寄駅①徒歩（分）</label>
+              <input style={F} value={form.nearest_station_walk} onChange={sf('nearest_station_walk')} placeholder="例：5" inputMode="numeric" /></div>
+
+            <Sep label="物件詳細" />
+            <div><label style={L}>間取り</label>
+              <select style={F} value={form.layout} onChange={sf('layout')}>
+                <option value="">選択</option>
+                {['ワンルーム','1K','1DK','1LDK','2K','2DK','2LDK','3K','3DK','3LDK','4LDK以上'].map(l => <option key={l} value={l}>{l}</option>)}
+              </select></div>
+            <div><label style={L}>専有面積（㎡）</label>
+              <input style={F} value={form.area} onChange={sf('area')} placeholder="例：65.5" inputMode="decimal" /></div>
+            <div><label style={L}>築年数（年）</label>
+              <input style={F} value={form.built_year} onChange={sf('built_year')} placeholder="例：10" inputMode="numeric" /></div>
+            <div><label style={L}>建物構造</label>
+              <select style={F} value={form.structure} onChange={sf('structure')}>
+                <option value="">選択</option>
+                {['RC造','SRC造','鉄骨造','木造','軽量鉄骨造'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select></div>
+            <div><label style={L}>総階数</label>
+              <input style={F} value={form.total_floors} onChange={sf('total_floors')} placeholder="例：10" inputMode="numeric" /></div>
+            <div><label style={L}>所在階</label>
+              <input style={F} value={form.floor_number} onChange={sf('floor_number')} placeholder="例：3" inputMode="numeric" /></div>
+            <div><label style={L}>方角</label>
+              <select style={F} value={form.direction} onChange={sf('direction')}>
+                <option value="">選択</option>
+                {['南','南東','東','南西','西','北西','北','北東'].map(d => <option key={d} value={d}>{d}</option>)}
+              </select></div>
+            <div><label style={L}>駐車場</label>
+              <select style={F} value={form.parking} onChange={sf('parking')}>
+                <option value="">選択</option>
+                {['あり','なし','近隣あり'].map(p => <option key={p} value={p}>{p}</option>)}
+              </select></div>
+
+            {isRent && <Sep label="賃貸条件" />}
+            {isRent && <div><label style={L}>賃料（万円/月）*</label>
+              <input style={F} value={form.rent} onChange={sf('rent')} placeholder="例：8" inputMode="decimal" /></div>}
+            {isRent && <div><label style={L}>管理費・共益費（円/月）</label>
+              <input style={F} value={form.management_fee} onChange={sf('management_fee')} placeholder="例：5000" inputMode="numeric" /></div>}
+            {isRent && <div><label style={L}>敷金（ヶ月）</label>
+              <input style={F} value={form.security_deposit} onChange={sf('security_deposit')} placeholder="例：1" inputMode="decimal" /></div>}
+            {isRent && <div><label style={L}>礼金（ヶ月）</label>
+              <input style={F} value={form.key_money} onChange={sf('key_money')} placeholder="例：1" inputMode="decimal" /></div>}
+            {isRent && <div><label style={L}>入居可能日</label>
+              <input style={F} type="date" value={form.available_date} onChange={sf('available_date')} /></div>}
+            {isRent && <div><label style={L}>契約種別</label>
+              <select style={F} value={form.contract_type} onChange={sf('contract_type')}>
+                <option value="">選択</option><option value="普通借家">普通借家</option><option value="定期借家">定期借家</option>
+              </select></div>}
+            {isRent && <div><label style={L}>ペット</label>
+              <select style={F} value={form.pet} onChange={sf('pet')}>
+                <option value="">選択</option><option value="可">可</option><option value="不可">不可</option><option value="相談">相談</option>
+              </select></div>}
+
+            {isSale && <Sep label="売買条件" />}
+            {isSale && <div><label style={L}>販売価格（万円）*</label>
+              <input style={F} value={form.price} onChange={sf('price')} placeholder="例：3000" inputMode="numeric" /></div>}
+            {isSale && <div><label style={L}>管理費（円/月）</label>
+              <input style={F} value={form.monthly_fee} onChange={sf('monthly_fee')} placeholder="例：10000" inputMode="numeric" /></div>}
+            {isSale && <div><label style={L}>修繕積立金（円/月）</label>
+              <input style={F} value={form.repair_fund} onChange={sf('repair_fund')} placeholder="例：8000" inputMode="numeric" /></div>}
+            {isSale && <div><label style={L}>土地面積（㎡）</label>
+              <input style={F} value={form.land_area} onChange={sf('land_area')} placeholder="例：100.5" inputMode="decimal" /></div>}
+            {isSale && <div><label style={L}>土地権利</label>
+              <select style={F} value={form.land_right} onChange={sf('land_right')}>
+                <option value="">選択</option><option value="所有権">所有権</option><option value="借地権">借地権</option>
+              </select></div>}
+            {isSale && <div><label style={L}>引渡し時期</label>
+              <input style={F} value={form.delivery_date} onChange={sf('delivery_date')} placeholder="例：2025年4月" /></div>}
+            {isSale && <div><label style={L}>現況</label>
+              <select style={F} value={form.current_status} onChange={sf('current_status')}>
+                <option value="">選択</option><option value="居住中">居住中</option><option value="空室">空室</option><option value="賃貸中">賃貸中</option>
+              </select></div>}
+
+            {isInv && <Sep label="投資用条件" />}
+            {isInv && <div><label style={L}>販売価格（万円）*</label>
+              <input style={F} value={form.price} onChange={sf('price')} placeholder="例：5000" inputMode="numeric" /></div>}
+            {isInv && <div><label style={L}>表面利回り（%）</label>
+              <input style={F} value={form.gross_yield} onChange={sf('gross_yield')} placeholder="例：7.5" inputMode="decimal" /></div>}
+            {isInv && <div><label style={L}>現在の賃料収入（円/月）</label>
+              <input style={F} value={form.rental_income} onChange={sf('rental_income')} placeholder="例：300000" inputMode="numeric" /></div>}
+            {isInv && <div><label style={L}>総収益室数</label>
+              <input style={F} value={form.total_rooms} onChange={sf('total_rooms')} placeholder="例：8" inputMode="numeric" /></div>}
+            {isInv && <div><label style={L}>入居状況</label>
+              <select style={F} value={form.occupancy_status} onChange={sf('occupancy_status')}>
+                <option value="">選択</option><option value="満室">満室</option><option value="一部空室">一部空室</option><option value="空室">空室</option>
+              </select></div>}
+            {isInv && <div><label style={L}>管理会社名</label>
+              <input style={F} value={form.management_company} onChange={sf('management_company')} placeholder="例：○○管理株式会社" /></div>}
+
+            <Sep label="物件説明・写真" />
+            <div style={{ gridColumn: '1 / -1' }}><label style={L}>物件説明文</label>
+              <textarea style={{ ...F, minHeight: 80, resize: 'vertical' }} value={form.description} onChange={sf('description')} placeholder="物件の特徴や魅力を記入してください" /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={L}>設備・特徴（カンマ区切り）</label>
+              <input style={F} value={form.features} onChange={sf('features')} placeholder="例：オートロック,宅配ボックス,エレベーター" /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={L}>物件写真</label>
+              <ImageUploader supabase={supabase} onUploaded={url => setForm(p => ({ ...p, image_url: url }))} currentUrl={form.image_url} /></div>
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <button onClick={handleSubmit} disabled={submitting} style={{ padding: '10px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
@@ -236,71 +342,68 @@ function PropertiesPanel({ supabase }) {
 
       {/* フィルターバー */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        {[{ id: 'all', label: '全て' }, { id: 'active', label: '公開中' }, { id: 'inactive', label: '非公開' }].map(f => (
-          <button key={f.id} onClick={() => setStatusFilter(f.id)}
+        {[{ id: 'all', label: '全て' }, { id: 'active', label: '公開中' }, { id: 'inactive', label: '非公開' }].map(ft => (
+          <button key={ft.id} onClick={() => setStatusFilter(ft.id)}
             style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-              background: statusFilter === f.id ? '#1a3a5c' : '#f0f0f0',
-              color: statusFilter === f.id ? '#fff' : '#555' }}>
-            {f.label}
+              background: statusFilter === ft.id ? '#1a3a5c' : '#f0f0f0',
+              color: statusFilter === ft.id ? '#fff' : '#555' }}>
+            {ft.label}
           </button>
         ))}
-        <input
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          placeholder="タイトル・住所で検索"
-          style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.15)', fontSize: 16, outline: 'none', minWidth: 200, flex: 1 }}
-        />
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="タイトル・住所で検索"
+          style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(26,58,92,0.15)', fontSize: 16, outline: 'none', minWidth: 200, flex: 1 }} />
         <span style={{ fontSize: 13, color: '#777', flexShrink: 0 }}>
-          {properties.filter(p => statusFilter === 'all' ? true : p.status === statusFilter).filter(p => !searchQuery || p.title?.includes(searchQuery) || p.address?.includes(searchQuery)).length}件
+          {properties.filter(p => statusFilter === 'all' || p.status === statusFilter).filter(p => !searchQuery || p.title?.includes(searchQuery) || p.address?.includes(searchQuery)).length}件
         </span>
       </div>
 
       {(() => {
         const filtered = properties
-          .filter(p => statusFilter === 'all' ? true : p.status === statusFilter)
+          .filter(p => statusFilter === 'all' || p.status === statusFilter)
           .filter(p => !searchQuery || p.title?.includes(searchQuery) || p.address?.includes(searchQuery))
         if (filtered.length === 0) return <p style={{ color: '#777' }}>物件はありません。「物件を登録」ボタンから追加してください。</p>
         return filtered.map(p => (
-        <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          {p.image_url && <img src={p.image_url} alt={p.title} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 12 }} />}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'both' ? '#ede9fe' : '#dbeafe', color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'both' ? '#5b21b6' : '#1e40af', fontWeight: 700 }}>
-                  {DEAL_LABEL[p.deal_type] || '賃貸'}
+          <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            {p.image_url && <img src={p.image_url} alt={p.title} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 12 }} />}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 700,
+                    background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'investment' ? '#f3e8ff' : '#dbeafe',
+                    color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'investment' ? '#6b21a8' : '#1e40af' }}>
+                    {DEAL_LABEL[p.deal_type] || '賃貸'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+                  {p.property_type && <span style={{ marginRight: 8 }}>{p.property_type}</span>}
+                  {p.layout && <span style={{ marginRight: 8 }}>{p.layout}</span>}
+                  {p.area && <span style={{ marginRight: 8 }}>{p.area}㎡</span>}
+                </div>
+                <div style={{ fontSize: 13, color: '#555' }}>📍 {p.address}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginTop: 4 }}>
+                  {p.rent ? `賃料 ${Math.round(p.rent/10000)}万円/月` : ''}
+                  {p.price ? `価格 ${(p.price/10000).toLocaleString()}万円` : ''}
+                </div>
+                <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: p.status === 'active' ? '#dcfce7' : '#f1f5f9', color: p.status === 'active' ? '#16a34a' : '#94a3b8' }}>
+                  {p.status === 'active' ? '✅ 公開中' : '⏸ 非公開'}
                 </span>
+                <button onClick={() => toggleStatus(p.id, p.status)} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                  {p.status === 'active' ? '非公開に' : '公開する'}
+                </button>
+                <button onClick={() => toggleFeatured(p.id)}
+                  style={{ padding: '4px 12px', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+                    background: isFeatured[p.id] ? '#f59e0b' : '#e5e7eb',
+                    color: isFeatured[p.id] ? '#fff' : '#555' }}>
+                  {isFeatured[p.id] ? '⭐ おすすめ中' : '☆ おすすめ'}
+                </button>
+                <button onClick={() => deleteProperty(p.id)} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>削除</button>
               </div>
-              <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
-                {p.deal_type && <span style={{ marginRight: 8 }}>{DEAL_LABEL[p.deal_type] || p.deal_type}</span>}
-                {p.property_type && <span style={{ marginRight: 8 }}>{p.property_type}</span>}
-                {p.layout && <span style={{ marginRight: 8 }}>{p.layout}</span>}
-                {p.area && <span style={{ marginRight: 8 }}>{p.area}㎡</span>}
-              </div>
-              <div style={{ fontSize: 13, color: '#555' }}>📍 {p.address}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginTop: 4 }}>
-                {p.rent ? `賃料 ${Math.round(p.rent/10000)}万円/月` : ''}
-                {p.price ? `価格 ${(p.price/10000).toLocaleString()}万円` : ''}
-              </div>
-              <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{p.created_at ? (() => { try { return new Date(p.created_at).toLocaleString('ja-JP') } catch(e) { return '' } })() : ''}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: p.status === 'active' ? '#dcfce7' : '#f1f5f9', color: p.status === 'active' ? '#16a34a' : '#94a3b8' }}>
-                {p.status === 'active' ? '✅ 公開中' : '⏸ 非公開'}
-              </span>
-              <button onClick={() => toggleStatus(p.id, p.status)} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
-                {p.status === 'active' ? '非公開に' : '公開する'}
-              </button>
-              <button onClick={() => toggleFeatured(p.id)}
-                style={{ padding: '4px 12px', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer',
-                  background: isFeatured[p.id] ? '#f59e0b' : '#e5e7eb',
-                  color: isFeatured[p.id] ? '#fff' : '#555' }}>
-                {isFeatured[p.id] ? '⭐ おすすめ中' : '☆ おすすめ'}
-              </button>
-              <button onClick={() => deleteProperty(p.id)} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>削除</button>
             </div>
           </div>
-        </div>
         ))
       })()}
     </div>
