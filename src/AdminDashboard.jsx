@@ -731,7 +731,8 @@ export default function AdminDashboard() {
 
   async function deletePost(id) {
     if (!window.confirm('この投稿を削除しますか？')) return
-    await supabase.from('community_posts').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('community_posts').delete().eq('id', id)
+    if (error) { alert('削除失敗: ' + error.message); return }
     setCommunity(list => list.filter(p => p.id !== id))
   }
 
