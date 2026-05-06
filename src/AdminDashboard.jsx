@@ -694,12 +694,12 @@ export default function AdminDashboard() {
     setLoading(true)
     try {
       const [m, a, v, e, c, o] = await Promise.all([
-        supabase.auth.admin ? supabase.from('profiles').select('*').order('created_at', { ascending: false }) : { data: [] },
-        supabase.from('agency_registrations').select('*').order('created_at', { ascending: false }),
-        supabase.from('valuations').select('*').order('created_at', { ascending: false }),
-        supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
-        supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
-        supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
+        { data: [] },
+        supabaseAdmin.from('agency_registrations').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('valuations').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('expert_requests').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('community_posts').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('owner_requests').select('*').order('created_at', { ascending: false }),
         ])
       setAgencies(a.data || [])
       setValuations(v.data || [])
