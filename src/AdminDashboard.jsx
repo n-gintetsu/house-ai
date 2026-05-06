@@ -85,6 +85,7 @@ function PropertiesPanel({ supabase }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isFeatured, setIsFeatured] = useState({})
+  const [form, setForm] = useState(EMPTY_FORM)
   useEffect(() => { loadProperties() }, [])
 
   async function loadProperties() {
