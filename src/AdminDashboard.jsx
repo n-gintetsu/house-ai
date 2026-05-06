@@ -60,6 +60,7 @@ function ImageUploader({ supabase, onUploaded, currentUrl }) {
 
 const PROPERTY_TYPES_ADMIN = ['マンション', '一戸建て', 'アパート', '土地', 'その他']
 const LAYOUTS_ADMIN = ['1R/1K', '1LDK', '2LDK', '3LDK', '4LDK以上']
+const DEAL_LABEL = { rent: '賃貸', sale: '売買', both: '賃貸・売買' }
 
 function PropertiesPanel({ supabase }) {
   const [properties, setProperties] = useState([])
@@ -267,10 +268,11 @@ function PropertiesPanel({ supabase }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</div>
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: p.deal_type === 'sale' ? '#fef3c7' : p.deal_type === 'both' ? '#ede9fe' : '#dbeafe', color: p.deal_type === 'sale' ? '#92400e' : p.deal_type === 'both' ? '#5b21b6' : '#1e40af', fontWeight: 700 }}>
-                  {p.deal_type === 'sale' ? '売買' : p.deal_type === 'both' ? '賃貸・売買' : '賃貸'}
+                  {DEAL_LABEL[p.deal_type] || '賃貸'}
                 </span>
               </div>
               <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+                {p.deal_type && <span style={{ marginRight: 8 }}>{DEAL_LABEL[p.deal_type] || p.deal_type}</span>}
                 {p.property_type && <span style={{ marginRight: 8 }}>{p.property_type}</span>}
                 {p.layout && <span style={{ marginRight: 8 }}>{p.layout}</span>}
                 {p.area && <span style={{ marginRight: 8 }}>{p.area}㎡</span>}
