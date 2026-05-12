@@ -15,6 +15,7 @@ const TABS = [
   { id: 'members', label: '👤 会員管理' },
   { id: 'vendors', label: '🏢 業者管理' },
   { id: 'properties', label: '🏠 物件管理' },
+  { id: 'sellers', label: '🏷️ 売主管理' },
   { id: 'cases', label: '💬 相談・案件管理' },
   { id: 'reports', label: '🚨 通報・トラブル管理' },
   { id: 'billing', label: '💳 課金・プラン管理' },
@@ -411,6 +412,169 @@ function PropertiesPanel({ supabase }) {
   )
 }
 
+
+const EMPTY_SELLER_FORM = { seller_name: '', email: '', phone: '', address: '', agent_name: '', agent_phone: '' }
+
+function SellersPanel() {
+  const [sellers, setSellers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState(EMPTY_SELLER_FORM)
+  const [submitting, setSubmitting] = useState(false)
+  const [toast, setToast] = useState('')
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000) }
+
+  useEffect(() => { fetchSellers() }, [])
+
+  async function fetchSellers() {
+    setLoading(true)
+    const res = await fetch('/api/admin-sellers')
+    const data = await res.json()
+    setSellers(data.sellers || [])
+    setLoading(false)
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.seller_name || !form.email) return alert('売主名とメールは必須です')
+    setSubmitting(true)
+    try {
+      // 1. 登録
+      const res = await fetch('/api/admin-sellers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error('登録に失敗しました')
+      const { seller } = await res.json()
+
+      // 2. 招待メール送信
+      await fetch('/api/send-seller-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seller_name: seller.seller_name, email: seller.email, access_token: seller.access_token }),
+      })
+
+      setForm(EMPTY_SELLER_FORM)
+      setShowModal(false)
+      await fetchSellers()
+      showToast('✅ 売主を登録し、招待メールを送信しました')
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function copyUrl(token) {
+    const url = `https://www.house-ai.co.jp/seller?token=${token}`
+    navigator.clipboard.writeText(url).then(() => showToast('URLをコピーしました'))
+  }
+
+  return (
+    <div>
+      {/* トースト */}
+      {toast && (
+        <div style={{ position: 'fixed', top: 24, right: 24, background: '#1a3a5c', color: '#fff', borderRadius: 10, padding: '12px 20px', fontSize: 13, fontWeight: 700, zIndex: 9999, boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+          {toast}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ margin: 0, color: '#1a3a5c', fontSize: 20, fontWeight: 800 }}>🏷️ 売主管理</h2>
+        <button
+          onClick={() => setShowModal(true)}
+          style={{ background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+        >
+          ＋ 新規売主登録
+        </button>
+      </div>
+
+      {loading ? (
+        <p style={{ color: '#64748b', fontSize: 14 }}>読み込み中...</p>
+      ) : sellers.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8', fontSize: 14 }}>まだ売主が登録されていません</div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                {['売主名', '物件住所', 'メール', '登録日', 'マイページURL'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#64748b', fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sellers.map(s => (
+                <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1a3a5c' }}>{s.seller_name || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#475569', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.address || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#475569' }}>{s.email}</td>
+                  <td style={{ padding: '12px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <button
+                      onClick={() => copyUrl(s.access_token)}
+                      style={{ background: '#f0f4ff', color: '#1a3a5c', border: '1px solid #c7d2fe', borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      📋 URLコピー
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 登録モーダル */}
+      {showModal && ReactDOM.createPortal(
+        <div
+          onClick={() => setShowModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}
+          >
+            <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#999', lineHeight: 1 }}>×</button>
+            <h3 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 17, fontWeight: 800 }}>🏷️ 新規売主登録</h3>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { key: 'seller_name', label: '売主名 *', placeholder: '山田 太郎', type: 'text' },
+                { key: 'email', label: 'メールアドレス *', placeholder: 'taro@example.com', type: 'email' },
+                { key: 'phone', label: '電話番号', placeholder: '090-1234-5678', type: 'tel' },
+                { key: 'address', label: '物件住所', placeholder: '東京都渋谷区〇〇1-2-3', type: 'text' },
+                { key: 'agent_name', label: '担当者名', placeholder: '鈴木 花子', type: 'text' },
+                { key: 'agent_phone', label: '担当者電話', placeholder: '03-1234-5678', type: 'tel' },
+              ].map(({ key, label, placeholder, type }) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 5 }}>{label}</label>
+                  <input
+                    type={type}
+                    placeholder={placeholder}
+                    value={form[key]}
+                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none' }}
+                  />
+                </div>
+              ))}
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>登録後、売主宛に招待メールが自動送信されます。</p>
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{ background: submitting ? '#94a3b8' : '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 800, cursor: submitting ? 'not-allowed' : 'pointer', marginTop: 4 }}
+              >
+                {submitting ? '登録中...' : '登録してメールを送信'}
+              </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
 
 function MembersPanel({ supabaseAdmin }) {
   const [members, setMembers] = useState([])
@@ -1456,6 +1620,11 @@ export default function AdminDashboard() {
           {/* 物件管理 */}
           {tab === 'properties' && (
             <PropertiesPanel supabase={supabase} />
+          )}
+
+          {/* 売主管理 */}
+          {tab === 'sellers' && (
+            <SellersPanel />
           )}
 
           {/* 会員管理 */}
