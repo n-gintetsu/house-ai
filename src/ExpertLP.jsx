@@ -109,7 +109,7 @@ export default function ExpertLP({ onNavigate, onExpertLogin }) {
           fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
           display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.3s',
         }}>
-          🏛️ 不動産AIコンシェルジュ
+          🏛️ House-AI
         </button>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => onNavigate('home')} style={{

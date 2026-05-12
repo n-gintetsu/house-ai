@@ -30,7 +30,7 @@ const C = {
 // ============================================================
 const FLOW = {
   start: {
-    text: "こんにちは！不動産AIコンシェルジュです😊\n30秒であなたに最適な解決方法をご提案します。\n\nどんなご相談ですか？",
+    text: "こんにちは！House-AIです😊\n30秒であなたに最適な解決方法をご提案します。\n\nどんなご相談ですか？",
     choices: [
       { label: "🏠 購入したい", next: "buy_type" },
       { label: "🏠 借りたい（賃貸）", next: "rent_worry" },
@@ -481,7 +481,7 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🏠</div>
             <div>
-              <p style={{ color: "#fff", fontSize: 12, fontWeight: 700, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>不動産AIコンシェルジュ</p>
+              <p style={{ color: "#fff", fontSize: 12, fontWeight: 700, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>House-AI</p>
               <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>● オンライン</p>
             </div>
           </div>

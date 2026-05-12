@@ -6,7 +6,7 @@ export default function TickerBanner() {
   const [loading, setLoading] = useState(true)
 
   const fallbackItems = [
-    { id: 1, label: 'PR', text: 'GINTETSUのAIコンシェルジュが不動産のお悩みを24時間サポート', url: 'https://www.gintetsu-fudosan.com', active: true },
+    { id: 1, label: 'PR', text: 'House-AIが不動産のお悩みを24時間サポート', url: 'https://www.gintetsu-fudosan.com', active: true },
     { id: 2, label: '提携', text: '住宅ローンのご相談はお気軽に｜ご成約者様に提携金融機関をご紹介', url: 'https://www.gintetsu-fudosan.com', active: true },
     { id: 3, label: 'PR', text: 'リフォーム・外構工事のご相談｜信頼の提携業者をご紹介します', url: 'https://www.gintetsu-fudosan.com', active: true },
   ]

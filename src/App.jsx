@@ -40,7 +40,7 @@ function incrementTodayChatCount() {
 }
 
 const DEFAULT_SYSTEM_PROMPT =
-  'あなたは「不動産AIコンシェルジュ」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
+  'あなたは「House-AI」です。ユーザーの希望（エリア、予算、間取り、通勤時間、家賃/購入、希望条件、優先順位、物件種別）を丁寧に整理し、次に取るべき行動（内見で確認するポイント、比較観点、ローン/税金/諸費用の一般的注意、情報収集の手順）を具体的に提案してください。ユーザーの情報が不足している場合は、短い質問を1〜3個だけしてから提案を進めてください。'
 
 const EXPERT_AI_SYSTEM =
   'あなたは不動産に関する専門家紹介のアドバイザーです。ユーザーの状況を整理し、選んだ専門家カテゴリ（リフォーム業者・司法書士・税理士・FP）ごとに、相談の進め方・準備すべき書類・注意点を簡潔に箇条書きで示してください。断定診断や法律・税務の最終判断は避け、専門家への相談を促してください。'
@@ -1107,7 +1107,7 @@ export default function App() {
               H
             </div>
             <div>
-              <strong>不動産AIコンシェルジュ</strong>
+              <strong>House-AI</strong>
               <span>不動産のお悩み・査定・専門家紹介・コミュニティ</span>
             </div>
           </div>
@@ -1189,7 +1189,7 @@ export default function App() {
                           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: 0 }}>{user.email}</p>
                         </>
                       ) : (
-                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: 0 }}>不動産AIコンシェルジュ</p>
+                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: 0 }}>House-AI</p>
                       )}
                     </div>
                     <button
@@ -2203,7 +2203,7 @@ export default function App() {
           textAlign: 'center',
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c', marginBottom: 12 }}>
-            不動産AIコンシェルジュ
+            House-AI
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 20px', marginBottom: 16 }}>
             {[
