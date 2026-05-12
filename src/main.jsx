@@ -5,6 +5,7 @@ import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 import AgencyDashboard from './AgencyDashboard'
 import PartnerDashboard from './PartnerDashboard'
+import SellerMyPage from './SellerMyPage'
 
 const pathname = window.location.pathname
 
@@ -15,6 +16,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = AgencyDashboard
 } else if (pathname === '/partner' || pathname === '/partner/') {
   Component = PartnerDashboard
+} else if (pathname === '/seller' || pathname === '/seller/') {
+  Component = SellerMyPage
 }
 
 createRoot(document.getElementById('root')).render(
