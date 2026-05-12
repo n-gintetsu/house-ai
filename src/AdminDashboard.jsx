@@ -449,17 +449,22 @@ function SellersPanel() {
       if (!res.ok) throw new Error('登録に失敗しました')
       const { seller } = await res.json()
 
-      // 2. 招待メール送信
-      await fetch('/api/send-seller-invite', {
+      // 2. 招待メール送信（失敗しても登録は成功扱い）
+      const inviteRes = await fetch('/api/send-seller-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seller_name: seller.seller_name, email: seller.email, access_token: seller.access_token }),
+        body: JSON.stringify({ seller_name: seller.name || seller.seller_name, email: seller.email, access_token: seller.access_token }),
       })
+      const inviteData = await inviteRes.json()
 
       setForm(EMPTY_SELLER_FORM)
       setShowModal(false)
       await fetchSellers()
-      showToast('✅ 売主を登録し、招待メールを送信しました')
+      if (inviteData.success) {
+        showToast('✅ 売主を登録し、招待メールを送信しました')
+      } else {
+        showToast('✅ 売主を登録しました（メール送信に失敗しました）')
+      }
     } catch (err) {
       alert(err.message)
     } finally {
