@@ -508,7 +508,7 @@ function SellersPanel() {
             <tbody>
               {sellers.map(s => (
                 <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1a3a5c' }}>{s.seller_name || '—'}</td>
+                  <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1a3a5c' }}>{s.seller_name || s.name || '—'}</td>
                   <td style={{ padding: '12px 14px', color: '#475569', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.property_address || '—'}</td>
                   <td style={{ padding: '12px 14px', color: '#475569' }}>{s.email}</td>
                   <td style={{ padding: '12px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
