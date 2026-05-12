@@ -57,6 +57,17 @@ function StatCard({ icon, label, value }) {
   )
 }
 
+function Spinner() {
+  return (
+    <span style={{
+      display: 'inline-block', width: 18, height: 18, borderRadius: '50%',
+      border: '2.5px solid rgba(255,255,255,0.3)',
+      borderTopColor: '#fff',
+      animation: 'spin 0.7s linear infinite',
+    }} />
+  )
+}
+
 function SectionTitle({ children }) {
   return (
     <h2 style={{
@@ -172,6 +183,24 @@ export default function SellerMyPage() {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [report, setReport] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportError, setReportError] = useState('')
+
+  async function generateReport() {
+    setReportLoading(true)
+    setReportError('')
+    setReport('')
+    try {
+      const res = await fetch(`/api/seller-report?token=${encodeURIComponent(token)}`)
+      if (!res.ok) throw new Error('Server error')
+      const json = await res.json()
+      setReport(json.report || '')
+    } catch {
+      setReportError('報告書の生成に失敗しました。時間をおいて再度お試しください。')
+    }
+    setReportLoading(false)
+  }
 
   useEffect(() => {
     if (!token) {
@@ -319,6 +348,72 @@ export default function SellerMyPage() {
           <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
             <ActivityTable activities={activities} />
           </div>
+        </div>
+
+        {/* AI報告書 */}
+        <div style={{ marginBottom: 24 }}>
+          <SectionTitle>AI販売活動報告書</SectionTitle>
+
+          {/* 生成ボタン */}
+          <button
+            onClick={generateReport}
+            disabled={reportLoading}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              background: reportLoading
+                ? '#6b7fa3'
+                : `linear-gradient(135deg, ${C.navy} 0%, ${C.navyDark} 100%)`,
+              color: '#fff', border: 'none', borderRadius: 14,
+              padding: '16px 24px', fontSize: 15, fontWeight: 800, cursor: reportLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 16px rgba(26,58,92,0.3)', marginBottom: 14,
+              transition: 'background 0.2s',
+            }}
+          >
+            {reportLoading ? (
+              <>
+                <Spinner />
+                AIが報告書を生成中...
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: 20 }}>✨</span>
+                AI報告書を生成する
+              </>
+            )}
+          </button>
+
+          {/* エラー */}
+          {reportError && (
+            <p style={{ fontSize: 12, color: '#c0392b', textAlign: 'center', margin: '0 0 12px' }}>
+              {reportError}
+            </p>
+          )}
+
+          {/* 報告書カード */}
+          {report && (
+            <div style={{
+              background: C.navyDark, borderRadius: 16,
+              padding: '20px 20px', boxShadow: '0 4px 20px rgba(15,37,64,0.2)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldLight} 100%)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, flexShrink: 0,
+                }}>✨</div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: C.gold }}>AI販売活動報告書</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>House-AI 自動生成</p>
+                </div>
+              </div>
+              <p style={{
+                margin: 0, fontSize: 14, color: '#fff', lineHeight: 1.85,
+                whiteSpace: 'pre-wrap', borderTop: `1px solid rgba(255,255,255,0.12)`,
+                paddingTop: 14,
+              }}>{report}</p>
+            </div>
+          )}
         </div>
 
         {/* 担当者へ連絡ボタン */}
