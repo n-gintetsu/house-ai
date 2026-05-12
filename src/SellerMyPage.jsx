@@ -74,7 +74,7 @@ export default function SellerMyPage() {
       const { data, error: err } = await supabase
         .from('sellers')
         .select('*')
-        .eq('token', token)
+        .eq('access_token', token)
         .maybeSingle()
 
       if (err || !data) {
