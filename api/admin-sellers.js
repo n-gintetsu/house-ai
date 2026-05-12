@@ -18,16 +18,19 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { seller_name, email, phone, address, agent_name, agent_phone } = req.body
+    const { seller_name, email, phone, property_address, agent_name, agent_phone } = req.body
     if (!seller_name || !email) return res.status(400).json({ error: 'seller_name and email are required' })
 
     const access_token = randomUUID()
     const { data, error } = await supabaseAdmin
       .from('sellers')
-      .insert({ seller_name, email, phone, address, agent_name, agent_phone, access_token })
+      .insert({ seller_name, email, phone, property_address, agent_name, agent_phone, access_token })
       .select()
       .single()
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      console.error('[admin-sellers] insert error:', error)
+      return res.status(500).json({ error: error.message, details: error.details, hint: error.hint })
+    }
     return res.status(201).json({ seller: data })
   }
 

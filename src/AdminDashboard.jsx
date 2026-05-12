@@ -413,7 +413,7 @@ function PropertiesPanel({ supabase }) {
 }
 
 
-const EMPTY_SELLER_FORM = { seller_name: '', email: '', phone: '', address: '', agent_name: '', agent_phone: '' }
+const EMPTY_SELLER_FORM = { seller_name: '', email: '', phone: '', property_address: '', agent_name: '', agent_phone: '' }
 
 function SellersPanel() {
   const [sellers, setSellers] = useState([])
@@ -509,7 +509,7 @@ function SellersPanel() {
               {sellers.map(s => (
                 <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1a3a5c' }}>{s.seller_name || '—'}</td>
-                  <td style={{ padding: '12px 14px', color: '#475569', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.address || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#475569', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.property_address || '—'}</td>
                   <td style={{ padding: '12px 14px', color: '#475569' }}>{s.email}</td>
                   <td style={{ padding: '12px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
                   <td style={{ padding: '12px 14px' }}>
@@ -544,7 +544,7 @@ function SellersPanel() {
                 { key: 'seller_name', label: '売主名 *', placeholder: '山田 太郎', type: 'text' },
                 { key: 'email', label: 'メールアドレス *', placeholder: 'taro@example.com', type: 'email' },
                 { key: 'phone', label: '電話番号', placeholder: '090-1234-5678', type: 'tel' },
-                { key: 'address', label: '物件住所', placeholder: '東京都渋谷区〇〇1-2-3', type: 'text' },
+                { key: 'property_address', label: '物件住所', placeholder: '東京都渋谷区〇〇1-2-3', type: 'text' },
                 { key: 'agent_name', label: '担当者名', placeholder: '鈴木 花子', type: 'text' },
                 { key: 'agent_phone', label: '担当者電話', placeholder: '03-1234-5678', type: 'tel' },
               ].map(({ key, label, placeholder, type }) => (

@@ -264,7 +264,7 @@ export default function SellerMyPage() {
             売主マイページ
           </h1>
           <p style={{ margin: '8px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-            {seller.address || '物件情報'}
+            {seller.property_address || '物件情報'}
           </p>
         </div>
       </div>
@@ -278,7 +278,7 @@ export default function SellerMyPage() {
             <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>物件情報</span>
           </div>
           <div style={{ padding: '16px 18px' }}>
-            <InfoRow label="住所" value={seller.address || '—'} />
+            <InfoRow label="住所" value={seller.property_address || '—'} />
             <InfoRow label="担当者" value={seller.agent_name || '—'} />
             <InfoRow label="電話番号" value={seller.agent_phone || '—'} last />
           </div>

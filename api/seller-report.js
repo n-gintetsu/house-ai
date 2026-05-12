@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
   const prompt = `あなたは不動産営業の専門家です。
 以下の販売活動データをもとに、売主向けのわかりやすい販売活動報告書コメントを300文字以内で生成してください。
-・物件住所：${seller.address || '（未設定）'}
+・物件住所：${seller.property_address || '（未設定）'}
 ・期間：直近の活動ログ
 ・ポータル別問い合わせ数：
 ${portalLines}
