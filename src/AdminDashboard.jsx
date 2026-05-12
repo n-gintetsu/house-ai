@@ -413,7 +413,7 @@ function PropertiesPanel({ supabase }) {
 }
 
 
-const EMPTY_SELLER_FORM = { seller_name: '', email: '', phone: '', property_address: '', agent_name: '', agent_phone: '' }
+const EMPTY_SELLER_FORM = { seller_name: '', email: '', phone: '', property_address: '', agent_name: '', agent_email: '' }
 
 function SellersPanel() {
   const [sellers, setSellers] = useState([])
@@ -546,7 +546,7 @@ function SellersPanel() {
                 { key: 'phone', label: '電話番号', placeholder: '090-1234-5678', type: 'tel' },
                 { key: 'property_address', label: '物件住所', placeholder: '東京都渋谷区〇〇1-2-3', type: 'text' },
                 { key: 'agent_name', label: '担当者名', placeholder: '鈴木 花子', type: 'text' },
-                { key: 'agent_phone', label: '担当者電話', placeholder: '03-1234-5678', type: 'tel' },
+                { key: 'agent_email', label: '担当者メール', placeholder: 'agent@example.com', type: 'email' },
               ].map(({ key, label, placeholder, type }) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 5 }}>{label}</label>

@@ -280,7 +280,7 @@ export default function SellerMyPage() {
           <div style={{ padding: '16px 18px' }}>
             <InfoRow label="住所" value={seller.property_address || '—'} />
             <InfoRow label="担当者" value={seller.agent_name || '—'} />
-            <InfoRow label="電話番号" value={seller.agent_phone || '—'} last />
+            <InfoRow label="電話番号" value={seller.agent_phone || seller.phone || '—'} last />
           </div>
         </div>
 
@@ -417,9 +417,9 @@ export default function SellerMyPage() {
         </div>
 
         {/* 担当者へ連絡ボタン */}
-        {seller.agent_phone && (
+        {(seller.agent_phone || seller.phone) && (
           <a
-            href={`tel:${seller.agent_phone.replace(/[^0-9+]/g, '')}`}
+            href={`tel:${(seller.agent_phone || seller.phone).replace(/[^0-9+]/g, '')}`}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldLight} 100%)`,
