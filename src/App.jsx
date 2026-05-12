@@ -1242,6 +1242,24 @@ export default function App() {
                         <span>{item.label}</span>
                       </button>
                     ))}
+                    {/* パートナー登録リンク */}
+                    <a
+                      href="/partner-lp"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        width: '100%', boxSizing: 'border-box',
+                        background: 'rgba(201,168,76,0.12)',
+                        border: 'none',
+                        borderBottom: '1px solid rgba(255,255,255,0.08)',
+                        borderTop: '1px solid rgba(201,168,76,0.25)',
+                        padding: '14px 20px',
+                        color: '#c9a84c', fontSize: 15, fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>🤝</span>
+                      <span>パートナー登録（無料）</span>
+                    </a>
                   </div>
 
                   {/* ログアウト */}
