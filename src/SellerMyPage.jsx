@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { supabase } from './lib/supabase'
 
 const C = {
   navy: '#1a3a5c',
@@ -71,25 +70,20 @@ export default function SellerMyPage() {
       return
     }
     async function load() {
-      const { data, error: err } = await supabase
-        .from('sellers')
-        .select('*')
-        .eq('access_token', token)
-        .maybeSingle()
-
-      if (err || !data) {
+      try {
+        const res = await fetch(`/api/seller?token=${encodeURIComponent(token)}`)
+        if (res.status === 404) {
+          setError('情報を取得できませんでした。URLが正しいかご確認ください。')
+          setLoading(false)
+          return
+        }
+        if (!res.ok) throw new Error('Server error')
+        const json = await res.json()
+        setSeller(json.seller)
+        setActivities(json.activities)
+      } catch {
         setError('情報を取得できませんでした。URLが正しいかご確認ください。')
-        setLoading(false)
-        return
       }
-      setSeller(data)
-
-      const { data: acts } = await supabase
-        .from('seller_activities')
-        .select('*')
-        .eq('seller_id', data.id)
-        .order('created_at', { ascending: false })
-      setActivities(acts || [])
       setLoading(false)
     }
     load()
