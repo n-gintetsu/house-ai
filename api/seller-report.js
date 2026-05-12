@@ -77,10 +77,16 @@ ${portalLines}
     return res.status(anthropicRes.status).json({ error: data?.error?.message || 'Claude API error' })
   }
 
-  const text = (data?.content ?? [])
+  const rawText = (data?.content ?? [])
     .filter(c => c?.type === 'text')
     .map(c => c.text)
     .join('')
 
-  res.json({ report: text })
+  const cleanText = rawText
+    .replace(/#{1,6}\s/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .trim()
+
+  res.json({ report: cleanText })
 }
