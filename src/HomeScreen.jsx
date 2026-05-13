@@ -823,26 +823,25 @@ export default function HomeScreen({ onNavigate }) {
                 <div
                   onClick={handleStartChat}
                   style={{
-                    background: '#ff6b35',
+                    background: '#1a3a5c',
                     border: 'none',
                     borderRadius: 16,
                     padding: '20px',
                     textAlign: 'center',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 12px rgba(255,107,53,0.3)',
+                    boxShadow: '0 2px 12px rgba(26,58,92,0.3)',
                   }}
                 >
                   <div style={{
                     fontSize: '28px',
                     fontWeight: '700',
-                    letterSpacing: '2px',
+                    letterSpacing: '3px',
                     fontFamily: 'Georgia, serif',
                     background: 'linear-gradient(90deg, #8a6820 0%, #c9a84c 30%, #f5e08a 50%, #c9a84c 70%, #8a6820 100%)',
                     backgroundSize: '200% auto',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    animation: 'goldFlow 3s linear infinite',
-                    marginBottom: 8
+                    animation: 'goldFlow 3s linear infinite'
                   }}>HOUSE-AI</div>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 4px', fontFamily: "'Noto Sans JP', sans-serif" }}>AIに相談してみる</p>
                   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', margin: '0 0 14px', fontFamily: "'Noto Sans JP', sans-serif" }}>3ステップで最適な進め方を提案します</p>
@@ -875,18 +874,17 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
-                  <div onClick={handleStartChat} style={{ background: "#ff6b35", border: "none", borderRadius: 16, padding: "20px", textAlign: "center", cursor: "pointer", boxShadow: "0 2px 12px rgba(255,107,53,0.3)" }}>
+                  <div onClick={handleStartChat} style={{ background: "#1a3a5c", border: "none", borderRadius: 16, padding: "20px", textAlign: "center", cursor: "pointer", boxShadow: "0 2px 12px rgba(26,58,92,0.3)" }}>
                     <div style={{
                       fontSize: '28px',
                       fontWeight: '700',
-                      letterSpacing: '2px',
+                      letterSpacing: '3px',
                       fontFamily: 'Georgia, serif',
                       background: 'linear-gradient(90deg, #8a6820 0%, #c9a84c 30%, #f5e08a 50%, #c9a84c 70%, #8a6820 100%)',
                       backgroundSize: '200% auto',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      animation: 'goldFlow 3s linear infinite',
-                      marginBottom: 8
+                      animation: 'goldFlow 3s linear infinite'
                     }}>HOUSE-AI</div>
                     <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>AIに相談してみる</p>
                     <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", margin: "0 0 14px" }}>3ステップで最適な進め方を提案します</p>
