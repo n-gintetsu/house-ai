@@ -835,7 +835,9 @@ export default function HomeScreen({ onNavigate }) {
                   <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                    <img src="/logo.png" alt="House-AI" style={{width:'320px',height:'auto',animation:'logoGlow 3s ease-in-out infinite'}} />
+                    <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>
+                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
+                    </div>
                     <div style={{textAlign:'center'}}>
                       <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                       <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
@@ -888,7 +890,9 @@ export default function HomeScreen({ onNavigate }) {
                     <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'320px',height:'auto',animation:'logoGlow 3s ease-in-out infinite'}} />
+                      <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>
+                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
+                    </div>
                       <div style={{textAlign:'center'}}>
                         <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
