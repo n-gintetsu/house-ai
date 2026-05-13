@@ -838,7 +838,7 @@ export default function HomeScreen({ onNavigate }) {
                   <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
-                    <img src="/logo.png" alt="House-AI" style={{width: '280px', height: 'auto', display: 'block'}} />
+                    <img src="/logo.png" alt="House-AI" style={{width: '340px', height: 'auto', display: 'block'}} />
                     <div style={{
                       position: 'absolute',
                       top: 0,
@@ -890,7 +890,7 @@ export default function HomeScreen({ onNavigate }) {
                     <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
-                      <img src="/logo.png" alt="House-AI" style={{width: '280px', height: 'auto', display: 'block'}} />
+                      <img src="/logo.png" alt="House-AI" style={{width: '340px', height: 'auto', display: 'block'}} />
                       <div style={{
                         position: 'absolute',
                         top: 0,
