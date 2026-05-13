@@ -573,13 +573,14 @@ export default function App() {
           width: 40px;
           height: 40px;
           border-radius: 12px;
-          background: linear-gradient(145deg, rgba(255, 215, 100, 0.35), rgba(255, 215, 100, 0.08));
-          border: 1px solid var(--border);
-          display: grid;
-          place-items: center;
-          font-weight: 900;
-          color: var(--accent);
-          box-shadow: var(--shadow);
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .ha-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
 
         .ha-brand strong {
@@ -1103,8 +1104,8 @@ export default function App() {
       <div className="ha-app" style={tab === 'properties' ? { paddingBottom: 0 } : { paddingBottom: 64 }}>
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
-            <div className="ha-logo" aria-hidden="true">
-              H
+            <div className="ha-logo">
+              <img src="/logo.png" alt="House-AI" />
             </div>
             <div>
               <strong>House-AI</strong>
