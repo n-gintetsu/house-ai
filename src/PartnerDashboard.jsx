@@ -15,7 +15,7 @@ export default function PartnerDashboard() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('ads')
+  const [tab, setTab] = useState('dashboard')
   const [mode, setMode] = useState(getInitialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,6 +30,7 @@ export default function PartnerDashboard() {
   const [inquirySent, setInquirySent] = useState(false)
   const [inquiries, setInquiries] = useState([])
   const [selectedInquiry, setSelectedInquiry] = useState(null)
+  const [kpiCounts, setKpiCounts] = useState([0, 0, 0, 0])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,6 +48,20 @@ export default function PartnerDashboard() {
       } else { setProfile(null); setLoading(false) }
     })
     return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const KPI_VALUES = [12, 1245, 34, 82]
+    const steps = 60
+    const interval = 1500 / steps
+    let step = 0
+    const timer = setInterval(() => {
+      step++
+      const p = Math.min(step / steps, 1)
+      setKpiCounts(KPI_VALUES.map(v => Math.round(v * p)))
+      if (step >= steps) clearInterval(timer)
+    }, interval)
+    return () => clearInterval(timer)
   }, [])
 
   const fetchProfile = async (userId) => {
@@ -204,6 +219,7 @@ export default function PartnerDashboard() {
   )
 
   const tabs = [
+    { id: 'dashboard', label: '📊 ダッシュボード' },
     { id: 'ads', label: '📢 広告掲載状況' },
     { id: 'customers', label: `👥 顧客管理${inquiries.length > 0 ? ` (${inquiries.length})` : ''}` },
     { id: 'profile', label: '🏢 会社情報' },
@@ -238,6 +254,136 @@ export default function PartnerDashboard() {
       </div>
 
       <div style={{ padding: 16, maxWidth: 760, margin: '0 auto' }}>
+
+        {/* ダッシュボード */}
+        {tab === 'dashboard' && (
+          <div>
+            {/* ① KPI 4枚カード */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 24 }}>
+              {[
+                { icon: '📩', label: 'AI紹介件数', value: kpiCounts[0], unit: '件', sub: '前月比+3件', borderColor: gold },
+                { icon: '👀', label: '広告閲覧数', value: kpiCounts[1].toLocaleString(), unit: '', sub: '前月比+18%', borderColor: navy },
+                { icon: '💬', label: '問い合わせ数', value: kpiCounts[2], unit: '', sub: '前月比+5件', borderColor: gold },
+                { icon: '⭐', label: 'マッチング率', value: kpiCounts[3], unit: '%', sub: '', borderColor: navy },
+              ].map((k, i) => (
+                <div key={k.label} className="kpi-card" style={{
+                  background: 'white', borderRadius: 16, padding: '20px 24px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  borderTop: `3px solid ${k.borderColor}`,
+                }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+                  <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{k.label}</div>
+                  <div style={{ fontSize: 30, fontWeight: 800, color: navy, lineHeight: 1 }}>
+                    {k.value}<span style={{ fontSize: 14, fontWeight: 600 }}>{k.unit}</span>
+                  </div>
+                  {k.sub && <div style={{ fontSize: 11, color: '#16a34a', marginTop: 6 }}>↑ {k.sub}</div>}
+                </div>
+              ))}
+            </div>
+
+            {/* ② AIおすすめ案件 */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: navy }}>🤖 AIおすすめ案件</div>
+                <span style={{ background: gold, color: navy, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>AIが自動選定</span>
+              </div>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {[
+                  { badge: '空き家相談', area: '埼玉県さいたま市', type: '解体', price: '50〜120万円', btnLabel: '詳細を見る →', btnBg: navy, btnColor: '#fff' },
+                  { badge: '中古住宅購入相談', area: '火災保険', type: '見積依頼中', price: '', btnLabel: '提案する →', btnBg: gold, btnColor: navy },
+                ].map((c, i) => (
+                  <div key={i} className="ai-case-card" style={{
+                    flex: '1 1 calc(50% - 6px)', minWidth: 200,
+                    background: '#fff', borderRadius: 14, padding: 16,
+                    boxShadow: '0 2px 12px rgba(26,58,92,0.09)',
+                    border: '1.5px solid #e2e8f0',
+                    position: 'relative',
+                  }}>
+                    <span style={{ position: 'absolute', top: 12, right: 12, background: gold, color: navy, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>AI PICK</span>
+                    <span style={{ background: navy, color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, display: 'inline-block', marginBottom: 8 }}>{c.badge}</span>
+                    <div style={{ fontSize: 13, color: '#1e293b', marginBottom: 4, lineHeight: 1.5 }}>📍 {c.area}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: c.price ? 4 : 12 }}>{c.type}</div>
+                    {c.price && <div style={{ fontSize: 13, fontWeight: 700, color: navy, marginBottom: 12 }}>{c.price}</div>}
+                    <button style={{ background: c.btnBg, color: c.btnColor, border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      {c.btnLabel}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ③ AI反響ログ */}
+            <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 24, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: navy, marginBottom: 14 }}>📈 AI反響ログ</div>
+              {[
+                { time: '10分前', text: 'さいたま市の空き家相談ユーザーがあなたの広告を閲覧しました' },
+                { time: '1時間前', text: 'AIがあなたのプロフィールを中古住宅購入相談3件にマッチングしました' },
+                { time: '3時間前', text: '火災保険の見積依頼が新たに1件届きました' },
+                { time: '昨日', text: '東京都の解体工事相談ユーザーへのおすすめ通知が送信されました' },
+                { time: '2日前', text: 'プロフィール完成度が上がりマッチング精度が向上しました' },
+              ].map((log, i, arr) => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < arr.length - 1 ? 12 : 0 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: gold, marginTop: 5, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 2 }}>{log.time}</div>
+                    <div style={{ fontSize: 13, color: '#1e293b', lineHeight: 1.5 }}>{log.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ④ プロフィール完成度 + AI信頼スコア */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+              <div style={{ flex: '2 1 200px', background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: navy, marginBottom: 12 }}>プロフィール完成度</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}>
+                    <div style={{ width: '78%', height: '100%', background: gold, borderRadius: 4 }} />
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: navy }}>78%</span>
+                </div>
+                {['実績・施工事例 未入力', '担当者写真 未設定', '対応エリア 未設定'].map(item => (
+                  <div key={item} style={{ fontSize: 12, color: '#ef4444', marginBottom: 4 }}>・{item}</div>
+                ))}
+                <button onClick={() => setTab('profile')} style={{ marginTop: 12, background: '#fff', color: navy, border: `1.5px solid ${navy}`, borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  プロフィールを充実させる
+                </button>
+              </div>
+              <div style={{ flex: '1 1 130px', background: `linear-gradient(135deg, ${navy} 0%, #0f2540 100%)`, borderRadius: 14, padding: 20, boxShadow: '0 2px 12px rgba(26,58,92,0.09)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>🏆 信頼スコア</div>
+                <div style={{ fontSize: 48, fontWeight: 900, color: gold, lineHeight: 1 }}>92</div>
+                <div style={{ width: '100%', marginTop: 12 }}>
+                  {[
+                    { label: '返信速度', pct: 90 },
+                    { label: '対応品質', pct: 85 },
+                    { label: '実績数', pct: 70 },
+                    { label: '口コミ評価', pct: 95 },
+                  ].map(b => (
+                    <div key={b.label} style={{ marginBottom: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
+                        <span>{b.label}</span><span>{b.pct}%</span>
+                      </div>
+                      <div style={{ height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2 }}>
+                        <div style={{ width: `${b.pct}%`, height: '100%', background: gold, borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ⑤ CTA */}
+            <button style={{
+              width: '100%', padding: 18,
+              background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)',
+              border: 'none', borderRadius: 32,
+              color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(26,58,92,0.3)',
+            }}>
+              ✨ AI集客をさらに強化する →
+            </button>
+          </div>
+        )}
 
         {/* 広告掲載状況 */}
         {tab === 'ads' && (
