@@ -1098,10 +1098,10 @@ export default function App() {
           <div className="ha-brand">
             <div className="ha-logo">
               <div style={{
-                width: '48px',
-                height: '48px',
+                width: '64px',
+                height: '64px',
                 borderRadius: '50%',
-                background: '#1a3a5c',
+                background: '#0a1f35',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1109,15 +1109,15 @@ export default function App() {
                 position: 'relative',
                 flexShrink: 0
               }}>
-                <img src="/logo.png" alt="House-AI" style={{width: '44px', height: '44px', objectFit: 'contain'}} />
+                <img src="/logo.png" alt="House-AI" style={{width: '60px', height: '60px', objectFit: 'contain'}} />
                 <div style={{
                   position: 'absolute',
                   top: '-50%',
                   left: '-150%',
                   width: '60%',
                   height: '200%',
-                  background: 'linear-gradient(105deg, transparent 20%, rgba(255,230,120,0.9) 50%, transparent 80%)',
-                  animation: 'logoShine 3s ease-in-out infinite',
+                  background: 'linear-gradient(105deg, transparent 15%, rgba(255,240,150,1.0) 50%, transparent 85%)',
+                  animation: 'logoShine 2s ease-in-out infinite',
                   pointerEvents: 'none'
                 }} />
               </div>
