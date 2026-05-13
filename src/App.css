@@ -1537,7 +1537,7 @@
 }
 
 @keyframes logoShine {
-  0% { left: -100%; }
+  0% { left: -150%; }
   35% { left: 150%; }
   100% { left: 150%; }
 }

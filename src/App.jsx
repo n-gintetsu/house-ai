@@ -1097,15 +1097,26 @@ export default function App() {
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo">
-              <div style={{position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', height: '48px'}}>
-                <img src="/logo.png" alt="House-AI" style={{height: '48px', width: 'auto', display: 'block'}} />
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: '#1a3a5c',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                position: 'relative',
+                flexShrink: 0
+              }}>
+                <img src="/logo.png" alt="House-AI" style={{width: '44px', height: '44px', objectFit: 'contain'}} />
                 <div style={{
                   position: 'absolute',
-                  top: 0,
-                  left: '-100%',
-                  width: '50%',
-                  height: '100%',
-                  background: 'linear-gradient(105deg, transparent 20%, rgba(255,230,120,0.85) 50%, transparent 80%)',
+                  top: '-50%',
+                  left: '-150%',
+                  width: '60%',
+                  height: '200%',
+                  background: 'linear-gradient(105deg, transparent 20%, rgba(255,230,120,0.9) 50%, transparent 80%)',
                   animation: 'logoShine 3s ease-in-out infinite',
                   pointerEvents: 'none'
                 }} />
