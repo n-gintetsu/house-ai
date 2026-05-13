@@ -1703,29 +1703,51 @@
 }
 
 /* ── Agency Partner Page ── */
+.agency-cards {
+  display: flex;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
 .agency-card {
   background: #fff;
   border-radius: 24px;
-  padding: 32px 28px;
+  overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 4px 24px rgba(26,58,92,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: fadeUp 0.7s ease-out both;
+  flex: 1;
 }
 .agency-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 36px rgba(26,58,92,0.14);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.16);
 }
 .agency-card--navy { border: 2px solid #1a3a5c; }
 .agency-card--gold  { border: 2px solid #c9a84c; }
 
+.agency-card-label {
+  padding: 10px 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.agency-card-label--navy { background: #1a3a5c; color: #c9a84c; }
+.agency-card-label--gold  { background: #c9a84c; color: #1a3a5c; }
+
+.agency-card-body {
+  padding: 28px 28px 24px;
+}
+
 .partner-cta {
   position: relative;
   overflow: hidden;
-  display: inline-block;
+  display: block;
   width: 100%;
   border: none;
-  border-radius: 14px;
+  border-radius: 32px;
   padding: 14px 20px;
   font-size: 15px;
   font-weight: 700;
@@ -1733,6 +1755,7 @@
   letter-spacing: 0.3px;
   font-family: inherit;
   text-align: center;
+  box-sizing: border-box;
 }
 .partner-cta::before {
   content: "";
@@ -1743,17 +1766,22 @@
   animation: shine 3s infinite;
 }
 .partner-cta--navy { background: #1a3a5c; color: #fff; }
-.partner-cta--gold  { background: linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c); background-size: 200% auto; color: #1a3a5c; animation: btnShimmer 3s linear infinite; }
+.partner-cta--gold  {
+  background: linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c);
+  background-size: 200% auto;
+  color: #1a3a5c;
+  animation: btnShimmer 3s linear infinite;
+}
 
 .agency-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(26,58,92,0.06);
-  border: 1px solid rgba(26,58,92,0.12);
+  background: #fff;
+  border: 1px solid #c9a84c;
   border-radius: 20px;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a3a5c;
   white-space: nowrap;
@@ -1768,7 +1796,8 @@
 }
 
 @media (max-width: 640px) {
-  .agency-card { padding: 24px 20px; }
+  .agency-cards { flex-direction: column; }
+  .agency-card-body { padding: 24px 20px 20px; }
   .agency-badges { flex-wrap: wrap; }
   .agency-flow { flex-direction: column !important; }
   .agency-flow-arrow { transform: rotate(90deg); }
