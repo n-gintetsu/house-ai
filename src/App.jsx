@@ -2044,40 +2044,98 @@ export default function App() {
           {tab === 'agency' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               {!agencyType && (
-                <div style={{ padding: '40px 24px' }}>
-                  <h2 style={{ color: '#1a3a5c', fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>🏗️ 業者様向けサービス</h2>
-                  <p style={{ color: '#666', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>ご利用用途をお選びください</p>
+                <div style={{
+                  background: 'radial-gradient(circle at top center, rgba(212,175,55,0.12), transparent 35%), linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%)',
+                  minHeight: '100%',
+                  padding: '40px 20px 80px',
+                }}>
+                  {/* ヒーロー */}
+                  <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 560, margin: '0 auto 28px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#c9a84c', marginBottom: 10, textTransform: 'uppercase' }}>House-AI Partner</div>
+                    <h2 style={{ color: '#1a3a5c', fontSize: 22, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.4 }}>House-AI パートナー登録</h2>
+                    <p style={{ color: '#4a6080', fontSize: 14, lineHeight: 1.8, margin: '0 0 8px' }}>
+                      AIマッチング・物件フィード・専門相談導線で、<br />貴社の集客をサポートします。
+                    </p>
+                    <p style={{ color: '#7a90a8', fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                      まずは無料で登録できます。料金プランは登録後、必要に応じて選択できます。
+                    </p>
+                  </div>
+
+                  {/* 信頼バッジ */}
+                  <div className="agency-badges" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 32, maxWidth: 560, margin: '0 auto 32px' }}>
+                    {[['✅','無料登録'],['🔕','営業連絡なし'],['🤖','AI連携準備中'],['📊','管理ダッシュボード利用可能']].map(([icon, label]) => (
+                      <div key={label} className="agency-badge"><span>{icon}</span>{label}</div>
+                    ))}
+                  </div>
+
+                  {/* カード */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 560, margin: '0 auto' }}>
-                    <div style={{ border: '2px solid #1a3a5c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
-                      onClick={() => setAgencyType('realestate')}>
+
+                    {/* 不動産業者カード */}
+                    <div className="agency-card agency-card--navy" onClick={() => setAgencyType('realestate')}>
+                      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#1a3a5c', opacity: 0.5, marginBottom: 12, textTransform: 'uppercase' }}>Real Estate Partner</div>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
-                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>不動産業者様</div>
-                      <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
-                        売買・賃貸物件を無料で掲載できます。AIマッチング・物件フィード・TikTok風フィードで集客をサポートします。
+                      <div style={{ color: '#1a3a5c', fontSize: 19, fontWeight: 800, marginBottom: 10 }}>不動産業者様</div>
+                      <p style={{ color: '#4a6080', fontSize: 13, lineHeight: 1.8, margin: '0 0 16px', wordBreak: 'keep-all' }}>
+                        売買・賃貸・収益物件を掲載し、House-AIの物件フィードやAIマッチング導線から集客できます。
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                        {['物件掲載','TikTok風物件フィード連携','AIマッチング対象','業者専用ダッシュボード','反響・申込管理'].map(t => (
+                          <div key={t} style={{ fontSize: 13, color: '#334e68', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ color: '#1a3a5c', fontWeight: 700 }}>✅</span>{t}
+                          </div>
+                        ))}
                       </div>
-                      <div style={{ display: 'inline-block', padding: '10px 24px', background: '#1a3a5c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        無料で物件掲載を始める
-                      </div>
-                      <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
+                      <button className="partner-cta partner-cta--navy">無料で物件掲載を始める →</button>
+                      <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
                         すでに登録済みの方は
-                        <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
+                        <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }} onClick={e => e.stopPropagation()}>こちらからログイン →</a>
                       </div>
                     </div>
-                    <div style={{ border: '2px solid #c9a84c', borderRadius: 16, padding: '28px 24px', cursor: 'pointer', background: '#fff' }}
-                      onClick={() => window.location.href = '/partner?mode=register'}>
+
+                    {/* その他業者カード */}
+                    <div className="agency-card agency-card--gold" onClick={() => window.location.href = '/partner?mode=register'}>
+                      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#c9a84c', marginBottom: 12, textTransform: 'uppercase' }}>AI Business Partner</div>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
-                      <div style={{ color: '#1a3a5c', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>その他の業者様</div>
-                      <div style={{ color: '#555', fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
-                        リフォーム・外構・司法書士・税理士・金融機関など、当サイトへの広告掲載をご希望の方はこちら。
+                      <div style={{ color: '#1a3a5c', fontSize: 19, fontWeight: 800, marginBottom: 10 }}>専門・提携業者様</div>
+                      <p style={{ color: '#4a6080', fontSize: 13, lineHeight: 1.8, margin: '0 0 16px', wordBreak: 'keep-all' }}>
+                        リフォーム・外構・士業・解体・保険・金融など、不動産に関わるサービスをHouse-AIと連携できます。
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                        {['企業ページ掲載','AI相談導線との連携','専門分野登録','実績・事例掲載','将来的な案件通知'].map(t => (
+                          <div key={t} style={{ fontSize: 13, color: '#334e68', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ color: '#c9a84c', fontWeight: 700 }}>✅</span>{t}
+                          </div>
+                        ))}
                       </div>
-                      <div style={{ color: '#888', fontSize: 12, marginBottom: 16 }}>※ 広告ページはこちらで作成し、当サイトに掲載いたします</div>
-                      <div style={{ display: 'inline-block', padding: '10px 24px', background: '#c9a84c', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14 }}>
-                        会員登録はこちら →
-                      </div>
-                      <div style={{ marginTop: 12, fontSize: 12, color: '#888' }}>
+                      <button className="partner-cta partner-cta--gold">無料でパートナー登録する →</button>
+                      <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
                         すでに登録済みの方は
-                        <a href="/partner" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }}>こちらからログイン →</a>
+                        <a href="/partner" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }} onClick={e => e.stopPropagation()}>こちらからログイン →</a>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* 連携フロー */}
+                  <div style={{ maxWidth: 560, margin: '40px auto 0' }}>
+                    <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#1a3a5c', marginBottom: 20 }}>House-AIでできること</div>
+                    <div className="agency-flow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      {[
+                        { icon: '👤', label: 'ユーザー相談' },
+                        { icon: '→', label: null, arrow: true },
+                        { icon: '🤖', label: 'AIが内容を整理' },
+                        { icon: '→', label: null, arrow: true },
+                        { icon: '🏢', label: '最適な業者へ接続' },
+                        { icon: '→', label: null, arrow: true },
+                        { icon: '📊', label: 'ダッシュボードで反響管理' },
+                      ].map((item, i) => item.arrow ? (
+                        <div key={i} className="agency-flow-arrow" style={{ color: '#c9a84c', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>→</div>
+                      ) : (
+                        <div key={i} className="agency-flow-step" style={{ textAlign: 'center', minWidth: 60 }}>
+                          <div style={{ fontSize: 24 }}>{item.icon}</div>
+                          <div style={{ fontSize: 10, color: '#4a6080', lineHeight: 1.4, marginTop: 4 }}>{item.label}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
