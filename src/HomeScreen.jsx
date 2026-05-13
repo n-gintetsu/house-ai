@@ -836,7 +836,7 @@ export default function HomeScreen({ onNavigate }) {
                   <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
                     <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
+                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
                     </div>
                     <div style={{textAlign:'center'}}>
                       <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
@@ -891,7 +891,7 @@ export default function HomeScreen({ onNavigate }) {
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
                       <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
+                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
                     </div>
                       <div style={{textAlign:'center'}}>
                         <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
