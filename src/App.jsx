@@ -570,17 +570,9 @@ export default function App() {
         }
 
         .ha-logo {
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          overflow: hidden;
+          display: flex;
+          align-items: center;
           flex-shrink: 0;
-        }
-
-        .ha-logo img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
         }
 
         .ha-brand strong {
@@ -1105,7 +1097,7 @@ export default function App() {
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo">
-              <img src="/logo.png" alt="House-AI" />
+              <img src="/logo.png" alt="House-AI" style={{height: '48px', width: 'auto'}} />
             </div>
             <div>
               <strong>House-AI</strong>
