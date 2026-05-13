@@ -1780,3 +1780,20 @@
   .agency-flow { flex-direction: column !important; }
   .agency-flow-arrow { transform: rotate(90deg); }
 }
+
+/* ── Expert Dashboard ── */
+.kpi-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26,58,92,0.18) !important;
+}
+
+.ai-case-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ai-case-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26,58,92,0.18) !important;
+}

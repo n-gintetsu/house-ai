@@ -66,180 +66,155 @@ function ConsultationCard({ item, style }) {
 }
 
 function SectionDashboard({ isPremium, setActiveSection }) {
+  const KPI_TARGETS = [
+    { icon: '👁️', label: 'プロフィール閲覧数', value: 128, unit: '回', color: NAVY },
+    { icon: '📩', label: '今月の相談数', value: 5, unit: '件', color: '#2563eb' },
+    { icon: '💬', label: '返信率', value: 80, unit: '%', color: '#16a34a' },
+    { icon: '✅', label: '対応完了', value: 2, unit: '件', color: GOLD },
+  ]
+  const [counts, setCounts] = useState(KPI_TARGETS.map(() => 0))
+
+  useEffect(() => {
+    const steps = 60
+    const interval = 1500 / steps
+    let step = 0
+    const timer = setInterval(() => {
+      step++
+      const p = step / steps
+      setCounts(KPI_TARGETS.map(k => Math.round(k.value * Math.min(p, 1))))
+      if (step >= steps) clearInterval(timer)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [])
+
+  const AI_CASES = [
+    { badge: '相続', urgency: '高', title: '親の不動産相続について相談したい', area: 'さいたま市', time: '10分前' },
+    { badge: '税金', urgency: '中', title: '売却時の譲渡所得税の計算方法が知りたい', area: '東京都', time: '1時間前' },
+  ]
+
+  const AD_STATUS = { plan: 'フリー', rank: 47, views: 128, ctr: '3.2%' }
+
+  const AI_LOGS = [
+    { time: '10分前', text: 'さいたま市の相続相談ユーザーがあなたのプロフィールを閲覧しました' },
+    { time: '1時間前', text: '東京都の税金相談ユーザーへのおすすめ通知が送信されました' },
+    { time: '3時間前', text: 'AIがあなたのプロフィールを3件の相談にマッチングしました' },
+    { time: '昨日', text: '横浜市のユーザーが契約トラブル相談を投稿、AIが候補に追加しました' },
+    { time: '2日前', text: 'プロフィール完成度が上がりマッチング精度が向上しました' },
+  ]
+
   return (
     <div>
-      {/* 成功体験演出カード */}
-      <div style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a4a7c 100%)', borderRadius: 16, padding: '20px 24px', marginBottom: 16, color: 'white' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 20 }}>🎉</span>
-          <span style={{ fontSize: 15, fontWeight: 800 }}>初めての相談が届きました！</span>
-        </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', margin: '0 0 12px', lineHeight: 1.6 }}>
-          あなたのプロフィール閲覧数：<strong style={{ color: '#c9a84c' }}>12回</strong>、相談：<strong style={{ color: '#c9a84c' }}>1件</strong><br />
-          スタンダードプランなら<strong style={{ color: '#c9a84c', fontSize: 16 }}>3倍</strong>届く可能性があります
-        </p>
-        <button onClick={() => setActiveSection('plan')} style={{ background: '#c9a84c', border: 'none', borderRadius: 8, padding: '10px 20px', color: '#1a3a5c', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
-          優先表示で相談数アップ →
-        </button>
-      </div>
-
-      {/* ① サマリーカード */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20 }}>
-        {[
-          { icon: '👁️', label: 'プロフィール閲覧数', value: MOCK_STATS.views, unit: '' },
-          { icon: '📩', label: '今月の相談数', value: MOCK_STATS.consultations, unit: '件' },
-          { icon: '💬', label: '返信率', value: MOCK_STATS.replyRate, unit: '%' },
-          { icon: '✅', label: '対応完了', value: MOCK_STATS.closed, unit: '件' },
-        ].map((s) => (
-          <div key={s.label} style={{
-            background: '#fff', borderRadius: 12, padding: 20,
-            boxShadow: '0 1px 8px rgba(26,58,92,0.08)', textAlign: 'center',
+      {/* ① KPI 4枚カード */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 24 }}>
+        {KPI_TARGETS.map((k, i) => (
+          <div key={k.label} className="kpi-card" style={{
+            background: '#fff', borderRadius: 14, padding: '20px 16px',
+            boxShadow: '0 2px 12px rgba(26,58,92,0.09)', textAlign: 'center',
           }}>
-            <div style={{ fontSize: 24, marginBottom: 4 }}>{s.icon}</div>
-            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: NAVY }}>{s.value}<span style={{ fontSize: 16 }}>{s.unit}</span></div>
+            <div style={{ fontSize: 26, marginBottom: 6 }}>{k.icon}</div>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>{k.label}</div>
+            <div style={{ fontSize: 34, fontWeight: 800, color: k.color, lineHeight: 1 }}>
+              {counts[i]}<span style={{ fontSize: 16, fontWeight: 600 }}>{k.unit}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* 表示順位トリガー */}
-      <div style={{ background: 'white', borderRadius: 12, padding: '16px 20px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>現在の表示順位</p>
-          <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 800, color: '#1a3a5c' }}>
-            {MOCK_TRIGGERS.displayRank}<span style={{ fontSize: 14, fontWeight: 400 }}>位</span>
-          </p>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>スタンダードで<strong style={{ color: '#c9a84c' }}>優先表示</strong>されます</p>
-        </div>
-        <button onClick={() => setActiveSection('plan')} style={{ background: '#f0f4ff', border: '1.5px solid #1a3a5c', borderRadius: 8, padding: '8px 16px', color: '#1a3a5c', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-          順位を上げる →
-        </button>
-      </div>
-
-      {/* ② AI評価カード */}
-      <div style={{
-        background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`,
-        borderRadius: 12, padding: 24, marginBottom: 20, color: '#fff',
-      }}>
-        <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 16 }}>🤖 AI評価</div>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          {[
-            { label: '表示順位', value: '中' },
-            { label: '返信速度', value: 'やや遅い' },
-            { label: 'おすすめ度', value: 'B+' },
-          ].map((item) => (
-            <div key={item.label} style={{
-              background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 14px', flex: '1 1 auto', textAlign: 'center',
+      {/* ② AIおすすめ案件 */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 12 }}>🤖 AIおすすめ案件</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {AI_CASES.map((c, i) => (
+            <div key={i} className="ai-case-card" style={{
+              flex: '1 1 calc(50% - 6px)', minWidth: 220,
+              background: '#fff', borderRadius: 14, padding: 16,
+              boxShadow: '0 2px 12px rgba(26,58,92,0.09)',
+              border: `1.5px solid ${NAVY}`,
             }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>{item.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{item.value}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          {['返信を早めると表示順位が上がります', 'プロフィールを充実させると相談が増えます'].map((tip) => (
-            <div key={tip} style={{ fontSize: 12, color: GOLD, marginBottom: 4 }}>・{tip}</div>
-          ))}
-        </div>
-        <button
-          onClick={() => setActiveSection('plan')}
-          style={{ background: GOLD, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
-        >
-          もっと相談を増やす →
-        </button>
-      </div>
-
-      {/* ③④ 新着相談 + ぼかし */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: NAVY }}>📩 新着相談</div>
-          <button
-            onClick={() => setActiveSection('consultations')}
-            style={{ background: 'none', border: 'none', color: NAVY, fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            すべて見る
-          </button>
-        </div>
-        {MOCK_CONSULTATIONS.slice(0, 3).map((item) => (
-          <ConsultationCard key={item.id} item={item} />
-        ))}
-
-        {!isPremium && (
-          <div style={{ position: 'relative' }}>
-            <div style={{ filter: 'blur(4px)', pointerEvents: 'none' }}>
-              {MOCK_CONSULTATIONS.slice(3).map((item) => (
-                <ConsultationCard key={item.id} item={item} />
-              ))}
-            </div>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(255,255,255,0.7)', borderRadius: 8,
-              gap: 12,
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: NAVY }}>さらに3件の相談があります</div>
-              <button
-                onClick={() => setActiveSection('plan')}
-                style={{ background: GOLD, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
-              >
-                スタンダードで全て閲覧 →
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ background: NAVY, color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{c.badge}</span>
+                <span style={{ background: URGENCY_COLORS[c.urgency], color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>緊急度：{c.urgency}</span>
+              </div>
+              <p style={{ fontSize: 13, color: TEXT, margin: '0 0 6px', lineHeight: 1.5 }}>{c.title}</p>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 10px' }}>📍 {c.area} · {c.time}</p>
+              <button style={{ padding: '7px 14px', background: NAVY, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                案件を確認する →
               </button>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* 取り逃しトリガー */}
-      <div style={{ background: '#fff8f0', border: '1.5px solid #f59e0b', borderRadius: 12, padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#92400e' }}>
-            😢 他の専門家に<strong style={{ fontSize: 16, color: '#d97706' }}>{MOCK_TRIGGERS.missedConsultations}件</strong>の相談が送信されました
-          </p>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#b45309' }}>優先表示で取り逃しを減らせます</p>
-        </div>
-        <button onClick={() => setActiveSection('plan')} style={{ background: '#f59e0b', border: 'none', borderRadius: 8, padding: '8px 16px', color: 'white', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-          優先表示にする →
-        </button>
-      </div>
-
-      {/* ⑤ アップグレード誘導カード */}
-      <div style={{
-        background: `linear-gradient(135deg, ${GOLD} 0%, #a87c2a 100%)`,
-        borderRadius: 12, padding: 24, marginBottom: 20,
-      }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 12 }}>もっと相談を増やしませんか？</div>
-        {['案件通知', 'DM制限解除', 'AI優先表示', '相談数上限UP'].map((item) => (
-          <div key={item} style={{ fontSize: 13, color: NAVY, marginBottom: 6 }}>✅ {item}</div>
-        ))}
-        <button
-          onClick={() => setActiveSection('plan')}
-          style={{ marginTop: 12, background: NAVY, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
-        >
-          スタンダードにアップグレード
-        </button>
-      </div>
-
-      {/* ⑥ プロフィール完成度 */}
-      <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 8px rgba(26,58,92,0.08)' }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 12 }}>プロフィール完成度</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}>
-            <div style={{ width: '70%', height: '100%', background: GOLD, borderRadius: 4 }} />
-          </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>70%</span>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          {['実績未入力', '写真未設定'].map((item) => (
-            <div key={item} style={{ fontSize: 12, color: '#ef4444', marginBottom: 4 }}>・{item}</div>
           ))}
         </div>
-        <button
-          onClick={() => setActiveSection('profile')}
-          style={{ background: '#fff', color: NAVY, border: `1.5px solid ${NAVY}`, borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-        >
-          プロフィールを充実させる
+      </div>
+
+      {/* ③ 広告掲載状況 */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 24, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 14 }}>📢 広告掲載状況</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {[
+            { label: '掲載プラン', value: AD_STATUS.plan },
+            { label: '表示順位', value: `${AD_STATUS.rank}位` },
+            { label: '閲覧数', value: `${AD_STATUS.views}回` },
+            { label: 'CTR', value: AD_STATUS.ctr },
+          ].map(item => (
+            <div key={item.label} style={{ flex: '1 1 70px', textAlign: 'center', background: '#f8fafc', borderRadius: 10, padding: '12px 8px' }}>
+              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{item.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: NAVY }}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setActiveSection('plan')} style={{ marginTop: 14, padding: '8px 18px', background: '#f0f4ff', border: `1.5px solid ${NAVY}`, borderRadius: 8, color: NAVY, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          掲載プランを変更する →
         </button>
       </div>
+
+      {/* ④ AI反響ログ */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 24, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 14 }}>📋 AI反響ログ</div>
+        {AI_LOGS.map((log, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < AI_LOGS.length - 1 ? 12 : 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD, marginTop: 5, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 2 }}>{log.time}</div>
+              <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.5 }}>{log.text}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ⑤ プロフィール完成度 + AI信頼スコア */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ flex: '2 1 200px', background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 12 }}>プロフィール完成度</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}>
+              <div style={{ width: '78%', height: '100%', background: GOLD, borderRadius: 4 }} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>78%</span>
+          </div>
+          {['実績未入力', '写真未設定'].map(item => (
+            <div key={item} style={{ fontSize: 12, color: '#ef4444', marginBottom: 4 }}>・{item}</div>
+          ))}
+          <button onClick={() => setActiveSection('profile')} style={{ marginTop: 12, background: '#fff', color: NAVY, border: `1.5px solid ${NAVY}`, borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            プロフィールを充実させる
+          </button>
+        </div>
+        <div style={{ flex: '1 1 130px', background: `linear-gradient(135deg, ${NAVY} 0%, #0f2540 100%)`, borderRadius: 14, padding: 20, boxShadow: '0 2px 12px rgba(26,58,92,0.09)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>AI信頼スコア</div>
+          <div style={{ fontSize: 52, fontWeight: 900, color: GOLD, lineHeight: 1 }}>92</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>上位 8% のスコア</div>
+        </div>
+      </div>
+
+      {/* ⑥ CTA */}
+      <button onClick={() => setActiveSection('plan')} style={{
+        width: '100%', padding: 16,
+        background: `linear-gradient(135deg, ${GOLD} 0%, #f5e08a 50%, ${GOLD} 100%)`,
+        backgroundSize: '200% auto', border: 'none', borderRadius: 14,
+        color: NAVY, fontSize: 16, fontWeight: 800, cursor: 'pointer',
+        boxShadow: '0 4px 20px rgba(201,168,76,0.4)',
+        animation: 'btnShimmer 3s linear infinite',
+      }}>
+        ✨ AI集客をさらに強化する →
+      </button>
     </div>
   )
 }
