@@ -823,15 +823,20 @@ export default function HomeScreen({ onNavigate }) {
                 <div
                   onClick={handleStartChat}
                   style={{
-                    background: '#1a3a5c',
-                    border: 'none',
-                    borderRadius: 16,
+                    background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)',
+                    border: '2px solid #c9a84c',
+                    borderRadius: '16px',
                     padding: '20px',
                     textAlign: 'center',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 12px rgba(26,58,92,0.3)',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                 >
+                  <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
+                  <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
+                  <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
+                  <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
                     <img src="/logo.png" alt="House-AI" style={{width: '280px', height: 'auto', display: 'block'}} />
                     <div style={{
@@ -850,7 +855,7 @@ export default function HomeScreen({ onNavigate }) {
                   </div>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 4px', fontFamily: "'Noto Sans JP', sans-serif" }}>AIに相談してみる</p>
                   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', margin: '0 0 14px', fontFamily: "'Noto Sans JP', sans-serif" }}>3ステップで最適な進め方を提案します</p>
-                  <button style={{ background: '#fff', color: '#ff6b35', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Noto Sans JP', sans-serif" }}>
+                  <button style={{ background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)', backgroundSize: '200% auto', color: '#1a3a5c', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: '700', cursor: 'pointer', fontFamily: "'Noto Sans JP', sans-serif", animationName: 'btnShimmer', animationDuration: '3s', animationTimingFunction: 'linear', animationIterationCount: 'infinite' }}>
                     💬 無料でAI相談する
                   </button>
                 </div>
@@ -879,7 +884,11 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
-                  <div onClick={handleStartChat} style={{ background: "#1a3a5c", border: "none", borderRadius: 16, padding: "20px", textAlign: "center", cursor: "pointer", boxShadow: "0 2px 12px rgba(26,58,92,0.3)" }}>
+                  <div onClick={handleStartChat} style={{ background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)', border: '2px solid #c9a84c', borderRadius: '16px', padding: '20px', textAlign: 'center', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
+                    <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
+                    <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
+                    <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
                       <img src="/logo.png" alt="House-AI" style={{width: '280px', height: 'auto', display: 'block'}} />
                       <div style={{
@@ -898,7 +907,7 @@ export default function HomeScreen({ onNavigate }) {
                     </div>
                     <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>AIに相談してみる</p>
                     <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", margin: "0 0 14px" }}>3ステップで最適な進め方を提案します</p>
-                    <button style={{ background: "#fff", color: "#ff6b35", border: "none", borderRadius: 50, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>💬 無料でAI相談する</button>
+                    <button style={{ background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)', backgroundSize: '200% auto', color: '#1a3a5c', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: '700', cursor: 'pointer', animationName: 'btnShimmer', animationDuration: '3s', animationTimingFunction: 'linear', animationIterationCount: 'infinite' }}>💬 無料でAI相談する</button>
                   </div>
                 )}
               <CommunityStrip onNavigate={navigate} />
