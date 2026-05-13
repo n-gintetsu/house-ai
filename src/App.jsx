@@ -1101,7 +1101,7 @@ export default function App() {
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: '#0a1f35',
+                background: '#000000',
                 border: '3px solid #c9a84c',
                 display: 'flex',
                 alignItems: 'center',
