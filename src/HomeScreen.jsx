@@ -913,17 +913,11 @@ export default function HomeScreen({ onNavigate }) {
                           pointerEvents:'none'
                         }} />
                       </div>
-                      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'16px'}}>
-                        <div style={{
-                          writingMode:'vertical-rl', textOrientation:'mixed',
-                          fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px',
-                          color:'#f5e08a', lineHeight:'1.8', textAlign:'center'
-                        }}>AIに相談してみる</div>
-                        <div style={{
-                          writingMode:'vertical-rl', textOrientation:'mixed',
-                          fontSize:'11px', letterSpacing:'2px',
-                          color:'rgba(255,255,255,0.6)', lineHeight:'1.6'
-                        }}>3ステップで最適な進め方を提案します</div>
+                      <div style={{display:'flex', flexDirection:'row', gap:'8px'}}>
+                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px', color:'#f5e08a', lineHeight:'1.8'}}>AIに相談</div>
+                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px', color:'#f5e08a', lineHeight:'1.8'}}>してみる</div>
+                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'11px', letterSpacing:'2px', color:'rgba(255,255,255,0.6)', lineHeight:'1.6', marginTop:'4px'}}>3ステップで</div>
+                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'11px', letterSpacing:'2px', color:'rgba(255,255,255,0.6)', lineHeight:'1.6', marginTop:'4px'}}>最適な進め方</div>
                       </div>
                     </div>
                     <button style={{
