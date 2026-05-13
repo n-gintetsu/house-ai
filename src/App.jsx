@@ -2069,12 +2069,12 @@ export default function App() {
                   </div>
 
                   {/* カード */}
-                  <div className="agency-cards">
+                  <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', maxWidth: '900px', margin: '0 auto' }}>
 
                     {/* 不動産業者カード */}
-                    <div className="agency-card agency-card--navy" onClick={() => setAgencyType('realestate')}>
-                      <div className="agency-card-label agency-card-label--navy">Real Estate Partner</div>
-                      <div className="agency-card-body">
+                    <div className="agency-card-hover" onClick={() => setAgencyType('realestate')} style={{ flex: 1, minWidth: '280px', border: '2px solid #1a3a5c', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', background: 'white', cursor: 'pointer' }}>
+                      <div style={{ background: '#1a3a5c', color: '#c9a84c', padding: '8px 16px', fontSize: '11px', letterSpacing: '2px', textAlign: 'center', fontWeight: 800, textTransform: 'uppercase' }}>Real Estate Partner</div>
+                      <div style={{ padding: '28px 28px 24px' }}>
                         <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
                         <div style={{ color: '#1a3a5c', fontSize: 19, fontWeight: 800, marginBottom: 10 }}>不動産業者様</div>
                         <p style={{ color: '#4a6080', fontSize: 13, lineHeight: 1.8, margin: '0 0 16px', wordBreak: 'keep-all' }}>
@@ -2087,7 +2087,7 @@ export default function App() {
                             </div>
                           ))}
                         </div>
-                        <button className="partner-cta partner-cta--navy">無料で物件掲載を始める →</button>
+                        <button style={{ background: '#1a3a5c', color: 'white', width: '100%', padding: '14px', borderRadius: '32px', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>無料で物件掲載を始める →</button>
                         <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
                           すでに登録済みの方は
                           <a href="/agency" style={{ color: '#1a3a5c', fontWeight: 700, marginLeft: 4 }} onClick={e => e.stopPropagation()}>こちらからログイン →</a>
@@ -2096,9 +2096,9 @@ export default function App() {
                     </div>
 
                     {/* その他業者カード */}
-                    <div className="agency-card agency-card--gold" onClick={() => window.location.href = '/partner?mode=register'}>
-                      <div className="agency-card-label agency-card-label--gold">AI Business Partner</div>
-                      <div className="agency-card-body">
+                    <div className="agency-card-hover" onClick={() => window.location.href = '/partner?mode=register'} style={{ flex: 1, minWidth: '280px', border: '2px solid #c9a84c', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', background: 'white', cursor: 'pointer' }}>
+                      <div style={{ background: '#c9a84c', color: '#1a3a5c', padding: '8px 16px', fontSize: '11px', letterSpacing: '2px', textAlign: 'center', fontWeight: 800, textTransform: 'uppercase' }}>AI Business Partner</div>
+                      <div style={{ padding: '28px 28px 24px' }}>
                         <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
                         <div style={{ color: '#1a3a5c', fontSize: 19, fontWeight: 800, marginBottom: 10 }}>専門・提携業者様</div>
                         <p style={{ color: '#4a6080', fontSize: 13, lineHeight: 1.8, margin: '0 0 16px', wordBreak: 'keep-all' }}>
@@ -2111,7 +2111,7 @@ export default function App() {
                             </div>
                           ))}
                         </div>
-                        <button className="partner-cta partner-cta--gold">無料でパートナー登録する →</button>
+                        <button style={{ background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)', backgroundSize: '200% auto', color: '#1a3a5c', width: '100%', padding: '14px', borderRadius: '32px', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer', animation: 'btnShimmer 3s linear infinite' }}>無料でパートナー登録する →</button>
                         <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
                           すでに登録済みの方は
                           <a href="/partner" style={{ color: '#c9a84c', fontWeight: 700, marginLeft: 4 }} onClick={e => e.stopPropagation()}>こちらからログイン →</a>

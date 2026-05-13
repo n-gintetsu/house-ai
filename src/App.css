@@ -1710,35 +1710,13 @@
   margin: 0 auto;
 }
 
-.agency-card {
-  background: #fff;
-  border-radius: 24px;
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+.agency-card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: fadeUp 0.7s ease-out both;
-  flex: 1;
 }
-.agency-card:hover {
+.agency-card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.16);
-}
-.agency-card--navy { border: 2px solid #1a3a5c; }
-.agency-card--gold  { border: 2px solid #c9a84c; }
-
-.agency-card-label {
-  padding: 10px 20px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-.agency-card-label--navy { background: #1a3a5c; color: #c9a84c; }
-.agency-card-label--gold  { background: #c9a84c; color: #1a3a5c; }
-
-.agency-card-body {
-  padding: 28px 28px 24px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.16) !important;
 }
 
 .partner-cta {
