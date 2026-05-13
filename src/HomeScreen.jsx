@@ -833,9 +833,9 @@ export default function HomeScreen({ onNavigate }) {
                   }}
                 >
                   <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '8px'}}>
-                    <img src="/logo.png" alt="House-AI" style={{width: '48px', height: '48px', objectFit: 'contain'}} />
+                    <img src="/logo.png" alt="House-AI" style={{width: '80px', height: '80px', objectFit: 'contain'}} />
                     <div style={{
-                      fontSize: '28px',
+                      fontSize: '48px',
                       fontWeight: '700',
                       letterSpacing: '3px',
                       fontFamily: 'Georgia, serif',
@@ -843,7 +843,10 @@ export default function HomeScreen({ onNavigate }) {
                       backgroundSize: '200% auto',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      animation: 'goldFlow 3s linear infinite'
+                      animationName: 'goldFlow',
+                      animationDuration: '2s',
+                      animationTimingFunction: 'linear',
+                      animationIterationCount: 'infinite'
                     }}>HOUSE-AI</div>
                   </div>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 4px', fontFamily: "'Noto Sans JP', sans-serif" }}>AIに相談してみる</p>
@@ -879,9 +882,9 @@ export default function HomeScreen({ onNavigate }) {
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
                   <div onClick={handleStartChat} style={{ background: "#1a3a5c", border: "none", borderRadius: 16, padding: "20px", textAlign: "center", cursor: "pointer", boxShadow: "0 2px 12px rgba(26,58,92,0.3)" }}>
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '8px'}}>
-                      <img src="/logo.png" alt="House-AI" style={{width: '48px', height: '48px', objectFit: 'contain'}} />
+                      <img src="/logo.png" alt="House-AI" style={{width: '80px', height: '80px', objectFit: 'contain'}} />
                       <div style={{
-                        fontSize: '28px',
+                        fontSize: '48px',
                         fontWeight: '700',
                         letterSpacing: '3px',
                         fontFamily: 'Georgia, serif',
@@ -889,7 +892,10 @@ export default function HomeScreen({ onNavigate }) {
                         backgroundSize: '200% auto',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        animation: 'goldFlow 3s linear infinite'
+                        animationName: 'goldFlow',
+                        animationDuration: '2s',
+                        animationTimingFunction: 'linear',
+                        animationIterationCount: 'infinite'
                       }}>HOUSE-AI</div>
                     </div>
                     <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>AIに相談してみる</p>
