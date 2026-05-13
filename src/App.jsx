@@ -1097,29 +1097,31 @@ export default function App() {
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo">
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: '#000000',
-                border: '3px solid #c9a84c',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                position: 'relative',
-                flexShrink: 0
-              }}>
-                <img src="/logo.png" alt="House-AI" style={{width: '60px', height: '60px', objectFit: 'contain'}} />
+              <div style={{position: 'relative', display: 'inline-flex'}}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: '#000000',
+                  border: '3px solid #c9a84c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}>
+                  <img src="/logo.png" alt="House-AI" style={{width: '60px', height: '60px', objectFit: 'contain'}} />
+                </div>
                 <div style={{
                   position: 'absolute',
-                  top: '-50%',
-                  left: '-150%',
-                  width: '60%',
-                  height: '200%',
-                  background: 'linear-gradient(105deg, transparent 15%, rgba(255,240,150,1.0) 50%, transparent 85%)',
+                  top: 0,
+                  left: '-100%',
+                  width: '50%',
+                  height: '100%',
+                  background: 'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.6) 50%, transparent 85%)',
                   animation: 'logoShine 2s ease-in-out infinite',
-                  pointerEvents: 'none'
+                  pointerEvents: 'none',
+                  borderRadius: '50%'
                 }} />
               </div>
             </div>
