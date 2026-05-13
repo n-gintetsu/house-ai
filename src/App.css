@@ -1552,6 +1552,7 @@
   100% { background-position: 0% center; }
 }
 
+
 /* ── AI Banner ── */
 .ai-banner {
   background: linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%);
@@ -1676,19 +1677,19 @@
 }
 
 @keyframes logoGlow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(212,175,55,0.35)); }
-  50%       { filter: drop-shadow(0 0 18px rgba(212,175,55,0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(212,175,55,0.3)); }
+  50% { filter: drop-shadow(0 0 30px rgba(212,175,55,1.0)) drop-shadow(0 0 60px rgba(212,175,55,0.6)); }
 }
 
 @keyframes shine {
-  0%   { left: -80%; }
-  60%  { left: 120%; }
-  100% { left: 120%; }
+  0% { left: -80%; opacity: 1; }
+  50% { left: 120%; opacity: 1; }
+  100% { left: 120%; opacity: 0; }
 }
 
 @keyframes particlesMove {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-34px); }
+  from { transform: translateY(0); opacity: 0.3; }
+  to { transform: translateY(-34px); opacity: 0.3; }
 }
 
 @keyframes fadeUp {

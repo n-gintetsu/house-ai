@@ -829,13 +829,13 @@ export default function HomeScreen({ onNavigate }) {
                   overflow: 'hidden',
                   animation: 'fadeUp 0.8s ease-out both'
                 }}>
-                  <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.18,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
+                  <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
                   <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                    <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>
+                    <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
                       <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
                     </div>
                     <div style={{textAlign:'center'}}>
@@ -843,9 +843,9 @@ export default function HomeScreen({ onNavigate }) {
                       <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                     </div>
                     <div style={{position:'relative',overflow:'hidden',borderRadius:'32px',width:'100%',maxWidth:'360px'}}>
-                      <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 3s linear infinite',position:'relative',overflow:'hidden'}}>
+                      <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 1.5s linear infinite',position:'relative',overflow:'hidden'}}>
                         今すぐ無料AI相談をはじめる →
-                        <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 3s infinite'}} />
+                        <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 1.8s ease-in-out infinite'}} />
                       </button>
                     </div>
                   </div>
@@ -884,13 +884,13 @@ export default function HomeScreen({ onNavigate }) {
                     overflow: 'hidden',
                     animation: 'fadeUp 0.8s ease-out both'
                   }}>
-                    <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.18,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
+                    <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
                     <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                      <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>
+                      <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
                       <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto'}} />
                     </div>
                       <div style={{textAlign:'center'}}>
@@ -898,9 +898,9 @@ export default function HomeScreen({ onNavigate }) {
                         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                       </div>
                       <div style={{position:'relative',overflow:'hidden',borderRadius:'32px',width:'100%',maxWidth:'360px'}}>
-                        <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 3s linear infinite',position:'relative',overflow:'hidden'}}>
+                        <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 1.5s linear infinite',position:'relative',overflow:'hidden'}}>
                           今すぐ無料AI相談をはじめる →
-                          <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 3s infinite'}} />
+                          <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 1.8s ease-in-out infinite'}} />
                         </button>
                       </div>
                     </div>
