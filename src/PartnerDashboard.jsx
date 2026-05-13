@@ -11,6 +11,159 @@ function getInitialMode() {
   return params.get('mode') === 'register' ? 'register' : 'login'
 }
 
+function SectionBoost({ setTab }) {
+  return (
+    <div>
+      {/* ① ヘッダー */}
+      <div style={{ background: 'linear-gradient(135deg, #0d2744, #1a3a5c)', color: 'white', padding: 32, borderRadius: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>✨ AI集客ブースト</div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>
+          House-AIが、あなたの集客・反響・信頼性をさらに最適化します。
+        </div>
+      </div>
+
+      {/* ② AI診断カード */}
+      <div style={{ background: 'white', border: '2px solid #c9a84c', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: '#1a3a5c', marginBottom: 16 }}>🤖 現在のAI分析</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+          <div style={{ textAlign: 'center', background: '#f8fafc', borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>プロフィール完成度</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a3a5c', marginBottom: 8 }}>78%</div>
+            <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3 }}>
+              <div style={{ width: '78%', height: '100%', background: '#c9a84c', borderRadius: 3 }} />
+            </div>
+          </div>
+          <div style={{ textAlign: 'center', background: '#f8fafc', borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>現在の反響率</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a3a5c' }}>3.2%</div>
+          </div>
+          <div style={{ textAlign: 'center', background: '#f8fafc', borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>AIマッチ数</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a3a5c' }}>12件/月</div>
+          </div>
+        </div>
+        {['✅ 施工事例追加でAIマッチ率+23%予測', '✅ 口コミ追加で信頼スコア+8pt'].map(t => (
+          <div key={t} style={{ fontSize: 13, color: '#1a3a5c', fontWeight: 600, marginBottom: 6 }}>{t}</div>
+        ))}
+      </div>
+
+      {/* ③ 現在との差セクション */}
+      <div style={{ background: '#fff8e7', border: '1px solid #c9a84c', borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>現在</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#1a3a5c' }}>月3件</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>問い合わせ</div>
+          </div>
+          <div style={{ fontSize: 28, color: '#c9a84c', fontWeight: 800 }}>→</div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>AI BOOST導入後予測</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: '#c9a84c' }}>月8〜14件</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>問い合わせ</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', marginTop: 12 }}>※過去データからAI予測</div>
+      </div>
+
+      {/* ④ 3プランカード */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* STANDARD */}
+        <div style={{ flex: '1 1 200px', border: '2px solid #e0e0e0', borderRadius: 20, padding: 28 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#64748b', marginBottom: 8, letterSpacing: 1 }}>STANDARD</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#1a3a5c', marginBottom: 16 }}>無料</div>
+          {['通常掲載', '基本マッチング', 'ダッシュボード閲覧', '顧客管理機能'].map(f => (
+            <div key={f} style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>・ {f}</div>
+          ))}
+          <button disabled style={{ marginTop: 16, width: '100%', padding: 10, background: '#e0e0e0', color: '#999', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'default' }}>
+            現在のプラン
+          </button>
+        </div>
+
+        {/* AI BOOST */}
+        <div style={{ flex: '1 1 200px', border: '3px solid #c9a84c', borderRadius: 20, padding: 32, transform: 'scale(1.03)', boxShadow: '0 12px 40px rgba(201,168,76,0.3)', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#c9a84c', color: '#1a3a5c', fontSize: 12, fontWeight: 800, padding: '4px 16px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+            🔥 人気
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#c9a84c', marginBottom: 8, letterSpacing: 1 }}>AI BOOST</div>
+          <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>月額</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#1a3a5c', marginBottom: 16 }}>9,800円</div>
+          {['AI優先紹介', '閲覧数ブースト', '反響率分析レポート', 'AI自動マッチング', '信頼スコア向上支援', '専任サポート'].map(f => (
+            <div key={f} style={{ fontSize: 13, color: '#1a3a5c', marginBottom: 6, fontWeight: 600 }}>✅ {f}</div>
+          ))}
+          <button style={{
+            marginTop: 16, width: '100%', padding: 12,
+            background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',
+            backgroundSize: '200% auto',
+            color: '#1a3a5c', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 800, cursor: 'pointer',
+            animation: 'btnShimmer 3s linear infinite',
+          }}>
+            ✨ AI集客を開始する
+          </button>
+        </div>
+
+        {/* AI PRO */}
+        <div style={{ flex: '1 1 200px', border: '2px solid #1a3a5c', borderRadius: 20, padding: 28, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#1a3a5c', color: '#c9a84c', fontSize: 12, fontWeight: 800, padding: '4px 16px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+            👑 PRO
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#1a3a5c', marginBottom: 8, letterSpacing: 1 }}>AI PRO PARTNER</div>
+          <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>月額</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#1a3a5c', marginBottom: 16 }}>29,800円</div>
+          {['AI最優先表示', '特集掲載', '専任AIアドバイザー', 'コンバージョン最適化', '月次詳細レポート', 'VIPサポート'].map(f => (
+            <div key={f} style={{ fontSize: 13, color: '#1a3a5c', marginBottom: 6 }}>✅ {f}</div>
+          ))}
+          <button style={{ marginTop: 16, width: '100%', padding: 10, background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            🚀 AI最適化を有効化
+          </button>
+        </div>
+      </div>
+
+      {/* ⑤ AIランクセクション */}
+      <div style={{ background: 'linear-gradient(135deg, #1a3a5c, #0d2744)', color: 'white', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>🏆 AIランク</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>現在のランク</div>
+          <div style={{ background: '#c9a84c', color: '#1a3a5c', fontSize: 13, fontWeight: 800, padding: '4px 16px', borderRadius: 20 }}>🥈 Silver Partner</div>
+        </div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>次のランク（Gold）の条件：</div>
+        {[
+          { done: true, text: '広告掲載を開始する' },
+          { done: false, text: '施工事例を3件以上登録する' },
+          { done: false, text: '口コミ評価を5件以上取得する' },
+        ].map((c, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ width: 20, height: 20, borderRadius: 4, border: c.done ? 'none' : '2px solid rgba(255,255,255,0.4)', background: c.done ? '#c9a84c' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#1a3a5c', fontWeight: 800, flexShrink: 0 }}>
+              {c.done ? '✓' : ''}
+            </div>
+            <div style={{ fontSize: 13, color: c.done ? '#c9a84c' : 'rgba(255,255,255,0.8)', textDecoration: c.done ? 'line-through' : 'none' }}>{c.text}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ⑥ AIフロー図 */}
+      <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(26,58,92,0.09)' }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: '#1a3a5c', textAlign: 'center', marginBottom: 20 }}>AIがあなたの集客を自動最適化</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+          {[
+            { icon: '👤', label: 'ユーザー相談' },
+            { icon: '🤖', label: 'AI分析' },
+            { icon: '🏢', label: '最適な業者へ推薦' },
+            { icon: '📈', label: '反響増加' },
+          ].map((step, i, arr) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ background: '#1a3a5c', borderRadius: 12, padding: '16px 20px', textAlign: 'center', minWidth: 80 }}>
+                <div style={{ fontSize: 24, color: '#c9a84c', marginBottom: 4 }}>{step.icon}</div>
+                <div style={{ fontSize: 11, color: '#fff', fontWeight: 700, lineHeight: 1.3 }}>{step.label}</div>
+              </div>
+              {i < arr.length - 1 && <div style={{ fontSize: 18, color: '#c9a84c', fontWeight: 800 }}>→</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PartnerDashboard() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -220,6 +373,7 @@ export default function PartnerDashboard() {
 
   const tabs = [
     { id: 'dashboard', label: '📊 ダッシュボード' },
+    { id: 'boost', label: '✨ AI集客強化' },
     { id: 'ads', label: '📢 広告掲載状況' },
     { id: 'customers', label: `👥 顧客管理${inquiries.length > 0 ? ` (${inquiries.length})` : ''}` },
     { id: 'profile', label: '🏢 会社情報' },
@@ -373,7 +527,7 @@ export default function PartnerDashboard() {
             </div>
 
             {/* ⑤ CTA */}
-            <button style={{
+            <button onClick={() => setTab('boost')} style={{
               width: '100%', padding: 18,
               background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)',
               border: 'none', borderRadius: 32,
@@ -384,6 +538,9 @@ export default function PartnerDashboard() {
             </button>
           </div>
         )}
+
+        {/* AI集客強化 */}
+        {tab === 'boost' && <SectionBoost setTab={setTab} />}
 
         {/* 広告掲載状況 */}
         {tab === 'ads' && (
