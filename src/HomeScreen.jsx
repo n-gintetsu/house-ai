@@ -820,57 +820,21 @@ export default function HomeScreen({ onNavigate }) {
               {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               ) : (
-                <div
-                  onClick={handleStartChat}
-                  style={{
-                    background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)',
-                    border: '2px solid #c9a84c',
-                    borderRadius: '16px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'20px', width:'100%'}}>
-                    <div style={{position:'relative', overflow:'hidden', borderRadius:'8px', flexShrink:0}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'280px', height:'auto', display:'block'}} />
-                      <div style={{
-                        position:'absolute', top:0, left:'-100%', width:'50%', height:'100%',
-                        background:'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
-                        animationName:'logoShine', animationDuration:'2.5s',
-                        animationTimingFunction:'ease-in-out', animationIterationCount:'infinite',
-                        pointerEvents:'none'
-                      }} />
+                <div className="ai-banner" onClick={handleStartChat}>
+                  <div className="ai-banner-corner tl" />
+                  <div className="ai-banner-corner tr" />
+                  <div className="ai-banner-corner bl" />
+                  <div className="ai-banner-corner br" />
+                  <div className="ai-banner-content">
+                    <div className="ai-banner-logo">
+                      <img src="/logo.png" alt="House-AI" />
                     </div>
-                    <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'16px'}}>
-                      <div style={{
-                        writingMode:'vertical-rl', textOrientation:'mixed',
-                        fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px',
-                        color:'#f5e08a', lineHeight:'1.8', textAlign:'center'
-                      }}>AIに相談してみる</div>
-                      <div style={{
-                        writingMode:'vertical-rl', textOrientation:'mixed',
-                        fontSize:'11px', letterSpacing:'2px',
-                        color:'rgba(255,255,255,0.6)', lineHeight:'1.6'
-                      }}>3ステップで最適な進め方を提案します</div>
+                    <div className="ai-banner-text">
+                      <div className="ai-banner-main">AIがあなたに最適な進め方を提案します</div>
+                      <div className="ai-banner-sub">売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                     </div>
                   </div>
-                  <button style={{
-                    background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',
-                    backgroundSize:'200% auto',
-                    color:'#1a3a5c', fontWeight:'700', fontSize:'16px',
-                    border:'none', borderRadius:'32px',
-                    padding:'14px 0', width:'90%', maxWidth:'420px',
-                    cursor:'pointer', letterSpacing:'1px',
-                    animationName:'btnShimmer', animationDuration:'3s',
-                    animationTimingFunction:'linear', animationIterationCount:'infinite'
-                  }}>今すぐ無料AIを試してみる →</button>
+                  <button className="ai-banner-cta">今すぐ無料AI相談をはじめる →</button>
                 </div>
               )}
             </div>
@@ -897,39 +861,21 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
-                  <div onClick={handleStartChat} style={{ background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)', border: '2px solid #c9a84c', borderRadius: '16px', padding: '20px', textAlign: 'center', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'20px', width:'100%'}}>
-                      <div style={{position:'relative', overflow:'hidden', borderRadius:'8px', flexShrink:0}}>
-                        <img src="/logo.png" alt="House-AI" style={{width:'280px', height:'auto', display:'block'}} />
-                        <div style={{
-                          position:'absolute', top:0, left:'-100%', width:'50%', height:'100%',
-                          background:'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
-                          animationName:'logoShine', animationDuration:'2.5s',
-                          animationTimingFunction:'ease-in-out', animationIterationCount:'infinite',
-                          pointerEvents:'none'
-                        }} />
+                  <div className="ai-banner" onClick={handleStartChat}>
+                    <div className="ai-banner-corner tl" />
+                    <div className="ai-banner-corner tr" />
+                    <div className="ai-banner-corner bl" />
+                    <div className="ai-banner-corner br" />
+                    <div className="ai-banner-content">
+                      <div className="ai-banner-logo">
+                        <img src="/logo.png" alt="House-AI" />
                       </div>
-                      <div style={{display:'flex', flexDirection:'row', gap:'8px'}}>
-                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px', color:'#f5e08a', lineHeight:'1.8'}}>AIに相談</div>
-                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px', color:'#f5e08a', lineHeight:'1.8'}}>してみる</div>
-                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'11px', letterSpacing:'2px', color:'rgba(255,255,255,0.6)', lineHeight:'1.6', marginTop:'4px'}}>3ステップで</div>
-                        <div style={{writingMode:'vertical-rl', textOrientation:'mixed', fontSize:'11px', letterSpacing:'2px', color:'rgba(255,255,255,0.6)', lineHeight:'1.6', marginTop:'4px'}}>最適な進め方</div>
+                      <div className="ai-banner-text">
+                        <div className="ai-banner-main">AIがあなたに最適な進め方を提案します</div>
+                        <div className="ai-banner-sub">売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                       </div>
                     </div>
-                    <button style={{
-                      background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',
-                      backgroundSize:'200% auto',
-                      color:'#1a3a5c', fontWeight:'700', fontSize:'16px',
-                      border:'none', borderRadius:'32px',
-                      padding:'14px 0', width:'90%', maxWidth:'420px',
-                      cursor:'pointer', letterSpacing:'1px',
-                      animationName:'btnShimmer', animationDuration:'3s',
-                      animationTimingFunction:'linear', animationIterationCount:'infinite'
-                    }}>今すぐ無料AIを試してみる →</button>
+                    <button className="ai-banner-cta">今すぐ無料AI相談をはじめる →</button>
                   </div>
                 )}
               <CommunityStrip onNavigate={navigate} />
