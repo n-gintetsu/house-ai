@@ -837,27 +837,40 @@ export default function HomeScreen({ onNavigate }) {
                   <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                   <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
-                    <img src="/logo.png" alt="House-AI" style={{width: '340px', height: 'auto', display: 'block'}} />
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: '-100%',
-                      width: '50%',
-                      height: '100%',
-                      background: 'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
-                      animationName: 'logoShine',
-                      animationDuration: '2.5s',
-                      animationTimingFunction: 'ease-in-out',
-                      animationIterationCount: 'infinite',
-                      pointerEvents: 'none'
-                    }} />
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'20px', width:'100%'}}>
+                    <div style={{position:'relative', overflow:'hidden', borderRadius:'8px', flexShrink:0}}>
+                      <img src="/logo.png" alt="House-AI" style={{width:'280px', height:'auto', display:'block'}} />
+                      <div style={{
+                        position:'absolute', top:0, left:'-100%', width:'50%', height:'100%',
+                        background:'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
+                        animationName:'logoShine', animationDuration:'2.5s',
+                        animationTimingFunction:'ease-in-out', animationIterationCount:'infinite',
+                        pointerEvents:'none'
+                      }} />
+                    </div>
+                    <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'16px'}}>
+                      <div style={{
+                        writingMode:'vertical-rl', textOrientation:'mixed',
+                        fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px',
+                        color:'#f5e08a', lineHeight:'1.8', textAlign:'center'
+                      }}>AIに相談してみる</div>
+                      <div style={{
+                        writingMode:'vertical-rl', textOrientation:'mixed',
+                        fontSize:'11px', letterSpacing:'2px',
+                        color:'rgba(255,255,255,0.6)', lineHeight:'1.6'
+                      }}>3ステップで最適な進め方を提案します</div>
+                    </div>
                   </div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 4px', fontFamily: "'Noto Sans JP', sans-serif" }}>AIに相談してみる</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', margin: '0 0 14px', fontFamily: "'Noto Sans JP', sans-serif" }}>3ステップで最適な進め方を提案します</p>
-                  <button style={{ background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)', backgroundSize: '200% auto', color: '#1a3a5c', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: '700', cursor: 'pointer', fontFamily: "'Noto Sans JP', sans-serif", animationName: 'btnShimmer', animationDuration: '3s', animationTimingFunction: 'linear', animationIterationCount: 'infinite' }}>
-                    💬 無料でAI相談する
-                  </button>
+                  <button style={{
+                    background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',
+                    backgroundSize:'200% auto',
+                    color:'#1a3a5c', fontWeight:'700', fontSize:'16px',
+                    border:'none', borderRadius:'32px',
+                    padding:'14px 0', width:'90%', maxWidth:'420px',
+                    cursor:'pointer', letterSpacing:'1px',
+                    animationName:'btnShimmer', animationDuration:'3s',
+                    animationTimingFunction:'linear', animationIterationCount:'infinite'
+                  }}>今すぐ無料AIを試してみる →</button>
                 </div>
               )}
             </div>
@@ -889,25 +902,40 @@ export default function HomeScreen({ onNavigate }) {
                     <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position: 'relative', display: 'inline-block', overflow: 'hidden', borderRadius: '8px'}}>
-                      <img src="/logo.png" alt="House-AI" style={{width: '340px', height: 'auto', display: 'block'}} />
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '-100%',
-                        width: '50%',
-                        height: '100%',
-                        background: 'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
-                        animationName: 'logoShine',
-                        animationDuration: '2.5s',
-                        animationTimingFunction: 'ease-in-out',
-                        animationIterationCount: 'infinite',
-                        pointerEvents: 'none'
-                      }} />
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'20px', width:'100%'}}>
+                      <div style={{position:'relative', overflow:'hidden', borderRadius:'8px', flexShrink:0}}>
+                        <img src="/logo.png" alt="House-AI" style={{width:'280px', height:'auto', display:'block'}} />
+                        <div style={{
+                          position:'absolute', top:0, left:'-100%', width:'50%', height:'100%',
+                          background:'linear-gradient(105deg, transparent 15%, rgba(255,240,150,0.95) 50%, transparent 85%)',
+                          animationName:'logoShine', animationDuration:'2.5s',
+                          animationTimingFunction:'ease-in-out', animationIterationCount:'infinite',
+                          pointerEvents:'none'
+                        }} />
+                      </div>
+                      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'16px'}}>
+                        <div style={{
+                          writingMode:'vertical-rl', textOrientation:'mixed',
+                          fontSize:'15px', fontFamily:'Georgia, serif', letterSpacing:'4px',
+                          color:'#f5e08a', lineHeight:'1.8', textAlign:'center'
+                        }}>AIに相談してみる</div>
+                        <div style={{
+                          writingMode:'vertical-rl', textOrientation:'mixed',
+                          fontSize:'11px', letterSpacing:'2px',
+                          color:'rgba(255,255,255,0.6)', lineHeight:'1.6'
+                        }}>3ステップで最適な進め方を提案します</div>
+                      </div>
                     </div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>AIに相談してみる</p>
-                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", margin: "0 0 14px" }}>3ステップで最適な進め方を提案します</p>
-                    <button style={{ background: 'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)', backgroundSize: '200% auto', color: '#1a3a5c', border: 'none', borderRadius: 50, padding: '10px 24px', fontSize: 13, fontWeight: '700', cursor: 'pointer', animationName: 'btnShimmer', animationDuration: '3s', animationTimingFunction: 'linear', animationIterationCount: 'infinite' }}>💬 無料でAI相談する</button>
+                    <button style={{
+                      background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',
+                      backgroundSize:'200% auto',
+                      color:'#1a3a5c', fontWeight:'700', fontSize:'16px',
+                      border:'none', borderRadius:'32px',
+                      padding:'14px 0', width:'90%', maxWidth:'420px',
+                      cursor:'pointer', letterSpacing:'1px',
+                      animationName:'btnShimmer', animationDuration:'3s',
+                      animationTimingFunction:'linear', animationIterationCount:'infinite'
+                    }}>今すぐ無料AIを試してみる →</button>
                   </div>
                 )}
               <CommunityStrip onNavigate={navigate} />
