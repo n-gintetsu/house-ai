@@ -1535,3 +1535,14 @@
   font-weight: 800;
   cursor: pointer;
 }
+
+@keyframes logoShine {
+  0% { left: -100%; }
+  35% { left: 150%; }
+  100% { left: 150%; }
+}
+
+@keyframes goldFlow {
+  0% { background-position: 200% center; }
+  100% { background-position: 0% center; }
+}

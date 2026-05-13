@@ -1097,7 +1097,19 @@ export default function App() {
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo">
-              <img src="/logo.png" alt="House-AI" style={{height: '48px', width: 'auto'}} />
+              <div style={{position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', height: '48px'}}>
+                <img src="/logo.png" alt="House-AI" style={{height: '48px', width: 'auto', display: 'block'}} />
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-100%',
+                  width: '50%',
+                  height: '100%',
+                  background: 'linear-gradient(105deg, transparent 20%, rgba(255,230,120,0.85) 50%, transparent 80%)',
+                  animation: 'logoShine 3s ease-in-out infinite',
+                  pointerEvents: 'none'
+                }} />
+              </div>
             </div>
             <div>
               <strong>House-AI</strong>
