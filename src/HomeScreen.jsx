@@ -650,7 +650,7 @@ function RightPanel({ onNavigate }) {
 function CommunityStrip({ onNavigate }) {
   const cards = [
     {
-      attr:'30代女性 / 賃貸契約',
+      attr:'30代女性 / 賃貸契約', initial:'F',
       category:'後悔', categoryColor:'rgba(239,68,68,0.1)', categoryText:'#ef4444',
       title:'焦って契約して後悔しました',
       body:'内見の時は良く見えたけど、住んでみたら騒音が想像以上で…',
@@ -658,7 +658,7 @@ function CommunityStrip({ onNavigate }) {
       likes:128, comments:24
     },
     {
-      attr:'40代男性 / 住宅購入',
+      attr:'40代男性 / 住宅購入', initial:'M',
       category:'失敗談', categoryColor:'rgba(249,115,22,0.1)', categoryText:'#f97316',
       title:'営業マンに言われるまま決めてしまった',
       body:'後から調べたら同じ条件でもっと安い物件があって…',
@@ -666,7 +666,7 @@ function CommunityStrip({ onNavigate }) {
       likes:96, comments:18
     },
     {
-      attr:'20代男性 / 一人暮らし',
+      attr:'20代男性 / 一人暮らし', initial:'Y',
       category:'相談中', categoryColor:'rgba(34,197,94,0.1)', categoryText:'#22c55e',
       title:'初めての一人暮らし、何から始めれば？',
       body:'家賃の目安や初期費用など分からないことだらけで不安です…',
@@ -674,7 +674,7 @@ function CommunityStrip({ onNavigate }) {
       likes:214, comments:47
     },
     {
-      attr:'50代男性 / 投資物件',
+      attr:'50代男性 / 投資物件', initial:'S',
       category:'投資', categoryColor:'rgba(212,175,55,0.1)', categoryText:'#D4AF37',
       title:'収益物件で失敗しないために知っておくこと',
       body:'空室リスクを甘く見ていた。購入前にもっと調べるべきだった…',
@@ -712,7 +712,7 @@ function CommunityStrip({ onNavigate }) {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
               <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                 <div style={{width:'38px', height:'38px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', color:'#D4AF37', fontSize:'14px', fontWeight:'700', flexShrink:0}}>
-                  {card.attr.slice(0,2)}
+                  {card.initial}
                 </div>
                 <div style={{fontSize:'12px', color:'#64748B'}}>{card.attr}</div>
               </div>
