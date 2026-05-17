@@ -1024,10 +1024,10 @@ export default function HomeScreen({ onNavigate }) {
           </div>
           <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none', scrollSnapType:'x mandatory'}}>
             {[
-              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', emoji:'🏡'},
-              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', emoji:'🏠'},
-              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', emoji:'🏢'},
-              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK', reason:'4LDK・学区人気エリア', emoji:'🏘️'},
+              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80'},
+              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', img:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80'},
+              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', img:'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80'},
+              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK', reason:'4LDK・学区人気エリア', img:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80'},
             ].map((p, i) => (
               <div key={i} className="property-card" style={{
                 flexShrink: 0,
@@ -1042,23 +1042,21 @@ export default function HomeScreen({ onNavigate }) {
                 scrollSnapAlign: 'start'
               }}>
                 {/* 画像エリア */}
-                <div style={{position:'relative', height:'180px', background:`linear-gradient(135deg, #0d2744 0%, #1a3a5c 50%, #${['2a4a7c','1e3a6e','243b5c','1a3558'][i]} 100%)`, overflow:'hidden'}}>
-                  <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'64px', opacity:0.4}}>
-                    {p.emoji}
-                  </div>
-                  {/* グラデーションoverlay */}
-                  <div style={{position:'absolute', bottom:0, left:0, right:0, height:'50%', background:'linear-gradient(to top, rgba(15,23,42,0.7), transparent)'}} />
+                <div style={{position:'relative', height:'180px', overflow:'hidden'}}>
+                  <img src={p.img} alt={p.area} style={{width:'100%', height:'180px', objectFit:'cover', display:'block'}} />
+                  {/* overlay */}
+                  <div style={{position:'absolute', inset:0, background:'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)'}} />
                   {/* AIタグ */}
                   <div style={{position:'absolute', top:'12px', left:'12px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'700', padding:'6px 12px', borderRadius:'999px', fontSize:'11px'}}>
                     {p.label}
                   </div>
                   {/* 保存ボタン */}
-                  <div style={{position:'absolute', top:'10px', right:'10px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:'18px', border:'1px solid rgba(255,255,255,0.2)'}}>
-                    🤍
+                  <div style={{position:'absolute', top:'10px', right:'10px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', border:'1px solid rgba(255,255,255,0.2)'}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   </div>
                   {/* エリア名（画像下部） */}
                   <div style={{position:'absolute', bottom:'10px', left:'14px', color:'rgba(255,255,255,0.85)', fontSize:'12px', fontWeight:'500'}}>
-                    📍 {p.area}
+                    {p.area}
                   </div>
                 </div>
                 {/* テキストエリア */}
