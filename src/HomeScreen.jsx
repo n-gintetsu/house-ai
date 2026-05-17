@@ -655,7 +655,7 @@ function CommunityStrip({ onNavigate }) {
   return (
     <div style={{ background: C.card, borderRadius: 16, padding: "16px", border: `0.5px solid ${C.border}` }}>
       <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif" }}>
-        💬 あなたの不安、みんな同じです
+        あなたの不安、みんな同じです
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {posts.map((p, i) => (
@@ -714,13 +714,13 @@ function ScrollCTA({ user, scrolled }) {
         onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
         style={{ flex: 1, background: "#1a3a5c", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
       >
-        🤖 無料でAI相談する
+        無料でAI相談する
       </button>
       <button
         onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))}
         style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
       >
-        ✅ 無料会員登録（簡単3ステップ）
+        無料会員登録（簡単3ステップ）
       </button>
     </div>
   );
@@ -792,12 +792,11 @@ export default function HomeScreen({ onNavigate }) {
           </p>
           <div style={{display:'flex', justifyContent:'center', gap:'20px', flexWrap:'wrap', marginBottom:'16px'}}>
             {[
-              {icon:'🔍', label:'本日AI診断', value:'128件'},
-              {icon:'🏠', label:'新着物件', value:'24件'},
-              {icon:'💬', label:'相談中', value:'18人'}
+              {label:'本日AI診断', value:'128件'},
+              {label:'新着物件', value:'24件'},
+              {label:'相談中', value:'18人'}
             ].map(item => (
               <div key={item.label} style={{display:'flex', alignItems:'center', gap:'6px', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.08)', borderRadius:'999px', padding:'6px 14px', fontSize:'12px', color:'#1E293B'}}>
-                <span>{item.icon}</span>
                 <span style={{color:'#64748B'}}>{item.label}：</span>
                 <span style={{fontWeight:'700', color:'#0F172A'}}>{item.value}</span>
               </div>
@@ -1071,7 +1070,7 @@ export default function HomeScreen({ onNavigate }) {
                   </div>
                   {/* AIおすすめ理由 */}
                   <div style={{fontSize:'12px', color:'#64748B', background:'rgba(15,23,42,0.03)', padding:'10px 12px', borderRadius:'12px', borderLeft:'3px solid #D4AF37', lineHeight:1.5}}>
-                    🤖 AI分析：{p.reason}
+                    AI分析：{p.reason}
                   </div>
                 </div>
               </div>
