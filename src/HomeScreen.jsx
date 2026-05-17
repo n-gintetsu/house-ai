@@ -787,9 +787,29 @@ export default function HomeScreen({ onNavigate }) {
           }}>
             AIがあなたに最適な住まいと進み方を提案
           </h1>
-          <p style={{ fontSize: isMobile ? 13 : 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 24, lineHeight: 1.7 }}>
+          <p style={{ fontSize: isMobile ? 13 : 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 20, lineHeight: 1.7 }}>
             賃貸・売買・投資・リフォームまでAIが最適ルートを提案します
           </p>
+          <div style={{display:'flex', justifyContent:'center', gap:'20px', flexWrap:'wrap', marginBottom:'16px'}}>
+            {[
+              {icon:'🔍', label:'本日AI診断', value:'128件'},
+              {icon:'🏠', label:'新着物件', value:'24件'},
+              {icon:'💬', label:'相談中', value:'18人'}
+            ].map(item => (
+              <div key={item.label} style={{display:'flex', alignItems:'center', gap:'6px', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.08)', borderRadius:'999px', padding:'6px 14px', fontSize:'12px', color:'#1E293B'}}>
+                <span>{item.icon}</span>
+                <span style={{color:'#64748B'}}>{item.label}：</span>
+                <span style={{fontWeight:'700', color:'#0F172A'}}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'8px', padding:'4px 0 8px', marginBottom:'16px', scrollbarWidth:'none'}}>
+            {['#一人暮らし','#ペット可','#投資','#戸建て','#新築','#リフォーム','#収益物件','#空き家'].map(tag => (
+              <span key={tag} style={{flexShrink:0, padding:'8px 16px', borderRadius:'999px', fontSize:'13px', fontWeight:'600', background:'white', border:'1px solid rgba(15,23,42,0.12)', color:'#1E293B', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.2s'}}>
+                {tag}
+              </span>
+            ))}
+          </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
             {["🏠 家を買いたい", "🏷️ 売りたい", "💰 投資したい"].map((label) => (
               <button key={label} onClick={handleStartChat}
@@ -929,6 +949,38 @@ export default function HomeScreen({ onNavigate }) {
             </div>
           </div>
         )}
+
+        {/* AIおすすめ物件カルーセル */}
+        <div style={{padding: '0 16px', maxWidth: 900, margin: '0 auto', marginTop:'32px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
+            <div>
+              <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A'}}>🏠 AIおすすめ物件</div>
+              <div style={{fontSize:'13px', color:'#64748B', marginTop:'4px'}}>あなたの条件に近い物件をAIが選定</div>
+            </div>
+            <button onClick={() => navigate('properties')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer'}}>すべて見る →</button>
+          </div>
+          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none'}}>
+            {[
+              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK'},
+              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気'},
+              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好'},
+              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK'},
+            ].map((p, i) => (
+              <div key={i} className="property-card" style={{flexShrink:0, width:'220px', background:'white', borderRadius:'20px', overflow:'hidden', boxShadow:'0 8px 24px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', transition:'all 0.25s'}}>
+                <div style={{height:'130px', background:`linear-gradient(135deg, #1a3a5c ${i*10}%, #2a5a8c)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative'}}>
+                  <span style={{fontSize:'40px'}}>🏠</span>
+                  <span style={{position:'absolute', top:'10px', left:'10px', background:'#c9a84c', color:'#1a3a5c', fontSize:'10px', fontWeight:'700', padding:'4px 10px', borderRadius:'999px'}}>{p.label}</span>
+                  <span style={{position:'absolute', top:'10px', right:'10px', fontSize:'20px', cursor:'pointer'}}>🤍</span>
+                </div>
+                <div style={{padding:'14px'}}>
+                  <div style={{fontSize:'11px', color:'#64748B', marginBottom:'4px'}}>{p.area}</div>
+                  <div style={{fontSize:'16px', fontWeight:'700', color:'#0F172A', marginBottom:'8px'}}>{p.price}</div>
+                  <span style={{fontSize:'11px', background:'rgba(59,130,246,0.1)', color:'#3B82F6', padding:'3px 10px', borderRadius:'999px', fontWeight:'600'}}>{p.tag}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* 裏導線 */}
         <div style={{ padding: "32px 16px 0", textAlign: "center" }}>
