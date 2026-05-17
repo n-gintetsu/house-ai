@@ -579,15 +579,15 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
 // ============================================================
 // LIVE Lounge カードデータ
 // ============================================================
-const LOUNGE_CARDS = [
-  { labelColor: '#D4AF37', labelText: 'CHAT  相談開始',     body: '住宅ローンが不安です',              footerType: 'text',  footerText: '埼玉県 / 30代  3分前' },
-  { labelColor: '#67E8F9', labelText: 'AI  AI回答',         body: '無理のない返済額を整理しています',   footerType: 'pulse', footerText: 'AIが分析中...' },
-  { labelColor: '#4ADE80', labelText: 'HOME  新着物件',     body: '横浜市西区 駅徒歩5分 2LDK',         footerType: 'icons', heartCount: 28, commentCount: 12 },
-  { labelColor: '#F9A8D4', labelText: 'HEART  注目物件',    body: 'さいたま市大宮区 4,280万円',         footerType: 'text',  footerText: '12件のいいね  急上昇中' },
-  { labelColor: '#C084FC', labelText: 'EXPERT  専門家参加', body: '住宅ローン専門家が参加しました',      footerType: 'text',  footerText: 'ファイナンシャルプランナー  今参加中' },
-  { labelColor: '#D4AF37', labelText: 'CHAT  相談開始',     body: '空き家をどう活用すればいいですか？',  footerType: 'text',  footerText: '東京都 / 50代  1分前' },
-  { labelColor: '#67E8F9', labelText: 'AI  AI診断完了',     body: '投資物件のAI診断が完了しました',     footerType: 'text',  footerText: '収益シミュレーション準備完了' },
-  { labelColor: '#4ADE80', labelText: 'HOME  AIおすすめ',   body: '川口市 新築マンション 3,980万円',    footerType: 'text',  footerText: 'マッチ率 91%  内見数増加中' },
+const liveCards = [
+  { type: 'consultation', label: '相談開始',   user: '30代 / 埼玉',      title: '住宅ローンが怖いです...', body: '無理のない返済額をAIが整理中', dots: true,  meta: '3分前' },
+  { type: 'ai-answer',    label: 'AI回答',     user: 'House-AI',         title: '焦って決めなくて大丈夫です', body: 'まずは月々の負担と将来の支出を一緒に整理しましょう。', dots: false, meta: '回答済み' },
+  { type: 'consultation', label: '相談開始',   user: '40代 / 東京',      title: '空き家をどう活用すればいいですか？', body: '売却・賃貸・管理の選択肢をAIが比較中', dots: true,  meta: '5分前' },
+  { type: 'expert',       label: '専門家参加', user: '住宅ローン専門家',  title: '住宅ローン相談に参加しました', body: '必要な場合のみ、専門家へつなげます。', dots: false, meta: '参加中' },
+  { type: 'property',     label: '新着物件',   user: 'AIおすすめ',       title: 'さいたま市大宮区 4,280万円', body: '12件のいいね。問い合わせが増えています。', dots: false, meta: 'ハート 28  コメント 12' },
+  { type: 'consultation', label: '相談開始',   user: '50代夫婦 / 神奈川', title: '売るべきか貸すべきか迷っています', body: '収益性と売却価格をAIが比較中', dots: true,  meta: '8分前' },
+  { type: 'ai-answer',    label: 'AI診断完了', user: 'House-AI',         title: '投資物件のAI診断が完了しました', body: '収益シミュレーション準備完了です。', dots: false, meta: '回答済み' },
+  { type: 'consultation', label: '相談開始',   user: '30代 / 大阪',      title: '初めての住宅購入で何から始めれば...', body: '優先順位をAIが整理中', dots: true,  meta: '2分前' },
 ];
 
 // ============================================================
@@ -603,10 +603,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [feedIndex, setFeedIndex] = useState(0);
   const [feedKey, setFeedKey] = useState(0);
   const chatRef = useRef(null);
-  const loungeRef = useRef(null);
-  const loungeIsDragging = useRef(false);
-  const loungeDragStartX = useRef(0);
-  const loungeScrollLeft = useRef(0);
 
   const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
   const TYPED_FULL = 'どんなことでお悩みですか？内容を教えていただくと、AIが最適な進め方を整理します。';
@@ -654,44 +650,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     }, 5000);
     return () => clearInterval(id);
   }, []);
-
-  useEffect(() => {
-    const el = loungeRef.current;
-    if (!el) return;
-    const id = setInterval(() => {
-      if (loungeIsDragging.current) return;
-      el.scrollLeft += 1;
-      if (el.scrollLeft >= el.scrollWidth / 2) {
-        el.scrollLeft = 0;
-      }
-    }, 30);
-    return () => clearInterval(id);
-  }, []);
-
-  const handleLoungeMouseDown = (e) => {
-    const el = loungeRef.current;
-    if (!el) return;
-    loungeIsDragging.current = true;
-    loungeDragStartX.current = e.pageX - el.offsetLeft;
-    loungeScrollLeft.current = el.scrollLeft;
-    el.style.cursor = 'grabbing';
-  };
-
-  const handleLoungeMouseMove = (e) => {
-    if (!loungeIsDragging.current) return;
-    const el = loungeRef.current;
-    if (!el) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - loungeDragStartX.current) * 1.5;
-    el.scrollLeft = loungeScrollLeft.current - walk;
-  };
-
-  const handleLoungeMouseUp = () => {
-    loungeIsDragging.current = false;
-    const el = loungeRef.current;
-    if (el) el.style.cursor = 'grab';
-  };
 
   const handleStartChat = () => {
     setShowChat(true);
@@ -847,86 +805,30 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       </section>
 
       {/* 2. LIVE Lounge フィード */}
-      <section className="live-lounge">
-        <div style={{ textAlign: 'center', padding: '0 32px', marginBottom: 36 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span className="live-lounge-dot" />
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Noto Serif JP', serif", lineHeight: 1.4 }}>
-              今、このような相談が増えています
-            </h2>
+      <section className="live-lounge-section">
+        <div className="live-lounge-header">
+          <div className="live-title-row">
+            <span className="live-dot"></span>
+            <h2>今、このような相談が増えています</h2>
           </div>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>
-            AIがリアルタイムでお悩みに寄り添っています
-          </p>
+          <p>AIがリアルタイムでお悩みに寄り添っています</p>
         </div>
-
-        <div
-          className="live-feed-row"
-          ref={loungeRef}
-          onMouseDown={handleLoungeMouseDown}
-          onMouseMove={handleLoungeMouseMove}
-          onMouseUp={handleLoungeMouseUp}
-          onMouseLeave={handleLoungeMouseUp}
-        >
-          {[...LOUNGE_CARDS, ...LOUNGE_CARDS].map((card, i) => (
-            <div
-              key={i}
-              className="live-card"
-              style={{ animationDelay: `${(i % 8) * 0.5}s` }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: card.labelColor, letterSpacing: 1, marginBottom: 14, fontFamily: "'Noto Sans JP', sans-serif" }}>
-                {card.labelText}
+        <div className="live-feed-wrap">
+          <div className="live-feed-track">
+            {[...liveCards, ...liveCards].map((card, i) => (
+              <div key={i} className={`live-card ${card.type}`} onClick={() => navigate('chat')}>
+                <div className="live-card-label">{card.label}</div>
+                <div className="live-user">{card.user}</div>
+                <h3>{card.title}</h3>
+                <p>{card.body}{card.dots ? <span className="typing-dots">...</span> : null}</p>
+                <div className="live-meta">{card.meta}</div>
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.6, marginBottom: 16, fontFamily: "'Noto Serif JP', serif" }}>
-                {card.body}
-              </div>
-              {card.footerType === 'text' ? (
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: "'Noto Sans JP', sans-serif" }}>
-                  {card.footerText}
-                </div>
-              ) : card.footerType === 'pulse' ? (
-                <div style={{ fontSize: 11, color: '#67E8F9', animation: 'pulse 1.8s ease-in-out infinite', display: 'inline-block', fontFamily: "'Noto Sans JP', sans-serif" }}>
-                  {card.footerText}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.45)', fontFamily: "'Noto Sans JP', sans-serif" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                    {card.heartCount}
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.45)', fontFamily: "'Noto Sans JP', sans-serif" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    {card.commentCount}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-
-        <div style={{ textAlign: 'center', marginTop: 40, padding: '0 32px' }}>
-          <button
-            onClick={() => navigate('chat')}
-            style={{
-              background: '#D4AF37',
-              color: '#0F172A',
-              padding: '14px 40px',
-              borderRadius: 999,
-              fontWeight: 800,
-              fontSize: 15,
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: "'Noto Sans JP', sans-serif",
-              boxShadow: '0 4px 20px rgba(212,175,55,0.4)',
-            }}
-          >
-            AIに相談してみる
-          </button>
-        </div>
+        <button className="live-main-cta" onClick={() => navigate('chat')}>
+          今の悩みを話してみる
+        </button>
       </section>
 
       {/* 3. 他ユーザー相談例 */}
