@@ -683,7 +683,7 @@ function CommunityStrip({ onNavigate }) {
     },
   ];
   return (
-    <div style={{marginTop:'40px', marginBottom:'32px'}}>
+    <div style={{marginTop:'48px', marginBottom:'32px'}}>
       {/* ヘッダー */}
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'8px'}}>
         <div>
@@ -707,7 +707,7 @@ function CommunityStrip({ onNavigate }) {
       {/* カルーセル */}
       <div style={{display:'flex', gap:'16px', overflowX:'auto', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', paddingBottom:'12px', scrollbarWidth:'none'}}>
         {cards.map((card, i) => (
-          <div key={i} className="experience-social-card" style={{flexShrink:0, width:'300px', scrollSnapAlign:'start', background:'rgba(255,255,255,0.86)', backdropFilter:'blur(18px)', border:'1px solid rgba(15,23,42,0.06)', borderRadius:'24px', padding:'22px', boxShadow:'0 18px 44px rgba(15,23,42,0.07)', transition:'all 0.25s ease'}}>
+          <div key={i} className="experience-social-card" style={{flexShrink:0, width:'300px', scrollSnapAlign:'start', background:'rgba(255,255,255,0.86)', backdropFilter:'blur(18px)', border:'1px solid rgba(15,23,42,0.06)', borderRadius:'24px', padding:'22px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', transition:'all 0.25s ease'}}>
             {/* ユーザー情報 */}
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
               <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -917,13 +917,13 @@ export default function HomeScreen({ onNavigate }) {
         {/* レイアウト：スマホは1カラム、PCは3カラム */}
         {isMobile ? (
           // スマホ：1カラム縦積み
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px", maxWidth: 780, margin: "0 auto", width: "100%" }}>
             {/* AIチャット */}
             <div id="ai-consult-section" ref={chatRef}>
               {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               ) : (
-                <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 20px 60px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
+                <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
                   {/* ヘッダー */}
                   <div style={{background:'linear-gradient(135deg, #0F172A, #1E293B)', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px'}}>
                     <img src="/logo.png" alt="HOUSE-AI" style={{width:'40px', height:'40px', borderRadius:'50%', objectFit:'contain', background:'black'}} />
@@ -936,7 +936,7 @@ export default function HomeScreen({ onNavigate }) {
                     </div>
                   </div>
                   {/* チャットエリア */}
-                  <div style={{padding:'24px', background:'#F4F7FB', minHeight:'160px'}}>
+                  <div style={{padding:'16px', background:'transparent'}}>
                     <div style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
                       <img src="/logo.png" alt="AI" style={{width:'36px', height:'36px', borderRadius:'50%', objectFit:'contain', background:'#0F172A', flexShrink:0}} />
                       <div style={{background:'white', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', boxShadow:'0 2px 8px rgba(15,23,42,0.06)', maxWidth:'85%'}}>
@@ -945,7 +945,7 @@ export default function HomeScreen({ onNavigate }) {
                         </div>
                         <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
                           {['一人暮らし','家族','投資','ペット可','駅近','戸建て'].map(chip => (
-                            <button key={chip} onClick={() => setShowChat(true)} style={{padding:'8px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer'}}>
+                            <button key={chip} onClick={() => setShowChat(true)} style={{padding:'6px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer'}}>
                               {chip}
                             </button>
                           ))}
@@ -954,14 +954,14 @@ export default function HomeScreen({ onNavigate }) {
                     </div>
                   </div>
                   {/* 入力欄 */}
-                  <div style={{padding:'16px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
+                  <div style={{padding:'16px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
                     <input type="text" placeholder="AIに相談してみる..." style={{flex:1, padding:'12px 18px', borderRadius:'999px', border:'1px solid rgba(15,23,42,0.1)', fontSize:'16px', outline:'none', background:'#F4F7FB', color:'#1E293B'}} onFocus={() => setShowChat(true)} />
                     <button onClick={() => setShowChat(true)} style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </button>
                   </div>
                   {/* 信頼バッジ */}
-                  <div style={{padding:'12px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
+                  <div style={{padding:'12px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
                     {['営業なし', '完全無料', 'AI提案', '30秒診断'].map(t => (
                       <span key={t} style={{padding:'4px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.06)'}}>
                         {t}
@@ -994,7 +994,7 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
-                  <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 20px 60px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
+                  <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
                     {/* ヘッダー */}
                     <div style={{background:'linear-gradient(135deg, #0F172A, #1E293B)', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px'}}>
                       <img src="/logo.png" alt="HOUSE-AI" style={{width:'40px', height:'40px', borderRadius:'50%', objectFit:'contain', background:'black'}} />
@@ -1007,7 +1007,7 @@ export default function HomeScreen({ onNavigate }) {
                       </div>
                     </div>
                     {/* チャットエリア */}
-                    <div style={{padding:'24px', background:'#F4F7FB', minHeight:'160px'}}>
+                    <div style={{padding:'16px', background:'transparent'}}>
                       <div style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
                         <img src="/logo.png" alt="AI" style={{width:'36px', height:'36px', borderRadius:'50%', objectFit:'contain', background:'#0F172A', flexShrink:0}} />
                         <div style={{background:'white', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', boxShadow:'0 2px 8px rgba(15,23,42,0.06)', maxWidth:'85%'}}>
@@ -1016,7 +1016,7 @@ export default function HomeScreen({ onNavigate }) {
                           </div>
                           <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
                             {['一人暮らし','家族','投資','ペット可','駅近','戸建て'].map(chip => (
-                              <button key={chip} onClick={() => setShowChat(true)} style={{padding:'8px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer'}}>
+                              <button key={chip} onClick={() => setShowChat(true)} style={{padding:'6px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer'}}>
                                 {chip}
                               </button>
                             ))}
@@ -1025,14 +1025,14 @@ export default function HomeScreen({ onNavigate }) {
                       </div>
                     </div>
                     {/* 入力欄 */}
-                    <div style={{padding:'16px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
+                    <div style={{padding:'16px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
                       <input type="text" placeholder="AIに相談してみる..." style={{flex:1, padding:'12px 18px', borderRadius:'999px', border:'1px solid rgba(15,23,42,0.1)', fontSize:'16px', outline:'none', background:'#F4F7FB', color:'#1E293B'}} onFocus={() => setShowChat(true)} />
                       <button onClick={() => setShowChat(true)} style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                       </button>
                     </div>
                     {/* 信頼バッジ */}
-                    <div style={{padding:'12px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
+                    <div style={{padding:'12px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
                       {['営業なし', '完全無料', 'AI提案', '30秒診断'].map(t => (
                         <span key={t} style={{padding:'4px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.06)'}}>
                           {t}
@@ -1050,10 +1050,10 @@ export default function HomeScreen({ onNavigate }) {
         )}
 
         {/* AI分析カードセクション */}
-        <div style={{padding: '0 16px', maxWidth: 900, margin: '0 auto'}}>
-          <div style={{display:'flex', gap:'16px', marginTop:'24px', flexWrap:'wrap'}}>
+        <div style={{padding: '0 16px', maxWidth: 780, margin: '0 auto'}}>
+          <div style={{display:'flex', gap:'16px', marginTop:'48px', flexWrap:'wrap'}}>
             {/* AI分析レポートカード */}
-            <div style={{flex:'1', minWidth:'280px', background:'linear-gradient(135deg, #0F172A, #1E293B)', borderRadius:'24px', padding:'24px', boxShadow:'0 20px 50px rgba(15,23,42,0.15)', border:'1px solid rgba(255,255,255,0.08)'}}>
+            <div style={{flex:'1', minWidth:'280px', background:'linear-gradient(135deg, #0F172A, #1E293B)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(255,255,255,0.08)'}}>
               <div style={{color:'#D4AF37', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI ANALYSIS</div>
               <div style={{color:'white', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>AI分析レポート</div>
               {[
@@ -1075,7 +1075,7 @@ export default function HomeScreen({ onNavigate }) {
               ))}
             </div>
             {/* AIステータスカード */}
-            <div style={{flex:'1', minWidth:'280px', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderRadius:'24px', padding:'24px', boxShadow:'0 20px 50px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)'}}>
+            <div style={{flex:'1', minWidth:'280px', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)'}}>
               <div style={{color:'#3B82F6', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI STATUS</div>
               <div style={{color:'#0F172A', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>現在のAI診断状況</div>
               {[
@@ -1097,7 +1097,7 @@ export default function HomeScreen({ onNavigate }) {
         </div>
 
         {/* AIおすすめ物件カルーセル */}
-        <div style={{padding: '0 16px', maxWidth: 900, margin: '0 auto', marginTop:'32px'}}>
+        <div style={{padding: '0 16px', maxWidth: 780, margin: '0 auto', marginTop:'32px'}}>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
             <div>
               <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A'}}>🏠 AIおすすめ物件</div>
@@ -1120,7 +1120,7 @@ export default function HomeScreen({ onNavigate }) {
                 border: '1px solid rgba(255,255,255,0.28)',
                 borderRadius: '28px',
                 overflow: 'hidden',
-                boxShadow: '0 20px 50px rgba(15,23,42,0.08)',
+                boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
                 transition: 'all 0.28s ease',
                 scrollSnapAlign: 'start'
               }}>
