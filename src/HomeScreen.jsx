@@ -959,23 +959,59 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <button onClick={() => navigate('properties')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer'}}>すべて見る →</button>
           </div>
-          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none'}}>
+          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none', scrollSnapType:'x mandatory'}}>
             {[
-              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK'},
-              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気'},
-              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好'},
-              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK'},
+              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', emoji:'🏡'},
+              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', emoji:'🏠'},
+              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', emoji:'🏢'},
+              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK', reason:'4LDK・学区人気エリア', emoji:'🏘️'},
             ].map((p, i) => (
-              <div key={i} className="property-card" style={{flexShrink:0, width:'220px', background:'white', borderRadius:'20px', overflow:'hidden', boxShadow:'0 8px 24px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', transition:'all 0.25s'}}>
-                <div style={{height:'130px', background:`linear-gradient(135deg, #1a3a5c ${i*10}%, #2a5a8c)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative'}}>
-                  <span style={{fontSize:'40px'}}>🏠</span>
-                  <span style={{position:'absolute', top:'10px', left:'10px', background:'#c9a84c', color:'#1a3a5c', fontSize:'10px', fontWeight:'700', padding:'4px 10px', borderRadius:'999px'}}>{p.label}</span>
-                  <span style={{position:'absolute', top:'10px', right:'10px', fontSize:'20px', cursor:'pointer'}}>🤍</span>
+              <div key={i} className="property-card" style={{
+                flexShrink: 0,
+                width: '280px',
+                background: 'rgba(255,255,255,0.92)',
+                backdropFilter: 'blur(18px)',
+                border: '1px solid rgba(255,255,255,0.28)',
+                borderRadius: '28px',
+                overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(15,23,42,0.08)',
+                transition: 'all 0.28s ease',
+                scrollSnapAlign: 'start'
+              }}>
+                {/* 画像エリア */}
+                <div style={{position:'relative', height:'180px', background:`linear-gradient(135deg, #0d2744 0%, #1a3a5c 50%, #${['2a4a7c','1e3a6e','243b5c','1a3558'][i]} 100%)`, overflow:'hidden'}}>
+                  <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'64px', opacity:0.4}}>
+                    {p.emoji}
+                  </div>
+                  {/* グラデーションoverlay */}
+                  <div style={{position:'absolute', bottom:0, left:0, right:0, height:'50%', background:'linear-gradient(to top, rgba(15,23,42,0.7), transparent)'}} />
+                  {/* AIタグ */}
+                  <div style={{position:'absolute', top:'12px', left:'12px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'700', padding:'6px 12px', borderRadius:'999px', fontSize:'11px'}}>
+                    {p.label}
+                  </div>
+                  {/* 保存ボタン */}
+                  <div style={{position:'absolute', top:'10px', right:'10px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:'18px', border:'1px solid rgba(255,255,255,0.2)'}}>
+                    🤍
+                  </div>
+                  {/* エリア名（画像下部） */}
+                  <div style={{position:'absolute', bottom:'10px', left:'14px', color:'rgba(255,255,255,0.85)', fontSize:'12px', fontWeight:'500'}}>
+                    📍 {p.area}
+                  </div>
                 </div>
-                <div style={{padding:'14px'}}>
-                  <div style={{fontSize:'11px', color:'#64748B', marginBottom:'4px'}}>{p.area}</div>
-                  <div style={{fontSize:'16px', fontWeight:'700', color:'#0F172A', marginBottom:'8px'}}>{p.price}</div>
-                  <span style={{fontSize:'11px', background:'rgba(59,130,246,0.1)', color:'#3B82F6', padding:'3px 10px', borderRadius:'999px', fontWeight:'600'}}>{p.tag}</span>
+                {/* テキストエリア */}
+                <div style={{padding:'18px'}}>
+                  {/* 価格 */}
+                  <div style={{fontSize:'28px', fontWeight:'800', letterSpacing:'-0.03em', color:'#0F172A', marginBottom:'10px', lineHeight:1.1}}>
+                    {p.price}
+                  </div>
+                  {/* タグ */}
+                  <div style={{marginBottom:'12px'}}>
+                    <span style={{fontSize:'11px', background:'rgba(59,130,246,0.08)', color:'#3B82F6', padding:'4px 12px', borderRadius:'999px', fontWeight:'600'}}>#{p.tag}</span>
+                  </div>
+                  {/* AIおすすめ理由 */}
+                  <div style={{fontSize:'12px', color:'#64748B', background:'rgba(15,23,42,0.03)', padding:'10px 12px', borderRadius:'12px', borderLeft:'3px solid #D4AF37', lineHeight:1.5}}>
+                    🤖 AI分析：{p.reason}
+                  </div>
                 </div>
               </div>
             ))}
