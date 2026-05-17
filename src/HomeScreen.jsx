@@ -584,7 +584,20 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [showChat, setShowChat] = useState(false);
   const [user, setUser] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const [statusIndex, setStatusIndex] = useState(0);
+  const [typedText, setTypedText] = useState('');
+  const [feedIndex, setFeedIndex] = useState(0);
+  const [feedKey, setFeedKey] = useState(0);
   const chatRef = useRef(null);
+
+  const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
+  const TYPED_FULL = 'どんなことでお悩みですか？内容を教えていただくと、AIが最適な進め方を整理します。';
+  const FEED_MSGS = [
+    '3分前　埼玉県のユーザーが住宅ローン相談を開始',
+    '1分前　空き家相談がAIマッチングされました',
+    '20秒前　投資物件のAI診断が完了しました',
+    'たった今　さいたま市で新規相談が入りました',
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY >= 200);
@@ -599,6 +612,30 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   }, []);
 
   useEffect(() => { trackEvent('page_view', { page: 'home' }); }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setStatusIndex(i => (i + 1) % STATUS_TEXTS.length), 2000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let i = 0;
+    setTypedText('');
+    const id = setInterval(() => {
+      i++;
+      setTypedText(TYPED_FULL.slice(0, i));
+      if (i >= TYPED_FULL.length) clearInterval(id);
+    }, 50);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setFeedIndex(n => (n + 1) % FEED_MSGS.length);
+      setFeedKey(k => k + 1);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleStartChat = () => {
     setShowChat(true);
@@ -638,17 +675,17 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   ];
 
   const properties = [
-    { area: 'さいたま市大宮区', price: '2,980万円', tag: '新築', match: 94, img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80' },
-    { area: 'さいたま市浦和区', price: '月8.5万円', tag: '賃貸', match: 88, img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80' },
-    { area: '川口市', price: '1,580万円', tag: '投資', match: 91, img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80' },
-    { area: '越谷市', price: '3,280万円', tag: '中古', match: 85, img: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=600&q=80' },
+    { area: 'さいたま市大宮区', price: '2,980万円', tag: '新築', match: 94, img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80', aiComment: 'AI分析：駅徒歩5分以内で問い合わせ急増中' },
+    { area: 'さいたま市浦和区', price: '月8.5万円', tag: '賃貸', match: 88, img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80', aiComment: 'AI分析：同条件ユーザーの満足度が高いエリア' },
+    { area: '川口市', price: '1,580万円', tag: '投資', match: 91, img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80', aiComment: 'AI分析：価格上昇トレンドに入っています' },
+    { area: '越谷市', price: '3,280万円', tag: '中古', match: 85, img: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=600&q=80', aiComment: 'AI分析：表面利回り5%超・空室リスク低' },
   ];
 
   const testimonials = [
-    { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '住んでみたら騒音が想像以上で…AIに相談していれば防げたと思います。' },
-    { initial: 'M', attr: '40代男性 / 購入', category: '失敗談', categoryColor: 'rgba(249,115,22,0.1)', categoryText: '#f97316', title: '営業マンに言われるまま決めてしまった', body: '後から調べたら同じ条件でもっと安い物件があって後悔しました。' },
-    { initial: 'Y', attr: '20代男性 / 投資', category: '成功談', categoryColor: 'rgba(34,197,94,0.1)', categoryText: '#22c55e', title: 'AIの提案で良い物件に出会えました', body: '利回り・空室リスクをAIで分析してから購入。半年で満室稼働中です。' },
-    { initial: 'S', attr: '50代女性 / 売却', category: 'AI活用', categoryColor: 'rgba(59,130,246,0.1)', categoryText: '#3b82f6', title: '相続物件の査定をAIに手伝ってもらった', body: '複数社の査定結果をAIが分析してくれて、最高値で売却できました。' },
+    { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '今日決めないと無くなると言われて焦って契約しました。住んでから後悔しています。' },
+    { initial: 'M', attr: '40代男性 / 購入', category: '失敗談', categoryColor: 'rgba(249,115,22,0.1)', categoryText: '#f97316', title: '営業マンに言われるまま決めてしまった', body: '営業マンに言われるまま決めてしまった。後から同じ条件でもっと安い物件を見つけました。' },
+    { initial: 'Y', attr: '20代男性 / 投資', category: '失敗談', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '利回りだけ見て大失敗しました', body: '利回りだけ見て投資して大失敗。空室が続いて修繕費も想定外でした。' },
+    { initial: 'S', attr: '50代女性 / 売却', category: 'AI活用', categoryColor: 'rgba(59,130,246,0.1)', categoryText: '#3b82f6', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。' },
   ];
 
   return (
@@ -678,8 +715,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
             <button className="hah-cta-primary" onClick={handleStartChat}>
               AIに無料相談する
             </button>
-            <button className="hah-cta-secondary" onClick={() => navigate('properties')}>
-              物件を探す
+            <button className="hah-cta-gold" onClick={handleStartChat}>
+              30秒で無料診断
             </button>
           </div>
           <div className="hah-hero-stats">
@@ -707,7 +744,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                   <div className="hah-chat-header-name">HOUSE-AI コンシェルジュ</div>
                   <div className="hah-chat-header-status">
                     <span className="hah-online-dot" />
-                    オンライン・AI応答中
+                    <span className="hah-status-pulse">{STATUS_TEXTS[statusIndex]}</span>
                   </div>
                 </div>
               </div>
@@ -715,7 +752,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                 <div className="hah-chat-bubble-wrap">
                   <img src="/logo.png" alt="AI" className="hah-chat-avatar" />
                   <div className="hah-chat-bubble">
-                    どんな暮らしをしたいですか？<br />ご希望を教えていただくと、AIが最適な物件をご提案します。
+                    <span className="hah-typed-text">{typedText}</span>
+                    <span className="hah-typed-cursor" />
                     <div className="hah-chat-chips">
                       {['一人暮らし','家族','投資','ペット可','駅近','戸建て'].map(chip => (
                         <button key={chip} className="hah-chat-chip" onClick={handleStartChat}>{chip}</button>
@@ -741,6 +779,12 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                   <span key={t} className="hah-trust-chip">{t}</span>
                 ))}
               </div>
+              <div className="hah-quick-chips-label">よく使われる相談</div>
+              <div className="hah-quick-chips-row">
+                {['家買うべき？','住宅ローン不安','空き家どうする？','何から始めればいい？'].map(q => (
+                  <button key={q} className="hah-quick-chip" onClick={handleStartChat}>{q}</button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -764,6 +808,12 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       {/* 3. 他ユーザー相談例 */}
       <section className="hah-consultations">
         <div className="hah-section-inner">
+          <div className="hah-live-feed">
+            <div key={feedKey} className="hah-live-feed-item">
+              <span className="hah-live-dot" />
+              <span className="hah-live-text">今こんな相談が増えています：{FEED_MSGS[feedIndex]}</span>
+            </div>
+          </div>
           <div className="hah-section-header">
             <div>
               <h2 className="hah-section-title">他のユーザーの相談例</h2>
@@ -816,6 +866,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                     <div className="hah-prop-price">{p.price}</div>
                     <div className="hah-prop-match">マッチ率 {p.match}%</div>
                   </div>
+                  <div className="hah-prop-ai-comment">{p.aiComment}</div>
                 </div>
               </div>
             ))}
