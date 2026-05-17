@@ -648,29 +648,113 @@ function RightPanel({ onNavigate }) {
 // コミュニティ導線
 // ============================================================
 function CommunityStrip({ onNavigate }) {
-  const posts = [
-    { title: "住宅購入で後悔しました", tag: "購入", tagBg: C.blueBg, tagColor: C.blue, desc: "営業に急かされて決めてしまった..." },
-    { title: "リフォームで100万損しました", tag: "リフォーム", tagBg: C.redBg, tagColor: C.red, desc: "見積もりを1社しか取らなかった..." },
+  const cards = [
+    {
+      attr:'30代女性 / 賃貸契約',
+      category:'後悔', categoryColor:'rgba(239,68,68,0.1)', categoryText:'#ef4444',
+      title:'焦って契約して後悔しました',
+      body:'内見の時は良く見えたけど、住んでみたら騒音が想像以上で…',
+      aiComment:'契約前に周辺環境と管理状況を確認すると防げるケースです。内見時は時間帯を変えて複数回訪問することをAIはおすすめします。',
+      likes:128, comments:24
+    },
+    {
+      attr:'40代男性 / 住宅購入',
+      category:'失敗談', categoryColor:'rgba(249,115,22,0.1)', categoryText:'#f97316',
+      title:'営業マンに言われるまま決めてしまった',
+      body:'後から調べたら同じ条件でもっと安い物件があって…',
+      aiComment:'購入前に複数社の比較と相場確認が重要です。AIが客観的な市場価格分析をサポートできます。',
+      likes:96, comments:18
+    },
+    {
+      attr:'20代男性 / 一人暮らし',
+      category:'相談中', categoryColor:'rgba(34,197,94,0.1)', categoryText:'#22c55e',
+      title:'初めての一人暮らし、何から始めれば？',
+      body:'家賃の目安や初期費用など分からないことだらけで不安です…',
+      aiComment:'手取り収入の30%以内が家賃の目安です。初期費用は家賃の約5〜6ヶ月分を想定しておきましょう。',
+      likes:214, comments:47
+    },
+    {
+      attr:'50代男性 / 投資物件',
+      category:'投資', categoryColor:'rgba(212,175,55,0.1)', categoryText:'#D4AF37',
+      title:'収益物件で失敗しないために知っておくこと',
+      body:'空室リスクを甘く見ていた。購入前にもっと調べるべきだった…',
+      aiComment:'投資物件は表面利回りだけでなく、空室率・管理費・修繕費を含めた実質利回りで判断することが重要です。',
+      likes:183, comments:31
+    },
   ];
   return (
-    <div style={{ background: C.card, borderRadius: 16, padding: "16px", border: `0.5px solid ${C.border}` }}>
-      <p style={{ fontSize: 13, fontWeight: 700, color: C.title, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif" }}>
-        あなたの不安、みんな同じです
-      </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {posts.map((p, i) => (
-          <div key={i} style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }} onClick={() => onNavigate("community")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: C.title, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>{p.title}</p>
-              <span style={{ fontSize: 9, background: p.tagBg, color: p.tagColor, padding: "2px 6px", borderRadius: 4, fontWeight: 600, flexShrink: 0, marginLeft: 6 }}>{p.tag}</span>
-            </div>
-            <p style={{ fontSize: 11, color: C.desc, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>{p.desc}</p>
+    <div style={{marginTop:'40px', marginBottom:'32px'}}>
+      {/* ヘッダー */}
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'8px'}}>
+        <div>
+          <div style={{fontSize:'20px', fontWeight:'700', color:'#0F172A', marginBottom:'4px'}}>みんなの不動産体験談</div>
+          <div style={{fontSize:'13px', color:'#64748B', lineHeight:'1.6'}}>失敗談・不安・後悔を共有して、AIと一緒に次の選択を考えましょう</div>
+        </div>
+        <button onClick={() => onNavigate('community')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer', whiteSpace:'nowrap', marginTop:'4px'}}>すべて見る</button>
+      </div>
+      {/* リアルタイム感バッジ */}
+      <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'16px'}}>
+        {[
+          {label:'本日の投稿', value:'32件'},
+          {label:'共感された体験談', value:'218件'},
+          {label:'AI解説済み', value:'96件'}
+        ].map(b => (
+          <div key={b.label} style={{fontSize:'11px', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.08)', borderRadius:'999px', padding:'4px 12px'}}>
+            {b.label}：<span style={{fontWeight:'700', color:'#0F172A'}}>{b.value}</span>
           </div>
         ))}
       </div>
-      <button onClick={() => onNavigate("community")} style={{ marginTop: 10, width: "100%", background: "none", border: `1.5px solid ${C.border}`, borderRadius: 8, padding: "8px", fontSize: 12, color: C.blue, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
-        体験談を見る →
-      </button>
+      {/* カルーセル */}
+      <div style={{display:'flex', gap:'16px', overflowX:'auto', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', paddingBottom:'12px', scrollbarWidth:'none'}}>
+        {cards.map((card, i) => (
+          <div key={i} className="experience-social-card" style={{flexShrink:0, width:'300px', scrollSnapAlign:'start', background:'rgba(255,255,255,0.86)', backdropFilter:'blur(18px)', border:'1px solid rgba(15,23,42,0.06)', borderRadius:'24px', padding:'22px', boxShadow:'0 18px 44px rgba(15,23,42,0.07)', transition:'all 0.25s ease'}}>
+            {/* ユーザー情報 */}
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
+              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                <div style={{width:'38px', height:'38px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', color:'#D4AF37', fontSize:'14px', fontWeight:'700', flexShrink:0}}>
+                  {card.attr.slice(0,1)}
+                </div>
+                <div style={{fontSize:'12px', color:'#64748B'}}>{card.attr}</div>
+              </div>
+              <span style={{fontSize:'11px', fontWeight:'700', padding:'4px 10px', borderRadius:'999px', background:card.categoryColor, color:card.categoryText}}>
+                {card.category}
+              </span>
+            </div>
+            {/* タイトル・本文 */}
+            <div style={{fontSize:'15px', fontWeight:'700', color:'#0F172A', marginBottom:'8px', lineHeight:'1.5'}}>{card.title}</div>
+            <div style={{fontSize:'13px', color:'#475569', lineHeight:'1.7', marginBottom:'12px'}}>{card.body}</div>
+            {/* AIコメント */}
+            <div style={{padding:'12px 14px', borderRadius:'14px', background:'linear-gradient(135deg, rgba(15,23,42,0.04), rgba(59,130,246,0.04))', borderLeft:'3px solid #D4AF37', marginBottom:'14px'}}>
+              <div style={{fontSize:'10px', fontWeight:'700', color:'#D4AF37', letterSpacing:'1px', marginBottom:'4px'}}>AI COMMENT</div>
+              <div style={{fontSize:'12px', color:'#334155', lineHeight:'1.7'}}>{card.aiComment}</div>
+            </div>
+            {/* アクション */}
+            <div style={{display:'flex', alignItems:'center', gap:'16px', borderTop:'1px solid rgba(15,23,42,0.06)', paddingTop:'12px'}}>
+              <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                {card.likes}
+              </button>
+              <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                {card.comments}
+              </button>
+              <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer', marginLeft:'auto'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                保存
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* CTA */}
+      <div style={{display:'flex', gap:'12px', marginTop:'20px', flexWrap:'wrap'}}>
+        <button onClick={() => onNavigate('community')} style={{padding:'12px 28px', borderRadius:'32px', background:'#16a34a', color:'white', fontWeight:'700', fontSize:'14px', border:'none', cursor:'pointer'}}>
+          体験談を見る
+        </button>
+        <button style={{padding:'12px 28px', borderRadius:'32px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'700', fontSize:'14px', border:'none', cursor:'pointer'}}>
+          あなたの体験談を投稿する
+        </button>
+      </div>
     </div>
   );
 }
