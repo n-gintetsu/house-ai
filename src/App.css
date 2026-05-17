@@ -1818,3 +1818,25 @@ html, body { overflow-x: hidden; }
   box-shadow: 0 28px 70px rgba(15,23,42,0.12) !important;
 }
 html { scroll-behavior: smooth; }
+
+body {
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
+  min-height: 100vh;
+}
+
+.scroll-cta-primary {
+  transition: all 0.2s ease;
+}
+.scroll-cta-primary:hover {
+  background: #254f7a !important;
+  box-shadow: 0 8px 24px rgba(26,58,92,0.4);
+  transform: translateY(-1px);
+}
+.scroll-cta-secondary {
+  transition: all 0.2s ease;
+}
+.scroll-cta-secondary:hover {
+  background: #008f47 !important;
+  box-shadow: 0 8px 24px rgba(0,166,81,0.4);
+  transform: translateY(-1px);
+}

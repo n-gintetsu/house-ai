@@ -648,6 +648,10 @@ function RightPanel({ onNavigate }) {
 // コミュニティ導線
 // ============================================================
 function CommunityStrip({ onNavigate }) {
+  const [liked, setLiked] = useState({});
+  const [saved, setSaved] = useState({});
+  const toggleLike = (i) => setLiked(prev => ({...prev, [i]: !prev[i]}));
+  const toggleSave = (i) => setSaved(prev => ({...prev, [i]: !prev[i]}));
   const cards = [
     {
       attr:'30代女性 / 賃貸契約', initial:'F',
@@ -730,17 +734,17 @@ function CommunityStrip({ onNavigate }) {
             </div>
             {/* アクション */}
             <div style={{display:'flex', alignItems:'center', gap:'16px', borderTop:'1px solid rgba(15,23,42,0.06)', paddingTop:'12px'}}>
-              <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer'}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                {card.likes}
+              <button onClick={() => toggleLike(i)} style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color: liked[i] ? '#ef4444' : '#64748B', background:'none', border:'none', cursor:'pointer', transition:'color 0.2s'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={liked[i] ? '#ef4444' : 'none'} stroke={liked[i] ? '#ef4444' : 'currentColor'} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                {card.likes + (liked[i] ? 1 : 0)}
               </button>
               <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 {card.comments}
               </button>
-              <button style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color:'#64748B', background:'none', border:'none', cursor:'pointer', marginLeft:'auto'}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-                保存
+              <button onClick={() => toggleSave(i)} style={{display:'flex', alignItems:'center', gap:'4px', fontSize:'12px', color: saved[i] ? '#3B82F6' : '#64748B', background:'none', border:'none', cursor:'pointer', marginLeft:'auto', transition:'color 0.2s'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={saved[i] ? '#3B82F6' : 'none'} stroke={saved[i] ? '#3B82F6' : 'currentColor'} strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                {saved[i] ? '保存済' : '保存'}
               </button>
             </div>
           </div>
@@ -793,14 +797,16 @@ function ScrollCTA({ user, scrolled }) {
   }, [])
   if (!scrolled || user) return null;
   return (
-    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "rgba(255,255,255,0.88)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderTop: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 -12px 40px rgba(15,23,42,0.08)", zIndex: 7000, display: "flex", gap: 8, transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s ease' }}>
+    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "10px 16px", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: "1px solid rgba(15,23,42,0.1)", boxShadow: "0 -16px 48px rgba(15,23,42,0.12), 0 -1px 0 rgba(255,255,255,0.8)", zIndex: 7000, display: "flex", gap: 8, transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s ease' }}>
       <button
+        className="scroll-cta-primary"
         onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
         style={{ flex: 1, background: "#1a3a5c", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
       >
         無料でAI相談する
       </button>
       <button
+        className="scroll-cta-secondary"
         onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))}
         style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
       >
@@ -917,7 +923,7 @@ export default function HomeScreen({ onNavigate }) {
         {/* レイアウト：スマホは1カラム、PCは3カラム */}
         {isMobile ? (
           // スマホ：1カラム縦積み
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 16px", maxWidth: 780, margin: "0 auto", width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "0 16px", maxWidth: 780, margin: "0 auto", width: "100%" }}>
             {/* AIチャット */}
             <div id="ai-consult-section" ref={chatRef}>
               {showChat ? (
@@ -989,10 +995,10 @@ export default function HomeScreen({ onNavigate }) {
         ) : (
           // PC：3カラム
           <div style={{ display: "grid", gridTemplateColumns: "320px 1fr 300px", gap: 0, alignItems: "start", width: "100%" }}>
-            <div style={{ padding: "0 16px 0 20px" }}>
+            <div style={{ padding: "0 16px 0 20px", opacity: 0.75 }}>
               <LeftPanel onNavigate={navigate} onStartChat={(tag) => { setInitialTag(tag); handleStartChat(); }} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "24px 20px", background: 'linear-gradient(180deg, rgba(30,41,59,0.07) 0%, rgba(30,41,59,0.03) 100%)', borderRadius: '28px', border: '1px solid rgba(15,23,42,0.1)', boxShadow: '0 24px 64px rgba(15,23,42,0.14)', maxWidth: '820px', margin: '0 auto', width: '100%' }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
                   <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
                     {/* ヘッダー */}
@@ -1043,7 +1049,7 @@ export default function HomeScreen({ onNavigate }) {
                 )}
               <CommunityStrip onNavigate={navigate} />
             </div>
-            <div style={{ padding: "0 20px 0 16px" }}>
+            <div style={{ padding: "0 20px 0 16px", opacity: 0.75 }}>
               <RightPanel onNavigate={navigate} />
             </div>
           </div>
@@ -1100,17 +1106,17 @@ export default function HomeScreen({ onNavigate }) {
         <div style={{padding: '0 16px', maxWidth: 780, margin: '0 auto', marginTop:'32px'}}>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
             <div>
-              <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A'}}>🏠 AIおすすめ物件</div>
+              <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A'}}>AIおすすめ物件</div>
               <div style={{fontSize:'13px', color:'#64748B', marginTop:'4px'}}>あなたの条件に近い物件をAIが選定</div>
             </div>
             <button onClick={() => navigate('properties')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer'}}>すべて見る →</button>
           </div>
           <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none', scrollSnapType:'x mandatory'}}>
             {[
-              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80'},
-              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', img:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80'},
-              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', img:'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80'},
-              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK', reason:'4LDK・学区人気エリア', img:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80'},
+              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80', match:94, badge:'人気上昇中', comment:'希望条件との高いマッチ率。駅近・新築で資産価値の安定が見込めます。'},
+              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', img:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80', match:88, badge:'問い合わせ急増', comment:'ペット可の中でコスパ最良。空室リスクが低い物件です。'},
+              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', img:'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80', match:91, badge:'利回り7%超', comment:'実質利回り5.8%。周辺賃貸需要が堅調で安定収益が見込めます。'},
+              {area:'戸田市', price:'3,200万円', tag:'戸建て', label:'AI PICK', reason:'4LDK・学区人気エリア', img:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80', match:86, badge:'学区人気', comment:'人気小学校区内で需要が高く、売却時にも有利な条件が揃っています。'},
             ].map((p, i) => (
               <div key={i} className="property-card" style={{
                 flexShrink: 0,
@@ -1144,17 +1150,28 @@ export default function HomeScreen({ onNavigate }) {
                 </div>
                 {/* テキストエリア */}
                 <div style={{padding:'18px'}}>
-                  {/* 価格 */}
-                  <div style={{fontSize:'28px', fontWeight:'800', letterSpacing:'-0.03em', color:'#0F172A', marginBottom:'10px', lineHeight:1.1}}>
-                    {p.price}
+                  {/* 価格 + マッチ率 */}
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px'}}>
+                    <div style={{fontSize:'26px', fontWeight:'800', letterSpacing:'-0.03em', color:'#0F172A', lineHeight:1.1}}>
+                      {p.price}
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:'3px', background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:'999px', padding:'4px 10px', flexShrink:0}}>
+                      <span style={{fontSize:'10px', fontWeight:'700', color:'#16a34a'}}>マッチ率</span>
+                      <span style={{fontSize:'13px', fontWeight:'800', color:'#16a34a'}}>{p.match}%</span>
+                    </div>
                   </div>
-                  {/* タグ */}
-                  <div style={{marginBottom:'12px'}}>
-                    <span style={{fontSize:'11px', background:'rgba(59,130,246,0.08)', color:'#3B82F6', padding:'4px 12px', borderRadius:'999px', fontWeight:'600'}}>#{p.tag}</span>
+                  {/* タグ + バッジ */}
+                  <div style={{display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'10px'}}>
+                    <span style={{fontSize:'11px', background:'rgba(59,130,246,0.08)', color:'#3B82F6', padding:'4px 10px', borderRadius:'999px', fontWeight:'600'}}>#{p.tag}</span>
+                    <span style={{fontSize:'11px', background:'rgba(212,175,55,0.12)', color:'#92700a', padding:'4px 10px', borderRadius:'999px', fontWeight:'600'}}>{p.badge}</span>
                   </div>
                   {/* AIおすすめ理由 */}
-                  <div style={{fontSize:'12px', color:'#64748B', background:'rgba(15,23,42,0.03)', padding:'10px 12px', borderRadius:'12px', borderLeft:'3px solid #D4AF37', lineHeight:1.5}}>
+                  <div style={{fontSize:'12px', color:'#64748B', background:'rgba(15,23,42,0.03)', padding:'10px 12px', borderRadius:'12px', borderLeft:'3px solid #D4AF37', lineHeight:1.5, marginBottom:'8px'}}>
                     AI分析：{p.reason}
+                  </div>
+                  {/* AIコメント */}
+                  <div style={{fontSize:'11px', color:'#475569', lineHeight:1.6}}>
+                    {p.comment}
                   </div>
                 </div>
               </div>
