@@ -1,3 +1,6 @@
+html, body { overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

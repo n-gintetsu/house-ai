@@ -709,7 +709,7 @@ function ScrollCTA({ user, scrolled }) {
   }, [])
   if (!scrolled || user) return null;
   return (
-    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "#fff", boxShadow: "0 -2px 12px rgba(0,0,0,0.15)", zIndex: 7000, display: "flex", gap: 8, transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s ease' }}>
+    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "8px 16px", background: "rgba(255,255,255,0.88)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderTop: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 -12px 40px rgba(15,23,42,0.08)", zIndex: 7000, display: "flex", gap: 8, transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s ease' }}>
       <button
         onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
         style={{ flex: 1, background: "#1a3a5c", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
@@ -766,13 +766,13 @@ export default function HomeScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: 'linear-gradient(180deg, #F5F7FB 0%, #EEF3F8 100%)', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: 'radial-gradient(circle at 30% 50%, rgba(59,130,246,0.06), transparent 50%), radial-gradient(circle at 70% 30%, rgba(212,175,55,0.06), transparent 50%), linear-gradient(180deg, #F5F7FB 0%, #EEF3F8 100%)', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
       <MiniTicker />
 
       <main style={{ width: "100%", padding: "20px 0 48px" }}>
         {/* ファーストビュー */}
-        <div style={{ textAlign: "center", padding: isMobile ? "24px 16px 24px" : "32px 16px 32px", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", paddingTop: isMobile ? '32px' : '56px', paddingBottom: isMobile ? '32px' : '48px', paddingLeft: '16px', paddingRight: '16px', maxWidth: 900, margin: "0 auto" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: C.red, letterSpacing: 1, marginBottom: 10, fontFamily: "'Noto Sans JP', sans-serif" }}>
             ⚠️ 知らずに進むと損します
           </p>
@@ -844,6 +844,13 @@ export default function HomeScreen({ onNavigate }) {
                       <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                       <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                     </div>
+                    <div style={{display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px', marginBottom:'16px'}}>
+                      {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
+                        <span key={t} style={{padding:'6px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'700', color:'rgba(255,255,255,0.9)', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)'}}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                     <div style={{width:'100%',maxWidth:'380px'}}>
                       <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
                         今すぐ無料AI相談をはじめる →
@@ -899,6 +906,13 @@ export default function HomeScreen({ onNavigate }) {
                       <div style={{textAlign:'center'}}>
                         <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
+                      </div>
+                      <div style={{display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px', marginBottom:'16px'}}>
+                        {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
+                          <span key={t} style={{padding:'6px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'700', color:'rgba(255,255,255,0.9)', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)'}}>
+                            {t}
+                          </span>
+                        ))}
                       </div>
                       <div style={{width:'100%',maxWidth:'380px'}}>
                         <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
