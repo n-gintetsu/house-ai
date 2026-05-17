@@ -966,6 +966,53 @@ export default function HomeScreen({ onNavigate }) {
           </div>
         )}
 
+        {/* AI分析カードセクション */}
+        <div style={{padding: '0 16px', maxWidth: 900, margin: '0 auto'}}>
+          <div style={{display:'flex', gap:'16px', marginTop:'24px', flexWrap:'wrap'}}>
+            {/* AI分析レポートカード */}
+            <div style={{flex:'1', minWidth:'280px', background:'linear-gradient(135deg, #0F172A, #1E293B)', borderRadius:'24px', padding:'24px', boxShadow:'0 20px 50px rgba(15,23,42,0.15)', border:'1px solid rgba(255,255,255,0.08)'}}>
+              <div style={{color:'#D4AF37', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI ANALYSIS</div>
+              <div style={{color:'white', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>AI分析レポート</div>
+              {[
+                {label:'将来価格安定性', score:88},
+                {label:'人気上昇エリア', score:92},
+                {label:'通勤利便性', score:76},
+                {label:'投資向き', score:84},
+                {label:'子育て環境', score:71},
+              ].map(item => (
+                <div key={item.label} style={{marginBottom:'12px'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', marginBottom:'4px'}}>
+                    <span style={{color:'rgba(255,255,255,0.8)', fontSize:'13px'}}>{item.label}</span>
+                    <span style={{color:'#D4AF37', fontSize:'13px', fontWeight:'700'}}>{item.score}</span>
+                  </div>
+                  <div style={{height:'4px', background:'rgba(255,255,255,0.1)', borderRadius:'999px', overflow:'hidden'}}>
+                    <div style={{height:'100%', width:`${item.score}%`, background:'linear-gradient(90deg, #D4AF37, #F4D978)', borderRadius:'999px'}} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* AIステータスカード */}
+            <div style={{flex:'1', minWidth:'280px', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderRadius:'24px', padding:'24px', boxShadow:'0 20px 50px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)'}}>
+              <div style={{color:'#3B82F6', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI STATUS</div>
+              <div style={{color:'#0F172A', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>現在のAI診断状況</div>
+              {[
+                {label:'本日のAI診断数', value:'128件', trend:'+12%'},
+                {label:'新着マッチング物件', value:'24件', trend:'更新済'},
+                {label:'平均提案時間', value:'28秒', trend:'高速'},
+                {label:'ユーザー満足度', value:'96%', trend:'優秀'},
+              ].map(item => (
+                <div key={item.label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid rgba(15,23,42,0.05)'}}>
+                  <span style={{color:'#64748B', fontSize:'13px'}}>{item.label}</span>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                    <span style={{color:'#0F172A', fontSize:'15px', fontWeight:'700'}}>{item.value}</span>
+                    <span style={{fontSize:'11px', color:'#22c55e', background:'rgba(34,197,94,0.1)', padding:'2px 8px', borderRadius:'999px', fontWeight:'600'}}>{item.trend}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* AIおすすめ物件カルーセル */}
         <div style={{padding: '0 16px', maxWidth: 900, margin: '0 auto', marginTop:'32px'}}>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
