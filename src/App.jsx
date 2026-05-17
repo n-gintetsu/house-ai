@@ -561,6 +561,13 @@ export default function App() {
           align-items: center;
           justify-content: space-between;
           gap: 12px;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          background: rgba(255,255,255,0.85);
+          box-shadow: 0 8px 30px rgba(15,23,42,0.05);
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
 
         .ha-brand {

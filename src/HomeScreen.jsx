@@ -766,7 +766,7 @@ export default function HomeScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: 'linear-gradient(180deg, #F5F7FB 0%, #EEF3F8 100%)', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
       <MiniTicker />
 
@@ -776,6 +776,7 @@ export default function HomeScreen({ onNavigate }) {
           <p style={{ fontSize: 13, fontWeight: 700, color: C.red, letterSpacing: 1, marginBottom: 10, fontFamily: "'Noto Sans JP', sans-serif" }}>
             ⚠️ 知らずに進むと損します
           </p>
+          <div style={{fontSize:'12px', letterSpacing:'3px', color:'#3B82F6', fontWeight:'600', marginBottom:'12px', textTransform:'uppercase'}}>AI不動産コンシェルジュ</div>
           <h1 style={{
             fontSize: isMobile ? 22 : 28,
             fontWeight: 700,
@@ -783,12 +784,11 @@ export default function HomeScreen({ onNavigate }) {
             fontFamily: "'Noto Serif JP', serif",
             lineHeight: 1.4,
             marginBottom: 10,
-            // whiteSpace: "nowrap" を削除してスマホ対応
           }}>
-            あなたの不動産判断、<br style={{ display: isMobile ? "block" : "none" }} />30秒で最適化
+            AIがあなたに最適な住まいと進み方を提案
           </h1>
           <p style={{ fontSize: isMobile ? 13 : 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 24, lineHeight: 1.7 }}>
-            営業なし・完全無料｜AIが最適な進め方を提示します
+            賃貸・売買・投資・リフォームまでAIが最適ルートを提案します
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
             {["🏠 家を買いたい", "🏷️ 売りたい", "💰 投資したい"].map((label) => (
@@ -821,13 +821,15 @@ export default function HomeScreen({ onNavigate }) {
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               ) : (
                 <div style={{
-                  background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)',
-                  border: '2px solid #c9a84c',
-                  borderRadius: '16px',
-                  padding: '24px',
+                  background: 'linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 20px 60px rgba(15,23,42,0.25)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '24px',
+                  padding: '40px',
+                  animation: 'fadeUp 0.8s ease-out both',
                   position: 'relative',
-                  overflow: 'hidden',
-                  animation: 'fadeUp 0.8s ease-out both'
+                  overflow: 'hidden'
                 }}>
                   <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
                   <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
@@ -842,10 +844,9 @@ export default function HomeScreen({ onNavigate }) {
                       <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                       <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                     </div>
-                    <div style={{position:'relative',overflow:'hidden',borderRadius:'32px',width:'100%',maxWidth:'360px'}}>
-                      <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 1.5s linear infinite',position:'relative',overflow:'hidden'}}>
+                    <div style={{width:'100%',maxWidth:'380px'}}>
+                      <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
                         今すぐ無料AI相談をはじめる →
-                        <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 1.8s ease-in-out infinite'}} />
                       </button>
                     </div>
                   </div>
@@ -876,13 +877,15 @@ export default function HomeScreen({ onNavigate }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
                   <div style={{
-                    background: 'linear-gradient(160deg, #0d2744 0%, #1a3a5c 60%, #0d2744 100%)',
-                    border: '2px solid #c9a84c',
-                    borderRadius: '16px',
-                    padding: '24px',
+                    background: 'linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 20px 60px rgba(15,23,42,0.25)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: '24px',
+                    padding: '40px',
+                    animation: 'fadeUp 0.8s ease-out both',
                     position: 'relative',
-                    overflow: 'hidden',
-                    animation: 'fadeUp 0.8s ease-out both'
+                    overflow: 'hidden'
                   }}>
                     <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
                     <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
@@ -891,16 +894,15 @@ export default function HomeScreen({ onNavigate }) {
                     <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
                     <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
                       <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
-                    </div>
+                        <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
+                      </div>
                       <div style={{textAlign:'center'}}>
                         <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
                         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
                       </div>
-                      <div style={{position:'relative',overflow:'hidden',borderRadius:'32px',width:'100%',maxWidth:'360px'}}>
-                        <button onClick={handleStartChat} style={{width:'100%',background:'linear-gradient(135deg, #c9a84c, #f5e08a, #c9a84c)',backgroundSize:'200% auto',color:'#1a3a5c',fontWeight:'700',fontSize:'15px',border:'none',borderRadius:'32px',padding:'14px 24px',cursor:'pointer',letterSpacing:'0.5px',animation:'btnShimmer 1.5s linear infinite',position:'relative',overflow:'hidden'}}>
+                      <div style={{width:'100%',maxWidth:'380px'}}>
+                        <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
                           今すぐ無料AI相談をはじめる →
-                          <div style={{position:'absolute',top:0,left:'-80%',width:'60%',height:'100%',background:'linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent)',animation:'shine 1.8s ease-in-out infinite'}} />
                         </button>
                       </div>
                     </div>
