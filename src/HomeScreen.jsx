@@ -712,7 +712,7 @@ function CommunityStrip({ onNavigate }) {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
               <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                 <div style={{width:'38px', height:'38px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', color:'#D4AF37', fontSize:'14px', fontWeight:'700', flexShrink:0}}>
-                  {card.attr.slice(0,1)}
+                  {card.attr.slice(0,2)}
                 </div>
                 <div style={{fontSize:'12px', color:'#64748B'}}>{card.attr}</div>
               </div>
