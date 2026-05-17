@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { AffiliateCard } from './AffiliateCard';
 import { supabase } from "./lib/supabase";
 import { trackEvent } from './lib/analytics';
+import './HouseAiHome.css';
 
 // ============================================================
 // HomeScreen.jsx — CV最大化版 + 会員登録ロック機能
@@ -576,212 +577,17 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
 }
 
 // ============================================================
-// 左サイド：不安・失敗事例
+// HomeScreen — 完全リニューアル版
 // ============================================================
-function LeftPanel({ onNavigate, onStartChat }) {
-  const cases = [
-    { title: "住宅購入で後悔しました", tag: "購入", desc: "営業に急かされて決めてしまった...", startTag: "失敗回避", cta: "AIで確認する" },
-    { title: "リフォームで100万損しました", tag: "リフォーム", desc: "見積もりを1社しか取らなかった...", startTag: "業者探し", cta: "失敗を避ける" },
-    { title: "投資物件で空室が続いています", tag: "投資", desc: "利回りだけ見て立地を軽視していた...", startTag: "初心者", cta: "リスクを診断する" },
-  ];
-
-  return (
-    <div style={{ background: C.card, borderRadius: 18, padding: "20px", border: `0.5px solid ${C.border}` }}>
-      <p style={{ fontSize: 14, fontWeight: 700, color: C.red, margin: "0 0 14px", fontFamily: "'Noto Sans JP', sans-serif", lineHeight: 1.5 }}>
-        ⚠️ 知らないと損する<br />不動産の現実
-      </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {cases.map((c, i) => (
-          <div key={i}
-            onClick={() => onStartChat && onStartChat(c.startTag)}
-            style={{ background: C.redBg, borderLeft: `3px solid ${C.red}`, padding: "10px 12px", borderRadius: "0 10px 10px 0", cursor: "pointer", transition: "opacity 0.2s" }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: C.red, margin: 0, fontFamily: "'Noto Sans JP', sans-serif" }}>{c.title}</p>
-              <span style={{ fontSize: 9, background: "#ffd5d5", color: C.red, padding: "1px 5px", borderRadius: 3, fontWeight: 600, flexShrink: 0, marginLeft: 4 }}>{c.tag}</span>
-            </div>
-            <p style={{ fontSize: 10, color: "#666", margin: 0, lineHeight: 1.5, fontFamily: "'Noto Sans JP', sans-serif" }}>{c.desc}</p>
-            <p style={{ fontSize: 10, color: C.blue, fontWeight: 700, margin: "4px 0 0", fontFamily: "'Noto Sans JP', sans-serif" }}>→ {c.cta}</p>
-          </div>
-        ))}
-      </div>
-      <button onClick={() => onNavigate("community")} style={{ marginTop: 14, width: "100%", background: C.navy, color: "#fff", border: "none", borderRadius: 10, padding: "10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
-        体験談を見る → 失敗を避ける
-      </button>
-    </div>
-  );
-}
-
-// ============================================================
-// 右サイド：最新情報
-// ============================================================
-function RightPanel({ onNavigate }) {
-  const news = [
-    { badge: "新着", badgeBg: C.blueBg, badgeColor: C.blue, text: "大宮エリアで新着物件3件" },
-    { badge: "市場", badgeBg: "#FFF9E6", badgeColor: "#854F0B", text: "変動金利、上昇傾向が続く" },
-    { badge: "NEWS", badgeBg: "#E8F5E9", badgeColor: "#27500A", text: "AI査定サービス開始" },
-    { badge: "INFO", badgeBg: "#F0F4F8", badgeColor: C.desc, text: "空き家対策セミナー開催予定" },
-  ];
-
-  return (
-    <div style={{ background: C.card, borderRadius: 18, padding: "20px", border: `0.5px solid ${C.border}` }}>
-      <p style={{ fontSize: 14, fontWeight: 700, color: C.title, margin: "0 0 12px", fontFamily: "'Noto Sans JP', sans-serif" }}>📰 最新情報</p>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {news.map((n, i) => (
-          <div key={i} style={{ padding: "10px 0", borderBottom: i < news.length - 1 ? `0.5px solid ${C.border}` : "none", display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <span style={{ fontSize: 9, background: n.badgeBg, color: n.badgeColor, padding: "2px 5px", borderRadius: 3, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{n.badge}</span>
-            <p style={{ fontSize: 12, color: C.title, margin: 0, lineHeight: 1.6, fontFamily: "'Noto Sans JP', sans-serif" }}>{n.text}</p>
-          </div>
-        ))}
-      </div>
-      <button onClick={() => onNavigate("properties")} style={{ marginTop: 12, width: "100%", background: C.bg, color: C.navy, border: `1px solid ${C.border}`, borderRadius: 10, padding: "9px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}>
-        物件一覧を見る →
-      </button>
-      <AffiliateCard type="insurance" reason="物件購入・賃貸時に確認を" />
-    </div>
-  );
-}
-
-// ============================================================
-// コミュニティ導線（プレビュー）
-// ============================================================
-function CommunityStrip({ onNavigate }) {
-  const cards = [
-    {
-      attr:'30代女性 / 賃貸契約', initial:'F',
-      category:'後悔', categoryColor:'rgba(239,68,68,0.1)', categoryText:'#ef4444',
-      title:'焦って契約して後悔しました',
-      body:'内見の時は良く見えたけど、住んでみたら騒音が想像以上で…',
-      aiComment:'契約前に周辺環境と管理状況を確認すると防げるケースです。内見時は時間帯を変えて複数回訪問することをAIはおすすめします。',
-    },
-    {
-      attr:'40代男性 / 住宅購入', initial:'M',
-      category:'失敗談', categoryColor:'rgba(249,115,22,0.1)', categoryText:'#f97316',
-      title:'営業マンに言われるまま決めてしまった',
-      body:'後から調べたら同じ条件でもっと安い物件があって…',
-      aiComment:'購入前に複数社の比較と相場確認が重要です。AIが客観的な市場価格分析をサポートできます。',
-    },
-    {
-      attr:'20代男性 / 一人暮らし', initial:'Y',
-      category:'相談中', categoryColor:'rgba(34,197,94,0.1)', categoryText:'#22c55e',
-      title:'初めての一人暮らし、何から始めれば？',
-      body:'家賃の目安や初期費用など分からないことだらけで不安です…',
-      aiComment:'手取り収入の30%以内が家賃の目安です。初期費用は家賃の約5〜6ヶ月分を想定しておきましょう。',
-    },
-  ];
-  return (
-    <section style={{marginBottom:'48px'}}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
-        <div>
-          <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A', marginBottom:'4px'}}>みんなの不動産体験談</div>
-          <div style={{fontSize:'13px', color:'#64748B'}}>失敗談・後悔をAIと一緒に解決しましょう</div>
-        </div>
-        <button onClick={() => onNavigate('community')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer', whiteSpace:'nowrap'}}>すべて見る</button>
-      </div>
-      <div style={{display:'flex', gap:'16px', overflowX:'auto', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', paddingBottom:'8px', scrollbarWidth:'none'}}>
-        {cards.map((card, i) => (
-          <div key={i} className="experience-social-card" onClick={() => onNavigate('community')} style={{flexShrink:0, width:'300px', scrollSnapAlign:'start', background:'rgba(255,255,255,0.86)', backdropFilter:'blur(18px)', border:'1px solid rgba(15,23,42,0.06)', borderRadius:'20px', padding:'20px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', transition:'all 0.25s ease', cursor:'pointer'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px'}}>
-              <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                <div style={{width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', color:'#D4AF37', fontSize:'13px', fontWeight:'700', flexShrink:0}}>
-                  {card.initial}
-                </div>
-                <div style={{fontSize:'12px', color:'#64748B'}}>{card.attr}</div>
-              </div>
-              <span style={{fontSize:'11px', fontWeight:'700', padding:'3px 9px', borderRadius:'999px', background:card.categoryColor, color:card.categoryText}}>
-                {card.category}
-              </span>
-            </div>
-            <div style={{fontSize:'14px', fontWeight:'700', color:'#0F172A', marginBottom:'6px', lineHeight:'1.5'}}>{card.title}</div>
-            <div style={{fontSize:'12px', color:'#475569', lineHeight:'1.7', marginBottom:'10px'}}>{card.body}</div>
-            <div style={{padding:'10px 12px', borderRadius:'12px', background:'linear-gradient(135deg, rgba(15,23,42,0.03), rgba(59,130,246,0.03))', borderLeft:'3px solid #D4AF37'}}>
-              <div style={{fontSize:'10px', fontWeight:'700', color:'#D4AF37', letterSpacing:'1px', marginBottom:'3px'}}>AI COMMENT</div>
-              <div style={{fontSize:'11px', color:'#334155', lineHeight:'1.7'}}>{card.aiComment}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{display:'flex', gap:'12px', marginTop:'16px', flexWrap:'wrap'}}>
-        <button onClick={() => onNavigate('community')} style={{flex:1, minWidth:'160px', padding:'12px 20px', borderRadius:'12px', background:'#0F172A', color:'white', fontWeight:'700', fontSize:'14px', border:'none', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif"}}>
-          体験談をすべて見る
-        </button>
-        <button onClick={() => onNavigate('community')} style={{flex:1, minWidth:'160px', padding:'12px 20px', borderRadius:'12px', background:'rgba(15,23,42,0.05)', color:'#0F172A', fontWeight:'700', fontSize:'14px', border:'1px solid rgba(15,23,42,0.1)', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif"}}>
-          体験談を投稿する
-        </button>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================
-// TickerBanner
-// ============================================================
-function MiniTicker() {
-  const text = ["🏠 新着物件が更新されました", "🤝 専門家ネットワーク拡大中", "✨ AI査定サービス開始", "📰 空き家対策セミナー開催予定"].join("　　●　　");
-  return (
-    <div style={{ background: "#fffbe6", borderBottom: "1px solid #f0d060", overflow: "hidden", padding: "5px 0" }}>
-      <style>{`@keyframes tk{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
-      <div style={{ display: "inline-flex", whiteSpace: "nowrap", animation: "tk 24s linear infinite" }}>
-        {[0,1].map((i) => <span key={i} style={{ fontSize: 11, color: "#92400e", paddingRight: 60, fontFamily: "'Noto Sans JP', sans-serif" }}>{text}</span>)}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// 固定底部CTA（スマホのみ表示）
-// ============================================================
-
-function ScrollCTA({ user, scrolled }) {
-  const [visible, setVisible] = useState(true)
-  const lastY = useRef(0)
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      if (y > lastY.current + 5) setVisible(false)
-      else if (y < lastY.current - 5) setVisible(true)
-      lastY.current = y
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  if (!scrolled || user) return null;
-  return (
-    <div style={{ position: "fixed", bottom: 64, left: 0, right: 0, padding: "10px 16px", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: "1px solid rgba(15,23,42,0.1)", boxShadow: "0 -16px 48px rgba(15,23,42,0.12), 0 -1px 0 rgba(255,255,255,0.8)", zIndex: 7000, display: "flex", gap: 8, transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s ease' }}>
-      <button
-        className="scroll-cta-primary"
-        onClick={() => document.getElementById('ai-consult-section')?.scrollIntoView({ behavior: 'smooth' })}
-        style={{ flex: 1, background: "#1a3a5c", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
-      >
-        無料でAI相談する
-      </button>
-      <button
-        className="scroll-cta-secondary"
-        onClick={() => window.dispatchEvent(new CustomEvent("show-auth-sheet", {}))}
-        style={{ flex: 1, background: "#00a651", color: "#fff", border: "none", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans JP', sans-serif" }}
-      >
-        無料会員登録（簡単3ステップ）
-      </button>
-    </div>
-  );
-}
-
-// ============================================================
-// HomeScreen
-// ============================================================
-export default function HomeScreen({ onNavigate }) {
-  const navigate = onNavigate || (() => {});
+export default function HomeScreen({ onTabChange, onNavigate }) {
+  const navigate = onTabChange || onNavigate || (() => {});
   const [showChat, setShowChat] = useState(false);
-  const [initialTag, setInitialTag] = useState(null);
   const [user, setUser] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const chatRef = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY >= 300);
+    const onScroll = () => setScrolled(window.scrollY >= 200);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -794,319 +600,272 @@ export default function HomeScreen({ onNavigate }) {
 
   useEffect(() => { trackEvent('page_view', { page: 'home' }); }, []);
 
-  // レスポンシブ判定
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
   const handleStartChat = () => {
     setShowChat(true);
-    setTimeout(() => chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    setTimeout(() => chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   };
 
+  const worries = [
+    { text: '予算・ローンが心配', sub: '借りられる金額がわからない', tag: 'ローン不安' },
+    { text: '物件の選び方がわからない', sub: '何を基準にすべきか迷っている', tag: '初心者' },
+    { text: '失敗・後悔したくない', sub: '後になって気づく落とし穴が怖い', tag: '失敗回避' },
+    { text: '売却タイミングがわからない', sub: 'いつ・いくらで売れるか不安', tag: 'タイミング' },
+    { text: '投資物件を探したい', sub: '利回りと空室リスクを知りたい', tag: '物件探し中' },
+    { text: '契約・法律が不安', sub: '重要事項説明書が読めない', tag: '法律' },
+  ];
+
+  const consultations = [
+    {
+      initial: 'F', attr: '30代女性 / 賃貸', category: '解決済み',
+      q: '敷金・礼金なしは本当に得ですか？',
+      a: '礼金ゼロでも家賃が高めに設定されているケースが多いです。2年分の総支払いで比較するとお得度がわかります。',
+    },
+    {
+      initial: 'M', attr: '40代男性 / 購入', category: '相談中',
+      q: '変動金利と固定金利どちらがいい？',
+      a: '変動は短期返済向き、固定は長期安心派向きです。現在の金利差と返済期間でシミュレーションしましょう。',
+    },
+    {
+      initial: 'Y', attr: '20代男性 / 投資', category: '解決済み',
+      q: '初めての投資物件で失敗しないコツは？',
+      a: '駅徒歩10分以内・築20年以内・表面利回り6%以上が目安です。管理会社の質も必ず確認してください。',
+    },
+    {
+      initial: 'S', attr: '50代女性 / 売却', category: 'AI提案済み',
+      q: '相続した実家をどうすればいい？',
+      a: '空き家は固定資産税特例が外れる可能性があります。売却・賃貸・リフォームの収支を比較してから決断を。',
+    },
+  ];
+
+  const properties = [
+    { area: 'さいたま市大宮区', price: '2,980万円', tag: '新築', match: 94, img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80' },
+    { area: 'さいたま市浦和区', price: '月8.5万円', tag: '賃貸', match: 88, img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80' },
+    { area: '川口市', price: '1,580万円', tag: '投資', match: 91, img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80' },
+    { area: '越谷市', price: '3,280万円', tag: '中古', match: 85, img: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=600&q=80' },
+  ];
+
+  const testimonials = [
+    { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '住んでみたら騒音が想像以上で…AIに相談していれば防げたと思います。' },
+    { initial: 'M', attr: '40代男性 / 購入', category: '失敗談', categoryColor: 'rgba(249,115,22,0.1)', categoryText: '#f97316', title: '営業マンに言われるまま決めてしまった', body: '後から調べたら同じ条件でもっと安い物件があって後悔しました。' },
+    { initial: 'Y', attr: '20代男性 / 投資', category: '成功談', categoryColor: 'rgba(34,197,94,0.1)', categoryText: '#22c55e', title: 'AIの提案で良い物件に出会えました', body: '利回り・空室リスクをAIで分析してから購入。半年で満室稼働中です。' },
+    { initial: 'S', attr: '50代女性 / 売却', category: 'AI活用', categoryColor: 'rgba(59,130,246,0.1)', categoryText: '#3b82f6', title: '相続物件の査定をAIに手伝ってもらった', body: '複数社の査定結果をAIが分析してくれて、最高値で売却できました。' },
+  ];
+
   return (
-    <div style={{ minHeight: "100vh", background: 'radial-gradient(circle at 30% 50%, rgba(59,130,246,0.06), transparent 50%), radial-gradient(circle at 70% 30%, rgba(212,175,55,0.06), transparent 50%), linear-gradient(180deg, #F5F7FB 0%, #EEF3F8 100%)', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80, overflowX: "hidden" }}>
+    <div className="hah-root">
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
-      <MiniTicker />
 
-      <main style={{ width: "100%", padding: "20px 0 48px" }}>
-        {/* ファーストビュー */}
-        <div style={{ textAlign: "center", paddingTop: isMobile ? '32px' : '56px', paddingBottom: isMobile ? '32px' : '48px', paddingLeft: '16px', paddingRight: '16px', maxWidth: 900, margin: "0 auto" }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: C.red, letterSpacing: 1, marginBottom: 10, fontFamily: "'Noto Sans JP', sans-serif" }}>
-            知らずに進むと損します
-          </p>
-          <div style={{fontSize:'12px', letterSpacing:'3px', color:'#3B82F6', fontWeight:'600', marginBottom:'12px', textTransform:'uppercase'}}>AI不動産コンシェルジュ</div>
-          <h1 style={{
-            fontSize: isMobile ? 22 : 28,
-            fontWeight: 700,
-            color: C.title,
-            fontFamily: "'Noto Serif JP', serif",
-            lineHeight: 1.4,
-            marginBottom: 10,
-          }}>
-            AIがあなたに最適な住まいと進み方を提案
-          </h1>
-          <p style={{ fontSize: isMobile ? 13 : 14, color: C.desc, fontFamily: "'Noto Sans JP', sans-serif", marginBottom: 20, lineHeight: 1.7 }}>
-            賃貸・売買・投資・リフォームまでAIが最適ルートを提案します
-          </p>
-          <div style={{display:'flex', justifyContent:'center', gap:'20px', flexWrap:'wrap', marginBottom:'16px'}}>
+      {/* 1. Hero */}
+      <section className="hah-hero">
+        <div className="hah-hero-left">
+          <div className="hah-hero-badge">AI不動産コンシェルジュ</div>
+          <h1 className="hah-hero-title">AIがあなたに最適な<br />住まいと進め方を提案</h1>
+          <ul className="hah-hero-features">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              30秒でAI診断・完全無料
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              営業連絡は一切ありません
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              専門家ネットワークに即接続
+            </li>
+          </ul>
+          <div className="hah-hero-ctas">
+            <button className="hah-cta-primary" onClick={handleStartChat}>
+              AIに無料相談する
+            </button>
+            <button className="hah-cta-secondary" onClick={() => navigate('properties')}>
+              物件を探す
+            </button>
+          </div>
+          <div className="hah-hero-stats">
             {[
-              {label:'本日AI診断', value:'128件'},
-              {label:'新着物件', value:'24件'},
-              {label:'相談中', value:'18人'}
+              { label: '本日AI診断', value: '128件' },
+              { label: '新着物件', value: '24件' },
+              { label: '相談中', value: '18人' },
             ].map(item => (
-              <div key={item.label} style={{display:'flex', alignItems:'center', gap:'6px', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.08)', borderRadius:'999px', padding:'6px 14px', fontSize:'12px', color:'#1E293B'}}>
-                <span style={{color:'#64748B'}}>{item.label}：</span>
-                <span style={{fontWeight:'700', color:'#0F172A'}}>{item.value}</span>
+              <div key={item.label} className="hah-stat-chip">
+                <span className="hah-stat-label">{item.label}：</span>
+                <span className="hah-stat-value">{item.value}</span>
               </div>
-            ))}
-          </div>
-          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'8px', padding:'4px 0 8px', marginBottom:'16px', scrollbarWidth:'none'}}>
-            {['#一人暮らし','#ペット可','#投資','#戸建て','#新築','#リフォーム','#収益物件','#空き家'].map(tag => (
-              <span key={tag} style={{flexShrink:0, padding:'8px 16px', borderRadius:'999px', fontSize:'13px', fontWeight:'600', background:'white', border:'1px solid rgba(15,23,42,0.12)', color:'#1E293B', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.2s'}}>
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
-            {["家を買いたい", "売りたい", "投資したい"].map((label) => (
-              <button key={label} onClick={handleStartChat}
-                style={{
-                  background: "#fff",
-                  border: `1.5px solid ${C.border}`,
-                  borderRadius: 12,
-                  padding: isMobile ? "10px 14px" : "12px 20px",
-                  fontSize: isMobile ? 13 : 14,
-                  fontWeight: 600,
-                  color: C.title,
-                  cursor: "pointer",
-                  fontFamily: "'Noto Sans JP', sans-serif",
-                  flex: isMobile ? "1 1 45%" : "0 0 auto",
-                  maxWidth: isMobile ? "46%" : "none",
-                }}
-              >{label}</button>
             ))}
           </div>
         </div>
 
-        {/* Section 1: AIコンシェルジュ入口 */}
-        <div style={{padding:'0 16px', maxWidth:'780px', margin:'0 auto'}}>
-          <section id="ai-consult-section" ref={chatRef} style={{marginBottom:'48px'}}>
-            {showChat ? (
-              <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
-            ) : (
-              <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden'}}>
-                <div style={{background:'linear-gradient(135deg, #0F172A, #1E293B)', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px'}}>
-                  <img src="/logo.png" alt="HOUSE-AI" style={{width:'40px', height:'40px', borderRadius:'50%', objectFit:'contain', background:'black'}} />
+        <div className="hah-hero-right" ref={chatRef}>
+          {showChat ? (
+            <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={null} />
+          ) : (
+            <div className="hah-chat-preview">
+              <div className="hah-chat-header">
+                <img src="/logo.png" alt="HOUSE-AI" className="hah-chat-logo" />
+                <div>
+                  <div className="hah-chat-header-name">HOUSE-AI コンシェルジュ</div>
+                  <div className="hah-chat-header-status">
+                    <span className="hah-online-dot" />
+                    オンライン・AI応答中
+                  </div>
+                </div>
+              </div>
+              <div className="hah-chat-body">
+                <div className="hah-chat-bubble-wrap">
+                  <img src="/logo.png" alt="AI" className="hah-chat-avatar" />
+                  <div className="hah-chat-bubble">
+                    どんな暮らしをしたいですか？<br />ご希望を教えていただくと、AIが最適な物件をご提案します。
+                    <div className="hah-chat-chips">
+                      {['一人暮らし','家族','投資','ペット可','駅近','戸建て'].map(chip => (
+                        <button key={chip} className="hah-chat-chip" onClick={handleStartChat}>{chip}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="hah-chat-input-wrap">
+                <input
+                  type="text"
+                  placeholder="AIに相談してみる..."
+                  className="hah-chat-input"
+                  onFocus={handleStartChat}
+                  readOnly
+                />
+                <button className="hah-chat-send" onClick={handleStartChat}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+              <div className="hah-chat-trust">
+                {['営業なし','完全無料','AI提案','30秒診断'].map(t => (
+                  <span key={t} className="hah-trust-chip">{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 2. 相談チップ */}
+      <section className="hah-worries">
+        <div className="hah-section-inner">
+          <h2 className="hah-section-title hah-center">こんなお悩みはありませんか？</h2>
+          <div className="hah-worry-grid">
+            {worries.map((w, i) => (
+              <button key={i} className="hah-worry-card" onClick={handleStartChat}>
+                <div className="hah-worry-text">{w.text}</div>
+                <div className="hah-worry-sub">{w.sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. 他ユーザー相談例 */}
+      <section className="hah-consultations">
+        <div className="hah-section-inner">
+          <div className="hah-section-header">
+            <div>
+              <h2 className="hah-section-title">他のユーザーの相談例</h2>
+              <p className="hah-section-sub">実際の相談とAIの回答をご覧ください</p>
+            </div>
+            <button className="hah-see-all" onClick={() => navigate('community')}>すべて見る</button>
+          </div>
+          <div className="hah-scroll-row">
+            {consultations.map((c, i) => (
+              <div key={i} className="hah-consult-card" onClick={() => navigate('community')}>
+                <div className="hah-consult-card-top">
+                  <div className="hah-avatar">{c.initial}</div>
                   <div>
-                    <div style={{color:'white', fontWeight:'700', fontSize:'16px'}}>HOUSE-AI コンシェルジュ</div>
-                    <div style={{color:'rgba(255,255,255,0.6)', fontSize:'12px', display:'flex', alignItems:'center', gap:'4px'}}>
-                      <span style={{width:'6px', height:'6px', borderRadius:'50%', background:'#22c55e', display:'inline-block'}} />
-                      オンライン・AI応答中
-                    </div>
+                    <div className="hah-consult-attr">{c.attr}</div>
+                    <span className="hah-consult-badge">{c.category}</span>
                   </div>
                 </div>
-                <div style={{padding:'16px', background:'transparent'}}>
-                  <div style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
-                    <img src="/logo.png" alt="AI" style={{width:'36px', height:'36px', borderRadius:'50%', objectFit:'contain', background:'#0F172A', flexShrink:0}} />
-                    <div style={{background:'white', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', boxShadow:'0 2px 8px rgba(15,23,42,0.06)', maxWidth:'85%'}}>
-                      <div style={{fontSize:'14px', color:'#1E293B', lineHeight:'1.8', marginBottom:'14px'}}>
-                        どんな暮らしをしたいですか？<br/>ご希望を教えていただくと、AIが最適な物件をご提案します。
-                      </div>
-                      <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
-                        {['一人暮らし','家族','投資','ペット可','駅近','戸建て'].map(chip => (
-                          <button key={chip} onClick={() => setShowChat(true)} style={{padding:'6px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer'}}>
-                            {chip}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{padding:'16px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
-                  <input type="text" placeholder="AIに相談してみる..." style={{flex:1, padding:'12px 18px', borderRadius:'999px', border:'1px solid rgba(15,23,42,0.1)', fontSize:'16px', outline:'none', background:'#F4F7FB', color:'#1E293B'}} onFocus={() => setShowChat(true)} />
-                  <button onClick={() => setShowChat(true)} style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  </button>
-                </div>
-                <div style={{padding:'12px 20px', background:'transparent', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
-                  {['営業なし', '完全無料', 'AI提案', '30秒診断'].map(t => (
-                    <span key={t} style={{padding:'4px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.06)'}}>
-                      {t}
-                    </span>
-                  ))}
+                <div className="hah-consult-q">Q. {c.q}</div>
+                <div className="hah-ai-comment">
+                  <div className="hah-ai-label">AI ANSWER</div>
+                  <div className="hah-ai-text">{c.a}</div>
                 </div>
               </div>
-            )}
-          </section>
-        </div>
-
-        {/* Section 2: AI診断・信頼バッジ */}
-        <div style={{padding: '0 16px', maxWidth: '780px', margin: '0 auto', marginBottom:'48px'}}>
-          <div style={{display:'flex', gap:'16px', flexWrap:'wrap'}}>
-            {/* AI分析レポートカード */}
-            <div style={{flex:'1', minWidth:'280px', background:'linear-gradient(135deg, #0F172A, #1E293B)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(255,255,255,0.08)'}}>
-              <div style={{color:'#D4AF37', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI ANALYSIS</div>
-              <div style={{color:'white', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>AI分析レポート</div>
-              {[
-                {label:'将来価格安定性', score:88},
-                {label:'人気上昇エリア', score:92},
-                {label:'通勤利便性', score:76},
-                {label:'投資向き', score:84},
-                {label:'子育て環境', score:71},
-              ].map(item => (
-                <div key={item.label} style={{marginBottom:'12px'}}>
-                  <div style={{display:'flex', justifyContent:'space-between', marginBottom:'4px'}}>
-                    <span style={{color:'rgba(255,255,255,0.8)', fontSize:'13px'}}>{item.label}</span>
-                    <span style={{color:'#D4AF37', fontSize:'13px', fontWeight:'700'}}>{item.score}</span>
-                  </div>
-                  <div style={{height:'4px', background:'rgba(255,255,255,0.1)', borderRadius:'999px', overflow:'hidden'}}>
-                    <div style={{height:'100%', width:`${item.score}%`, background:'linear-gradient(90deg, #D4AF37, #F4D978)', borderRadius:'999px'}} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* AIステータスカード */}
-            <div style={{flex:'1', minWidth:'280px', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.06)'}}>
-              <div style={{color:'#3B82F6', fontSize:'11px', fontWeight:'700', letterSpacing:'2px', marginBottom:'12px'}}>AI STATUS</div>
-              <div style={{color:'#0F172A', fontSize:'18px', fontWeight:'700', marginBottom:'16px'}}>現在のAI診断状況</div>
-              {[
-                {label:'本日のAI診断数', value:'128件', trend:'+12%'},
-                {label:'新着マッチング物件', value:'24件', trend:'更新済'},
-                {label:'平均提案時間', value:'28秒', trend:'高速'},
-                {label:'ユーザー満足度', value:'96%', trend:'優秀'},
-              ].map(item => (
-                <div key={item.label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid rgba(15,23,42,0.05)'}}>
-                  <span style={{color:'#64748B', fontSize:'13px'}}>{item.label}</span>
-                  <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                    <span style={{color:'#0F172A', fontSize:'15px', fontWeight:'700'}}>{item.value}</span>
-                    <span style={{fontSize:'11px', color:'#22c55e', background:'rgba(34,197,94,0.1)', padding:'2px 8px', borderRadius:'999px', fontWeight:'600'}}>{item.trend}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Section 3: 体験談プレビュー */}
-        <div style={{padding: '0 16px', maxWidth: '780px', margin: '0 auto'}}>
-          <CommunityStrip onNavigate={navigate} />
-        </div>
-
-        {/* Section 4: 物件プレビュー */}
-        <div style={{padding: '0 16px', maxWidth: '780px', margin: '0 auto', marginBottom:'48px'}}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
+      {/* 4. 人気物件プレビュー */}
+      <section className="hah-properties-section">
+        <div className="hah-section-inner">
+          <div className="hah-section-header">
             <div>
-              <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A'}}>AIおすすめ物件</div>
-              <div style={{fontSize:'13px', color:'#64748B', marginTop:'4px'}}>あなたの条件に近い物件をAIが選定</div>
+              <h2 className="hah-section-title">人気物件プレビュー</h2>
+              <p className="hah-section-sub">AIが選定したおすすめ物件</p>
             </div>
-            <button onClick={() => navigate('properties')} style={{fontSize:'13px', color:'#3B82F6', background:'none', border:'none', cursor:'pointer'}}>すべて見る →</button>
+            <button className="hah-see-all" onClick={() => navigate('properties')}>すべて見る</button>
           </div>
-          <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch', display:'flex', gap:'16px', padding:'8px 0 16px', scrollbarWidth:'none', scrollSnapType:'x mandatory'}}>
-            {[
-              {area:'さいたま市大宮区', price:'2,980万円', tag:'新築', label:'AI PICK', reason:'駅徒歩5分以内で人気上昇中', img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80', match:94, badge:'人気上昇中', comment:'希望条件との高いマッチ率。駅近・新築で資産価値の安定が見込めます。'},
-              {area:'さいたま市浦和区', price:'月8.5万円', tag:'賃貸', label:'人気', reason:'ペット可・築浅で問い合わせ急増', img:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80', match:88, badge:'問い合わせ急増', comment:'ペット可の中でコスパ最良。空室リスクが低い物件です。'},
-              {area:'川口市', price:'1,580万円', tag:'投資', label:'利回り良好', reason:'表面利回り7.2%・空室リスク低', img:'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80', match:91, badge:'利回り7%超', comment:'実質利回り5.8%。周辺賃貸需要が堅調で安定収益が見込めます。'},
-            ].map((p, i) => (
-              <div key={i} className="property-card" onClick={() => navigate('properties')} style={{
-                flexShrink: 0,
-                width: '280px',
-                background: 'rgba(255,255,255,0.92)',
-                backdropFilter: 'blur(18px)',
-                border: '1px solid rgba(255,255,255,0.28)',
-                borderRadius: '28px',
-                overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
-                transition: 'all 0.28s ease',
-                scrollSnapAlign: 'start',
-                cursor: 'pointer'
-              }}>
-                {/* 画像エリア */}
-                <div style={{position:'relative', height:'180px', overflow:'hidden'}}>
-                  <img src={p.img} alt={p.area} style={{width:'100%', height:'180px', objectFit:'cover', display:'block'}} />
-                  {/* overlay */}
-                  <div style={{position:'absolute', inset:0, background:'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)'}} />
-                  {/* AIタグ */}
-                  <div style={{position:'absolute', top:'12px', left:'12px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'700', padding:'6px 12px', borderRadius:'999px', fontSize:'11px'}}>
-                    {p.label}
-                  </div>
-                  {/* 保存ボタン */}
-                  <div style={{position:'absolute', top:'10px', right:'10px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', border:'1px solid rgba(255,255,255,0.2)'}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                  </div>
-                  {/* エリア名（画像下部） */}
-                  <div style={{position:'absolute', bottom:'10px', left:'14px', color:'rgba(255,255,255,0.85)', fontSize:'12px', fontWeight:'500'}}>
-                    {p.area}
-                  </div>
+          <div className="hah-property-grid">
+            {properties.map((p, i) => (
+              <div key={i} className="hah-property-card" onClick={() => navigate('properties')}>
+                <div className="hah-prop-img-wrap">
+                  <img src={p.img} alt={p.area} className="hah-prop-img" />
+                  <div className="hah-prop-overlay" />
+                  <div className="hah-prop-tag">{p.tag}</div>
+                  <div className="hah-prop-area-label">{p.area}</div>
                 </div>
-                {/* テキストエリア */}
-                <div style={{padding:'18px'}}>
-                  {/* 価格 + マッチ率 */}
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px'}}>
-                    <div style={{fontSize:'26px', fontWeight:'800', letterSpacing:'-0.03em', color:'#0F172A', lineHeight:1.1}}>
-                      {p.price}
-                    </div>
-                    <div style={{display:'flex', alignItems:'center', gap:'3px', background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:'999px', padding:'4px 10px', flexShrink:0}}>
-                      <span style={{fontSize:'10px', fontWeight:'700', color:'#16a34a'}}>マッチ率</span>
-                      <span style={{fontSize:'13px', fontWeight:'800', color:'#16a34a'}}>{p.match}%</span>
-                    </div>
-                  </div>
-                  {/* タグ + バッジ */}
-                  <div style={{display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'10px'}}>
-                    <span style={{fontSize:'11px', background:'rgba(59,130,246,0.08)', color:'#3B82F6', padding:'4px 10px', borderRadius:'999px', fontWeight:'600'}}>#{p.tag}</span>
-                    <span style={{fontSize:'11px', background:'rgba(212,175,55,0.12)', color:'#92700a', padding:'4px 10px', borderRadius:'999px', fontWeight:'600'}}>{p.badge}</span>
-                  </div>
-                  {/* AIおすすめ理由 */}
-                  <div style={{fontSize:'12px', color:'#64748B', background:'rgba(15,23,42,0.03)', padding:'10px 12px', borderRadius:'12px', borderLeft:'3px solid #D4AF37', lineHeight:1.5, marginBottom:'8px'}}>
-                    AI分析：{p.reason}
-                  </div>
-                  {/* AIコメント */}
-                  <div style={{fontSize:'11px', color:'#475569', lineHeight:1.6}}>
-                    {p.comment}
+                <div className="hah-prop-body">
+                  <div className="hah-prop-price-row">
+                    <div className="hah-prop-price">{p.price}</div>
+                    <div className="hah-prop-match">マッチ率 {p.match}%</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={() => navigate('properties')} style={{width:'100%', marginTop:'16px', padding:'14px', borderRadius:'14px', background:'linear-gradient(135deg, #0F172A, #1E293B)', color:'white', fontWeight:'700', fontSize:'15px', border:'none', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif", letterSpacing:'0.3px'}}>
-            物件をすべて見る
-          </button>
         </div>
+      </section>
 
-        {/* Section 5: 専門家・業者導線 */}
-        <div style={{padding:'0 16px', maxWidth:'780px', margin:'0 auto', marginBottom:'48px'}}>
-          <div style={{fontSize:'18px', fontWeight:'700', color:'#0F172A', marginBottom:'4px'}}>専門家・業者の方へ</div>
-          <div style={{fontSize:'13px', color:'#64748B', marginBottom:'20px'}}>AIが整理したご相談を、必要なタイミングでお届けします</div>
-          <div style={{display:'flex', gap:'16px', flexWrap:'wrap'}}>
-            <div onClick={() => navigate('expert')} style={{flex:'1', minWidth:'220px', background:'rgba(255,255,255,0.9)', backdropFilter:'blur(16px)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.06)', border:'1px solid rgba(15,23,42,0.08)', cursor:'pointer', transition:'all 0.25s ease'}}>
-              <div style={{fontSize:'11px', fontWeight:'700', color:'#3B82F6', letterSpacing:'2px', marginBottom:'8px'}}>FOR EXPERT</div>
-              <div style={{fontSize:'16px', fontWeight:'700', color:'#0F172A', marginBottom:'8px'}}>専門家に相談する</div>
-              <div style={{fontSize:'13px', color:'#64748B', lineHeight:'1.6', marginBottom:'16px'}}>不動産に精通した専門家がAIと連携し、最適な提案をご提供します。</div>
-              <div style={{fontSize:'13px', fontWeight:'700', color:'#3B82F6'}}>専門家を探す →</div>
-            </div>
-            <div onClick={() => navigate('agency')} style={{flex:'1', minWidth:'220px', background:'linear-gradient(135deg, #0F172A, #1E293B)', borderRadius:'20px', padding:'24px', boxShadow:'0 8px 24px rgba(15,23,42,0.12)', border:'1px solid rgba(255,255,255,0.08)', cursor:'pointer', transition:'all 0.25s ease'}}>
-              <div style={{fontSize:'11px', fontWeight:'700', color:'#D4AF37', letterSpacing:'2px', marginBottom:'8px'}}>FOR AGENCY</div>
-              <div style={{fontSize:'16px', fontWeight:'700', color:'white', marginBottom:'8px'}}>業者の方はこちら</div>
-              <div style={{fontSize:'13px', color:'rgba(255,255,255,0.7)', lineHeight:'1.6', marginBottom:'16px'}}>AIが選別した質の高い見込み客を、必要な案件だけお届けします。</div>
-              <div style={{fontSize:'13px', fontWeight:'700', color:'#D4AF37'}}>無料で登録する →</div>
-            </div>
-          </div>
-          <div style={{marginTop:'16px', background:'rgba(212,175,55,0.06)', border:'1px solid rgba(212,175,55,0.2)', borderRadius:'16px', padding:'20px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'12px'}}>
+      {/* 5. 体験談プレビュー */}
+      <section className="hah-testimonials-section">
+        <div className="hah-section-inner">
+          <div className="hah-section-header">
             <div>
-              <div style={{fontSize:'14px', fontWeight:'700', color:'#0F172A', marginBottom:'4px'}}>専門家として登録する</div>
-              <div style={{fontSize:'12px', color:'#64748B'}}>営業なし・AIが相談を整理して送客します</div>
+              <h2 className="hah-section-title">みんなの不動産体験談</h2>
+              <p className="hah-section-sub">失敗談・成功談をAIと一緒に解決しましょう</p>
             </div>
-            <button onClick={() => { trackEvent('expert_register_click'); navigate('expertregister'); }} style={{padding:'12px 24px', borderRadius:'12px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'700', fontSize:'14px', border:'none', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif", whiteSpace:'nowrap'}}>
-              無料で専門家登録
+            <button className="hah-see-all" onClick={() => navigate('community')}>すべて見る</button>
+          </div>
+          <div className="hah-testimonial-grid">
+            {testimonials.map((t, i) => (
+              <div key={i} className="hah-testimonial-card" onClick={() => navigate('community')}>
+                <div className="hah-testi-top">
+                  <div className="hah-avatar">{t.initial}</div>
+                  <div>
+                    <div className="hah-testi-attr">{t.attr}</div>
+                    <span className="hah-testi-badge" style={{ background: t.categoryColor, color: t.categoryText }}>{t.category}</span>
+                  </div>
+                </div>
+                <div className="hah-testi-title">{t.title}</div>
+                <div className="hah-testi-body">{t.body}</div>
+              </div>
+            ))}
+          </div>
+          <div className="hah-testi-ctas">
+            <button className="hah-cta-primary" onClick={() => navigate('community')}>体験談をすべて見る</button>
+            <button className="hah-cta-outline" onClick={() => navigate('community')}>体験談を投稿する</button>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. 下部固定CTA */}
+      {scrolled ? (
+        <div className="hah-fixed-cta">
+          <div className="hah-fixed-cta-inner">
+            <div className="hah-fixed-cta-text">AIが30秒で最適な住まいを提案します</div>
+            <button className="hah-fixed-cta-btn" onClick={handleStartChat}>
+              無料でAI相談をはじめる →
             </button>
           </div>
         </div>
-
-        {/* Section 6: 会員登録導線 */}
-        <div style={{padding:'0 16px', maxWidth:'780px', margin:'0 auto', marginBottom:'48px'}}>
-          <div style={{background:'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', borderRadius:'24px', padding:'36px 28px', textAlign:'center', boxShadow:'0 16px 48px rgba(15,23,42,0.2)'}}>
-            <div style={{fontSize:'11px', fontWeight:'700', color:'#D4AF37', letterSpacing:'3px', marginBottom:'12px'}}>FREE MEMBERSHIP</div>
-            <div style={{fontSize:'22px', fontWeight:'700', color:'white', marginBottom:'10px', lineHeight:'1.4'}}>無料会員登録で<br/>AI提案をフル活用</div>
-            <div style={{fontSize:'13px', color:'rgba(255,255,255,0.7)', marginBottom:'24px', lineHeight:'1.7'}}>
-              物件お気に入り保存・AI診断履歴・専門家への相談予約が<br/>すべて無料で使えます
-            </div>
-            <div style={{display:'flex', gap:'12px', justifyContent:'center', flexWrap:'wrap'}}>
-              <button onClick={() => window.dispatchEvent(new CustomEvent('show-auth-sheet', {}))} style={{padding:'14px 32px', borderRadius:'14px', background:'linear-gradient(135deg, #D4AF37, #F4D978)', color:'#0F172A', fontWeight:'800', fontSize:'15px', border:'none', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif", boxShadow:'0 8px 24px rgba(212,175,55,0.4)'}}>
-                無料会員登録（30秒）
-              </button>
-              <button onClick={() => setShowChat(true)} style={{padding:'14px 28px', borderRadius:'14px', background:'rgba(255,255,255,0.1)', color:'white', fontWeight:'700', fontSize:'15px', border:'1px solid rgba(255,255,255,0.2)', cursor:'pointer', fontFamily:"'Noto Sans JP', sans-serif", backdropFilter:'blur(8px)'}}>
-                まずAIに相談する
-              </button>
-            </div>
-            <div style={{fontSize:'11px', color:'rgba(255,255,255,0.4)', marginTop:'16px'}}>営業連絡は一切ありません</div>
-          </div>
-        </div>
-      </main>
-
-      <ScrollCTA user={user} scrolled={scrolled} />
+      ) : null}
     </div>
   );
 }
