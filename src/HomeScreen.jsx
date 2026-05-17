@@ -840,42 +840,43 @@ export default function HomeScreen({ onNavigate }) {
               {showChat ? (
                 <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} />
               ) : (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: '0 20px 60px rgba(15,23,42,0.25)',
-                  backdropFilter: 'blur(20px)',
-                  borderRadius: '24px',
-                  padding: '40px',
-                  animation: 'fadeUp 0.8s ease-out both',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
-                  <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                  <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                    <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
-                      <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
+                <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 20px 60px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
+                  {/* ヘッダー */}
+                  <div style={{background:'linear-gradient(135deg, #0F172A, #1E293B)', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px'}}>
+                    <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0}}>🤖</div>
+                    <div>
+                      <div style={{color:'white', fontWeight:'700', fontSize:'16px'}}>HOUSE-AI コンシェルジュ</div>
+                      <div style={{color:'rgba(255,255,255,0.6)', fontSize:'12px'}}>● オンライン・AI応答中</div>
                     </div>
-                    <div style={{textAlign:'center'}}>
-                      <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
-                      <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
+                  </div>
+                  {/* チャットエリア */}
+                  <div style={{padding:'24px', background:'#F4F7FB', minHeight:'160px'}}>
+                    <div style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
+                      <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>🤖</div>
+                      <div style={{background:'white', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', boxShadow:'0 2px 8px rgba(15,23,42,0.06)', maxWidth:'85%'}}>
+                        <div style={{fontSize:'14px', color:'#1E293B', lineHeight:'1.7', marginBottom:'12px'}}>どんな暮らしをしたいですか？<br/>ご希望を教えていただくと、AIが最適な物件をご提案します。</div>
+                        <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
+                          {['🏠 一人暮らし','👨‍👩‍👧 家族','💰 投資','🐾 ペット可','🚃 駅近','🏡 戸建て'].map(chip => (
+                            <button key={chip} onClick={() => setShowChat(true)} style={{padding:'8px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer', transition:'all 0.2s'}}>
+                              {chip}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px', marginBottom:'16px'}}>
-                      {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
-                        <span key={t} style={{padding:'6px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'700', color:'rgba(255,255,255,0.9)', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)'}}>
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <div style={{width:'100%',maxWidth:'380px'}}>
-                      <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
-                        今すぐ無料AI相談をはじめる →
-                      </button>
-                    </div>
+                  </div>
+                  {/* 入力欄 */}
+                  <div style={{padding:'16px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
+                    <input type="text" placeholder="AIに相談してみる…" style={{flex:1, padding:'12px 18px', borderRadius:'999px', border:'1px solid rgba(15,23,42,0.1)', fontSize:'14px', outline:'none', background:'#F4F7FB', color:'#1E293B'}} onFocus={() => setShowChat(true)} />
+                    <button onClick={() => setShowChat(true)} style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', border:'none', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>➤</button>
+                  </div>
+                  {/* 信頼バッジ */}
+                  <div style={{padding:'12px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
+                    {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
+                      <span key={t} style={{padding:'4px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.06)'}}>
+                        {t}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -903,42 +904,43 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }} ref={chatRef}>
                 {showChat ? <AIChatFlow onNavigate={navigate} onRegisterSuccess={setUser} user={user} initialTag={initialTag} /> : (
-                  <div style={{
-                    background: 'linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92))',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 20px 60px rgba(15,23,42,0.25)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: '24px',
-                    padding: '40px',
-                    animation: 'fadeUp 0.8s ease-out both',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle, rgba(212,175,55,0.35) 1px, transparent 1px)',backgroundSize:'34px 34px',opacity:0.4,animation:'particlesMove 12s linear infinite',pointerEvents:'none'}} />
-                    <div style={{position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderLeft:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #f5e08a',borderRight:'2px solid #f5e08a',opacity:0.8}} />
-                    <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-                      <div style={{width:'100%',background:'rgba(0,0,0,0.3)',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',justifyContent:'center',animation:'logoGlow 1.5s ease-in-out infinite',position:'relative',zIndex:1}}>
-                        <img src="/logo.png" alt="House-AI" style={{width:'100%',maxWidth:'420px',height:'auto',animation:'logoFloat 2s ease-in-out infinite'}} />
+                  <div style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(20px)', borderRadius:'28px', boxShadow:'0 20px 60px rgba(15,23,42,0.08)', border:'1px solid rgba(15,23,42,0.06)', overflow:'hidden', maxWidth:'720px', margin:'0 auto'}}>
+                    {/* ヘッダー */}
+                    <div style={{background:'linear-gradient(135deg, #0F172A, #1E293B)', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px'}}>
+                      <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0}}>🤖</div>
+                      <div>
+                        <div style={{color:'white', fontWeight:'700', fontSize:'16px'}}>HOUSE-AI コンシェルジュ</div>
+                        <div style={{color:'rgba(255,255,255,0.6)', fontSize:'12px'}}>● オンライン・AI応答中</div>
                       </div>
-                      <div style={{textAlign:'center'}}>
-                        <div style={{fontSize:'16px',color:'#f5e08a',fontWeight:'600',lineHeight:'1.7',wordBreak:'keep-all'}}>AIがあなたに最適な進め方を提案します</div>
-                        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7',marginTop:'4px'}}>売買・賃貸・投資・リフォームまで、30秒で相談開始</div>
+                    </div>
+                    {/* チャットエリア */}
+                    <div style={{padding:'24px', background:'#F4F7FB', minHeight:'160px'}}>
+                      <div style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
+                        <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'linear-gradient(135deg, #0F172A, #1E293B)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0}}>🤖</div>
+                        <div style={{background:'white', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', boxShadow:'0 2px 8px rgba(15,23,42,0.06)', maxWidth:'85%'}}>
+                          <div style={{fontSize:'14px', color:'#1E293B', lineHeight:'1.7', marginBottom:'12px'}}>どんな暮らしをしたいですか？<br/>ご希望を教えていただくと、AIが最適な物件をご提案します。</div>
+                          <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
+                            {['🏠 一人暮らし','👨‍👩‍👧 家族','💰 投資','🐾 ペット可','🚃 駅近','🏡 戸建て'].map(chip => (
+                              <button key={chip} onClick={() => setShowChat(true)} style={{padding:'8px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'600', background:'rgba(59,130,246,0.08)', color:'#3B82F6', border:'1px solid rgba(59,130,246,0.2)', cursor:'pointer', transition:'all 0.2s'}}>
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px', marginBottom:'16px'}}>
-                        {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
-                          <span key={t} style={{padding:'6px 14px', borderRadius:'999px', fontSize:'12px', fontWeight:'700', color:'rgba(255,255,255,0.9)', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)'}}>
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                      <div style={{width:'100%',maxWidth:'380px'}}>
-                        <button className="cta-main-btn" onClick={handleStartChat} style={{background:'linear-gradient(135deg, #D4AF37, #f5e08a, #D4AF37)',backgroundSize:'200% auto',color:'#0F172A',fontWeight:'700',fontSize:'16px',padding:'16px 0',width:'100%',maxWidth:'380px',borderRadius:'32px',border:'none',cursor:'pointer',animation:'btnShimmer 3s linear infinite',transition:'transform 0.2s, box-shadow 0.2s'}}>
-                          今すぐ無料AI相談をはじめる →
-                        </button>
-                      </div>
+                    </div>
+                    {/* 入力欄 */}
+                    <div style={{padding:'16px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.06)', display:'flex', gap:'10px', alignItems:'center'}}>
+                      <input type="text" placeholder="AIに相談してみる…" style={{flex:1, padding:'12px 18px', borderRadius:'999px', border:'1px solid rgba(15,23,42,0.1)', fontSize:'14px', outline:'none', background:'#F4F7FB', color:'#1E293B'}} onFocus={() => setShowChat(true)} />
+                      <button onClick={() => setShowChat(true)} style={{width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg, #D4AF37, #F4D978)', border:'none', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>➤</button>
+                    </div>
+                    {/* 信頼バッジ */}
+                    <div style={{padding:'12px 20px', background:'white', borderTop:'1px solid rgba(15,23,42,0.04)', display:'flex', justifyContent:'center', flexWrap:'wrap', gap:'8px'}}>
+                      {['✓ 営業なし', '✓ 完全無料', '✓ AI提案', '✓ 30秒診断'].map(t => (
+                        <span key={t} style={{padding:'4px 12px', borderRadius:'999px', fontSize:'11px', fontWeight:'600', color:'#64748B', background:'rgba(15,23,42,0.04)', border:'1px solid rgba(15,23,42,0.06)'}}>
+                          {t}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
