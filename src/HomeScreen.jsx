@@ -834,6 +834,9 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       {/* 2. LIVE Lounge フィード */}
       <section className="live-lounge-section">
         <div className="live-lounge-header">
+          <div className="live-logo-wrap">
+            <img src="/logo.png" alt="HOUSE-AI" className="live-logo-img" />
+          </div>
           <div className="live-title-row">
             <span className="live-dot"></span>
             <h2>今、このような相談が増えています</h2>

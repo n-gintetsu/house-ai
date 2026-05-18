@@ -1385,3 +1385,25 @@
   .consult-card-sns  { min-width: 270px; }
   .property-card-sns { min-width: 250px; }
 }
+
+/* LIVE Lounge ロゴ */
+.live-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.live-logo-img {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(212,175,55,0.7))
+          drop-shadow(0 0 40px rgba(212,175,55,0.35));
+  animation: logoShine 3s ease-in-out infinite;
+}
+
+@keyframes logoShine {
+  0%   { filter: drop-shadow(0 0 12px rgba(212,175,55,0.5)) drop-shadow(0 0 30px rgba(212,175,55,0.2)); }
+  50%  { filter: drop-shadow(0 0 28px rgba(212,175,55,0.95)) drop-shadow(0 0 60px rgba(212,175,55,0.55)) drop-shadow(0 0 90px rgba(212,175,55,0.25)); }
+  100% { filter: drop-shadow(0 0 12px rgba(212,175,55,0.5)) drop-shadow(0 0 30px rgba(212,175,55,0.2)); }
+}
