@@ -964,21 +964,21 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
             <p className="feed-desc-body">気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
             <div className="feed-steps">
               <div className="feed-step">
-                <img src="/logo.png" alt="" className="feed-step-logo" />
+                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
                 <div>
                   <strong>物件を縦にスワイプ</strong>
                   <span>気になる物件を直感的に見つけられます。</span>
                 </div>
               </div>
               <div className="feed-step">
-                <img src="/logo.png" alt="" className="feed-step-logo" />
+                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
                 <div>
                   <strong>気になったらAIに質問</strong>
                   <span>ローン・価格・リスク・周辺環境をその場で確認できます。</span>
                 </div>
               </div>
               <div className="feed-step">
-                <img src="/logo.png" alt="" className="feed-step-logo" />
+                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
                 <div>
                   <strong>必要なら専門家へ相談</strong>
                   <span>相談内容に合わせて最適な専門家へつなげます。</span>
