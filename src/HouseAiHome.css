@@ -1114,3 +1114,274 @@
   .live-title-row h2   { font-size: 20px; }
   .live-main-cta       { width: calc(100% - 48px); max-width: 360px; }
 }
+
+/* ============================================================
+   SNS style: 他のユーザーの相談例 / 人気物件プレビュー
+   ============================================================ */
+
+/* 共通 */
+.section-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.section-header-row h2 {
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 800;
+  color: #0B1F33;
+  margin: 0 0 6px;
+}
+.section-header-row p {
+  font-size: 14px;
+  color: #64748B;
+  margin: 0;
+}
+.section-header-row button {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3B82F6;
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.scroll-feed {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scroll-feed::-webkit-scrollbar { display: none; }
+
+/* リアルタイムバー */
+.realtime-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid #D1FAE5;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.rt-dot {
+  width: 10px;
+  height: 10px;
+  background: #1DBF73;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: rtPulse 1.8s infinite;
+}
+@keyframes rtPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(29,191,115,0.5); }
+  70%  { box-shadow: 0 0 0 10px rgba(29,191,115,0); }
+  100% { box-shadow: 0 0 0 0 rgba(29,191,115,0); }
+}
+
+/* 相談セクション */
+.consult-section-sns { max-width: 1080px; margin: 0 auto 48px; padding: 0 20px; }
+.consult-card-sns {
+  min-width: 300px;
+  max-width: 340px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #E8EFF6;
+  box-shadow: 0 4px 20px rgba(11,31,51,0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.consult-card-sns:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(11,31,51,0.12);
+}
+.card-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0B1F33;
+  color: #D6AE3B;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  flex: 1;
+}
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.badge-green  { background: #D1FAE5; color: #065F46; }
+.badge-yellow { background: #FEF3C7; color: #92400E; }
+.badge-blue   { background: #DBEAFE; color: #1E40AF; }
+.card-question {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0B1F33;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.ai-answer-box {
+  border-left: 4px solid #D6AE3B;
+  background: #F8FAFC;
+  border-radius: 0 14px 14px 0;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.ai-answer-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #D6AE3B;
+  margin-bottom: 8px;
+}
+.ai-answer-box p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #475569;
+  margin: 0;
+}
+.card-footer-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #94A3B8;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 14px;
+}
+.card-footer-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.card-footer-stats .ml-auto { margin-left: auto; }
+
+/* 物件セクション */
+.property-section-sns { max-width: 1080px; margin: 0 auto 48px; padding: 0 20px; }
+.property-card-sns {
+  min-width: 280px;
+  max-width: 300px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #E8EFF6;
+  box-shadow: 0 4px 20px rgba(11,31,51,0.06);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.property-card-sns:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(11,31,51,0.12); }
+.prop-img-wrap { position: relative; height: 200px; overflow: hidden; }
+.prop-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.property-card-sns:hover .prop-img { transform: scale(1.05); }
+.prop-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.05) 50%, transparent);
+}
+.prop-type-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #D6AE3B;
+  color: #0B1F33;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.prop-match-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #D1FAE5;
+  color: #065F46;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.prop-img-bottom {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.prop-img-bottom span  { font-size: 12px; display: flex; align-items: center; gap: 4px; opacity: 0.9; }
+.prop-img-bottom strong { font-size: 16px; font-weight: 800; }
+.prop-body { padding: 18px; }
+.prop-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.prop-price { font-size: 22px; font-weight: 900; color: #0B1F33; }
+.prop-badge-dark {
+  background: #0B1F33;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.ai-comment-box {
+  border-left: 4px solid #D6AE3B;
+  background: #F8FAFC;
+  border-radius: 0 12px 12px 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.bookmark-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.bookmark-btn:hover { color: #D6AE3B; }
+
+@media (max-width: 768px) {
+  .consult-card-sns  { min-width: 270px; }
+  .property-card-sns { min-width: 250px; }
+}

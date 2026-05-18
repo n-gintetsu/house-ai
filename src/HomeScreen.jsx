@@ -665,35 +665,62 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     { text: '契約・法律が不安', sub: '重要事項説明書が読めない', tag: '法律' },
   ];
 
-  const consultations = [
+  const consultationItems = [
     {
-      initial: 'F', attr: '30代女性 / 賃貸', category: '解決済み',
-      q: '敷金・礼金なしは本当に得ですか？',
-      a: '礼金ゼロでも家賃が高めに設定されているケースが多いです。2年分の総支払いで比較するとお得度がわかります。',
+      user: '30代女性 / 賃貸',
+      badge: '解決済み',
+      badgeType: 'green',
+      question: '敷金・礼金なしは本当に得ですか？',
+      answer: '礼金ゼロでも家賃が高めに設定されているケースがあります。2年分の総支払いで比較すると判断しやすくなります。',
+      likes: 128,
+      comments: 24,
+      views: 2341,
     },
     {
-      initial: 'M', attr: '40代男性 / 購入', category: '相談中',
-      q: '変動金利と固定金利どちらがいい？',
-      a: '変動は短期返済向き、固定は長期安心派向きです。現在の金利差と返済期間でシミュレーションしましょう。',
+      user: '40代男性 / 購入',
+      badge: '相談中',
+      badgeType: 'yellow',
+      question: '変動金利と固定金利どちらがいい？',
+      answer: '変動は短期返済向き、固定は長期安心派向きです。現在の金利差と返済期間でシミュレーションしましょう。',
+      likes: 96,
+      comments: 18,
+      views: 1890,
     },
     {
-      initial: 'Y', attr: '20代男性 / 投資', category: '解決済み',
-      q: '初めての投資物件で失敗しないコツは？',
-      a: '駅徒歩10分以内・築20年以内・表面利回り6%以上が目安です。管理会社の質も必ず確認してください。',
+      user: '20代男性 / 投資',
+      badge: 'AI提案済み',
+      badgeType: 'blue',
+      question: '初めての投資物件で失敗しないコツは？',
+      answer: '駅徒歩・築年数・表面利回りだけでなく、空室率と修繕費も確認しましょう。',
+      likes: 214,
+      comments: 47,
+      views: 3120,
     },
     {
-      initial: 'S', attr: '50代女性 / 売却', category: 'AI提案済み',
-      q: '相続した実家をどうすればいい？',
-      a: '空き家は固定資産税特例が外れる可能性があります。売却・賃貸・リフォームの収支を比較してから決断を。',
+      user: '50代女性 / 売却',
+      badge: '解決済み',
+      badgeType: 'green',
+      question: '相続した実家をどうすればいい？',
+      answer: '売却・賃貸・空き家管理の3パターンで比較しましょう。固定資産税と維持費も重要です。',
+      likes: 183,
+      comments: 31,
+      views: 2760,
     },
   ];
 
-  const properties = [
-    { area: 'さいたま市大宮区', price: '2,980万円', tag: '新築', match: 94, img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80', aiComment: 'AI分析：駅徒歩5分以内で問い合わせ急増中' },
-    { area: 'さいたま市浦和区', price: '月8.5万円', tag: '賃貸', match: 88, img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80', aiComment: 'AI分析：同条件ユーザーの満足度が高いエリア' },
-    { area: '川口市', price: '1,580万円', tag: '投資', match: 91, img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80', aiComment: 'AI分析：価格上昇トレンドに入っています' },
-    { area: '越谷市', price: '3,280万円', tag: '中古', match: 85, img: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=600&q=80', aiComment: 'AI分析：表面利回り5%超・空室リスク低' },
+  const propertyItems = [
+    { type: '新築', badge: 'AI PICK', area: 'さいたま市大宮区', title: '駅近スマート住宅', price: '2,980万円', imgIndex: 1, ai: '駅徒歩5分以内で問い合わせ急増中', match: '94%', likes: 234, comments: 45 },
+    { type: '賃貸', badge: '人気急上昇', area: 'さいたま市浦和区', title: 'ペット可デザイナーズ', price: '月8.5万円', imgIndex: 2, ai: '同条件ユーザーの満足度が高いエリア', match: '88%', likes: 189, comments: 32 },
+    { type: '投資', badge: '利回り良好', area: '川口市', title: '収益マンション', price: '1,580万円', imgIndex: 3, ai: '表面利回り5%以上・空室リスク低', match: '91%', likes: 512, comments: 89 },
+    { type: '中古', badge: '注目', area: '越谷市', title: 'リノベ済み戸建て', price: '3,280万円', imgIndex: 4, ai: 'ファミリー層の保存数が増えています', match: '85%', likes: 156, comments: 21 },
   ];
+
+  const propImgUrls = {
+    1: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80',
+    2: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80',
+    3: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80',
+    4: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+  };
 
   const testimonials = [
     { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '今日決めないと無くなると言われて焦って契約しました。住んでから後悔しています。' },
@@ -832,71 +859,105 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       </section>
 
       {/* 3. 他ユーザー相談例 */}
-      <section className="hah-consultations">
-        <div className="hah-section-inner">
-          <div className="hah-live-feed">
-            <div key={feedKey} className="hah-live-feed-item">
-              <span className="hah-live-dot" />
-              <span className="hah-live-text">今こんな相談が増えています：{FEED_MSGS[feedIndex]}</span>
-            </div>
+      <section className="consult-section-sns">
+        <div className="realtime-bar">
+          <span className="rt-dot"></span>
+          <span>今こんな相談が増えています：20秒前　投資物件のAI診断が完了しました</span>
+        </div>
+
+        <div className="section-header-row">
+          <div>
+            <h2>他のユーザーの相談例</h2>
+            <p>実際の相談とAIの回答をご覧ください</p>
           </div>
-          <div className="hah-section-header">
-            <div>
-              <h2 className="hah-section-title">他のユーザーの相談例</h2>
-              <p className="hah-section-sub">実際の相談とAIの回答をご覧ください</p>
-            </div>
-            <button className="hah-see-all" onClick={() => navigate('community')}>すべて見る</button>
-          </div>
-          <div className="hah-scroll-row">
-            {consultations.map((c, i) => (
-              <div key={i} className="hah-consult-card" onClick={() => navigate('community')}>
-                <div className="hah-consult-card-top">
-                  <div className="hah-avatar">{c.initial}</div>
-                  <div>
-                    <div className="hah-consult-attr">{c.attr}</div>
-                    <span className="hah-consult-badge">{c.category}</span>
-                  </div>
-                </div>
-                <div className="hah-consult-q">Q. {c.q}</div>
-                <div className="hah-ai-comment">
-                  <div className="hah-ai-label">AI ANSWER</div>
-                  <div className="hah-ai-text">{c.a}</div>
-                </div>
+          <button onClick={() => navigate('community')}>すべて見る</button>
+        </div>
+
+        <div className="scroll-feed">
+          {consultationItems.map((item, i) => (
+            <article key={i} className="consult-card-sns">
+              <div className="card-user-row">
+                <div className="user-avatar">{item.user.slice(0, 1)}</div>
+                <span className="user-name">{item.user}</span>
+                <span className={`badge badge-${item.badgeType}`}>{item.badge}</span>
               </div>
-            ))}
-          </div>
+              <h3 className="card-question">Q. {item.question}</h3>
+              <div className="ai-answer-box">
+                <div className="ai-answer-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.8l-5 3.4 1.9-5.8L4 8.8h6.1z"/></svg>
+                  AI ANSWER
+                </div>
+                <p>{item.answer}</p>
+              </div>
+              <div className="card-footer-stats">
+                <span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  {item.likes}
+                </span>
+                <span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  {item.comments}
+                </span>
+                <span className="ml-auto">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {item.views}
+                </span>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
       {/* 4. 人気物件プレビュー */}
-      <section className="hah-properties-section">
-        <div className="hah-section-inner">
-          <div className="hah-section-header">
-            <div>
-              <h2 className="hah-section-title">人気物件プレビュー</h2>
-              <p className="hah-section-sub">AIが選定したおすすめ物件</p>
-            </div>
-            <button className="hah-see-all" onClick={() => navigate('properties')}>すべて見る</button>
+      <section className="property-section-sns">
+        <div className="section-header-row">
+          <div>
+            <h2>人気物件プレビュー</h2>
+            <p>AIが選定したおすすめ物件</p>
           </div>
-          <div className="hah-property-grid">
-            {properties.map((p, i) => (
-              <div key={i} className="hah-property-card" onClick={() => navigate('properties')}>
-                <div className="hah-prop-img-wrap">
-                  <img src={p.img} alt={p.area} className="hah-prop-img" />
-                  <div className="hah-prop-overlay" />
-                  <div className="hah-prop-tag">{p.tag}</div>
-                  <div className="hah-prop-area-label">{p.area}</div>
-                </div>
-                <div className="hah-prop-body">
-                  <div className="hah-prop-price-row">
-                    <div className="hah-prop-price">{p.price}</div>
-                    <div className="hah-prop-match">マッチ率 {p.match}%</div>
-                  </div>
-                  <div className="hah-prop-ai-comment">{p.aiComment}</div>
+          <button onClick={() => navigate('properties')}>すべて見る</button>
+        </div>
+
+        <div className="scroll-feed">
+          {propertyItems.map((item, i) => (
+            <article key={i} className="property-card-sns" onClick={() => navigate('properties')}>
+              <div className="prop-img-wrap">
+                <img src={propImgUrls[item.imgIndex]} alt={item.title} className="prop-img" />
+                <div className="prop-img-overlay" />
+                <span className="prop-type-badge">{item.type}</span>
+                <span className="prop-match-badge">マッチ率 {item.match}</span>
+                <div className="prop-img-bottom">
+                  <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {item.area}
+                  </span>
+                  <strong>{item.title}</strong>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="prop-body">
+                <div className="prop-price-row">
+                  <span className="prop-price">{item.price}</span>
+                  <span className="prop-badge-dark">{item.badge}</span>
+                </div>
+                <div className="ai-comment-box">
+                  AI分析：{item.ai}
+                </div>
+                <div className="card-footer-stats">
+                  <span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    {item.likes}
+                  </span>
+                  <span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    {item.comments}
+                  </span>
+                  <button className="ml-auto bookmark-btn" onClick={(e) => e.stopPropagation()}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
