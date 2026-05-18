@@ -593,6 +593,13 @@ const liveCards = [
 // ============================================================
 // HomeScreen — 完全リニューアル版
 // ============================================================
+const storyItems = [
+  { initial: 'F', user: '30代女性', category: '賃貸', badge: '後悔', badgeType: 'red', title: '焦って契約して後悔しました', body: '今日決めないと無くなると言われて焦って契約しました。住んでから後悔しています。', aiComment: '契約前に周辺環境・管理費・修繕積立金を比較すると防げるケースです。最低3物件は比較し、時間帯を変えて内見することをおすすめします。' },
+  { initial: 'M', user: '40代男性', category: '購入', badge: '失敗談', badgeType: 'orange', title: '営業マンに言われるまま決めてしまった', body: '営業マンに言われるまま決めてしまった。後から同じ条件でもっと安い物件を見つけました。', aiComment: 'このケースでは比較不足が原因でした。複数物件の比較と、時間帯を変えた内見が重要です。' },
+  { initial: 'Y', user: '20代男性', category: '投資', badge: '失敗談', badgeType: 'orange', title: '利回りだけ見て大失敗しました', body: '利回りだけ見て投資して大失敗。空室が続いて修繕費も想定外でした。', aiComment: '表面利回りだけでなく、実質利回り、空室率、修繕積立金の推移を確認することが重要です。' },
+  { initial: 'S', user: '50代女性', category: '売却', badge: 'AI活用', badgeType: 'blue', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。', aiComment: 'AI相談は初心者の方に特に効果的です。疑問点の整理と優先順位付けができます。' },
+];
+
 const verticalProperties = [
   {
     type: '賃貸',
@@ -795,13 +802,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     },
   ];
 
-
-  const testimonials = [
-    { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '今日決めないと無くなると言われて焦って契約しました。住んでから後悔しています。' },
-    { initial: 'M', attr: '40代男性 / 購入', category: '失敗談', categoryColor: 'rgba(249,115,22,0.1)', categoryText: '#f97316', title: '営業マンに言われるまま決めてしまった', body: '営業マンに言われるまま決めてしまった。後から同じ条件でもっと安い物件を見つけました。' },
-    { initial: 'Y', attr: '20代男性 / 投資', category: '失敗談', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '利回りだけ見て大失敗しました', body: '利回りだけ見て投資して大失敗。空室が続いて修繕費も想定外でした。' },
-    { initial: 'S', attr: '50代女性 / 売却', category: 'AI活用', categoryColor: 'rgba(59,130,246,0.1)', categoryText: '#3b82f6', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。' },
-  ];
 
   return (
     <div className="hah-root">
@@ -1155,33 +1155,62 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       </section>
 
       {/* 5. 体験談プレビュー */}
-      <section className="hah-testimonials-section">
-        <div className="hah-section-inner">
-          <div className="hah-section-header">
+      <section className="new-story-section">
+        <div className="new-story-inner">
+          <div className="new-story-header">
             <div>
-              <h2 className="hah-section-title">みんなの不動産体験談</h2>
-              <p className="hah-section-sub">失敗談・成功談をAIと一緒に解決しましょう</p>
+              <h2 className="new-story-title">みんなの不動産体験談</h2>
+              <p className="new-story-sub">失敗談・成功談をAIと一緒に解決しましょう</p>
             </div>
-            <button className="hah-see-all" onClick={() => navigate('community')}>すべて見る</button>
+            <button className="new-story-seeall" onClick={() => navigate('community')}>すべて見る</button>
           </div>
-          <div className="hah-testimonial-grid">
-            {testimonials.map((t, i) => (
-              <div key={i} className="hah-testimonial-card" onClick={() => navigate('community')}>
-                <div className="hah-testi-top">
-                  <div className="hah-avatar">{t.initial}</div>
-                  <div>
-                    <div className="hah-testi-attr">{t.attr}</div>
-                    <span className="hah-testi-badge" style={{ background: t.categoryColor, color: t.categoryText }}>{t.category}</span>
+
+          <div className="new-story-grid">
+            {storyItems.map((item, i) => (
+              <article key={i} className="new-story-card">
+                <div className="new-story-card-top">
+                  <div className="new-story-avatar">{item.initial}</div>
+                  <div className="new-story-userinfo">
+                    <span className="new-story-username">{item.user} / {item.category}</span>
                   </div>
+                  <span className={`new-story-badge new-story-badge-${item.badgeType}`}>{item.badge}</span>
                 </div>
-                <div className="hah-testi-title">{t.title}</div>
-                <div className="hah-testi-body">{t.body}</div>
-              </div>
+
+                <h3 className="new-story-card-title">{item.title}</h3>
+                <p className="new-story-card-body">{item.body}</p>
+
+                <div className="new-story-ai-wrap">
+                  <div className="new-story-ai-header">
+                    <div className="new-story-ai-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                    </div>
+                    <span className="new-story-ai-label">AIまとめ</span>
+                  </div>
+                  <p className="new-story-ai-text">{item.aiComment}</p>
+                </div>
+
+                <div className="new-story-reactions">
+                  <button className="new-story-reaction-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                    私も同じでした
+                  </button>
+                  <button className="new-story-reaction-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    参考になった
+                  </button>
+                </div>
+
+                <button className="new-story-ai-btn" onClick={() => navigate('chat')}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  似た悩みをAIに相談
+                </button>
+              </article>
             ))}
           </div>
-          <div className="hah-testi-ctas">
-            <button className="hah-cta-primary" onClick={() => navigate('community')}>体験談をすべて見る</button>
-            <button className="hah-cta-outline" onClick={() => navigate('community')}>体験談を投稿する</button>
+
+          <div className="new-story-cta-row">
+            <button className="new-story-cta-dark" onClick={() => navigate('community')}>体験談をすべて見る</button>
+            <button className="new-story-cta-outline" onClick={() => navigate('community')}>体験談を投稿する</button>
           </div>
         </div>
       </section>
