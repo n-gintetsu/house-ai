@@ -1186,7 +1186,7 @@
 }
 
 /* 相談セクション */
-.consult-section-sns { max-width: 1080px; margin: 0 auto 48px; padding: 0 20px; }
+.consult-section-sns { max-width: 1080px; margin: 80px auto 48px; padding: 0 20px; }
 .consult-card-sns {
   min-width: 300px;
   max-width: 340px;
