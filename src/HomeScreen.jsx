@@ -3,6 +3,7 @@ import { AffiliateCard } from './AffiliateCard';
 import { supabase } from "./lib/supabase";
 import { trackEvent } from './lib/analytics';
 import { FigmaExperienceSection } from './FigmaExperienceSection';
+import { FigmaNewsSection } from './FigmaNewsSection';
 import { SectionTransition } from './SectionTransition';
 import './HouseAiHome.css';
 
@@ -1160,6 +1161,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       <SectionTransition />
       <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
+      <FigmaNewsSection onTabChange={navigate} />
 
       {/* 6. 下部固定CTA */}
       {scrolled ? (
