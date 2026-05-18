@@ -1394,7 +1394,7 @@
 }
 
 .live-logo-img {
-  height: 64px;
+  height: 100px;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 0 18px rgba(212,175,55,0.7))
