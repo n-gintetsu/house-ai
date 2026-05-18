@@ -600,11 +600,10 @@ const verticalProperties = [
     title: '大宮駅徒歩3分 新築マンション',
     price: '月8.5万円',
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80',
-    aiComments: [
-      '駅近・単身層からの問い合わせが増えています',
-      '同条件ユーザーの満足度が高いエリアです',
-      '初期費用の総額を事前に確認することをおすすめします',
-    ],
+    matchRate: '94%',
+    aiBadge: 'AI PICK',
+    aiComments: ['駅近・単身層からの問い合わせが増えています', '同条件ユーザーの満足度が高いエリアです', '初期費用の総額を事前に確認することをおすすめします'],
+    aiReason: '一人暮らし・駅近希望の相談と相性が高いです',
   },
   {
     type: '売買',
@@ -612,11 +611,10 @@ const verticalProperties = [
     title: 'ファミリー向け戸建て',
     price: '4,580万円',
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
-    aiComments: [
-      '学区・住環境を重視する方に人気です',
-      'ファミリー層の保存数が増えています',
-      '通勤時間と学区の両立を確認するのがポイントです',
-    ],
+    matchRate: '88%',
+    aiBadge: '人気上昇中',
+    aiComments: ['学区・住環境を重視する方に人気です', 'ファミリー層の保存数が増えています', '通勤時間と学区の両立を確認するのがポイントです'],
+    aiReason: 'ファミリー層・マイホーム希望の相談と相性が高いです',
   },
   {
     type: '投資',
@@ -624,11 +622,10 @@ const verticalProperties = [
     title: '収益マンション',
     price: '1,580万円',
     image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80',
-    aiComments: [
-      '表面利回り5%以上・空室リスク低めです',
-      '投資初心者からの相談が増えている条件です',
-      '修繕積立金と管理費の確認をおすすめします',
-    ],
+    matchRate: '91%',
+    aiBadge: 'AI PICK',
+    aiComments: ['表面利回り5%以上・空室リスク低めです', '投資初心者からの相談が増えている条件です', '修繕積立金と管理費の確認をおすすめします'],
+    aiReason: '投資・利回り重視の相談と相性が高いです',
   },
 ];
 
@@ -643,6 +640,9 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [feedKey, setFeedKey] = useState(0);
   const [aiCommentIndex, setAiCommentIndex] = useState(0);
   const [showStorySheet, setShowStorySheet] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiStep, setAiStep] = useState(0);
+  const [noticeIndex, setNoticeIndex] = useState(0);
   const chatRef = useRef(null);
 
   const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
@@ -652,6 +652,20 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     '1分前　空き家相談がAIマッチングされました',
     '20秒前　投資物件のAI診断が完了しました',
     'たった今　さいたま市で新規相談が入りました',
+  ];
+
+  const aiMessages = [
+    'AIが物件条件を読み取っています...',
+    '価格・エリア・リスクを整理しています...',
+    '似た相談事例を確認しています...',
+    'あなた向けの相談画面を準備しています...',
+  ];
+
+  const liveNotices = [
+    '20秒前　投資物件のAI診断が完了しました',
+    '3分前　さいたま市で住宅ローン相談が始まりました',
+    '5分前　この物件が保存されました',
+    '8分前　似た条件の体験談が読まれました',
   ];
 
   useEffect(() => {
@@ -698,6 +712,31 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     }, 3000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setNoticeIndex(prev => (prev + 1) % liveNotices.length);
+    }, 8000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleAIConsult = () => {
+    setAiLoading(true);
+    setAiStep(0);
+    let step = 0;
+    const interval = setInterval(() => {
+      step = step + 1;
+      if (step >= aiMessages.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setAiLoading(false);
+          navigate('chat');
+        }, 600);
+      } else {
+        setAiStep(step);
+      }
+    }, 450);
+  };
 
   const handleStartChat = () => {
     setShowChat(true);
@@ -948,6 +987,11 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
 
       {/* 4. 人気物件プレビュー（縦型フィード） */}
       <section className="vertical-feed-section">
+        <div className="vf-notice-bar">
+          <span className="vf-notice-dot" />
+          <span>今こんな相談が増えています：</span>
+          <span className="vf-notice-text">{liveNotices[noticeIndex]}</span>
+        </div>
         <div className="vertical-feed-inner">
 
           {/* 左：縦型フィード */}
@@ -974,7 +1018,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                         <button className="feed-icon-btn">
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                         </button>
-                        <button className="feed-icon-btn feed-icon-ai">
+                        <button className="feed-icon-btn feed-icon-ai" onClick={(e) => { e.stopPropagation(); handleAIConsult(); }}>
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F33" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                         </button>
                         <button className="feed-icon-btn" onClick={(e) => { e.stopPropagation(); setShowStorySheet(true); }}>
@@ -986,7 +1030,10 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                           </svg>
                         </button>
                       </div>
-                      <span className="feed-type-badge">{item.type}</span>
+                      <div className="feed-top-badges">
+                        <span className="feed-type-badge">{item.type}</span>
+                        <span className="feed-match-badge">マッチ率 {item.matchRate}</span>
+                      </div>
                       <div className="feed-card-bottom">
                         <div className="feed-area">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -994,7 +1041,10 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                         </div>
                         <h3 className="feed-card-title">{item.title}</h3>
                         <p className="feed-card-price">{item.price}</p>
-                        <div className="feed-ai-comment">AI分析：{item.aiComments[aiCommentIndex % item.aiComments.length]}</div>
+                        <div className="feed-ai-comment">
+                          <p>AI分析：{item.aiComments[aiCommentIndex % item.aiComments.length]}</p>
+                          <p className="feed-ai-reason">{item.aiReason}</p>
+                        </div>
                         <div className="feed-detail-btn">詳細を見る</div>
                       </div>
                     </div>
@@ -1044,7 +1094,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
             </div>
             <div className="feed-cta-row">
               <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
-              <button className="feed-cta-gold" onClick={() => navigate('chat')}>AIに相談して探す</button>
+              <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
             </div>
             <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
           </div>
@@ -1077,6 +1127,30 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
               <button className="story-sheet-close" onClick={() => setShowStorySheet(false)}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
+            </div>
+          </div>
+        ) : null}
+
+        {aiLoading ? (
+          <div className="ai-loading-overlay">
+            <div className="ai-loading-card">
+              <div className="ai-loading-header">
+                <div className="ai-loading-avatar">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F33" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                </div>
+                <div>
+                  <p className="ai-loading-label">HOUSE-AI ANALYSIS</p>
+                  <h3 className="ai-loading-title">AIがあなた向けに整理しています</h3>
+                </div>
+              </div>
+              <p className="ai-loading-sub">選択中の物件・相談内容・似た条件の体験談を確認しています。</p>
+              <div className="ai-loading-box">
+                <p className="ai-loading-message">{aiMessages[aiStep]}</p>
+                <div className="ai-progress-bar">
+                  <div className="ai-progress-fill" style={{ width: `${((aiStep + 1) / aiMessages.length) * 100}%` }} />
+                </div>
+              </div>
+              <p className="ai-loading-note">営業連絡は一切ありません。安心して相談できます。</p>
             </div>
           </div>
         ) : null}

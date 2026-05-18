@@ -1868,3 +1868,162 @@
   cursor: pointer;
   padding: 4px;
 }
+
+/* ============================================================
+   AI分析モーダル
+   ============================================================ */
+
+.ai-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(11,31,51,0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ai-loading-card {
+  background: white;
+  border-radius: 28px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+  animation: fadeUp 0.3s ease;
+}
+
+.ai-loading-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ai-loading-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #D6AE3B;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.ai-loading-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #D6AE3B;
+  margin-bottom: 4px;
+}
+
+.ai-loading-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #0B1F33;
+  margin: 0;
+}
+
+.ai-loading-sub {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.ai-loading-box {
+  background: #EEF4F8;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.ai-loading-message {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0B1F33;
+  margin: 0 0 14px;
+  min-height: 24px;
+  transition: opacity 0.3s ease;
+}
+
+.ai-progress-bar {
+  height: 8px;
+  background: white;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  height: 100%;
+  background: #D6AE3B;
+  border-radius: 999px;
+  transition: width 0.45s ease;
+}
+
+.ai-loading-note {
+  font-size: 12px;
+  color: #94A3B8;
+  text-align: center;
+  margin: 0;
+}
+
+/* 物件カードバッジ */
+.feed-top-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.feed-match-badge {
+  background: rgba(255,255,255,0.92);
+  color: #123A5A;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.feed-ai-reason {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* 通知バー */
+.vf-notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #D1FAE5;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 13px;
+  color: #123A5A;
+  margin-bottom: 48px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.vf-notice-dot {
+  width: 10px;
+  height: 10px;
+  background: #1DBF73;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: rtPulse 1.8s infinite;
+}
+
+.vf-notice-text {
+  font-weight: 700;
+}
