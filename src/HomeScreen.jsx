@@ -593,6 +593,12 @@ const liveCards = [
 // ============================================================
 // HomeScreen — 完全リニューアル版
 // ============================================================
+const verticalProperties = [
+  { type: '賃貸', area: 'さいたま市大宮区', title: '大宮駅徒歩3分 新築マンション', price: '月8.5万円', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80', ai: '駅近・単身層からの問い合わせが増えています' },
+  { type: '売買', area: 'さいたま市浦和区', title: 'ファミリー向け戸建て', price: '4,580万円', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', ai: '学区・住環境を重視する方に人気です' },
+  { type: '投資', area: '川口市', title: '収益マンション', price: '1,580万円', image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80', ai: '表面利回り5%以上・空室リスク低め' },
+];
+
 export default function HomeScreen({ onTabChange, onNavigate }) {
   const navigate = onTabChange || onNavigate || (() => {});
   const [showChat, setShowChat] = useState(false);
@@ -708,19 +714,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     },
   ];
 
-  const propertyItems = [
-    { type: '新築', badge: 'AI PICK', area: 'さいたま市大宮区', title: '駅近スマート住宅', price: '2,980万円', imgIndex: 1, ai: '駅徒歩5分以内で問い合わせ急増中', match: '94%', likes: 234, comments: 45 },
-    { type: '賃貸', badge: '人気急上昇', area: 'さいたま市浦和区', title: 'ペット可デザイナーズ', price: '月8.5万円', imgIndex: 2, ai: '同条件ユーザーの満足度が高いエリア', match: '88%', likes: 189, comments: 32 },
-    { type: '投資', badge: '利回り良好', area: '川口市', title: '収益マンション', price: '1,580万円', imgIndex: 3, ai: '表面利回り5%以上・空室リスク低', match: '91%', likes: 512, comments: 89 },
-    { type: '中古', badge: '注目', area: '越谷市', title: 'リノベ済み戸建て', price: '3,280万円', imgIndex: 4, ai: 'ファミリー層の保存数が増えています', match: '85%', likes: 156, comments: 21 },
-  ];
-
-  const propImgUrls = {
-    1: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80',
-    2: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80',
-    3: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80',
-    4: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
-  };
 
   const testimonials = [
     { initial: 'F', attr: '30代女性 / 賃貸', category: '後悔', categoryColor: 'rgba(239,68,68,0.1)', categoryText: '#ef4444', title: '焦って契約して後悔しました', body: '今日決めないと無くなると言われて焦って契約しました。住んでから後悔しています。' },
@@ -911,56 +904,76 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         </div>
       </section>
 
-      {/* 4. 人気物件プレビュー */}
-      <section className="property-section-sns">
-        <div className="section-header-row">
-          <div>
-            <h2>人気物件プレビュー</h2>
-            <p>AIが選定したおすすめ物件</p>
-          </div>
-          <button onClick={() => navigate('properties')}>すべて見る</button>
-        </div>
+      {/* 4. 人気物件プレビュー（縦型フィード） */}
+      <section className="vertical-feed-section">
+        <div className="vertical-feed-inner">
 
-        <div className="scroll-feed">
-          {propertyItems.map((item, i) => (
-            <article key={i} className="property-card-sns" onClick={() => navigate('properties')}>
-              <div className="prop-img-wrap">
-                <img src={propImgUrls[item.imgIndex]} alt={item.title} className="prop-img" />
-                <div className="prop-img-overlay" />
-                <span className="prop-type-badge">{item.type}</span>
-                <span className="prop-match-badge">マッチ率 {item.match}</span>
-                <div className="prop-img-bottom">
-                  <span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    {item.area}
-                  </span>
-                  <strong>{item.title}</strong>
+          {/* 左：縦型フィード */}
+          <div className="feed-phone-wrap">
+            <div className="feed-phone-frame">
+              <div className="feed-phone-header">
+                <span className="feed-phone-label">HOUSE-AI FEED</span>
+                <span className="feed-phone-title">人気物件プレビュー</span>
+                <span className="feed-phone-count">1/5</span>
+              </div>
+              <div className="feed-phone-screen">
+                <div className="feed-track">
+                  {[...verticalProperties, ...verticalProperties].map((item, i) => (
+                    <div key={i} className="feed-card" onClick={() => navigate('properties')}>
+                      <img src={item.image} alt={item.title} className="feed-card-img" />
+                      <div className="feed-card-overlay" />
+                      <div className="feed-side-icons">
+                        <button className="feed-icon-btn">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                        <button className="feed-icon-btn">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </button>
+                        <button className="feed-icon-btn">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                        </button>
+                        <button className="feed-icon-btn feed-icon-ai">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F33" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                        </button>
+                      </div>
+                      <span className="feed-type-badge">{item.type}</span>
+                      <div className="feed-card-bottom">
+                        <div className="feed-area">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                          {item.area}
+                        </div>
+                        <h3 className="feed-card-title">{item.title}</h3>
+                        <p className="feed-card-price">{item.price}</p>
+                        <div className="feed-ai-comment">AI分析：{item.ai}</div>
+                        <div className="feed-detail-btn">詳細を見る</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="prop-body">
-                <div className="prop-price-row">
-                  <span className="prop-price">{item.price}</span>
-                  <span className="prop-badge-dark">{item.badge}</span>
-                </div>
-                <div className="ai-comment-box">
-                  AI分析：{item.ai}
-                </div>
-                <div className="card-footer-stats">
-                  <span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    {item.likes}
-                  </span>
-                  <span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    {item.comments}
-                  </span>
-                  <button className="ml-auto bookmark-btn" onClick={(e) => e.stopPropagation()}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+            </div>
+          </div>
+
+          {/* 右：説明・CTA */}
+          <div className="feed-desc-wrap">
+            <div className="feed-desc-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.8l-5 3.4 1.9-5.8L4 8.8h6.1z"/></svg>
+              物件探しもAIでかんたんに
+            </div>
+            <h2 className="feed-desc-title">物件を見るだけでなく、<br/>AIに相談しながら探せます。</h2>
+            <p className="feed-desc-body">気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
+            <div className="feed-steps">
+              <div className="feed-step"><strong>物件を縦にスワイプ</strong><span>気になる物件を直感的に見つけられます。</span></div>
+              <div className="feed-step"><strong>気になったらAIに質問</strong><span>ローン・価格・リスク・周辺環境をその場で確認できます。</span></div>
+              <div className="feed-step"><strong>必要なら専門家へ相談</strong><span>相談内容に合わせて最適な専門家へつなげます。</span></div>
+            </div>
+            <div className="feed-cta-row">
+              <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
+              <button className="feed-cta-gold" onClick={() => navigate('chat')}>AIに相談して探す</button>
+            </div>
+            <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
+          </div>
+
         </div>
       </section>
 
