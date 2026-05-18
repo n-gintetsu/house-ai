@@ -1525,8 +1525,8 @@
 
 .feed-type-badge {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 14px;
+  left: 14px;
   background: #D6AE3B;
   color: #0B1F33;
   padding: 5px 14px;
@@ -1972,16 +1972,10 @@
 }
 
 /* 物件カードバッジ */
-.feed-top-badges {
+.feed-match-badge {
   position: absolute;
   top: 14px;
-  left: 14px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.feed-match-badge {
+  right: 14px;
   background: rgba(255,255,255,0.92);
   color: #123A5A;
   padding: 5px 12px;

@@ -1030,10 +1030,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                           </svg>
                         </button>
                       </div>
-                      <div className="feed-top-badges">
-                        <span className="feed-type-badge">{item.type}</span>
-                        <span className="feed-match-badge">マッチ率 {item.matchRate}</span>
-                      </div>
+                      <span className="feed-type-badge">{item.type}</span>
+                      <span className="feed-match-badge">{item.aiBadge}　マッチ率 {item.matchRate}</span>
                       <div className="feed-card-bottom">
                         <div className="feed-area">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
