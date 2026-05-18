@@ -594,9 +594,42 @@ const liveCards = [
 // HomeScreen — 完全リニューアル版
 // ============================================================
 const verticalProperties = [
-  { type: '賃貸', area: 'さいたま市大宮区', title: '大宮駅徒歩3分 新築マンション', price: '月8.5万円', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80', ai: '駅近・単身層からの問い合わせが増えています' },
-  { type: '売買', area: 'さいたま市浦和区', title: 'ファミリー向け戸建て', price: '4,580万円', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', ai: '学区・住環境を重視する方に人気です' },
-  { type: '投資', area: '川口市', title: '収益マンション', price: '1,580万円', image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80', ai: '表面利回り5%以上・空室リスク低め' },
+  {
+    type: '賃貸',
+    area: 'さいたま市大宮区',
+    title: '大宮駅徒歩3分 新築マンション',
+    price: '月8.5万円',
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80',
+    aiComments: [
+      '駅近・単身層からの問い合わせが増えています',
+      '同条件ユーザーの満足度が高いエリアです',
+      '初期費用の総額を事前に確認することをおすすめします',
+    ],
+  },
+  {
+    type: '売買',
+    area: 'さいたま市浦和区',
+    title: 'ファミリー向け戸建て',
+    price: '4,580万円',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+    aiComments: [
+      '学区・住環境を重視する方に人気です',
+      'ファミリー層の保存数が増えています',
+      '通勤時間と学区の両立を確認するのがポイントです',
+    ],
+  },
+  {
+    type: '投資',
+    area: '川口市',
+    title: '収益マンション',
+    price: '1,580万円',
+    image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80',
+    aiComments: [
+      '表面利回り5%以上・空室リスク低めです',
+      '投資初心者からの相談が増えている条件です',
+      '修繕積立金と管理費の確認をおすすめします',
+    ],
+  },
 ];
 
 export default function HomeScreen({ onTabChange, onNavigate }) {
@@ -608,6 +641,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [typedText, setTypedText] = useState('');
   const [feedIndex, setFeedIndex] = useState(0);
   const [feedKey, setFeedKey] = useState(0);
+  const [aiCommentIndex, setAiCommentIndex] = useState(0);
+  const [showStorySheet, setShowStorySheet] = useState(false);
   const chatRef = useRef(null);
 
   const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
@@ -655,6 +690,13 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       setFeedKey(k => k + 1);
     }, 5000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAiCommentIndex(prev => (prev + 1) % 3);
+    }, 3000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleStartChat = () => {
@@ -935,6 +977,14 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                         <button className="feed-icon-btn feed-icon-ai">
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F33" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                         </button>
+                        <button className="feed-icon-btn" onClick={(e) => { e.stopPropagation(); setShowStorySheet(true); }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                          </svg>
+                        </button>
                       </div>
                       <span className="feed-type-badge">{item.type}</span>
                       <div className="feed-card-bottom">
@@ -944,7 +994,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                         </div>
                         <h3 className="feed-card-title">{item.title}</h3>
                         <p className="feed-card-price">{item.price}</p>
-                        <div className="feed-ai-comment">AI分析：{item.ai}</div>
+                        <div className="feed-ai-comment">AI分析：{item.aiComments[aiCommentIndex % item.aiComments.length]}</div>
                         <div className="feed-detail-btn">詳細を見る</div>
                       </div>
                     </div>
@@ -980,6 +1030,13 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
               <div className="feed-step">
                 <img src="/favicon-src.png" alt="" className="feed-step-logo" />
                 <div>
+                  <strong>似た条件の体験談も確認</strong>
+                  <span>後悔しないための注意点をAIが整理します。</span>
+                </div>
+              </div>
+              <div className="feed-step">
+                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
+                <div>
                   <strong>必要なら専門家へ相談</strong>
                   <span>相談内容に合わせて最適な専門家へつなげます。</span>
                 </div>
@@ -993,6 +1050,36 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           </div>
 
         </div>
+
+        {showStorySheet ? (
+          <div className="story-sheet-overlay" onClick={() => setShowStorySheet(false)}>
+            <div className="story-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="story-sheet-handle" />
+              <h3 className="story-sheet-title">似た条件でよくある体験談</h3>
+              <p className="story-sheet-sub">このエリア・価格帯では、初期費用・騒音・通勤時間についての相談が多く寄せられています。</p>
+              <div className="story-sheet-ai">
+                <div className="story-sheet-ai-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>
+                  契約前に確認したいポイント
+                </div>
+                <ol className="story-sheet-list">
+                  <li>初期費用の総額（敷金・礼金・仲介手数料）</li>
+                  <li>夜間の騒音環境</li>
+                  <li>駅までの実際の徒歩時間</li>
+                  <li>管理会社の対応範囲</li>
+                </ol>
+              </div>
+              <p className="story-sheet-note">投稿内容はAIと運営により、個人・企業を特定しない形に整理して掲載しています。</p>
+              <div className="story-sheet-cta-row">
+                <button className="story-sheet-btn-outline" onClick={() => { setShowStorySheet(false); navigate('community'); }}>体験談をもっと見る</button>
+                <button className="story-sheet-btn-gold" onClick={() => { setShowStorySheet(false); navigate('chat'); }}>AIにこの条件で相談する</button>
+              </div>
+              <button className="story-sheet-close" onClick={() => setShowStorySheet(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {/* 5. 体験談プレビュー */}
