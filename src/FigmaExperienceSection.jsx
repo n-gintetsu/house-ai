@@ -1,5 +1,6 @@
 import { ArrowRight, ChevronLeft, ChevronRight, Heart, MessageCircle, Sparkles, AlertCircle, CheckCircle, Bot, TrendingUp } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { LiveTag } from './LiveTag';
 import { AIComment } from './AIComment';
 import { SocialComments } from './SocialComments';
@@ -11,6 +12,16 @@ const experiences = [
   { id: '4', userAge: '50代男性', category: '売却', status: 'success', title: '複数社査定で300万円UP', excerpt: '最初の業者の査定額で売ろうとしていましたが、複数社に依頼したら300万円も高く売れました。', aiSummary: '売却時は最低3社の査定比較が基本です。各社の査定根拠を聞き、市場相場と照らし合わせることで適正価格が見えてきます。', likes: 423, comments: 56, liveTag: 'popular' },
   { id: '5', userAge: '30代男性', category: '賃貸', status: 'resolved', title: '営業マン任せにして失敗', excerpt: '言われるがままに契約したら、不要なオプションがたくさん。後から交渉して外してもらいましたが、最初から確認すべきでした。', aiSummary: '初期費用の内訳は全て確認し、不要な項目は削除交渉が可能です。仲介手数料、消臭・消毒費用、鍵交換費用などは交渉の余地があります。', likes: 289, comments: 41 },
 ];
+
+const sortedExperiences = [...experiences].sort((a, b) => b.likes - a.likes);
+
+function CrownIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M2 19h20M3 9l4 4 5-8 5 8 4-4 1 10H2L3 9z" fill="#D4AF37" stroke="#D4AF37" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 const statusConfig = {
   regret:   { label: '学び',   icon: AlertCircle,  bg: 'rgba(59,130,246,0.1)',  text: '#2563eb', border: 'rgba(59,130,246,0.3)' },
@@ -113,6 +124,25 @@ function ExperienceCard({ experience, onConsult }) {
 
 export function FigmaExperienceSection({ onTabChange }) {
   const scrollRef = useRef(null);
+  const [topIndex, setTopIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [prevTopIndex, setPrevTopIndex] = useState(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setPrevTopIndex(topIndex);
+      setTimeout(() => {
+        setTopIndex(prev => (prev + 1) % sortedExperiences.length);
+        setTimeout(() => {
+          setIsTransitioning(false);
+          setPrevTopIndex(null);
+        }, 800);
+      }, 600);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [topIndex]);
+
   const scroll = (dir) => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: dir === 'left' ? -400 : 400, behavior: 'smooth' });
@@ -135,17 +165,115 @@ export function FigmaExperienceSection({ onTabChange }) {
           </button>
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <button onClick={() => scroll('left')} style={{ position: 'absolute', left: '-16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #E2E8F0', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
-            <ChevronLeft size={20} />
-          </button>
-          <button onClick={() => scroll('right')} style={{ position: 'absolute', right: '-16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #E2E8F0', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
-            <ChevronRight size={20} />
-          </button>
-          <div ref={scrollRef} style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {experiences.map(exp => (
-              <ExperienceCard key={exp.id} experience={exp} onConsult={() => onTabChange('chat')} />
-            ))}
+        <div style={{ display: 'flex', gap: '24px', marginTop: '40px' }}>
+          {/* ランキング1位固定カード */}
+          <div style={{ position: 'relative', flexShrink: 0, width: '360px' }}>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'linear-gradient(135deg, #0a1628, #1a2a42)',
+                border: '1px solid rgba(212,175,55,0.6)',
+                borderRadius: '999px',
+                padding: '5px 14px',
+                boxShadow: '0 0 20px rgba(212,175,55,0.3)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <CrownIcon />
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4AF37', letterSpacing: '0.06em' }}>
+                AI共感ランキング
+              </span>
+              <motion.div
+                style={{ width: '6px', height: '6px', background: '#D4AF37', borderRadius: '50%' }}
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            </motion.div>
+
+            {isTransitioning && prevTopIndex !== null ? (
+              <motion.div
+                key={`prev-${prevTopIndex}`}
+                initial={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                animate={{ opacity: 0, scale: 0.85, filter: 'blur(8px)', y: -20 }}
+                transition={{ duration: 0.6, ease: 'easeIn' }}
+                style={{ position: 'absolute', inset: 0, zIndex: 5 }}
+              >
+                <ExperienceCard experience={sortedExperiences[prevTopIndex]} onConsult={() => onTabChange('chat')} />
+              </motion.div>
+            ) : null}
+
+            <motion.div
+              key={`top-${topIndex}`}
+              initial={isTransitioning ? { opacity: 0 } : { opacity: 0, y: 40, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: isTransitioning ? 0.5 : 0 }}
+              style={{ position: 'relative', zIndex: 10 }}
+            >
+              <motion.div
+                style={{
+                  position: 'absolute',
+                  inset: '-2px',
+                  borderRadius: '22px',
+                  background: 'linear-gradient(135deg, #D4AF37, #F0D97F, #D4AF37)',
+                  zIndex: -1,
+                }}
+                animate={{
+                  boxShadow: [
+                    '0 0 16px rgba(212,175,55,0.4)',
+                    '0 0 32px rgba(212,175,55,0.7)',
+                    '0 0 16px rgba(212,175,55,0.4)',
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <ExperienceCard experience={sortedExperiences[topIndex]} onConsult={() => onTabChange('chat')} />
+            </motion.div>
+
+            {isTransitioning ? (
+              <div style={{ position: 'absolute', inset: 0, zIndex: 15, pointerEvents: 'none' }}>
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      width: '4px',
+                      height: '4px',
+                      borderRadius: '50%',
+                      background: i % 2 === 0 ? '#D4AF37' : '#60a5fa',
+                      left: `${20 + (i * 10) % 60}%`,
+                      top: `${20 + (i * 13) % 60}%`,
+                    }}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0], y: [0, -40, -80] }}
+                    transition={{ duration: 1.2, delay: i * 0.08 }}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          {/* 残りのカード横スクロール */}
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <button onClick={() => scroll('left')} style={{ position: 'absolute', left: '-16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #E2E8F0', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
+              <ChevronLeft size={20} />
+            </button>
+            <button onClick={() => scroll('right')} style={{ position: 'absolute', right: '-16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #E2E8F0', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
+              <ChevronRight size={20} />
+            </button>
+            <div ref={scrollRef} style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {sortedExperiences.filter((_, i) => i !== topIndex).map(exp => (
+                <ExperienceCard key={exp.id} experience={exp} onConsult={() => onTabChange('chat')} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
