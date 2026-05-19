@@ -9,42 +9,18 @@ const aiLoadingLogs = ['あなた向け条件を整理しています...','似�
 const ageRanges = ['10代','20代','30代','40代','50代','60代〜'];
 
 const userTypes = [
-  { id: 'first', label: '初めて検討中', sub: '何から始めればいいか知りたい', icon: HomeIcon, color: '#3b82f6' },
-  { id: 'compare', label: '比較・検討中', sub: '複数の選択肢を整理したい', icon: Search, color: '#8b5cf6' },
-  { id: 'invest', label: '投資・資産運用', sub: '利回り・リスクを分析したい', icon: Target, color: '#f59e0b' },
-  { id: 'sell', label: '売却・整理したい', sub: '相場・タイミングを知りたい', icon: DollarSign, color: '#10b981' },
+  { id: 'first',   label: '初めて検討中',   sub: '何から始めればいいか知りたい', icon: HomeIcon,    color: '#3b82f6' },
+  { id: 'compare', label: '比較・検討中',   sub: '複数の選択肢を整理したい',     icon: Search,      color: '#8b5cf6' },
+  { id: 'invest',  label: '投資・資産運用', sub: '利回り・リスクを分析したい',   icon: Target,      color: '#f59e0b' },
+  { id: 'sell',    label: '売却・整理したい', sub: '相場・タイミングを知りたい', icon: DollarSign,  color: '#10b981' },
 ];
 
 const priorities = [
-  { id: 'price', label: '価格・費用を抑えたい', icon: DollarSign },
-  { id: 'speed', label: 'スピード重視', icon: Clock },
-  { id: 'safety', label: '安心・安全優先', icon: ShieldCheck },
-  { id: 'location', label: 'エリア・立地重視', icon: MapPin },
+  { id: 'price',    label: '価格・費用を抑えたい', icon: DollarSign },
+  { id: 'speed',    label: 'スピード重視',         icon: Clock },
+  { id: 'safety',   label: '安心・安全優先',       icon: ShieldCheck },
+  { id: 'location', label: 'エリア・立地重視',     icon: MapPin },
 ];
-
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.6)',
-  backdropFilter: 'blur(4px)',
-  zIndex: 9998,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '16px',
-};
-
-const contentStyle = {
-  position: 'relative',
-  background: '#fff',
-  borderRadius: '24px',
-  width: '100%',
-  maxWidth: '480px',
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  boxShadow: '0 25px 60px rgba(0,0,0,0.2)',
-  zIndex: 9999,
-};
 
 export default function AIDiagnosisModal({ open, onOpenChange }) {
   const [step, setStep] = useState(1);
@@ -91,33 +67,53 @@ export default function AIDiagnosisModal({ open, onOpenChange }) {
     onOpenChange(false);
   };
 
-  const totalSteps = 3;
-  const stepNum = typeof step === 'number' ? step : (step === 'preview' ? 4 : 5);
-
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay asChild>
+        {/* Overlay — 背景だけ担当、centering はしない */}
+        <Dialog.Overlay
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9998,
+          }}
+        />
+        {/* Content — full-screen flex container でモーダルを中央配置 */}
+        <Dialog.Content
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            zIndex: 9999,
+            outline: 'none',
+          }}
+        >
+          <VisuallyHidden.Root>
+            <Dialog.Title>AI診断</Dialog.Title>
+            <Dialog.Description>AIがあなたに合ったサービスを診断します</Dialog.Description>
+          </VisuallyHidden.Root>
+
+          {/* motion.div — 実際のモーダルボックス */}
           <motion.div
-            style={overlayStyle}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          />
-        </Dialog.Overlay>
-        <Dialog.Content asChild>
-          <motion.div
-            style={contentStyle}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            style={{
+              background: '#fff',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.2)',
+            }}
           >
-            <VisuallyHidden.Root>
-              <Dialog.Title>AI診断</Dialog.Title>
-              <Dialog.Description>AIがあなたに合ったサービスを診断します</Dialog.Description>
-            </VisuallyHidden.Root>
-
             {/* ヘッダー */}
             <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -126,14 +122,14 @@ export default function AIDiagnosisModal({ open, onOpenChange }) {
                 </div>
                 <span style={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>AI診断</span>
               </div>
-              <Dialog.Close asChild>
-                <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
-                  <X size={16} color="#6b7280" />
-                </button>
+              <Dialog.Close
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
+              >
+                <X size={16} color="#6b7280" />
               </Dialog.Close>
             </div>
 
-            {/* プログレスバー (step 1-3のみ) */}
+            {/* プログレスバー (step 1-3) */}
             {typeof step === 'number' && step <= 3 ? (
               <div style={{ padding: '0 24px 16px' }}>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -141,7 +137,7 @@ export default function AIDiagnosisModal({ open, onOpenChange }) {
                     <div key={s} style={{ flex: 1, height: '3px', borderRadius: '99px', background: step >= s ? 'linear-gradient(to right, #3b82f6, #7c3aed)' : '#e5e7eb', transition: 'background 0.3s' }} />
                   ))}
                 </div>
-                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>{step} / {totalSteps}</p>
+                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>{step} / 3</p>
               </div>
             ) : null}
 
@@ -163,7 +159,7 @@ export default function AIDiagnosisModal({ open, onOpenChange }) {
                             onClick={() => handleUserTypeSelect(type.id)}
                             whileHover={{ scale: 1.01, x: 4 }}
                             whileTap={{ scale: 0.99 }}
-                            style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '14px', border: `1.5px solid ${selections.userType === type.id ? type.color : '#e5e7eb'}`, background: selections.userType === type.id ? `${type.color}12` : '#fafafa', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '14px', border: `1.5px solid ${selections.userType === type.id ? type.color : '#e5e7eb'}`, background: selections.userType === type.id ? `${type.color}18` : '#fafafa', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
                           >
                             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${type.color}20`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                               <Icon size={20} color={type.color} />
