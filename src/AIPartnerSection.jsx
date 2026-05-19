@@ -1,8 +1,12 @@
 import { motion } from 'motion/react';
+import { useState } from 'react';
 import AIServiceComparisonMockup from './AIServiceComparisonMockup';
 import PartnerServiceContents from './PartnerServiceContents';
+import AIDiagnosisModal from './AIDiagnosisModal';
 
 export default function AIPartnerSection({ onTabChange }) {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <section style={{ position: 'relative', background: '#F7F9FC', padding: '80px 20px', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -19,7 +23,7 @@ export default function AIPartnerSection({ onTabChange }) {
             <AIServiceComparisonMockup />
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <PartnerServiceContents onOpenModal={() => onTabChange('chat')} />
+            <PartnerServiceContents onOpenModal={() => setModalOpen(true)} />
           </motion.div>
         </div>
       </div>
@@ -29,6 +33,7 @@ export default function AIPartnerSection({ onTabChange }) {
           .ai-partner-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      <AIDiagnosisModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
   );
 }
