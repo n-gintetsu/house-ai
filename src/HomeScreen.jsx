@@ -5,6 +5,7 @@ import { trackEvent } from './lib/analytics';
 import { FigmaExperienceSection } from './FigmaExperienceSection';
 import { FigmaNewsSection } from './FigmaNewsSection';
 import { SectionTransition } from './SectionTransition';
+import AIToolsSection from './AIToolsSection';
 import './HouseAiHome.css';
 
 // ============================================================
@@ -1157,7 +1158,10 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         ) : null}
       </section>
 
-      {/* 5. 体験談プレビュー */}
+      {/* 5. AIツール紹介 */}
+      <AIToolsSection onTabChange={navigate} />
+
+      {/* 6. 体験談プレビュー */}
       <SectionTransition />
       <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
