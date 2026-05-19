@@ -6,6 +6,7 @@ import { FigmaExperienceSection } from './FigmaExperienceSection';
 import { FigmaNewsSection } from './FigmaNewsSection';
 import { SectionTransition } from './SectionTransition';
 import AIToolsSection from './AIToolsSection';
+import AIPartnerSection from './AIPartnerSection';
 import './HouseAiHome.css';
 
 // ============================================================
@@ -1166,8 +1167,9 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
       <FigmaNewsSection onTabChange={navigate} />
+      <AIPartnerSection onTabChange={navigate} />
 
-      {/* 6. 下部固定CTA */}
+      {/* 8. 下部固定CTA */}
       {scrolled ? (
         <div className="hah-fixed-cta">
           <div className="hah-fixed-cta-inner">
