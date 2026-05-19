@@ -909,7 +909,10 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         </div>
       </section>
 
-      {/* 2. LIVE Lounge フィード */}
+      {/* 2. AIツール紹介 */}
+      <AIToolsSection onTabChange={navigate} />
+
+      {/* 3. LIVE Lounge フィード */}
       <section className="live-lounge-section">
         <div className="live-lounge-header">
           <div className="live-logo-wrap">
@@ -1158,10 +1161,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         ) : null}
       </section>
 
-      {/* 5. AIツール紹介 */}
-      <AIToolsSection onTabChange={navigate} />
-
-      {/* 6. 体験談プレビュー */}
+      {/* 7. 体験談プレビュー */}
       <SectionTransition />
       <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
