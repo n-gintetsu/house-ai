@@ -65,11 +65,7 @@ export default function AIToolsSection({ onTabChange }) {
     <section ref={sectionRef} className="relative py-16 sm:py-24 lg:py-32 px-4 overflow-hidden" style={{ background:'linear-gradient(180deg, #F7F8FA 0%, #EEF1F5 100%)' }}>
       <div className="absolute inset-0 opacity-30" style={{ backgroundImage:'radial-gradient(circle at 2px 2px, rgba(15,23,42,0.15) 1px, transparent 0)', backgroundSize:'40px 40px' }} />
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage:'linear-gradient(to right, rgba(59,130,246,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(59,130,246,0.1) 1px, transparent 1px)', backgroundSize:'80px 80px' }} />
-      <motion.div className="absolute inset-0 opacity-20 pointer-events-none" animate={{ background:['radial-gradient(circle at 30% 40%, rgba(59,130,246,0.15) 0%, transparent 50%)','radial-gradient(circle at 70% 60%, rgba(168,85,247,0.15) 0%, transparent 50%)','radial-gradient(circle at 30% 40%, rgba(59,130,246,0.15) 0%, transparent 50%)'] }} transition={{ duration:20, repeat:Infinity }} />
-
-      {isInView ? [...Array(20)].map((_, i) => (
-        <motion.div key={`p-${i}`} className="hidden lg:block absolute rounded-full pointer-events-none" style={{ width:i%4===0?'4px':'2px', height:i%4===0?'4px':'2px', left:`${10+(i*4.5)%80}%`, top:`${15+(i*7)%70}%`, background:i%3===0?'rgba(59,130,246,0.3)':i%3===1?'rgba(251,191,36,0.25)':'rgba(168,85,247,0.25)', boxShadow:i%3===0?'0 0 10px rgba(59,130,246,0.5)':i%3===1?'0 0 8px rgba(251,191,36,0.4)':'0 0 8px rgba(168,85,247,0.4)' }} initial={{ opacity:0, y:10 }} animate={{ y:[0,-40,0], opacity:[0.1,0.4,0.1], scale:[1,1.5,1] }} transition={{ duration:5+(i%5), repeat:Infinity, delay:i*0.3 }} />
-      )) : null}
+      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background:'radial-gradient(circle at 30% 40%, rgba(59,130,246,0.15) 0%, transparent 50%)' }} />
 
       <div className="relative max-w-7xl mx-auto">
         <motion.div initial={{ opacity:0, y:20 }} animate={isInView?{opacity:1,y:0}:{}} transition={{ duration:0.6 }} className="text-center mb-8 sm:mb-12 lg:mb-16">

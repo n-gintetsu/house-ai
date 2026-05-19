@@ -721,14 +721,14 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   useEffect(() => {
     const timer = setInterval(() => {
       setAiCommentIndex(prev => (prev + 1) % 3);
-    }, 3000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
     const t = setInterval(() => {
       setNoticeIndex(prev => (prev + 1) % liveNotices.length);
-    }, 8000);
+    }, 12000);
     return () => clearInterval(t);
   }, []);
 

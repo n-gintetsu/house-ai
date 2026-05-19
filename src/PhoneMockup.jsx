@@ -49,12 +49,7 @@ export default function PhoneMockup() {
     <div ref={containerRef} className="relative">
       <motion.div className="absolute -inset-12" initial={{ opacity: 0 }} animate={{ opacity: isInView ? 0.5 : 0 }} transition={{ duration: 1 }}>
         <motion.div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%)', filter: 'blur(70px)' }} animate={isInView ? { scale: [1,1.15,1], opacity: [0.4,0.6,0.4] } : {}} transition={{ duration: 5, repeat: Infinity }} />
-        <motion.div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)', filter: 'blur(65px)' }} animate={isInView ? { scale: [1,1.2,1], opacity: [0.3,0.5,0.3] } : {}} transition={{ duration: 6, repeat: Infinity, delay: 1.5 }} />
       </motion.div>
-
-      {isInView ? [...Array(16)].map((_, i) => (
-        <motion.div key={`float-${i}`} className="absolute rounded-full" style={{ width: i%3===0?'3px':'2px', height: i%3===0?'3px':'2px', left:`${15+(i*6)%70}%`, top:`${10+(i*8)%80}%`, background: i%3===0?'rgba(59,130,246,0.4)':i%3===1?'rgba(168,85,247,0.3)':'rgba(251,191,36,0.3)', boxShadow: i%3===0?'0 0 8px rgba(59,130,246,0.6)':i%3===1?'0 0 6px rgba(168,85,247,0.5)':'0 0 6px rgba(251,191,36,0.5)' }} initial={{ opacity: 0, y: 10 }} animate={{ y:[0,-30,0], opacity:[0.2,0.7,0.2], scale:[1,1.3,1] }} transition={{ duration: 4+(i%4), repeat: Infinity, delay: i*0.25 }} />
-      )) : null}
 
       <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: 'min(760px,85vh)', maxHeight: '760px' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
         <div className="absolute inset-0 rounded-[3rem] opacity-30" style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.4) 0%, transparent 100%)', filter: 'blur(40px)', transform: 'translateY(20px)' }} />
@@ -78,10 +73,7 @@ export default function PhoneMockup() {
           <div className="relative w-full h-full pt-16 pb-8 px-6 overflow-hidden">
             <div className="absolute inset-0 opacity-20" style={{ backgroundImage:'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize:'24px 24px' }} />
             {isInView ? (
-              <>
-                <motion.div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" animate={{ top:['0%','100%'], opacity:[0,0.6,0] }} transition={{ duration: 5, repeat: Infinity }} />
-                <motion.div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-violet-400/40 to-transparent blur-sm" animate={{ top:['0%','100%'], opacity:[0,0.4,0] }} transition={{ duration: 6, repeat: Infinity, delay: 1.5 }} />
-              </>
+              <motion.div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" animate={{ top:['0%','100%'], opacity:[0,0.6,0] }} transition={{ duration: 5, repeat: Infinity }} />
             ) : null}
 
             <div className="relative mb-6">

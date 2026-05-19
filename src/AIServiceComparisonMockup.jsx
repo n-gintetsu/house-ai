@@ -39,9 +39,6 @@ export default function AIServiceComparisonMockup() {
       <motion.div style={{ position: 'absolute', inset: 0, borderRadius: '44px', opacity: 0.4, filter: 'blur(48px)' }} animate={{ background: ['radial-gradient(circle at 50% 50%, rgba(59,130,246,0.3), transparent 70%)', 'radial-gradient(circle at 30% 50%, rgba(147,51,234,0.2), transparent 70%)', 'radial-gradient(circle at 70% 50%, rgba(59,130,246,0.3), transparent 70%)'] }} transition={{ duration: 4, repeat: Infinity }} />
       <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '44px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #071226, #0A1A35, #091A35)' }} />
-        {[...Array(12)].map((_, i) => (
-          <motion.div key={i} style={{ position: 'absolute', width: '6px', height: '6px', background: 'rgba(96,165,250,0.3)', borderRadius: '50%', left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%` }} animate={{ y: [0, -60, 0], opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 8 + (i % 4), repeat: Infinity, delay: i * 0.3 }} />
-        ))}
         <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '32px 24px' }}>
             <div style={{ color: 'rgba(147,197,253,0.7)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '24px' }}>HOUSE-AI TOOLS</div>

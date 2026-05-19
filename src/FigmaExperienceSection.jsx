@@ -1,5 +1,4 @@
 import { ArrowRight, ChevronLeft, ChevronRight, Heart, MessageCircle, Sparkles, AlertCircle, CheckCircle, Bot, TrendingUp } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState, useRef } from 'react';
 import { LiveTag } from './LiveTag';
 import { AIComment } from './AIComment';
@@ -122,8 +121,8 @@ export function FigmaExperienceSection({ onTabChange }) {
 
   return (
     <section style={{ position: 'relative', padding: '80px 0', background: 'linear-gradient(to bottom, white, rgba(249,250,251,0.4), white)', overflow: 'hidden' }}>
-      <motion.div animate={{ x: [0, 30, 0], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 18, repeat: Infinity }} style={{ position: 'absolute', top: '80px', left: 0, width: '384px', height: '384px', background: 'linear-gradient(to right, rgba(10,22,40,0.04), transparent)', borderRadius: '50%', filter: 'blur(48px)' }} />
-      <motion.div animate={{ x: [0, -30, 0], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 22, repeat: Infinity }} style={{ position: 'absolute', bottom: '80px', right: 0, width: '384px', height: '384px', background: 'linear-gradient(to left, rgba(212,175,55,0.04), transparent)', borderRadius: '50%', filter: 'blur(48px)' }} />
+      <div style={{ position: 'absolute', top: '80px', left: 0, width: '384px', height: '384px', background: 'linear-gradient(to right, rgba(10,22,40,0.04), transparent)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3 }} />
+      <div style={{ position: 'absolute', bottom: '80px', right: 0, width: '384px', height: '384px', background: 'linear-gradient(to left, rgba(212,175,55,0.04), transparent)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3 }} />
 
       <div style={{ position: 'relative', maxWidth: '1080px', margin: '0 auto', padding: '0 20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '32px' }}>
