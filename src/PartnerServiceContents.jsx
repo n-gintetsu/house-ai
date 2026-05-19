@@ -46,7 +46,7 @@ export default function PartnerServiceContents({ onOpenModal }) {
       </div>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <button onClick={onOpenModal} style={{ position: 'relative', width: '100%', height: '58px', borderRadius: '20px', overflow: 'hidden', border: 'none', cursor: 'pointer', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #a16207, #ca8a04, #a16207)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #b8860b, #D4AF37, #f0c040, #D4AF37, #b8860b)', backgroundSize: '300% 300%' }} />
           <motion.div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent)' }} animate={{ x: ['-100%', '200%'] }} transition={{ duration: 2, repeat: Infinity }} />
           <span style={{ position: 'relative', zIndex: 1, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', fontWeight: 700, fontSize: '15px' }}>
             <Sparkles size={18} /> AI比較を始める

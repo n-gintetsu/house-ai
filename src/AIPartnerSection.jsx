@@ -14,7 +14,13 @@ export default function AIPartnerSection({ onTabChange }) {
 
       <div style={{ position: 'relative', maxWidth: '1080px', margin: '0 auto' }}>
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <h2 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 700, marginBottom: '12px', background: 'linear-gradient(to right, #111827, #1e3a5f, #111827)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>AI提携サービス</h2>
+          <motion.h2
+            style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 700, marginBottom: '12px', background: 'linear-gradient(135deg, #111827, #1e3a5f, #7c3aed, #2563eb, #111827)', backgroundSize: '300% 300%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+            animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            AI提携サービス
+          </motion.h2>
           <p style={{ color: '#4B5563', fontSize: '18px' }}>AIがあなたに合うサービスを整理・比較します</p>
         </motion.div>
 
