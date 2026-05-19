@@ -125,28 +125,6 @@ export function FigmaNewsSection({ onTabChange }) {
           </div>
         </div>
 
-        <div style={{ position: 'relative', marginTop: '48px', padding: '48px 40px', background: 'linear-gradient(135deg, #0a1628, #1a2a42, #0a1628)', borderRadius: '28px', textAlign: 'center', overflow: 'hidden', boxShadow: '0 32px 80px rgba(10,22,40,0.3)' }}>
-          <div style={{ position: 'absolute', top: 0, left: '25%', width: '256px', height: '256px', background: 'linear-gradient(135deg, rgba(212,175,55,0.2), transparent)', borderRadius: '50%', filter: 'blur(48px)' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: '25%', width: '256px', height: '256px', background: 'linear-gradient(to top left, rgba(212,175,55,0.2), transparent)', borderRadius: '50%', filter: 'blur(48px)' }} />
-          <div style={{ position: 'absolute', inset: 0, borderRadius: '28px', border: '1px solid rgba(212,175,55,0.2)' }} />
-          <div style={{ position: 'relative' }}>
-            <h3 style={{ fontSize: 'clamp(18px,2.5vw,24px)', fontWeight: 900, color: 'white', marginBottom: '12px', lineHeight: 1.4 }}>
-              難しい不動産情報も、<br />
-              <span style={{ background: 'linear-gradient(to right, #D4AF37, #F0D97F, #D4AF37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>AIがあなた向けに整理します</span>
-            </h3>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '32px', lineHeight: 1.8 }}>
-              住宅ローン・相場・税金・補助金まで、AIがわかりやすくサポートします。
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
-              <button onClick={() => onTabChange('chat')} style={{ padding: '14px 32px', background: 'linear-gradient(135deg, #D4AF37, #F0D97F, #D4AF37)', color: '#0a1628', fontWeight: 800, fontSize: '14px', borderRadius: '14px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 0 32px rgba(212,175,55,0.5)' }}>
-                <Bot size={18} /> AIに相談する
-              </button>
-              <button style={{ padding: '14px 32px', background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 800, fontSize: '14px', borderRadius: '14px', border: '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backdropFilter: 'blur(8px)' }}>
-                <Newspaper size={18} /> 最新情報を見る
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
