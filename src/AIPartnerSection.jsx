@@ -29,7 +29,7 @@ export default function AIPartnerSection({ onTabChange }) {
             <AIServiceComparisonMockup />
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <PartnerServiceContents onOpenModal={() => setModalOpen(true)} />
+            <PartnerServiceContents onOpenModal={() => setModalOpen(true)} onScrollToTools={() => document.getElementById('tool-hub')?.scrollIntoView({ behavior: 'smooth' })} />
           </motion.div>
         </div>
       </div>

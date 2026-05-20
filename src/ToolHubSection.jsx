@@ -43,7 +43,7 @@ export default function ToolHubSection({ onTabChange }) {
   };
 
   return (
-    <section style={{ position: 'relative', background: '#F7F9FC', padding: '80px 20px 100px', overflow: 'hidden' }}>
+    <section id="tool-hub" style={{ position: 'relative', background: '#F7F9FC', padding: '80px 20px 100px', overflow: 'hidden' }}>
       {/* Grid background */}
       <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
