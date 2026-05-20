@@ -53,7 +53,7 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#EFF6FF', color: '#1d4ed8' }}>匿名OK</span>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#FAF5FF', color: '#7e22ce' }}>無料</span>
           </div>
-          <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 700, marginBottom: '12px', background: 'linear-gradient(to right, #111827, #1e3a5f, #111827)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>便利ツール</h1>
+          <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 700, marginBottom: '12px', color: '#111827' }}>便利ツール</h1>
           <p style={{ color: '#4B5563', fontSize: '20px', margin: 0 }}>不動産の悩みをAIと整理できます</p>
         </motion.div>
 
