@@ -131,6 +131,29 @@ export default function PartnerLP() {
     { num: '4.8', label: '平均満足度評価' },
   ]
 
+  const features = [
+    { icon: '🔔', title: 'AI案件通知を受け取る', desc: 'あなたの業種・エリアに合った案件をAIが自動で選定・通知します。' },
+    { icon: '🏢', title: '企業ページを作成', desc: 'House-AIサイト内に企業ページを無料で掲載。SEO効果も期待できます。' },
+    { icon: '📊', title: 'AIダッシュボードを使う', desc: '問い合わせ数・閲覧数・案件状況をリアルタイムで確認できます。' },
+    { icon: '📩', title: '問い合わせを受信', desc: 'ユーザーからの問い合わせを直接受け取り、スピーディに対応可能です。' },
+  ]
+
+  const reviews = [
+    {
+      company: '田中建設 株式会社',
+      role: '代表取締役',
+      avatar: '🏗️',
+      text: '登録翌月からAI経由で月5件以上の問い合わせが来るようになりました。費用ゼロでここまで効果があるとは思っていませんでした。',
+      stars: 5,
+    },
+    {
+      company: '横浜不動産サービス',
+      role: '営業部長',
+      avatar: '🏠',
+      text: 'AIが自動でマッチングしてくれるので、手間なく質の高い案件に出会えます。スタッフの稼働を大幅に削減できました。',
+      stars: 5,
+    },
+  ]
 
   return (
     <div style={{ fontFamily: "'Noto Sans JP', 'Hiragino Sans', sans-serif", background: C.bg, minHeight: '100vh' }}>
@@ -191,37 +214,29 @@ export default function PartnerLP() {
             margin: '0 0 16px', fontSize: 11, fontWeight: 800, color: C.gold,
             letterSpacing: 3, textTransform: 'uppercase',
           }}>
-            PARTNER PROGRAM
+            HOUSE-AI パートナープログラム
           </p>
           <h1 className="plp-fade plp-fade-2" style={{
             margin: '0 0 16px', color: '#fff', fontSize: 'clamp(26px, 6vw, 40px)',
             fontWeight: 900, lineHeight: 1.25,
           }}>
-            GINTETSU不動産 パートナープログラム
+            AIがあなたの会社に<br />案件を届ける
           </h1>
           <p className="plp-fade plp-fade-3" style={{
-            margin: '0 0 28px', fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.8,
+            margin: '0 0 8px', color: '#fff', fontSize: 'clamp(20px, 4.5vw, 30px)',
+            fontWeight: 800, lineHeight: 1.35,
           }}>
-            GINTETSU不動産ではお客様のお悩みを一緒に解決・パートナーとして最高のサービス提供できるパートナー企業様を募集しています。
+            <span style={{
+              background: `linear-gradient(90deg, ${C.gold} 0%, ${C.goldLight} 100%)`,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>完全無料で始める</span>
+            {' '}AI案件マッチング
           </p>
-          <div className="plp-fade plp-fade-3" style={{ marginBottom: 28 }}>
-            <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>現在募集している企業様</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {['リフォーム','外構工事','解体','司法書士','行政書士','税理士','不用品回収','遺品整理','保険','金融','清掃','害虫駆除','空き家管理'].map(tag => (
-                <span key={tag} style={{
-                  display: 'inline-block',
-                  border: `1px solid ${C.gold}99`,
-                  background: `${C.gold}22`,
-                  color: C.goldLight,
-                  borderRadius: 999,
-                  padding: '4px 14px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: 0.3,
-                }}>{tag}</span>
-              ))}
-            </div>
-          </div>
+          <p className="plp-fade plp-fade-3" style={{
+            margin: '0 0 36px', fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: 700,
+          }}>
+            登録費用・月額費用 一切不要
+          </p>
           <div className="plp-fade plp-fade-4" style={{ marginBottom: 16 }}>
             <CtaButton />
           </div>
@@ -246,6 +261,71 @@ export default function PartnerLP() {
           ))}
         </div>
       </div>
+
+      {/* ━━━ 3. 無料でできること ━━━ */}
+      <Section>
+        <div className="plp-fade plp-fade-1" style={{ textAlign: 'center', marginBottom: 40 }}>
+          <Badge>完全無料</Badge>
+          <h2 style={{ margin: '0 0 10px', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 900, color: C.title }}>
+            無料でできること
+          </h2>
+          <p style={{ margin: 0, fontSize: 14, color: C.desc }}>
+            登録後すぐにすべての機能をご利用いただけます
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {features.map((f, i) => (
+            <div key={i} className={`plp-feature-card plp-fade plp-fade-${i + 2}`}>
+              <div style={{ fontSize: 32, marginBottom: 14 }}>{f.icon}</div>
+              <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800, color: C.title }}>{f.title}</h3>
+              <p style={{ margin: 0, fontSize: 13, color: C.desc, lineHeight: 1.75 }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="plp-fade plp-fade-5" style={{ textAlign: 'center', marginTop: 40 }}>
+          <CtaButton />
+          <p style={{ margin: '12px 0 0', fontSize: 12, color: C.desc }}>クレジットカード不要・1分で完了</p>
+        </div>
+      </Section>
+
+      <Divider />
+
+      {/* ━━━ 4. パートナーの声 ━━━ */}
+      <Section>
+        <div className="plp-fade plp-fade-1" style={{ textAlign: 'center', marginBottom: 36 }}>
+          <Badge>パートナーの声</Badge>
+          <h2 style={{ margin: '0 0 10px', fontSize: 'clamp(20px, 4vw, 26px)', fontWeight: 900, color: C.title }}>
+            すでに{' '}
+            <span style={{ color: C.navy }}>1,200社以上</span>
+            {' '}が活用中
+          </h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {reviews.map((r, i) => (
+            <div key={i} className={`plp-review-card plp-fade plp-fade-${i + 2}`}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 14 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                  background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+                }}>{r.avatar}</div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: C.title }}>{r.company}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: C.desc }}>{r.role}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 14, color: C.gold, letterSpacing: 1 }}>
+                    {'★'.repeat(r.stars)}
+                  </p>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 13.5, color: C.title, lineHeight: 1.8, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+                「{r.text}」
+              </p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Divider />
 
       {/* ━━━ 5. 底部CTA ━━━ */}
       <div style={{
