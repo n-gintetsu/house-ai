@@ -68,10 +68,10 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                 transition={{ delay: idx * 0.05 }}
                 whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(11,31,51,0.12)' }}
                 onClick={() => handleToolClick(tool.id)}
-                style={{ background: 'white', borderRadius: '24px', padding: '32px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer' }}
+                style={{ background: 'white', borderRadius: '24px', padding: '40px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer' }}
               >
-                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '16px' }}>
-                  <Icon size={28} color="white" />
+                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px' }}>
+                  <Icon size={32} color="white" />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px', margin: '0 0 8px 0' }}>{tool.title}</h3>
                 <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px', lineHeight: 1.6, margin: '0 0 16px 0' }}>{tool.description}</p>
