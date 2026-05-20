@@ -47,13 +47,13 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
       <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       <section style={{ position: 'relative', maxWidth: '1080px', margin: '0 auto', padding: '100px 40px 60px' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: '56px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: '80px' }}>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#F0FDF4', color: '#15803d' }}>登録不要</span>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#EFF6FF', color: '#1d4ed8' }}>匿名OK</span>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#FAF5FF', color: '#7e22ce' }}>無料</span>
           </div>
-          <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 700, marginBottom: '12px', color: '#111827' }}>便利ツール</h1>
+          <h1 style={{ fontSize: '48px', fontWeight: 700, marginBottom: '12px', color: '#111827' }}>便利ツール</h1>
           <p style={{ color: '#4B5563', fontSize: '20px', margin: 0 }}>不動産の悩みをAIと整理できます</p>
         </motion.div>
 
