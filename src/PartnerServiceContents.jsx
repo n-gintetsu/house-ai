@@ -11,7 +11,7 @@ const features = [
 
 const tickerMessages = ['AI相談が増えています', '住宅ローン比較完了', '引越し費用比較中', '火災保険を整理中'];
 
-export default function PartnerServiceContents({ onOpenModal, onScrollToTools }) {
+export default function PartnerServiceContents({ onOpenModal, onOpenToolPage }) {
   const [currentTicker, setCurrentTicker] = useState(0);
   useEffect(() => {
     const iv = setInterval(() => setCurrentTicker(p => (p + 1) % tickerMessages.length), 3000);
@@ -52,7 +52,7 @@ export default function PartnerServiceContents({ onOpenModal, onScrollToTools })
             <Sparkles size={18} /> AI比較を始める
           </span>
         </button>
-        <button onClick={onScrollToTools} style={{ position: 'relative', width: '100%', height: '58px', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(96,165,250,0.3)', cursor: 'pointer', background: 'linear-gradient(to right, rgba(23,37,84,0.8), rgba(30,58,138,0.8))', backdropFilter: 'blur(4px)', color: 'rgba(219,234,254,0.9)', fontWeight: 600, fontSize: '15px', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+        <button onClick={onOpenToolPage} style={{ position: 'relative', width: '100%', height: '58px', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(96,165,250,0.3)', cursor: 'pointer', background: 'linear-gradient(to right, rgba(23,37,84,0.8), rgba(30,58,138,0.8))', backdropFilter: 'blur(4px)', color: 'rgba(219,234,254,0.9)', fontWeight: 600, fontSize: '15px', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
           便利ツールを見る
         </button>
       </motion.div>

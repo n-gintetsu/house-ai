@@ -7,7 +7,6 @@ import { FigmaNewsSection } from './FigmaNewsSection';
 import { SectionTransition } from './SectionTransition';
 import AIToolsSection from './AIToolsSection';
 import AIPartnerSection from './AIPartnerSection';
-import ToolHubSection from './ToolHubSection';
 import './HouseAiHome.css';
 
 // ============================================================
@@ -1169,7 +1168,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       <SectionTransition />
       <FigmaNewsSection onTabChange={navigate} />
       <AIPartnerSection onTabChange={navigate} />
-      <ToolHubSection onTabChange={navigate} />
 
       {/* 8. 下部固定CTA */}
       {scrolled ? (

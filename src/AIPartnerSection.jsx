@@ -3,9 +3,20 @@ import { useState } from 'react';
 import AIServiceComparisonMockup from './AIServiceComparisonMockup';
 import PartnerServiceContents from './PartnerServiceContents';
 import AIDiagnosisModal from './AIDiagnosisModal';
+import ToolHubPage from './ToolHubPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('home');
+
+  if (currentView === 'toolHub') {
+    return (
+      <ToolHubPage
+        onSelectTool={() => onTabChange('chat')}
+        onBack={() => setCurrentView('home')}
+      />
+    );
+  }
 
   return (
     <section style={{ position: 'relative', background: '#F7F9FC', padding: '80px 20px', overflow: 'hidden' }}>
@@ -29,7 +40,7 @@ export default function AIPartnerSection({ onTabChange }) {
             <AIServiceComparisonMockup />
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <PartnerServiceContents onOpenModal={() => setModalOpen(true)} onScrollToTools={() => document.getElementById('tool-hub')?.scrollIntoView({ behavior: 'smooth' })} />
+            <PartnerServiceContents onOpenModal={() => setModalOpen(true)} onOpenToolPage={() => setCurrentView('toolHub')} />
           </motion.div>
         </div>
       </div>
