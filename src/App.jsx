@@ -18,6 +18,7 @@ import MemberDashboard from './MemberDashboard'
 import Community from './Community'
 import ExpertDashboard from './ExpertDashboard'
 import ExpertRegister from './ExpertRegister'
+import AIConcierge from './AIConcierge'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -2342,6 +2343,7 @@ export default function App() {
             © 2024 GINTETSU不動産株式会社　All rights reserved.
           </div>
         </footer>}
+        <AIConcierge />
     </>
   )
 }
