@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AIServiceComparisonMockup from './AIServiceComparisonMockup';
 import PartnerServiceContents from './PartnerServiceContents';
 import AIDiagnosisModal from './AIDiagnosisModal';
@@ -8,6 +8,12 @@ import ToolHubPage from './ToolHubPage';
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home');
+
+  useEffect(() => {
+    const handler = () => setCurrentView('toolHub');
+    window.addEventListener('open-tool-hub', handler);
+    return () => window.removeEventListener('open-tool-hub', handler);
+  }, []);
 
   if (currentView === 'toolHub') {
     return (

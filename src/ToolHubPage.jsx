@@ -68,6 +68,7 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
             return (
               <motion.button
                 key={tool.id}
+                id={`tool-card-${tool.id}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}

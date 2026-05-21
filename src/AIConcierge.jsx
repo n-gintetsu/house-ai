@@ -42,6 +42,27 @@ const WELCOME_MESSAGES = {
   ds: 'よし来い。不動産の悩みならビシッと答えてやる。\n条件をはっきり言ってくれると助かります。',
 };
 
+const TOOL_KEYWORD_MAP = [
+  { keywords: ['住宅ローン', 'ローン', '返済', '金利', '月々'], toolId: 'mortgage', label: '住宅ローンシミュレーション' },
+  { keywords: ['投資', '利回り', '収益', '投資ローン'], toolId: 'investment', label: '投資ローンシミュレータ' },
+  { keywords: ['初心者', '勉強', '知識', 'ドリル'], toolId: 'beginner', label: '投資初心者ドリル' },
+  { keywords: ['諸費用', '購入費用', '初期費用'], toolId: 'costs', label: '諸費用計算' },
+  { keywords: ['税金', '不動産税', '譲渡', '売買税'], toolId: 'tax', label: '不動産税金整理' },
+  { keywords: ['宅建', '用語', '専門用語'], toolId: 'dictionary', label: '宅建用語集' },
+  { keywords: ['火災保険', '保険', '補償'], toolId: 'insurance', label: '火災保険整理' },
+  { keywords: ['引越し', '引っ越し', '引越費用'], toolId: 'moving', label: '引越し費用比較' },
+];
+
+function findToolByKeyword(input) {
+  const text = input || '';
+  for (const item of TOOL_KEYWORD_MAP) {
+    for (const kw of item.keywords) {
+      if (text.includes(kw)) return item;
+    }
+  }
+  return null;
+}
+
 const GLOW_RINGS = [
   { offset: '-8px', opacity: 0.5, dur: 3.0 },
   { offset: '-16px', opacity: 0.3, dur: 4.5 },
@@ -137,10 +158,46 @@ export default function AIConcierge() {
   };
 
   const selectAction = (action) => {
+    if (action.id === 'tools') {
+      const newMessages = [
+        ...messages,
+        { role: 'user', text: action.label },
+        { role: 'assistant', text: 'どのツールをお探しですか？キーワードで教えてください。\n例：住宅ローン、税金、引越し' },
+      ];
+      setMessages(newMessages);
+      setPhase('tool-search');
+      return;
+    }
     const newMessages = [...messages, { role: 'user', text: action.label }];
     setMessages(newMessages);
     setPhase('chat');
     doSend(newMessages);
+  };
+
+  const handleToolSearch = () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    const match = findToolByKeyword(text);
+    const userMsg = { role: 'user', text };
+    if (match) {
+      setMessages(prev => [...prev, userMsg, { role: 'assistant', text: `${match.label}へご案内します。` }]);
+      window.dispatchEvent(new CustomEvent('navigate', { detail: { tab: 'home' } }));
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-tool-hub'));
+        setTimeout(() => {
+          const el = document.getElementById(`tool-card-${match.toolId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ai-guide-highlight');
+            setTimeout(() => el.classList.remove('ai-guide-highlight'), 1460);
+          }
+          setMessages(prev => [...prev, { role: 'assistant', text: 'こちらです。登録不要で使えます。' }]);
+        }, 700);
+      }, 400);
+    } else {
+      setMessages(prev => [...prev, userMsg, { role: 'assistant', text: '該当するツールが見つかりませんでした。別のキーワードをお試しください。' }]);
+    }
   };
 
   const handleSendInput = () => {
@@ -463,6 +520,27 @@ export default function AIConcierge() {
                 </div>
               ) : null}
 
+              {/* ツール検索 */}
+              {phase === 'tool-search' ? (
+                <div>
+                  {messages.map((m, i) => (
+                    <div key={i} style={{ marginBottom: '12px', display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                      <div style={{
+                        maxWidth: '85%',
+                        background: m.role === 'assistant' ? 'rgba(216,179,63,0.07)' : 'rgba(255,255,255,0.07)',
+                        border: `1px solid ${m.role === 'assistant' ? 'rgba(216,179,63,0.2)' : 'rgba(255,255,255,0.12)'}`,
+                        borderRadius: '10px', padding: '10px 12px',
+                        color: 'rgba(255,255,255,0.9)', fontSize: '13px', lineHeight: 1.65,
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                      }}>
+                        {m.text}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              ) : null}
+
               {/* チャット */}
               {phase === 'chat' ? (
                 <div>
@@ -529,8 +607,8 @@ export default function AIConcierge() {
               ) : null}
             </div>
 
-            {/* Chat input */}
-            {phase === 'chat' ? (
+            {/* Chat / Tool-search input */}
+            {phase === 'chat' || phase === 'tool-search' ? (
               <div style={{ borderTop: '1px solid rgba(216,179,63,0.2)', flexShrink: 0 }}>
                 <div style={{ padding: '10px 12px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                   <textarea
@@ -539,10 +617,10 @@ export default function AIConcierge() {
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        handleSendInput();
+                        phase === 'tool-search' ? handleToolSearch() : handleSendInput();
                       }
                     }}
-                    placeholder="メッセージを入力..."
+                    placeholder={phase === 'tool-search' ? 'キーワードを入力...' : 'メッセージを入力...'}
                     disabled={isSending}
                     style={{
                       flex: 1, background: 'rgba(255,255,255,0.05)',
@@ -554,7 +632,7 @@ export default function AIConcierge() {
                   />
                   <button
                     type="button"
-                    onClick={handleSendInput}
+                    onClick={phase === 'tool-search' ? handleToolSearch : handleSendInput}
                     disabled={isSending}
                     style={{
                       background: GOLD, color: BG, border: 'none', borderRadius: '10px',
@@ -567,19 +645,36 @@ export default function AIConcierge() {
                     <ChevronRight size={16} />
                   </button>
                 </div>
-                <div style={{ padding: '0 12px 10px', display: 'flex', justifyContent: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPhase('action')}
-                    style={{
-                      background: 'none', border: '1px solid rgba(216,179,63,0.25)',
-                      color: 'rgba(216,179,63,0.65)', borderRadius: '8px',
-                      padding: '5px 14px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    アクション選択に戻る
-                  </button>
-                </div>
+                {phase === 'chat' ? (
+                  <div style={{ padding: '0 12px 10px', display: 'flex', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPhase('action')}
+                      style={{
+                        background: 'none', border: '1px solid rgba(216,179,63,0.25)',
+                        color: 'rgba(216,179,63,0.65)', borderRadius: '8px',
+                        padding: '5px 14px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      アクション選択に戻る
+                    </button>
+                  </div>
+                ) : null}
+                {phase === 'tool-search' ? (
+                  <div style={{ padding: '0 12px 10px', display: 'flex', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPhase('action')}
+                      style={{
+                        background: 'none', border: '1px solid rgba(216,179,63,0.25)',
+                        color: 'rgba(216,179,63,0.65)', borderRadius: '8px',
+                        padding: '5px 14px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      アクション選択に戻る
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </motion.div>
