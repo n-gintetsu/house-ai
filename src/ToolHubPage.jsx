@@ -25,6 +25,7 @@ const labelStyle = (label) => {
 export default function ToolHubPage({ onSelectTool, onBack }) {
   const [loadingTool, setLoadingTool] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   const handleToolClick = (toolId) => {
     setLoadingTool(toolId);
@@ -70,11 +71,22 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.5)' }}
+                onMouseEnter={() => setHoveredCard(tool.id)}
+                onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => handleToolClick(tool.id)}
-                style={{ background: 'white', borderRadius: '24px', padding: '40px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s ease' }}
+                style={{
+                  background: hoveredCard === tool.id ? 'linear-gradient(135deg, #EFF6FF, #F5F3FF)' : 'white',
+                  borderRadius: '24px',
+                  padding: '40px',
+                  border: hoveredCard === tool.id ? '1px solid rgba(99,102,241,0.5)' : '1px solid #E5E7EB',
+                  boxShadow: hoveredCard === tool.id ? '0 16px 40px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  transform: hoveredCard === tool.id ? 'translateY(-4px)' : 'translateY(0)',
+                }}
               >
-                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: hoveredCard === tool.id ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px', transition: 'background 0.25s ease' }}>
                   <Icon size={32} color="white" />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px', margin: '0 0 8px 0' }}>{tool.title}</h3>
