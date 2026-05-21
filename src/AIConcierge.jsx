@@ -20,14 +20,19 @@ const ACTIONS = [
   { id: 'tools', label: '便利ツールを使いたい', Icon: Wrench },
 ];
 
-const AI_LOG_MESSAGES = [
-  '新着物件を確認しています…',
+const HAPPY_LOGS = [
+  '山田さんが理想のお部屋を契約しました',
+  '初めての住宅ローン相談が完了しました',
+  'AI相談から問題が解決されました',
+  '新着物件が3件追加されました',
+  '鈴木さんが内見予約を完了しました',
+  '体験談への共感が急増しています',
+  '住宅ローン条件を整理しています…',
   '人気エリアを分析しています…',
   '類似体験談を検索しています…',
   'ローン相談が増えています…',
   '条件に合う物件を整理中…',
   '市場データを更新しています…',
-  'AIが最適解を検索中…',
 ];
 
 const SYSTEM_PROMPTS = {
@@ -63,6 +68,11 @@ function findToolByKeyword(input) {
   return null;
 }
 
+const EVENTS = [
+  { label: '内見予約完了', toast: '理想のお部屋と出会えますように', type: 'celebration' },
+  { label: '契約完了', toast: 'おめでとうございます。新生活のスタートですね。', type: 'contract' },
+];
+
 const GLOW_RINGS = [
   { offset: '-8px', opacity: 0.5, dur: 3.0 },
   { offset: '-16px', opacity: 0.3, dur: 4.5 },
@@ -77,6 +87,9 @@ const PARTICLES = Array.from({ length: 8 }, (_, i) => ({
   dur: 3 + (i % 3),
 }));
 
+const CEL_ANGLES = Array.from({ length: 8 }, (_, i) => i * 45);
+const THINKING_DELAYS = [0, 0.2, 0.4];
+
 export default function AIConcierge() {
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState('char');
@@ -84,10 +97,16 @@ export default function AIConcierge() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [chatCount, setChatCount] = useState(0);
   const [badge, setBadge] = useState(1);
   const [logIndex, setLogIndex] = useState(0);
   const [showLog, setShowLog] = useState(false);
+  const [toolFoundFlash, setToolFoundFlash] = useState(false);
+  const [eventToast, setEventToast] = useState(null);
+  const [celebrationActive, setCelebrationActive] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState([]);
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -97,8 +116,8 @@ export default function AIConcierge() {
     }
     const showTimer = setTimeout(() => setShowLog(true), 2500);
     const cycleInterval = setInterval(() => {
-      setLogIndex(prev => (prev + 1) % AI_LOG_MESSAGES.length);
-    }, 3500);
+      setLogIndex(prev => (prev + 1) % HAPPY_LOGS.length);
+    }, 6000);
     return () => {
       clearTimeout(showTimer);
       clearInterval(cycleInterval);
@@ -107,7 +126,7 @@ export default function AIConcierge() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isSending]);
+  }, [messages, isSending, isThinking]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -140,7 +159,9 @@ export default function AIConcierge() {
   };
 
   const doSend = async (newMessages) => {
+    setIsThinking(true);
     setIsSending(true);
+    setTimeout(() => setIsThinking(false), 800);
     try {
       const reply = await callClaude(newMessages, character);
       const newCount = chatCount + 1;
@@ -153,6 +174,7 @@ export default function AIConcierge() {
     } catch {
       setMessages([...newMessages, { role: 'assistant', text: 'エラーが発生しました。しばらくしてからお試しください。' }]);
     } finally {
+      setIsThinking(false);
       setIsSending(false);
     }
   };
@@ -192,6 +214,8 @@ export default function AIConcierge() {
             el.classList.add('ai-guide-highlight');
             setTimeout(() => el.classList.remove('ai-guide-highlight'), 1460);
           }
+          setToolFoundFlash(true);
+          setTimeout(() => setToolFoundFlash(false), 2500);
           setMessages(prev => [...prev, { role: 'assistant', text: 'こちらです。登録不要で使えます。' }]);
         }, 700);
       }, 400);
@@ -215,6 +239,30 @@ export default function AIConcierge() {
     setMessages([]);
     setInput('');
     setChatCount(0);
+    setIsThinking(false);
+    setToolFoundFlash(false);
+  };
+
+  const triggerEvent = (event) => {
+    setEventToast({ text: event.toast, type: event.type });
+    setTimeout(() => setEventToast(null), 3500);
+    if (event.type === 'celebration') {
+      setCelebrationActive(true);
+      setTimeout(() => setCelebrationActive(false), 2000);
+    }
+    if (event.type === 'contract') {
+      const pieces = Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        x: (i * 5.17 + 2.3) % 100,
+        color: ['#D8B33F', '#FFFFFF', '#93C5FD'][i % 3],
+        delay: (i % 5) * 0.1,
+        dur: 1.8 + (i % 3) * 0.25,
+        rotation: (i * 37) % 360,
+        size: 7 + (i % 3) * 2,
+      }));
+      setConfettiPieces(pieces);
+      setTimeout(() => setConfettiPieces([]), 2600);
+    }
   };
 
   const charObj = CHARACTERS.find(c => c.id === character) || null;
@@ -226,7 +274,60 @@ export default function AIConcierge() {
           0%, 100% { opacity: 0.3; transform: translateY(0); }
           50% { opacity: 1; transform: translateY(-3px); }
         }
+        @keyframes ai-thinking-dot {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+          40% { opacity: 1; transform: scale(1); }
+        }
       `}</style>
+
+      {/* Confetti — top 20% of screen, falls and fades */}
+      {confettiPieces.map(p => (
+        <motion.div
+          key={`confetti-${p.id}`}
+          initial={{ x: `${p.x}vw`, y: '-10px', opacity: 1, rotate: p.rotation }}
+          animate={{ y: '18vh', opacity: 0, rotate: p.rotation + 180 }}
+          transition={{ duration: p.dur, delay: p.delay, ease: 'easeIn' }}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0,
+            width: `${p.size}px`, height: `${p.size * 1.5}px`,
+            background: p.color,
+            borderRadius: '2px',
+            zIndex: 99999,
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+
+      {/* Event toast */}
+      <AnimatePresence>
+        {eventToast !== null ? (
+          <motion.div
+            key="event-toast"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4 }}
+            style={{
+              position: 'fixed',
+              bottom: '104px',
+              right: '20px',
+              background: eventToast.type === 'celebration' ? 'rgba(216,179,63,0.18)' : BG,
+              color: GOLD,
+              border: `1px solid ${GOLD}`,
+              borderRadius: '12px',
+              padding: '10px 16px',
+              fontSize: '13px', fontWeight: 600,
+              zIndex: 10001,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              maxWidth: '240px',
+              pointerEvents: 'none',
+            }}
+          >
+            {eventToast.text}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* AI log — visible when panel is closed */}
       {showLog ? (
@@ -234,10 +335,10 @@ export default function AIConcierge() {
           <AnimatePresence mode="wait">
             <motion.div
               key={logIndex}
-              initial={{ opacity: 0, x: -24, filter: 'blur(8px)' }}
+              initial={{ opacity: 0, x: -20, filter: 'blur(6px)' }}
               animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, x: 10, filter: 'blur(4px)' }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -250,23 +351,12 @@ export default function AIConcierge() {
               }}
             >
               <motion.div
-                animate={{
-                  opacity: [0, 1, 0, 1, 0, 1, 1],
-                  boxShadow: [
-                    '0 0 0px rgba(216,179,63,0)',
-                    `0 0 6px ${GOLD}`,
-                    '0 0 0px rgba(216,179,63,0)',
-                    `0 0 6px ${GOLD}`,
-                    '0 0 0px rgba(216,179,63,0)',
-                    `0 0 6px ${GOLD}`,
-                    `0 0 4px ${GOLD}`,
-                  ],
-                }}
-                transition={{ duration: 1.4, ease: 'easeInOut' }}
+                animate={{ opacity: [0, 1, 0, 1, 0, 1, 1] }}
+                transition={{ duration: 1.2 }}
                 style={{ width: '6px', height: '6px', borderRadius: '50%', background: GOLD, flexShrink: 0 }}
               />
               <span style={{ color: 'rgba(216,179,63,0.85)', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                {AI_LOG_MESSAGES[logIndex]}
+                {HAPPY_LOGS[logIndex]}
               </span>
             </motion.div>
           </AnimatePresence>
@@ -325,6 +415,33 @@ export default function AIConcierge() {
           />
         ))}
 
+        {/* Celebration burst particles */}
+        {celebrationActive ? (
+          CEL_ANGLES.map((angle, i) => {
+            const rad = angle * Math.PI / 180;
+            const tx = Math.cos(rad) * 80;
+            const ty = Math.sin(rad) * 80;
+            return (
+              <motion.div
+                key={`cel-${i}`}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                animate={{ x: tx, y: ty, opacity: 0, scale: 0.3 }}
+                transition={{ duration: 1.2, ease: 'easeOut', delay: i * 0.04 }}
+                style={{
+                  position: 'absolute',
+                  top: '50%', left: '50%',
+                  width: '8px', height: '8px',
+                  borderRadius: '50%',
+                  background: GOLD,
+                  marginTop: '-4px', marginLeft: '-4px',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
+            );
+          })
+        ) : null}
+
         {/* Breathing FAB */}
         <motion.div
           animate={{ scale: [1, 1.02, 1] }}
@@ -351,6 +468,50 @@ export default function AIConcierge() {
             <img src="/logo.png" alt="AI" style={{ width: '46px', height: '46px', objectFit: 'contain' }} />
           </div>
         </motion.div>
+      </div>
+
+      {/* Demo controls */}
+      <div style={{ position: 'fixed', bottom: '10px', left: '10px', zIndex: 10000 }}>
+        {showDemoPanel ? (
+          <div style={{
+            position: 'absolute', bottom: '36px', left: 0,
+            background: BG, border: `1px solid rgba(216,179,63,0.3)`,
+            borderRadius: '12px', padding: '10px', minWidth: '164px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          }}>
+            <div style={{ color: 'rgba(216,179,63,0.6)', fontSize: '10px', fontWeight: 600, marginBottom: '8px', letterSpacing: '0.05em' }}>
+              DEMO EVENTS
+            </div>
+            {EVENTS.map(ev => (
+              <button
+                key={ev.label}
+                type="button"
+                onClick={() => { triggerEvent(ev); setShowDemoPanel(false); }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  background: 'rgba(216,179,63,0.08)', border: '1px solid rgba(216,179,63,0.2)',
+                  borderRadius: '8px', padding: '8px 10px', marginBottom: '6px',
+                  color: 'rgba(255,255,255,0.85)', fontSize: '12px', cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {ev.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setShowDemoPanel(prev => !prev)}
+          style={{
+            background: 'rgba(7,20,38,0.7)', border: `1px solid rgba(216,179,63,0.2)`,
+            borderRadius: '8px', padding: '4px 8px',
+            color: 'rgba(216,179,63,0.5)', fontSize: '10px', cursor: 'pointer',
+            fontFamily: 'inherit', fontWeight: 600, letterSpacing: '0.04em',
+          }}
+        >
+          DEMO
+        </button>
       </div>
 
       {/* Panel */}
@@ -537,6 +698,19 @@ export default function AIConcierge() {
                       </div>
                     </div>
                   ))}
+                  {toolFoundFlash ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 1, 1, 0] }}
+                      transition={{ duration: 2.5, times: [0, 0.12, 0.8, 1] }}
+                      style={{
+                        textAlign: 'center', padding: '10px 8px',
+                        color: GOLD, fontSize: '13px', fontWeight: 600,
+                      }}
+                    >
+                      条件に合うツールを見つけました
+                    </motion.div>
+                  ) : null}
                   <div ref={messagesEndRef} />
                 </div>
               ) : null}
@@ -558,7 +732,23 @@ export default function AIConcierge() {
                       </div>
                     </div>
                   ))}
-                  {isSending ? (
+                  {isThinking ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 4px' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {THINKING_DELAYS.map((delay, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: '6px', height: '6px', borderRadius: '50%',
+                              background: 'rgba(216,179,63,0.6)',
+                              animation: `ai-thinking-dot 1.2s ${delay}s ease-in-out infinite`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span style={{ color: 'rgba(216,179,63,0.6)', fontSize: '12px' }}>少々お待ちください…</span>
+                    </div>
+                  ) : isSending ? (
                     <div style={{ display: 'flex', gap: '5px', padding: '10px 4px', alignItems: 'center' }}>
                       <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GOLD, animation: 'ai-concierge-pulse 1s 0s infinite' }} />
                       <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GOLD, animation: 'ai-concierge-pulse 1s 0.15s infinite' }} />
@@ -615,18 +805,20 @@ export default function AIConcierge() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && (e.shiftKey || e.metaKey)) {
                         e.preventDefault();
                         phase === 'tool-search' ? handleToolSearch() : handleSendInput();
                       }
                     }}
                     placeholder={phase === 'tool-search' ? 'キーワードを入力...' : 'メッセージを入力...'}
                     disabled={isSending}
+                    rows={1}
                     style={{
                       flex: 1, background: 'rgba(255,255,255,0.05)',
                       border: '1px solid rgba(216,179,63,0.28)', borderRadius: '10px',
-                      padding: '8px 12px', color: '#fff', fontSize: '13px',
-                      resize: 'none', minHeight: '40px', maxHeight: '90px',
+                      padding: '8px 12px', color: '#fff', fontSize: '16px',
+                      resize: 'none', minHeight: '40px', maxHeight: '120px',
+                      overflowY: 'auto',
                       fontFamily: 'inherit', outline: 'none', lineHeight: 1.5,
                     }}
                   />
