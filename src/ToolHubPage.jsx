@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
-import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles } from 'lucide-react';
+import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft } from 'lucide-react';
 
 const tools = [
   { id: 'mortgage', icon: Calculator, title: '住宅ローンシミュレーション', description: '返済・固定変動を整理', labels: ['登録不要', '人気'] },
@@ -46,15 +46,19 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
     <div style={{ minHeight: '100vh', width: '100%', background: '#F7F9FC', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <section style={{ position: 'relative', maxWidth: '1080px', margin: '0 auto', padding: '100px 40px 60px' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: '80px' }}>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <motion.button onClick={onBack} style={{ position: 'fixed', top: '24px', left: '24px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '999px', border: '1px solid #E5E7EB', background: 'white', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} whileHover={{ y: -1 }}>
+        <ChevronLeft size={16} /> 戻る
+      </motion.button>
+
+      <section style={{ position: 'relative', maxWidth: '1080px', margin: '0 auto', padding: '80px 40px 60px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: '72px' }}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#F0FDF4', color: '#15803d' }}>登録不要</span>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#EFF6FF', color: '#1d4ed8' }}>匿名OK</span>
             <span style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, background: '#FAF5FF', color: '#7e22ce' }}>無料</span>
           </div>
-          <h1 style={{ fontSize: '48px', fontWeight: 700, marginBottom: '12px', color: '#111827' }}>便利ツール</h1>
-          <p style={{ color: '#4B5563', fontSize: '20px', margin: 0 }}>不動産の悩みをAIと整理できます</p>
+          <h1 style={{ fontSize: '56px', fontWeight: 700, marginBottom: '12px', color: '#111827' }}>便利ツール</h1>
+          <p style={{ color: '#6B7280', fontSize: '18px', margin: 0 }}>不動産の悩みをAIと整理できます</p>
         </motion.div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
