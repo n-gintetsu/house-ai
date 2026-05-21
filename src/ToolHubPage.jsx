@@ -70,9 +70,9 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(11,31,51,0.12)' }}
+                whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.5)' }}
                 onClick={() => handleToolClick(tool.id)}
-                style={{ background: 'white', borderRadius: '24px', padding: '40px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer' }}
+                style={{ background: 'white', borderRadius: '24px', padding: '40px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s ease' }}
               >
                 <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px' }}>
                   <Icon size={32} color="white" />
