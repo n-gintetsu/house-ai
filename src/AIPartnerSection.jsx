@@ -4,10 +4,12 @@ import AIServiceComparisonMockup from './AIServiceComparisonMockup';
 import PartnerServiceContents from './PartnerServiceContents';
 import AIDiagnosisModal from './AIDiagnosisModal';
 import ToolHubPage from './ToolHubPage';
+import CostCalculatorPage from './CostCalculatorPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home');
+  const [selectedTool, setSelectedTool] = useState(null);
 
   useEffect(() => {
     const handler = () => setCurrentView('toolHub');
@@ -15,10 +17,25 @@ export default function AIPartnerSection({ onTabChange }) {
     return () => window.removeEventListener('open-tool-hub', handler);
   }, []);
 
+  const handleSelectTool = (toolId) => {
+    if (toolId === 'costs') {
+      setSelectedTool('costs');
+      setCurrentView('tool-detail');
+    } else {
+      onTabChange('chat');
+    }
+  };
+
+  if (currentView === 'tool-detail' && selectedTool === 'costs') {
+    return (
+      <CostCalculatorPage onBack={() => setCurrentView('toolHub')} />
+    );
+  }
+
   if (currentView === 'toolHub') {
     return (
       <ToolHubPage
-        onSelectTool={() => onTabChange('chat')}
+        onSelectTool={handleSelectTool}
         onBack={() => setCurrentView('home')}
       />
     );
