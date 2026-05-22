@@ -34,6 +34,8 @@ const HAPPY_LOGS = [
   'ローン相談が増えています…',
   '条件に合う物件を整理中…',
   '市場データを更新しています…',
+  'コミュニティで問題が解決されました',
+  'ベスト回答が選ばれました',
 ];
 
 const SYSTEM_PROMPTS = {
@@ -108,6 +110,7 @@ export default function AIConcierge() {
   const [celebrationActive, setCelebrationActive] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
   const [showDemoPanel, setShowDemoPanel] = useState(false);
+  const [dynamicLog, setDynamicLog] = useState(null);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [lastHistoryLabel, setLastHistoryLabel] = useState(null);
   const [panelGlowActive, setPanelGlowActive] = useState(false);
@@ -133,6 +136,16 @@ export default function AIConcierge() {
       const session = data.session || null;
       setLoggedInUser(session ? session.user : null);
     });
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const name = (e.detail && e.detail.userName) || 'ユーザー';
+      setDynamicLog(`${name}さんの悩みが解決されました`);
+      setTimeout(() => setDynamicLog(null), 4000);
+    };
+    window.addEventListener('community-solved', handler);
+    return () => window.removeEventListener('community-solved', handler);
   }, []);
 
   useEffect(() => {
@@ -397,7 +410,7 @@ export default function AIConcierge() {
                 style={{ width: '6px', height: '6px', borderRadius: '50%', background: GOLD, flexShrink: 0 }}
               />
               <span style={{ color: 'rgba(216,179,63,0.85)', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                {HAPPY_LOGS[logIndex]}
+                {dynamicLog !== null ? dynamicLog : HAPPY_LOGS[logIndex]}
               </span>
             </motion.div>
           </AnimatePresence>

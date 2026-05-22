@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
+import CommunityResolved from './CommunityResolved'
 
 const STORAGE_KEY = 'house-ai-community-v1'
 
@@ -78,6 +79,7 @@ function normalizePost(p) {
     empathyByMe: !!p.empathyByMe,
     comments: Array.isArray(p.comments) ? p.comments : [],
     aiComment: typeof p.aiComment === 'string' ? p.aiComment : '',
+    solved: !!p.solved,
   }
 }
 
@@ -143,6 +145,7 @@ export default function Community({ user }) {
   const [aiLoadingPostId, setAiLoadingPostId] = useState(null)
   const [rankSort, setRankSort] = useState('empathy')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [resolvedOverlay, setResolvedOverlay] = useState(null)
 
   useEffect(() => {
     saveCommunity(posts)
@@ -226,6 +229,15 @@ export default function Community({ user }) {
       }),
     )
     setCommentDrafts((d) => ({ ...d, [postId]: '' }))
+  }
+
+  const markSolved = (post) => {
+    setPosts((list) =>
+      list.map((p) => (p.id !== post.id ? p : { ...p, solved: true }))
+    )
+    const displayName = post.anon ? '匿名さん' : (post.author_name || post.author || '匿名さん')
+    setResolvedOverlay({ userName: displayName })
+    window.dispatchEvent(new CustomEvent('community-solved', { detail: { userName: displayName } }))
   }
 
   const generateAiComment = useCallback(async (post) => {
@@ -371,7 +383,12 @@ export default function Community({ user }) {
         <p style={{ color: '#475569', fontSize: 14 }}>まだ投稿がありません。最初の体験談を投稿してみましょう。</p>
       ) : (
         sortedPosts.map((post) => (
-          <article key={post.id} className="ha-post" style={{ color: '#1e293b', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: '14px 14px 10px', marginBottom: 12 }}>
+          <article key={post.id} className="ha-post" style={{
+            color: '#1e293b', background: '#fff', borderRadius: 12,
+            border: post.solved ? '1px solid rgba(216,179,63,0.5)' : '1px solid #e2e8f0',
+            padding: '14px 14px 10px', marginBottom: 12,
+            boxShadow: post.solved ? '0 0 20px rgba(216,179,63,0.1), 0 0 40px rgba(99,102,241,0.08)' : 'none',
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
               {CATEGORIES.find((c) => c.id === post.category) && (
                 <span style={{ fontSize: 11, background: '#f0f4f8', color: '#334155', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
@@ -383,6 +400,11 @@ export default function Community({ user }) {
                   💸 {post.lossAmount}
                 </span>
               )}
+              {post.solved ? (
+                <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(216,179,63,0.12)', color: '#D8B33F', border: '1px solid rgba(216,179,63,0.35)', padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                  解決済み
+                </span>
+              ) : null}
             </div>
             <h4 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 750, color: '#1e293b', lineHeight: 1.4 }}>{post.title}</h4>
             <p style={{ margin: '0 0 8px', fontSize: 13, color: '#1e293b', lineHeight: 1.65 }}>{post.body}</p>
@@ -416,7 +438,7 @@ export default function Community({ user }) {
                     {post.aiComment}
                   </div>
                 ) : null}
-                <div className="ha-actions" style={{ marginTop: 10 }}>
+                <div className="ha-actions" style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
                     type="button"
                     className="ha-btn"
@@ -425,6 +447,27 @@ export default function Community({ user }) {
                   >
                     {aiLoadingPostId === post.id ? 'AI生成中…' : 'AIコメントを生成'}
                   </button>
+                  {post.solved ? (
+                    <span style={{ fontSize: 12, color: '#D8B33F', fontWeight: 600 }}>この投稿は解決済みです</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => markSolved(post)}
+                      style={{
+                        background: 'none',
+                        border: '1px solid rgba(216,179,63,0.4)',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#D8B33F',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      解決済みにする
+                    </button>
+                  )}
                 </div>
                 {post.comments.map((c) => (
                   <div key={c.id} className="ha-comment" style={{ color: '#1e293b' }}>
@@ -450,6 +493,13 @@ export default function Community({ user }) {
           </article>
         ))
       )}
+
+      {resolvedOverlay !== null ? (
+        <CommunityResolved
+          userName={resolvedOverlay.userName}
+          onClose={() => setResolvedOverlay(null)}
+        />
+      ) : null}
 
       {/* 固定投稿ボタン（フォーム非表示時） */}
       {!showForm && (
