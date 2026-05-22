@@ -7,6 +7,36 @@ const GOLD = '#D8B33F';
 const BG = '#071426';
 const FREE_LIMIT = 5;
 
+const DAILY_LIMIT = 5;
+const STORAGE_KEY = 'house_ai_concierge_usage';
+
+function getUsageData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { count: 0, date: new Date().toDateString() };
+    const data = JSON.parse(raw);
+    if (data.date !== new Date().toDateString()) {
+      return { count: 0, date: new Date().toDateString() };
+    }
+    return data;
+  } catch(e) {
+    return { count: 0, date: new Date().toDateString() };
+  }
+}
+
+function incrementUsage() {
+  const data = getUsageData();
+  data.count = data.count + 1;
+  data.date = new Date().toDateString();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  return data.count;
+}
+
+function getRemainingCount() {
+  const data = getUsageData();
+  return Math.max(0, DAILY_LIMIT - data.count);
+}
+
 const CHARACTERS = [
   { id: 'polite', name: '丁寧系', desc: '親切・丁寧にご案内します', Icon: Star },
   { id: 'comedy', name: 'お笑い系', desc: 'ユーモアたっぷりでご案内', Icon: Smile },
@@ -112,6 +142,8 @@ export default function AIConcierge() {
   const [showDemoPanel, setShowDemoPanel] = useState(false);
   const [dynamicLog, setDynamicLog] = useState(null);
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [remaining, setRemaining] = useState(DAILY_LIMIT);
+  const [showLimitMsg, setShowLimitMsg] = useState(false);
   const [lastHistoryLabel, setLastHistoryLabel] = useState(null);
   const [panelGlowActive, setPanelGlowActive] = useState(false);
   const messagesEndRef = useRef(null);
@@ -134,7 +166,13 @@ export default function AIConcierge() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const session = data.session || null;
-      setLoggedInUser(session ? session.user : null);
+      const user = session ? session.user : null;
+      setLoggedInUser(user);
+      if (user) {
+        setRemaining(999);
+      } else {
+        setRemaining(getRemainingCount());
+      }
     });
   }, []);
 
@@ -215,7 +253,7 @@ export default function AIConcierge() {
       setChatCount(newCount);
       const withReply = [...newMessages, { role: 'assistant', text: reply }];
       setMessages(withReply);
-      if (newCount >= FREE_LIMIT) {
+      if (!loggedInUser && newCount >= FREE_LIMIT) {
         setTimeout(() => setPhase('limit'), 600);
       }
     } catch {
@@ -227,6 +265,14 @@ export default function AIConcierge() {
   };
 
   const selectAction = (action) => {
+    if (!loggedInUser && remaining <= 0) {
+      setShowLimitMsg(true);
+      return;
+    }
+    if (!loggedInUser) {
+      incrementUsage();
+      setRemaining(getRemainingCount());
+    }
     if (loggedInUser) {
       supabase.from('user_concierge_history').insert({
         user_id: loggedInUser.id,
@@ -295,6 +341,7 @@ export default function AIConcierge() {
     setChatCount(0);
     setIsThinking(false);
     setToolFoundFlash(false);
+    setShowLimitMsg(false);
   };
 
   const triggerEvent = (event) => {
@@ -615,11 +662,9 @@ export default function AIConcierge() {
                 <img src="/logo.png" alt="H" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
                 <div>
                   <div style={{ color: GOLD, fontWeight: 700, fontSize: '14px', lineHeight: 1.2 }}>AIコンシェルジュ</div>
-                  {charObj !== null ? (
-                    <div style={{ color: 'rgba(216,179,63,0.55)', fontSize: '11px', marginTop: '2px' }}>
-                      {charObj.name}モード・残り{FREE_LIMIT - chatCount}回
-                    </div>
-                  ) : null}
+                  <div style={{ color: 'rgba(216,179,63,0.55)', fontSize: '11px', marginTop: '2px' }}>
+                    {charObj !== null ? `${charObj.name}モード・` : ''}{loggedInUser ? '無制限' : `残り${remaining}回`}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -649,8 +694,25 @@ export default function AIConcierge() {
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px', minHeight: 0 }}>
 
+              {showLimitMsg ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ background: 'rgba(216,179,63,0.04)', border: '1px solid rgba(216,179,63,0.15)', borderRadius: '14px', padding: '16px' }}>
+                    <div style={{ color: 'rgba(216,179,63,0.9)', fontSize: '13px', marginBottom: '8px' }}>本日の無料相談回数（5回）を使い切りました</div>
+                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11.5px', lineHeight: 1.7, marginBottom: '12px' }}>登録すると相談回数が無制限になります。過去の相談内容も保存されます。</div>
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new CustomEvent('show-auth-sheet'))}
+                      style={{ width: '100%', background: 'linear-gradient(135deg, #c8a030, #D8B33F)', border: 'none', borderRadius: '10px', padding: '12px', color: '#071426', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      無料登録して無制限に使う
+                    </button>
+                    <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '10.5px', textAlign: 'center', marginTop: '8px' }}>明日またリセットされます</div>
+                  </div>
+                </div>
+              ) : null}
+
               {/* キャラ選択 */}
-              {phase === 'char' ? (
+              {phase === 'char' && !showLimitMsg ? (
                 <div>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', margin: '0 0 16px', lineHeight: 1.7 }}>
                     担当コンシェルジュを選んでください。
@@ -692,7 +754,7 @@ export default function AIConcierge() {
               ) : null}
 
               {/* アクション選択 */}
-              {phase === 'action' ? (
+              {phase === 'action' && !showLimitMsg ? (
                 <div>
                   {messages.map((m, i) => (
                     <div key={i} style={{ marginBottom: '14px' }}>
@@ -744,7 +806,7 @@ export default function AIConcierge() {
               ) : null}
 
               {/* ツール検索 */}
-              {phase === 'tool-search' ? (
+              {phase === 'tool-search' && !showLimitMsg ? (
                 <div>
                   {messages.map((m, i) => (
                     <div key={i} style={{ marginBottom: '12px', display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -778,7 +840,7 @@ export default function AIConcierge() {
               ) : null}
 
               {/* チャット */}
-              {phase === 'chat' ? (
+              {phase === 'chat' && !showLimitMsg ? (
                 <div>
                   {messages.map((m, i) => (
                     <div key={i} style={{ marginBottom: '12px', display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -822,7 +884,7 @@ export default function AIConcierge() {
               ) : null}
 
               {/* 登録誘導 */}
-              {phase === 'limit' ? (
+              {phase === 'limit' && !showLimitMsg ? (
                 <div style={{ textAlign: 'center', padding: '20px 8px' }}>
                   <div style={{ color: GOLD, fontWeight: 700, fontSize: '15px', marginBottom: '12px', lineHeight: 1.4 }}>
                     無料チャット（{FREE_LIMIT}回）に達しました
