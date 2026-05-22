@@ -28,7 +28,7 @@ export default function AIPartnerSection({ onTabChange }) {
 
   if (currentView === 'tool-detail' && selectedTool === 'costs') {
     return (
-      <CostCalculatorPage onBack={() => setCurrentView('toolHub')} />
+      <CostCalculatorPage onBack={() => setCurrentView('toolHub')} onSelectTool={handleSelectTool} />
     );
   }
 
