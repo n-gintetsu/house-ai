@@ -298,13 +298,15 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
         <div style={{ background: 'linear-gradient(135deg, #1a3a5c, #2563eb)', borderRadius: '24px', padding: '32px', textAlign: 'center' }}>
           <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', margin: '0 0 8px' }}>より詳しく相談しますか？</h3>
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', margin: '0 0 20px', lineHeight: 1.7 }}>AIコンシェルジュが年収・家族構成・希望エリアをもとに、あなた向けのローンプランを整理します。</p>
-          <button
+          <motion.button
             type="button"
             onClick={safeOnOpenConcierge}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 32px', borderRadius: '999px', border: 'none', background: '#c9a84c', color: '#0F172A', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            whileHover={{ scale: 1.03, boxShadow: '0 8px 30px rgba(201,168,76,0.6)' }}
+            whileTap={{ scale: 0.98 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 32px', borderRadius: '999px', border: 'none', background: 'linear-gradient(135deg, #c8a030, #D4AF37, #c8a030)', boxShadow: '0 4px 20px rgba(201,168,76,0.4)', color: '#0F172A', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             AIに相談する <ArrowRight size={16} />
-          </button>
+          </motion.button>
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '12px', marginBottom: 0 }}>登録不要・無料でご利用いただけます</p>
         </div>
 
