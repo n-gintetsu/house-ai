@@ -165,6 +165,7 @@ export default function DictionaryPage({ onBack }) {
           <img src="/logo.png" alt="House-AI" style={{ width: '40px', height: '40px', objectFit: 'contain', display: 'block', margin: '0 auto 12px' }} />
           <h1 style={{ fontSize: '32px', fontWeight: 700, color: NAVY, margin: '0 0 8px' }}>宅建用語集</h1>
           <p style={{ fontSize: '15px', color: '#6B7280', margin: 0 }}>不動産取引の重要用語をカテゴリ別に整理</p>
+          <p style={{ fontSize: '12px', color: '#9CA3AF', margin: '8px 0 0', textAlign: 'center' }}>最新情報の反映に努めていますが、法改正等により内容が古い場合があります。</p>
         </div>
 
         {/* 検索バー */}
