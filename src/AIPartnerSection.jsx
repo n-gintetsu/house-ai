@@ -5,6 +5,7 @@ import PartnerServiceContents from './PartnerServiceContents';
 import AIDiagnosisModal from './AIDiagnosisModal';
 import ToolHubPage from './ToolHubPage';
 import CostCalculatorPage from './CostCalculatorPage';
+import DictionaryPage from './DictionaryPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,6 +22,9 @@ export default function AIPartnerSection({ onTabChange }) {
     if (toolId === 'costs') {
       setSelectedTool('costs');
       setCurrentView('tool-detail');
+    } else if (toolId === 'dictionary') {
+      setSelectedTool('dictionary');
+      setCurrentView('tool-detail');
     } else {
       onTabChange('chat');
     }
@@ -29,6 +33,12 @@ export default function AIPartnerSection({ onTabChange }) {
   if (currentView === 'tool-detail' && selectedTool === 'costs') {
     return (
       <CostCalculatorPage onBack={() => setCurrentView('toolHub')} onSelectTool={handleSelectTool} />
+    );
+  }
+
+  if (currentView === 'tool-detail' && selectedTool === 'dictionary') {
+    return (
+      <DictionaryPage onBack={() => setCurrentView('toolHub')} />
     );
   }
 
