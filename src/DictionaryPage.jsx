@@ -161,12 +161,10 @@ export default function DictionaryPage({ onBack }) {
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '80px 20px 0' }}>
         {/* ヘッダー */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '8px' }}>
-            <img src="/logo.png" alt="House-AI" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-            <h1 style={{ fontSize: '32px', fontWeight: 700, color: NAVY, margin: 0 }}>宅建用語集</h1>
-          </div>
-          <p style={{ color: '#6B7280', fontSize: '15px', margin: 0 }}>不動産取引の重要用語をカテゴリ別に整理</p>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <img src="/logo.png" alt="House-AI" style={{ width: '40px', height: '40px', objectFit: 'contain', display: 'block', margin: '0 auto 12px' }} />
+          <h1 style={{ fontSize: '32px', fontWeight: 700, color: NAVY, margin: '0 0 8px' }}>宅建用語集</h1>
+          <p style={{ fontSize: '15px', color: '#6B7280', margin: 0 }}>不動産取引の重要用語をカテゴリ別に整理</p>
         </div>
 
         {/* 検索バー */}
