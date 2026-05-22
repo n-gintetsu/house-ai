@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Home, Calculator, BookOpen, Users, Wrench, ChevronRight, UserPlus, Star, Smile, Zap } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 const GOLD = '#D8B33F';
 const BG = '#071426';
@@ -107,6 +108,9 @@ export default function AIConcierge() {
   const [celebrationActive, setCelebrationActive] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
   const [showDemoPanel, setShowDemoPanel] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [lastHistoryLabel, setLastHistoryLabel] = useState(null);
+  const [panelGlowActive, setPanelGlowActive] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -125,6 +129,13 @@ export default function AIConcierge() {
   }, [isOpen]);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data.session || null;
+      setLoggedInUser(session ? session.user : null);
+    });
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending, isThinking]);
 
@@ -132,11 +143,34 @@ export default function AIConcierge() {
     setIsOpen(true);
     setBadge(0);
     setShowLog(false);
+    if (loggedInUser) {
+      setPanelGlowActive(true);
+      setTimeout(() => setPanelGlowActive(false), 800);
+      supabase
+        .from('user_concierge_history')
+        .select('action_label, created_at')
+        .eq('user_id', loggedInUser.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+        .then(({ data }) => {
+          const items = data || [];
+          setLastHistoryLabel(items.length > 0 ? items[0].action_label : null);
+        });
+    }
   };
 
   const selectCharacter = (charId) => {
     setCharacter(charId);
-    setMessages([{ role: 'assistant', text: WELCOME_MESSAGES[charId] }]);
+    let welcomeText = WELCOME_MESSAGES[charId];
+    if (loggedInUser) {
+      const namePart = (loggedInUser.email || '').split('@')[0];
+      welcomeText = `おかえりなさいませ。${namePart}さん。`;
+      if (lastHistoryLabel !== null) {
+        welcomeText += `\n前回は${lastHistoryLabel}をご相談されていましたね。`;
+      }
+      welcomeText += '\n本日は続きを整理しますか？';
+    }
+    setMessages([{ role: 'assistant', text: welcomeText }]);
     setPhase('action');
   };
 
@@ -180,6 +214,13 @@ export default function AIConcierge() {
   };
 
   const selectAction = (action) => {
+    if (loggedInUser) {
+      supabase.from('user_concierge_history').insert({
+        user_id: loggedInUser.id,
+        action_type: action.id,
+        action_label: action.label,
+      });
+    }
     if (action.id === 'tools') {
       const newMessages = [
         ...messages,
@@ -522,11 +563,17 @@ export default function AIConcierge() {
             initial={{ opacity: 0, y: 40, scale: 0.92, filter: 'blur(8px)' }}
             animate={{
               opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
-              boxShadow: [
-                '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
-                '0 8px 48px rgba(0,0,0,0.7), 0 0 30px rgba(216,179,63,0.15)',
-                '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
-              ],
+              boxShadow: panelGlowActive
+                ? [
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 60px rgba(216,179,63,0.75), inset 0 0 24px rgba(216,179,63,0.12)',
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
+                  ]
+                : [
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 30px rgba(216,179,63,0.15)',
+                    '0 8px 48px rgba(0,0,0,0.7), 0 0 0px rgba(216,179,63,0)',
+                  ],
             }}
             exit={{ opacity: 0, y: 20, scale: 0.96, filter: 'blur(4px)' }}
             transition={{
@@ -534,7 +581,9 @@ export default function AIConcierge() {
               y: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
               scale: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
               filter: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-              boxShadow: { duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 },
+              boxShadow: panelGlowActive
+                ? { duration: 0.8, repeat: 0, ease: 'easeInOut' }
+                : { duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 },
             }}
             style={{
               position: 'fixed', bottom: '100px', right: '16px',
