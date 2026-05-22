@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { ChevronLeft, Calculator, Receipt, Shield, Home, ChevronRight } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const NAVY = '#1a3a5c';
 const GOLD = '#c9a84c';
@@ -167,6 +168,11 @@ export default function CostCalculatorPage({ onBack, onSelectTool }) {
 
   return (
     <div style={{ minHeight: '100vh', background: BG, paddingBottom: '60px' }}>
+      <SEOHead
+        title="諸費用計算 | House-AI"
+        description="賃貸・売買の初期費用を無料で簡単計算。敷金・礼金・仲介手数料・登記費用など購入時の諸費用をリアルタイムで試算できます。"
+        url="https://house-ai.co.jp/tools/costs"
+      />
       <style>{`
         @media (max-width: 900px) {
           .cost-calc-grid { grid-template-columns: 1fr !important; }

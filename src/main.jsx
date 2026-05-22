@@ -7,6 +7,42 @@ import AgencyDashboard from './AgencyDashboard'
 import PartnerDashboard from './PartnerDashboard'
 import SellerMyPage from './SellerMyPage'
 import PartnerLP from './PartnerLP'
+import ToolHubPage from './ToolHubPage'
+import DictionaryPage from './DictionaryPage'
+import CostCalculatorPage from './CostCalculatorPage'
+
+const TOOL_URL_MAP = {
+  dictionary: '/tools/dictionary',
+  costs: '/tools/costs',
+};
+
+function ToolHubStandalone() {
+  return (
+    <ToolHubPage
+      onSelectTool={(id) => {
+        const url = TOOL_URL_MAP[id];
+        if (url) { window.location.href = url; } else { window.location.href = '/'; }
+      }}
+      onBack={() => { window.location.href = '/'; }}
+    />
+  );
+}
+
+function DictionaryStandalone() {
+  return <DictionaryPage onBack={() => { window.location.href = '/tools'; }} />;
+}
+
+function CostCalculatorStandalone() {
+  return (
+    <CostCalculatorPage
+      onBack={() => { window.location.href = '/tools'; }}
+      onSelectTool={(id) => {
+        const url = TOOL_URL_MAP[id];
+        if (url) { window.location.href = url; } else { window.location.href = '/tools'; }
+      }}
+    />
+  );
+}
 
 const pathname = window.location.pathname
 
@@ -21,6 +57,12 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = SellerMyPage
 } else if (pathname === '/partner-lp' || pathname === '/partner-lp/') {
   Component = PartnerLP
+} else if (pathname === '/tools' || pathname === '/tools/') {
+  Component = ToolHubStandalone
+} else if (pathname === '/tools/dictionary' || pathname === '/tools/dictionary/') {
+  Component = DictionaryStandalone
+} else if (pathname === '/tools/costs' || pathname === '/tools/costs/') {
+  Component = CostCalculatorStandalone
 }
 
 createRoot(document.getElementById('root')).render(

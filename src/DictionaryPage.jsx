@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import SEOHead from './SEOHead';
 
 const NAVY = '#1a3a5c';
 const BG = '#F7F9FC';
@@ -132,6 +133,11 @@ export default function DictionaryPage({ onBack }) {
 
   return (
     <div style={{ minHeight: '100vh', background: BG, paddingBottom: '80px' }}>
+      <SEOHead
+        title="宅建用語集 | House-AI"
+        description="不動産取引で使われる宅建用語を51件カテゴリ別に解説。契約・登記・税金・ローン・宅建業法など重要用語をわかりやすく整理。"
+        url="https://house-ai.co.jp/tools/dictionary"
+      />
       <button
         type="button"
         onClick={onBack}

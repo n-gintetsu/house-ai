@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AffiliateCard } from './AffiliateCard';
+import SEOHead from './SEOHead';
 import { supabase } from "./lib/supabase";
 import { trackEvent } from './lib/analytics';
 import { FigmaExperienceSection } from './FigmaExperienceSection';
@@ -473,6 +474,11 @@ function AIChatFlow({ onNavigate, onRegisterSuccess, user, initialTag }) {
 
   return (
     <>
+      <SEOHead
+        title="House-AI | 不動産AIコンシェルジュ"
+        description="AIが不動産の悩みを整理・分析・提案。物件探し・住宅ローン相談・諸費用計算など不動産のすべてをAIがサポートします。"
+        url="https://house-ai.co.jp"
+      />
       {showRegisterModal && (
         <RegisterModal
           tags={savedTags}

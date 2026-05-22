@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://house-ai.co.jp/sitemap.xml
