@@ -4,4 +4,5 @@
   <url><loc>https://house-ai.co.jp/tools</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://house-ai.co.jp/tools/dictionary</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://house-ai.co.jp/tools/costs</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://house-ai.co.jp/tools/mortgage</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
 </urlset>

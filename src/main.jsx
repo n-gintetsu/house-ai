@@ -10,10 +10,12 @@ import PartnerLP from './PartnerLP'
 import ToolHubPage from './ToolHubPage'
 import DictionaryPage from './DictionaryPage'
 import CostCalculatorPage from './CostCalculatorPage'
+import MortgageSimulatorPage from './MortgageSimulatorPage'
 
 const TOOL_URL_MAP = {
   dictionary: '/tools/dictionary',
   costs: '/tools/costs',
+  mortgage: '/tools/mortgage',
 };
 
 function ToolHubStandalone() {
@@ -63,6 +65,13 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = DictionaryStandalone
 } else if (pathname === '/tools/costs' || pathname === '/tools/costs/') {
   Component = CostCalculatorStandalone
+} else if (pathname === '/tools/mortgage' || pathname === '/tools/mortgage/') {
+  Component = () => (
+    <MortgageSimulatorPage
+      onBack={() => { window.location.href = '/tools'; }}
+      onOpenConcierge={() => {}}
+    />
+  )
 }
 
 createRoot(document.getElementById('root')).render(

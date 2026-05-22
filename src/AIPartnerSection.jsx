@@ -6,6 +6,7 @@ import AIDiagnosisModal from './AIDiagnosisModal';
 import ToolHubPage from './ToolHubPage';
 import CostCalculatorPage from './CostCalculatorPage';
 import DictionaryPage from './DictionaryPage';
+import MortgageSimulatorPage from './MortgageSimulatorPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,6 +26,9 @@ export default function AIPartnerSection({ onTabChange }) {
     } else if (toolId === 'dictionary') {
       setSelectedTool('dictionary');
       setCurrentView('tool-detail');
+    } else if (toolId === 'mortgage') {
+      setSelectedTool('mortgage');
+      setCurrentView('tool-detail');
     } else {
       onTabChange('chat');
     }
@@ -39,6 +43,12 @@ export default function AIPartnerSection({ onTabChange }) {
   if (currentView === 'tool-detail' && selectedTool === 'dictionary') {
     return (
       <DictionaryPage onBack={() => setCurrentView('toolHub')} />
+    );
+  }
+
+  if (currentView === 'tool-detail' && selectedTool === 'mortgage') {
+    return (
+      <MortgageSimulatorPage onBack={() => setCurrentView('toolHub')} onOpenConcierge={() => {}} />
     );
   }
 
