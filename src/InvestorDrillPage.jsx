@@ -20,16 +20,9 @@ const correctComments = [
 
 const wrongComment = 'その視点は悪くありません。\n投資家でも迷う領域です。';
 
-const COUNT_OPTIONS = [
-  { count: 5, label: '5問チャレンジ' },
-  { count: 10, label: '10問チャレンジ' },
-  { count: 30, label: '30問チャレンジ' },
-  { count: 50, label: '全50問挑戦' },
-];
-
 export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking }) {
   const [phase, setPhase] = useState('select');
-  const [selectedCount, setSelectedCount] = useState(null);
+  const [selectedLevel, setSelectedLevel] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -63,8 +56,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     setTimeout(() => setResultPhase(3), 3600);
   }, [phase]);
 
-  function handleStart(count) {
-    setSelectedCount(count);
+  function startQuiz(count) {
     setQuestions(drillLevel1.slice(0, count));
     setPhase('quiz');
     setCurrentIndex(0);
@@ -103,7 +95,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
   function handleReset() {
     setPhase('select');
-    setSelectedCount(null);
+    setSelectedLevel(null);
     setQuestions([]);
     setCurrentIndex(0);
     setSelectedAnswer(null);
@@ -138,51 +130,153 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
   if (phase === 'select') {
     return (
-      <div style={{ minHeight: '100vh', background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', overflowY: 'auto' }}>
-        <div style={{ width: '100%', maxWidth: '480px' }}>
-          {onBack ? (
+      <div style={{ minHeight: '100vh', background: '#0F172A', padding: '24px', boxSizing: 'border-box' }}>
+        {onBack ? (
+          <button
+            onClick={onBack}
+            style={{ marginBottom: '24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', padding: '8px 16px', cursor: 'pointer' }}
+          >
+            戻る
+          </button>
+        ) : null}
+
+        <div style={{ textAlign: 'center', marginBottom: '48px', paddingTop: '24px' }}>
+          <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>
+            AI INVESTOR TRAINING
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: '700', color: 'white' }}>
+            投資家育成ドリル
+          </div>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
+            レベルを選択してください
+          </div>
+        </div>
+
+        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* LEVEL 1 */}
+          <div
+            onClick={() => { setSelectedLevel('lv1'); setQuestions(drillLevel1.slice(0, 50)); setPhase('modeSelect'); }}
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
+          >
+            <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: '#D4AF37', letterSpacing: '2px' }}>LV</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#D4AF37', lineHeight: 1 }}>1</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>投資見習い</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>利回り・空室・修繕・ローン基礎</div>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問</div>
+            </div>
+            <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '20px' }}>{'>'}</div>
+          </div>
+
+          {/* LEVEL 2 COMING SOON */}
+          <div
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', cursor: 'default', opacity: 0.5, display: 'flex', alignItems: 'center', gap: '16px' }}
+          >
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>LV</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>2</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>収益化チャレンジャー</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>キャッシュフロー・融資・出口戦略</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>
+              COMING SOON
+            </div>
+          </div>
+
+          {/* LEVEL 3 COMING SOON */}
+          <div
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.08)', borderRadius: '16px', padding: '24px', cursor: 'default', opacity: 0.5, display: 'flex', alignItems: 'center', gap: '16px' }}
+          >
+            <div style={{ background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.1)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.4)', letterSpacing: '2px' }}>LV</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(212,175,55,0.4)', lineHeight: 1 }}>3</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>プロ投資家</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>IRR・積算・法人化・相続・レバレッジ</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>
+              COMING SOON
+            </div>
+          </div>
+
+          {/* EXTREME */}
+          <div
+            onClick={() => { setSelectedLevel('extreme'); setPhase('modeSelect'); }}
+            style={{ background: 'linear-gradient(135deg, rgba(20,0,0,0.8), rgba(10,10,10,0.9))', border: '1px solid rgba(212,175,55,0.6)', borderRadius: '16px', padding: '28px', cursor: 'pointer', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '16px' }}
+          >
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+            <div style={{ background: 'rgba(212,175,55,0.15)', border: '1px solid #D4AF37', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: '#D4AF37', letterSpacing: '2px' }}>EX</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#D4AF37', lineHeight: 1 }}>!</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: '#D4AF37', letterSpacing: '1px' }}>AI EXTREME TEST</div>
+              <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.6)', marginTop: '4px' }}>ネットで調べても解けない超難問</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>本物の投資家だけが解ける領域</div>
+            </div>
+            <div style={{ color: '#D4AF37', fontSize: '20px' }}>{'>'}</div>
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '8px' }}>
+            EXTREME は登録不要・全問正解者は全国TOP認定
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'modeSelect') {
+    const isExtreme = selectedLevel === 'extreme';
+    const counts = isExtreme ? [5, 10, 20, drillLevel1.length] : [5, 10, 30, 50];
+    const labels = isExtreme
+      ? ['5問チャレンジ（超難問）', '10問チャレンジ（超難問）', '20問（本気モード）', '全問挑戦（伝説級）']
+      : ['5問チャレンジ', '10問チャレンジ', '30問チャレンジ', '全50問挑戦'];
+
+    return (
+      <div style={{ minHeight: '100vh', background: '#0F172A', padding: '24px', boxSizing: 'border-box' }}>
+        <button
+          onClick={() => setPhase('select')}
+          style={{ marginBottom: '24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', padding: '8px 16px', cursor: 'pointer' }}
+        >
+          戻る
+        </button>
+
+        {isExtreme ? (
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{ color: '#D4AF37', fontSize: '24px', fontWeight: 700, letterSpacing: '2px' }}>AI EXTREME TEST</div>
+            <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '12px', marginTop: '8px' }}>本物の投資家領域への挑戦</div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{ color: 'white', fontSize: '22px', fontWeight: 700 }}>LEVEL 1 ｜ 投資見習い</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '8px' }}>問題数を選択してください</div>
+          </div>
+        )}
+
+        <div style={{ maxWidth: '440px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {labels.map((label, index) => (
             <button
-              onClick={onBack}
-              style={{ marginBottom: '24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', padding: '8px 16px', cursor: 'pointer' }}
+              key={index}
+              onClick={() => startQuiz(counts[index])}
+              style={{
+                background: isExtreme ? 'rgba(212,175,55,0.06)' : 'rgba(255,255,255,0.04)',
+                border: isExtreme ? '1px solid rgba(212,175,55,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                color: isExtreme ? '#D4AF37' : 'white',
+                fontSize: '16px',
+                padding: '18px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
             >
-              戻る
+              {label}
             </button>
-          ) : null}
-
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#D4AF37', margin: '0 0 8px' }}>投資初心者ドリル</h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>LEVEL 1 ｜ 投資見習い</p>
-          </div>
-
-          <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', marginBottom: '32px' }} />
-
-          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '32px' }}>
-            AIと一緒に不動産投資の基礎を身につけよう
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {COUNT_OPTIONS.map(({ count, label }) => (
-              <button
-                key={count}
-                onClick={() => handleStart(count)}
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(212,175,55,0.3)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  color: 'white',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#D4AF37'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
     );
@@ -198,19 +292,15 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
       null;
 
     return (
-      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', overflowY: 'auto', fontFamily: 'inherit', animation: 'flicker 8s infinite' }}>
+      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', overflowY: 'auto', fontFamily: 'inherit' }}>
         <style>{`
           @keyframes scanline {
             0% { transform: translateY(-100%); opacity: 0.3; }
             100% { transform: translateY(100vh); opacity: 0; }
           }
-          @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            92% { opacity: 1; }
-            93% { opacity: 0.4; }
-            94% { opacity: 1; }
-            96% { opacity: 0.6; }
-            97% { opacity: 1; }
+          @keyframes goldBreath {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
           }
           @keyframes particleFloat {
             0% { transform: translateY(0px) translateX(0px); opacity: 0.6; }
@@ -272,7 +362,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
           >
             {/* AI解析ヘッダー */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'flicker 2s infinite' }} />
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'goldBreath 3s ease-in-out infinite' }} />
               <span style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '3px', fontWeight: '600' }}>AI ANALYSIS</span>
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.4), transparent)' }} />
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>Q.{currentIndex + 1}</span>
@@ -433,17 +523,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             0% { transform: translateY(-100%); opacity: 0.3; }
             100% { transform: translateY(100vh); opacity: 0; }
           }
-          @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            92% { opacity: 1; }
-            93% { opacity: 0.4; }
-            94% { opacity: 1; }
-            96% { opacity: 0.6; }
-            97% { opacity: 1; }
-          }
           @keyframes aiScan {
             0% { width: 0%; opacity: 1; }
             100% { width: 100%; opacity: 0; }
+          }
+          @keyframes goldBreath {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
           }
         `}</style>
 
@@ -453,7 +539,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
         <div style={{ width: '100%', maxWidth: '480px', textAlign: 'center' }}>
           {resultPhase === 0 ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.8)', letterSpacing: '4px', marginBottom: '24px', animation: 'flicker 1s infinite' }}>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.8)', letterSpacing: '4px', marginBottom: '24px' }}>
                 AI ANALYSIS COMPLETE
               </div>
               <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>
