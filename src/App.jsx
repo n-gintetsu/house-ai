@@ -219,6 +219,21 @@ const NavIcons = {
   ),
 };
 
+const MenuSVGs = {
+  properties: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 8L9 2L16 8V16H12V11H6V16H2V8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>,
+  vendors: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4"/><circle cx="12" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M1 15C1 12.8 3.2 11 6 11M17 15C17 12.8 14.8 11 12 11C9.2 11 7 12.8 7 15" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+  chat: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4H15C15.6 4 16 4.4 16 5V12C16 12.6 15.6 13 15 13H10L7 16V13H3C2.4 13 2 12.6 2 12V5C2 4.4 2.4 4 3 4Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/><circle cx="6" cy="8.5" r="1" fill="currentColor"/><circle cx="9" cy="8.5" r="1" fill="currentColor"/><circle cx="12" cy="8.5" r="1" fill="currentColor"/></svg>,
+  sell: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2 7H16" stroke="currentColor" strokeWidth="1.2"/><circle cx="6" cy="11" r="1.2" fill="currentColor"/><path d="M9 11H13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  owner: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2 7H16" stroke="currentColor" strokeWidth="1.2"/><path d="M5 10H8M5 12.5H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  expert: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M2 16C2 13.2 5.1 11 9 11C12.9 11 16 13.2 16 16" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><path d="M12 8L13 10L15 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  community: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4H15C15.6 4 16 4.4 16 5V11C16 11.6 15.6 12 15 12H10L7 15V12H3C2.4 12 2 11.6 2 11V5C2 4.4 2.4 4 3 4Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>,
+  agency: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="6" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M6 6V4.5C6 3.1 7.1 2 8.5 2H9.5C10.9 2 12 3.1 12 4.5V6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><circle cx="9" cy="11" r="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  column: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  drill: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.4"/><path d="M9 5V9L12 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg>,
+  simulator: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 13L5 8L8 11L12 5L16 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="16" cy="9" r="1.5" fill="currentColor"/><line x1="2" y1="15.5" x2="16" y2="15.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  member: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M2 16C2 13.2 5.1 11 9 11C12.9 11 16 13.2 16 16" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+};
+
 export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const [user, setUser] = useState(null)
@@ -1248,41 +1263,54 @@ export default function App() {
                   boxShadow: '-4px 0 24px rgba(0,0,0,0.3)',
                 }}>
                   {/* ヘッダー */}
-                  <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      {user ? (
-                        <>
-                          <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: '0 0 2px' }}>
-                            {user.user_metadata?.name || 'ユーザー'}
-                          </p>
-                          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: 0 }}>{user.email}</p>
-                        </>
-                      ) : (
-                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: 0 }}>House-AI</p>
-                      )}
+                  <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.1))', border: '1px solid rgba(212,175,55,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M2 8L9 2L16 8V16H12V11H6V16H2V8Z" stroke="#D4AF37" strokeWidth="1.4" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: '700', color: 'white', letterSpacing: '0.5px' }}>House-AI</div>
+                          <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '2px' }}>AI不動産プラットフォーム</div>
+                        </div>
+                      </div>
+                      <button
+                        className="ha-menu-item"
+                        onClick={() => setMenuOpen(false)}
+                        style={{ background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', opacity: 0.8, lineHeight: 1, padding: 4 }}
+                      >×</button>
                     </div>
-                    <button
-                      className="ha-menu-item"
-                      onClick={() => setMenuOpen(false)}
-                      style={{ background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', opacity: 0.8, lineHeight: 1, padding: 4 }}
-                    >×</button>
+                    {user ? (
+                      <div style={{ marginTop: '12px' }}>
+                        <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, margin: '0 0 2px' }}>
+                          {user.user_metadata?.name || 'ユーザー'}
+                        </p>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: 0 }}>{user.email}</p>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', padding: '6px 10px', background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '6px', letterSpacing: '0.5px' }}>
+                        会員登録で全機能を無料で利用できます
+                      </div>
+                    )}
                   </div>
 
                   {/* メニュー項目 */}
                   <div style={{ flex: 1 }}>
                     {[
-                      { id: 'properties', icon: '🏠', label: '物件情報' },
-                      { id: 'vendors',    icon: '👷', label: '業者一覧' },
-                      { id: 'chat',       icon: '💬', label: 'AIチャット' },
-                      { id: 'sell',       icon: '🏷️', label: '売却査定' },
-                      { id: 'owner',      icon: '🏢', label: '賃貸経営者様向け' },
-                      { id: 'expert',     icon: '👔', label: '専門家紹介' },
-                      { id: 'community',  icon: '🏘️', label: 'コミュニティ' },
-                      { id: 'agency',     icon: '🏗️', label: '業者様向け' },
-                      { id: 'column',     icon: '💰', label: 'お得情報' },
-                      { id: 'drill',      icon: '📊', label: '投資ドリル' },
-                      { id: 'simulator',  icon: '🧮', label: '投資シミュレーター' },
-                      { id: 'member',     icon: '👤', label: '会員専用' },
+                      { id: 'properties', label: '物件情報' },
+                      { id: 'vendors',    label: '業者一覧' },
+                      { id: 'chat',       label: 'AIチャット' },
+                      { id: 'sell',       label: '売却査定' },
+                      { id: 'owner',      label: '賃貸経営者様向け' },
+                      { id: 'expert',     label: '専門家紹介' },
+                      { id: 'community',  label: 'コミュニティ' },
+                      { id: 'agency',     label: '業者様向け' },
+                      { id: 'column',     label: 'お得情報' },
+                      { id: 'drill',      label: '投資ドリル' },
+                      { id: 'simulator',  label: '投資シミュレーター' },
+                      { id: 'member',     label: '会員専用' },
                     ].map((item) => (
                       <button
                         key={item.id}
@@ -1301,13 +1329,15 @@ export default function App() {
                           border: 'none',
                           borderBottom: '1px solid rgba(255,255,255,0.08)',
                           padding: '14px 20px',
-                          color: '#fff', fontSize: 15,
+                          color: 'rgba(255,255,255,0.85)', fontSize: 14,
                           fontWeight: tab === item.id ? 700 : 400,
                           cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
                           pointerEvents: 'auto',
                         }}
                       >
-                        <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>{item.icon}</span>
+                        <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', flexShrink: 0 }}>
+                          {MenuSVGs[item.id]}
+                        </span>
                         <span>{item.label}</span>
                       </button>
                     ))}
@@ -1326,7 +1356,6 @@ export default function App() {
                         textDecoration: 'none',
                       }}
                     >
-                      <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>🤝</span>
                       <span>パートナー登録（無料）</span>
                     </a>
                   </div>
@@ -1344,7 +1373,6 @@ export default function App() {
                       }}
                       style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.15)', padding: '14px 20px', color: '#ff8080', fontSize: 15, fontWeight: 700, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
-                      <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>🚪</span>
                       <span>ログアウト</span>
                     </button>
                   )}
