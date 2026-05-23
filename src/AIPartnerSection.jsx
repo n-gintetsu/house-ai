@@ -8,6 +8,7 @@ import CostCalculatorPage from './CostCalculatorPage';
 import DictionaryPage from './DictionaryPage';
 import MortgageSimulatorPage from './MortgageSimulatorPage';
 import InvestorDrillPage from './InvestorDrillPage';
+import InvestmentLoanPage from './InvestmentLoanPage';
 import DrillRankingPage from './DrillRankingPage';
 
 export default function AIPartnerSection({ onTabChange }) {
@@ -60,6 +61,15 @@ export default function AIPartnerSection({ onTabChange }) {
 
   if (showRanking) {
     return <DrillRankingPage onBack={() => setShowRanking(false)} />;
+  }
+
+  if (currentView === 'tool-detail' && selectedTool === 'investment') {
+    return (
+      <InvestmentLoanPage
+        onBack={() => setCurrentView('toolHub')}
+        onOpenTool={(tool) => { setSelectedTool(tool); setCurrentView('tool-detail'); }}
+      />
+    );
   }
 
   if (currentView === 'tool-detail' && selectedTool === 'beginner') {
