@@ -177,6 +177,48 @@ function initialOwnerForm() {
   }
 }
 
+const NavIcons = {
+  home: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="9" y="14" width="4" height="5" rx="0.5" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.2"/>
+    </svg>
+  ),
+  properties: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="4" width="16" height="14" rx="2" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5"/>
+      <path d="M3 9H19" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.2"/>
+      <path d="M8 4V9" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.2"/>
+      <path d="M14 4V9" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.2"/>
+      <circle cx="7" cy="13" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+      <circle cx="11" cy="13" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+      <circle cx="15" cy="13" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+    </svg>
+  ),
+  community: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 5H18C18.6 5 19 5.4 19 6V14C19 14.6 18.6 15 18 15H12L8 19V15H4C3.4 15 3 14.6 3 14V6C3 5.4 3.4 5 4 5Z" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="8" cy="10" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+      <circle cx="11" cy="10" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+      <circle cx="14" cy="10" r="1.2" fill={active ? '#1a3a5c' : '#94a3b8'}/>
+    </svg>
+  ),
+  expert: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="7" r="3" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5"/>
+      <circle cx="14" cy="7" r="3" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5"/>
+      <path d="M2 18C2 15.2 4.7 13 8 13" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M20 18C20 15.2 17.3 13 14 13C10.7 13 8 15.2 8 18" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  member: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="11" cy="7" r="3.5" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5"/>
+      <path d="M3 19C3 15.7 6.6 13 11 13C15.4 13 19 15.7 19 19" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+};
+
 export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const [user, setUser] = useState(null)
@@ -2271,12 +2313,12 @@ export default function App() {
           transition: 'transform 0.3s ease',
         }}>
           {[
-            { icon: '🏠', label: 'ホーム', id: 'home' },
-            { icon: '🏢', label: '物件', id: 'properties' },
-            { icon: '💬', label: '体験談', id: 'community' },
-            { icon: '🤝', label: '専門家相談', id: 'expert' },
-            { icon: '👤', label: 'マイページ', id: 'member' },
-          ].map(({ icon, label, id }) => {
+            { label: 'ホーム', id: 'home' },
+            { label: '物件', id: 'properties' },
+            { label: '体験談', id: 'community' },
+            { label: '専門家相談', id: 'expert' },
+            { label: 'マイページ', id: 'member' },
+          ].map(({ label, id }) => {
             const isActive = tab === id || (id === 'member' && tab === 'member');
             const handleClick = () => {
               if ((id === 'expert' || id === 'member') && !user) {
@@ -2292,10 +2334,9 @@ export default function App() {
                 flex: 1, background: 'none', border: 'none', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 2, padding: '6px 0',
-                color: isActive ? '#1a3a5c' : '#94a3b8',
               }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
-                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 400 }}>{label}</span>
+                {NavIcons[id](isActive)}
+                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 400, color: isActive ? '#1a3a5c' : '#94a3b8' }}>{label}</span>
               </button>
             );
           })}
