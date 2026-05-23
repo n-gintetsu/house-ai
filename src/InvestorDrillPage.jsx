@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { drillLevel1 } from './drillData';
+import { drillLevel1, drillExtreme } from './drillData';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -232,7 +232,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
   if (phase === 'modeSelect') {
     const isExtreme = selectedLevel === 'extreme';
-    const counts = isExtreme ? [5, 10, 20, drillLevel1.length] : [5, 10, 30, 50];
+    const counts = isExtreme ? [5, 10, 20, drillExtreme.length] : [5, 10, 30, 50];
     const labels = isExtreme
       ? ['5問チャレンジ（超難問）', '10問チャレンジ（超難問）', '20問（本気モード）', '全問挑戦（伝説級）']
       : ['5問チャレンジ', '10問チャレンジ', '30問チャレンジ', '全50問挑戦'];
@@ -262,7 +262,17 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
           {labels.map((label, index) => (
             <button
               key={index}
-              onClick={() => startQuiz(counts[index])}
+              onClick={() => {
+                const pool = isExtreme ? drillExtreme : drillLevel1;
+                setQuestions(pool.slice(0, counts[index]));
+                setPhase('quiz');
+                setCurrentIndex(0);
+                setSelectedAnswer(null);
+                setShowResult(false);
+                setScore(0);
+                setStreak(0);
+                setMaxStreak(0);
+              }}
               style={{
                 background: isExtreme ? 'rgba(212,175,55,0.06)' : 'rgba(255,255,255,0.04)',
                 border: isExtreme ? '1px solid rgba(212,175,55,0.35)' : '1px solid rgba(255,255,255,0.1)',
@@ -330,6 +340,9 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <span style={{ padding: '3px 10px', borderRadius: '999px', background: 'rgba(212,175,55,0.12)', color: '#D4AF37', fontSize: '12px', fontWeight: 600 }}>
               {q.category}
             </span>
+            {selectedLevel === 'extreme' ? (
+              <span style={{ fontSize: '9px', fontWeight: '700', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.6)', padding: '2px 6px', borderRadius: '3px', letterSpacing: '1px' }}>EXTREME</span>
+            ) : null}
           </div>
           <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
             スコア {score}
