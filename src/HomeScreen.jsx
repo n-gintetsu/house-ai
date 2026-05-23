@@ -662,6 +662,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStep, setAiStep] = useState(0);
   const [noticeIndex, setNoticeIndex] = useState(0);
+  const [heroStats, setHeroStats] = useState(null);
   const chatRef = useRef(null);
 
   const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
@@ -686,6 +687,41 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
     '5分前　この物件が保存されました',
     '8分前　似た条件の体験談が読まれました',
   ];
+
+  useEffect(() => {
+    const fetchHeroStats = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString();
+
+      const { data: drillData } = await supabase
+        .from('drill_scores')
+        .select('id', { count: 'exact' })
+        .gte('created_at', todayISO);
+
+      const { data: propData } = await supabase
+        .from('properties')
+        .select('id', { count: 'exact' })
+        .gte('created_at', todayISO);
+
+      const { data: conciergeData } = await supabase
+        .from('user_concierge_history')
+        .select('id', { count: 'exact' })
+        .gte('created_at', todayISO);
+
+      const drillCount = drillData ? drillData.length : 0;
+      const propCount = propData ? propData.length : 0;
+      const conciergeCount = conciergeData ? conciergeData.length : 0;
+
+      setHeroStats({
+        drill: drillCount,
+        properties: propCount,
+        concierge: conciergeCount,
+      });
+    };
+
+    fetchHeroStats();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY >= 200);
@@ -818,6 +854,23 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   return (
     <div className="hah-root">
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
+      <style>{`
+        @keyframes statPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        @keyframes countUp {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-skeleton {
+          width: 60px; height: 14px;
+          background: linear-gradient(90deg, rgba(26,58,92,0.08), rgba(26,58,92,0.15), rgba(26,58,92,0.08));
+          background-size: 200% 100%;
+          border-radius: 4px;
+          animation: statPulse 1.5s ease-in-out infinite;
+        }
+      `}</style>
 
       {/* 1. Hero */}
       <section className="hah-hero">
@@ -846,18 +899,34 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
               30秒で無料診断
             </button>
           </div>
-          <div className="hah-hero-stats">
-            {[
-              { label: '本日AI診断', value: '128件' },
-              { label: '新着物件', value: '24件' },
-              { label: '相談中', value: '18人' },
-            ].map(item => (
-              <div key={item.label} className="hah-stat-chip">
-                <span className="hah-stat-label">{item.label}：</span>
-                <span className="hah-stat-value">{item.value}</span>
-              </div>
-            ))}
-          </div>
+          {heroStats === null ? (
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(26,58,92,0.04)', border: '1px solid rgba(26,58,92,0.08)', borderRadius: '20px', padding: '7px 14px' }}>
+                  <div className="stat-skeleton" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            (() => {
+              const statsToShow = [
+                heroStats.drill > 0 ? { label: '本日の挑戦', value: heroStats.drill, unit: '件', color: '#185FA5' } : null,
+                heroStats.properties > 0 ? { label: '新着物件', value: heroStats.properties, unit: '件', color: '#0F6E56' } : null,
+                heroStats.concierge > 0 ? { label: 'AI相談', value: heroStats.concierge, unit: '件', color: '#854F0B' } : null,
+              ].filter(s => s !== null);
+              return statsToShow.length > 0 ? (
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
+                  {statsToShow.map((stat, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(26,58,92,0.04)', border: `1px solid ${stat.color}30`, borderRadius: '20px', padding: '7px 14px', animation: 'countUp 0.5s ease forwards', animationDelay: `${i * 0.1}s`, opacity: 0 }}>
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: stat.color, animation: 'statPulse 2s ease-in-out infinite' }} />
+                      <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: '500' }}>{stat.label}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: stat.color }}>{stat.value}{stat.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null;
+            })()
+          )}
         </div>
 
         <div className="hah-hero-right" ref={chatRef}>
