@@ -10,6 +10,8 @@ export default function DrillRankingPage({ onBack }) {
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [iq3Answer, setIq3Answer] = useState('');
+  const [iq3Submitted, setIq3Submitted] = useState(false);
 
   useEffect(() => {
     async function fetchRankings() {
@@ -360,19 +362,92 @@ export default function DrillRankingPage({ onBack }) {
               この投資のリスク調整後期待リターンとして投資判断の分岐点となる
               借入金利の上限値として最も適切なものはどれか。
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {['約2.1%', '約3.4%', '約1.6%', '約4.2%'].map((choice, idx) => (
-                <div key={idx} style={{ padding: '14px', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '15px', marginBottom: '8px', background: 'rgba(255,255,255,0.02)' }}>
-                  {choice}
+            <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '10px', marginTop: '20px' }}>
+              YOUR ANSWER
+            </div>
+
+            {iq3Submitted === false ? (
+              <div>
+                <textarea
+                  value={iq3Answer}
+                  onChange={(e) => setIq3Answer(e.target.value)}
+                  placeholder="借入金利の上限値と、その根拠・計算過程を記述してください..."
+                  rows={5}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    fontSize: '16px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(212,175,55,0.3)',
+                    borderRadius: '12px',
+                    color: 'white',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.7',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '8px', textAlign: 'right' }}>
+                  {iq3Answer.length} 文字
                 </div>
-              ))}
-            </div>
-            <div style={{ marginTop: '20px', padding: '14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.1)', borderRadius: '10px' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '2px', marginBottom: '6px' }}>AI HINT</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.7' }}>
-                人口動態・空室率・キャップレート変動・DSCR・IRRを全て統合するマクロ分析。不動産ファンドマネージャーレベルの問題。
+                <button
+                  onClick={() => { if (iq3Answer.trim().length >= 20) setIq3Submitted(true); }}
+                  style={{
+                    width: '100%',
+                    marginTop: '12px',
+                    padding: '16px',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    background: iq3Answer.trim().length >= 20
+                      ? 'linear-gradient(135deg, #D4AF37, #c9a84c)'
+                      : 'rgba(255,255,255,0.05)',
+                    color: iq3Answer.trim().length >= 20 ? '#0F172A' : 'rgba(255,255,255,0.2)',
+                    border: iq3Answer.trim().length >= 20
+                      ? 'none'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    cursor: iq3Answer.trim().length >= 20 ? 'pointer' : 'default',
+                    letterSpacing: '1px',
+                    transition: 'all 0.3s',
+                  }}
+                >
+                  解答を提出する
+                </button>
+                {iq3Answer.trim().length < 20 ? (
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '8px' }}>
+                    根拠を含め20文字以上で記述してください
+                  </div>
+                ) : null}
               </div>
-            </div>
+            ) : null}
+
+            {iq3Submitted === true ? (
+              <div style={{
+                padding: '24px',
+                background: 'rgba(212,175,55,0.05)',
+                border: '1px solid rgba(212,175,55,0.3)',
+                borderRadius: '12px',
+                marginTop: '16px',
+              }}>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', letterSpacing: '3px', marginBottom: '12px' }}>
+                  AI ANALYSIS
+                </div>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', lineHeight: '1.7', marginBottom: '16px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', borderLeft: '2px solid rgba(212,175,55,0.3)' }}>
+                  {'「'}{iq3Answer.length > 60 ? iq3Answer.slice(0, 60) + '...' : iq3Answer}{'」'}
+                </div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.8', marginBottom: '16px' }}>
+                  解答を受け付けました。<br/>
+                  AI解析・模範解答機能は近日公開予定です。
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.5)', lineHeight: '1.7', padding: '12px', background: 'rgba(212,175,55,0.05)', borderRadius: '8px' }}>
+                  参考：正解は約2.1%。FCR=6%・K%=約4.7%（LTV70%・金利2.5%・30年）の条件下で、
+                  キャップレート1.5%悪化による売却損をDSCR・IRRに織り込むと
+                  許容できる金利上昇幅は約0.4%となり、現行金利2.5%＋0.4%＝約2.9%が上限。
+                  ただし人口減少・空室率悪化のリスクプレミアムを加味すると保守的には2.1%が分岐点となる。
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* 解答送信エリア */}
