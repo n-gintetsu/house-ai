@@ -8,11 +8,13 @@ import CostCalculatorPage from './CostCalculatorPage';
 import DictionaryPage from './DictionaryPage';
 import MortgageSimulatorPage from './MortgageSimulatorPage';
 import InvestorDrillPage from './InvestorDrillPage';
+import DrillRankingPage from './DrillRankingPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home');
   const [selectedTool, setSelectedTool] = useState(null);
+  const [showRanking, setShowRanking] = useState(false);
 
   useEffect(() => {
     const handler = () => setCurrentView('toolHub');
@@ -56,9 +58,13 @@ export default function AIPartnerSection({ onTabChange }) {
     );
   }
 
+  if (showRanking) {
+    return <DrillRankingPage onBack={() => setShowRanking(false)} />;
+  }
+
   if (currentView === 'tool-detail' && selectedTool === 'beginner') {
     return (
-      <InvestorDrillPage onBack={() => setCurrentView('toolHub')} onOpenTool={(tool) => { setSelectedTool(tool); setCurrentView('tool-detail'); }} />
+      <InvestorDrillPage onBack={() => setCurrentView('toolHub')} onOpenTool={(tool) => { setSelectedTool(tool); setCurrentView('tool-detail'); }} onShowRanking={() => setShowRanking(true)} />
     );
   }
 
