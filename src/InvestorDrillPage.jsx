@@ -20,6 +20,14 @@ const correctComments = [
 
 const wrongComment = 'その視点は悪くありません。\n投資家でも迷う領域です。';
 
+const reactionItems = [
+  { key: 'hard', label: 'むずい' },
+  { key: 'great', label: '神問題' },
+  { key: 'good', label: 'なるほど' },
+  { key: 'beaten', label: 'やられた' },
+  { key: 'explain', label: '解説ほしい' },
+];
+
 export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking }) {
   const [phase, setPhase] = useState('select');
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -36,6 +44,9 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const [scoreSaved, setScoreSaved] = useState(false);
   const [resultPhase, setResultPhase] = useState(0);
   const [userPercentile, setUserPercentile] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
+  const [reactions, setReactions] = useState({ hard: 0, great: 0, good: 0, beaten: 0, explain: 0 });
+  const [myReaction, setMyReaction] = useState(null);
 
   useEffect(() => {
     if (phase !== 'result') return;
@@ -55,6 +66,25 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     setTimeout(() => setResultPhase(2), 2400);
     setTimeout(() => setResultPhase(3), 3600);
   }, [phase]);
+
+  useEffect(() => {
+    const fetchLiveStats = async () => {
+      const { data } = await supabase
+        .from('drill_scores')
+        .select('user_name, badge, streak, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (data && data.length > 0) {
+        const total = data.length;
+        const goldCount = data.filter(d => d.badge === 'GOLD').length;
+        const silverCount = data.filter(d => d.badge === 'SILVER').length;
+        const maxStreakAll = Math.max(...data.map(d => d.streak || 0));
+        const latestNames = data.slice(0, 5).map(d => d.user_name);
+        setLiveStats({ total, goldCount, silverCount, maxStreakAll, latestNames });
+      }
+    };
+    fetchLiveStats();
+  }, []);
 
   function startQuiz(count) {
     setQuestions(drillLevel1.slice(0, count));
@@ -108,6 +138,8 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     setScoreSaved(false);
     setResultPhase(0);
     setUserPercentile(null);
+    setReactions({ hard: 0, great: 0, good: 0, beaten: 0, explain: 0 });
+    setMyReaction(null);
   }
 
   async function handleSaveScore() {
@@ -301,8 +333,16 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
       streak === 3 ? '分析精度が上昇しています…' :
       null;
 
+    const aiAnalysisMsg =
+      showResult && isCorrect && streak >= 3 ? '連続正解を検知。思考パターンが安定しています。' :
+      showResult && isCorrect ? '正答を確認しました。' :
+      showResult ? 'この領域は多くの投資家が迷います。' :
+      '次の問題を分析中…';
+
+    const sidePanelDisplay = typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : 'flex';
+
     return (
-      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', overflowY: 'auto', fontFamily: 'inherit' }}>
+      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', fontFamily: 'inherit', display: 'flex' }}>
         <style>{`
           @keyframes scanline {
             0% { transform: translateY(-100%); opacity: 0.3; }
@@ -321,6 +361,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             0% { width: 0%; opacity: 1; }
             100% { width: 100%; opacity: 0; }
           }
+          @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+          }
         `}</style>
 
         {/* スキャンライン */}
@@ -331,148 +375,250 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
         <div style={{ position: 'fixed', top: '60%', left: '3%', width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(212,175,55,0.3)', animation: 'particleFloat 5s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'fixed', top: '40%', right: '8%', width: '2px', height: '2px', borderRadius: '50%', background: 'rgba(212,175,55,0.2)', animation: 'particleFloat 7s ease-in-out infinite', pointerEvents: 'none' }} />
 
-        {/* ヘッダー */}
-        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ color: '#D4AF37', fontWeight: 700, fontSize: '16px' }}>
-              Q.{currentIndex + 1} / {questions.length}
-            </span>
-            <span style={{ padding: '3px 10px', borderRadius: '999px', background: 'rgba(212,175,55,0.12)', color: '#D4AF37', fontSize: '12px', fontWeight: 600 }}>
-              {q.category}
-            </span>
-            {selectedLevel === 'extreme' ? (
-              <span style={{ fontSize: '9px', fontWeight: '700', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.6)', padding: '2px 6px', borderRadius: '3px', letterSpacing: '1px' }}>EXTREME</span>
-            ) : null}
-          </div>
-          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
-            スコア {score}
-          </span>
-        </div>
-
-        {/* 進捗バー */}
-        <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)' }}>
-          <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, #D4AF37, #c9a84c)', transition: 'width 0.5s ease' }} />
-        </div>
-
-        {/* ストリーク演出 */}
-        {!showResult && streakLabel !== null ? (
-          <div style={{ textAlign: 'center', padding: '12px', color: '#D4AF37', fontWeight: 700, fontSize: '14px' }}>
-            {streakLabel}
-          </div>
-        ) : null}
-
-        {/* 問題カード */}
-        <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }}>
-          <div
-            style={{
-              background: showResult && isCorrect ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.05)',
-              borderRadius: '20px',
-              padding: '32px',
-              marginBottom: '24px',
-              transition: 'background 0.3s ease',
-              opacity: 1,
-            }}
-          >
-            {/* AI解析ヘッダー */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'goldBreath 3s ease-in-out infinite' }} />
-              <span style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '3px', fontWeight: '600' }}>AI ANALYSIS</span>
-              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.4), transparent)' }} />
-              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>Q.{currentIndex + 1}</span>
+        {/* 左カラム */}
+        <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+          {/* ヘッダー */}
+          <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ color: '#D4AF37', fontWeight: 700, fontSize: '16px' }}>
+                Q.{currentIndex + 1} / {questions.length}
+              </span>
+              <span style={{ padding: '3px 10px', borderRadius: '999px', background: 'rgba(212,175,55,0.12)', color: '#D4AF37', fontSize: '12px', fontWeight: 600 }}>
+                {q.category}
+              </span>
+              {selectedLevel === 'extreme' ? (
+                <span style={{ fontSize: '9px', fontWeight: '700', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.6)', padding: '2px 6px', borderRadius: '3px', letterSpacing: '1px' }}>EXTREME</span>
+              ) : null}
             </div>
-
-            <p style={{ fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.6, margin: '0 0 28px' }}>
-              {q.question}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {q.choices.map((choice, idx) => {
-                let bg = 'rgba(255,255,255,0.05)';
-                let borderColor = 'rgba(255,255,255,0.1)';
-                let color = 'white';
-                let opacity = 1;
-
-                if (showResult) {
-                  if (idx === q.correct) {
-                    bg = 'rgba(212,175,55,0.2)';
-                    borderColor = '#D4AF37';
-                    color = '#D4AF37';
-                  } else if (idx === selectedAnswer) {
-                    bg = 'rgba(239,68,68,0.1)';
-                    borderColor = '#EF4444';
-                    color = '#EF4444';
-                  } else {
-                    opacity = 0.4;
-                  }
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleAnswer(idx)}
-                    disabled={showResult}
-                    style={{
-                      background: bg,
-                      border: `1px solid ${borderColor}`,
-                      borderRadius: '12px',
-                      padding: '16px',
-                      color: color,
-                      fontSize: '16px',
-                      textAlign: 'left',
-                      cursor: showResult ? 'default' : 'pointer',
-                      opacity: opacity,
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {choice}
-                  </button>
-                );
-              })}
-            </div>
+            <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
+              スコア {score}
+            </span>
           </div>
 
-          {/* 正解・不正解演出 */}
-          {showResult ? (
-            isCorrect ? (
-              <div style={{ color: '#D4AF37', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
-                {correctComments[praiseIndex]}
-              </div>
-            ) : (
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '16px', whiteSpace: 'pre-line' }}>
-                {wrongComment}
-              </div>
-            )
-          ) : null}
+          {/* 進捗バー */}
+          <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)' }}>
+            <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, #D4AF37, #c9a84c)', transition: 'width 0.5s ease' }} />
+          </div>
 
-          {/* 解説 */}
-          {showResult ? (
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid #D4AF37', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
-              <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.7, margin: 0 }}>
-                {q.explanation}
-              </p>
+          {/* ストリーク演出 */}
+          {!showResult && streakLabel !== null ? (
+            <div style={{ textAlign: 'center', padding: '12px', color: '#D4AF37', fontWeight: 700, fontSize: '14px' }}>
+              {streakLabel}
             </div>
           ) : null}
 
-          {/* 次へボタン */}
-          {showResult ? (
-            <button
-              onClick={handleNext}
+          {/* 問題カード */}
+          <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }}>
+            <div
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '16px 40px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
-                color: '#0F172A',
-                fontWeight: 700,
-                fontSize: '16px',
-                cursor: 'pointer',
+                background: showResult && isCorrect ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.05)',
+                borderRadius: '20px',
+                padding: '32px',
+                marginBottom: '24px',
+                transition: 'background 0.3s ease',
+                opacity: 1,
               }}
             >
-              {currentIndex < questions.length - 1 ? '次の問題へ' : '結果を見る'}
-            </button>
-          ) : null}
+              {/* AI解析ヘッダー */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'goldBreath 3s ease-in-out infinite' }} />
+                <span style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '3px', fontWeight: '600' }}>AI ANALYSIS</span>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.4), transparent)' }} />
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>Q.{currentIndex + 1}</span>
+              </div>
+
+              <p style={{ fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.6, margin: '0 0 28px' }}>
+                {q.question}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {q.choices.map((choice, idx) => {
+                  let bg = 'rgba(255,255,255,0.05)';
+                  let borderColor = 'rgba(255,255,255,0.1)';
+                  let color = 'white';
+                  let opacity = 1;
+
+                  if (showResult) {
+                    if (idx === q.correct) {
+                      bg = 'rgba(212,175,55,0.2)';
+                      borderColor = '#D4AF37';
+                      color = '#D4AF37';
+                    } else if (idx === selectedAnswer) {
+                      bg = 'rgba(239,68,68,0.1)';
+                      borderColor = '#EF4444';
+                      color = '#EF4444';
+                    } else {
+                      opacity = 0.4;
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleAnswer(idx)}
+                      disabled={showResult}
+                      style={{
+                        background: bg,
+                        border: `1px solid ${borderColor}`,
+                        borderRadius: '12px',
+                        padding: '16px',
+                        color: color,
+                        fontSize: '16px',
+                        textAlign: 'left',
+                        cursor: showResult ? 'default' : 'pointer',
+                        opacity: opacity,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {choice}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 正解・不正解演出 */}
+            {showResult ? (
+              isCorrect ? (
+                <div style={{ color: '#D4AF37', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
+                  {correctComments[praiseIndex]}
+                </div>
+              ) : (
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '16px', whiteSpace: 'pre-line' }}>
+                  {wrongComment}
+                </div>
+              )
+            ) : null}
+
+            {/* 解説 */}
+            {showResult ? (
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid #D4AF37', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.7, margin: 0 }}>
+                  {q.explanation}
+                </p>
+              </div>
+            ) : null}
+
+            {/* 次へボタン */}
+            {showResult ? (
+              <button
+                onClick={handleNext}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '16px 40px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
+                  color: '#0F172A',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                {currentIndex < questions.length - 1 ? '次の問題へ' : '結果を見る'}
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* 右カラム（AI伴走モニター） */}
+        <div style={{
+          width: '220px',
+          minWidth: '220px',
+          borderLeft: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(5,5,15,0.8)',
+          minHeight: '100vh',
+          display: sidePanelDisplay,
+          flexDirection: 'column',
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          overflowY: 'auto',
+        }}>
+          {/* Zone 1: AI ANALYZER */}
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '3px', marginBottom: '12px' }}>AI ANALYZER</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '16px' }}>
+              {aiAnalysisMsg}
+            </div>
+            {liveStats !== null ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>累計挑戦者</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>{liveStats.total}人</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>GOLD認定</span>
+                  <span style={{ color: '#D4AF37', fontWeight: 700 }}>{liveStats.goldCount}人</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>最高連続正解</span>
+                  <span style={{ color: '#D4AF37', fontWeight: 700 }}>{liveStats.maxStreakAll}連続</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Zone 2: LIVE LOG */}
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', animation: 'livePulse 2s ease-in-out infinite' }} />
+              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px' }}>LIVE LOG</span>
+            </div>
+            {liveStats !== null && liveStats.latestNames.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {liveStats.latestNames.map((name, i) => (
+                  <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>
+                    <span>{name} が挑戦</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>ログなし</div>
+            )}
+          </div>
+
+          {/* Zone 3: REACTION */}
+          <div style={{ padding: '16px' }}>
+            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', marginBottom: '10px' }}>REACTION</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {reactionItems.map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    if (myReaction === item.key) {
+                      setMyReaction(null);
+                      setReactions(r => ({ ...r, [item.key]: Math.max(0, r[item.key] - 1) }));
+                    } else {
+                      if (myReaction !== null) {
+                        setReactions(r => ({ ...r, [myReaction]: Math.max(0, r[myReaction] - 1) }));
+                      }
+                      setMyReaction(item.key);
+                      setReactions(r => ({ ...r, [item.key]: r[item.key] + 1 }));
+                    }
+                  }}
+                  style={{
+                    background: myReaction === item.key ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: myReaction === item.key ? '1px solid rgba(212,175,55,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    color: myReaction === item.key ? '#D4AF37' : 'rgba(255,255,255,0.5)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{reactions[item.key]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
