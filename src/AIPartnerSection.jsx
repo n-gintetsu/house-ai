@@ -36,6 +36,9 @@ export default function AIPartnerSection({ onTabChange }) {
     } else if (toolId === 'beginner') {
       setSelectedTool('beginner');
       setCurrentView('tool-detail');
+    } else if (toolId === 'investment') {
+      setSelectedTool('investment');
+      setCurrentView('tool-detail');
     } else {
       onTabChange('chat');
     }
