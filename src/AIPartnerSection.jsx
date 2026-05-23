@@ -58,7 +58,7 @@ export default function AIPartnerSection({ onTabChange }) {
 
   if (currentView === 'tool-detail' && selectedTool === 'beginner') {
     return (
-      <InvestorDrillPage onBack={() => setCurrentView('toolHub')} />
+      <InvestorDrillPage onBack={() => setCurrentView('toolHub')} onOpenTool={(tool) => { setSelectedTool(tool); setCurrentView('tool-detail'); }} />
     );
   }
 
