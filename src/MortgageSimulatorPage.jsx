@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, Users, ChevronRight, ArrowRight } from 'lucide-react';
 import SEOHead from './SEOHead';
+import { supabase } from './lib/supabase';
 
 const LAST_UPDATED = '2026年5月22日';
 
@@ -64,6 +65,9 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
   const [logVisible, setLogVisible] = useState(true);
   const [hoveredBank, setHoveredBank] = useState(null);
   const [prevSaved, setPrevSaved] = useState(false);
+  const [rateData, setRateData] = useState(RATE_DATA);
+  const [rateLastUpdated, setRateLastUpdated] = useState(LAST_UPDATED);
+  const [rateLoading, setRateLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -97,6 +101,30 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    supabase
+      .from('mortgage_rates')
+      .select('*')
+      .eq('is_active', true)
+      .order('bank_name')
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setRateData(data.map(r => ({
+            bank: r.bank_name,
+            variable: r.variable_rate,
+            fixed10: r.fixed10_rate,
+            fixed35: r.fixed35_rate,
+            tag: r.tag,
+            url: r.bank_url,
+          })));
+          const latest = data.reduce((a, b) => new Date(a.last_updated) > new Date(b.last_updated) ? a : b);
+          const d = new Date(latest.last_updated);
+          setRateLastUpdated(`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`);
+        }
+        setRateLoading(false);
+      });
+  }, []);
+
   const result = useMemo(() => {
     const principal = (loanAmount - downPayment) * 10000;
     if (principal <= 0) return null;
@@ -125,7 +153,7 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
   const animatedTotal = useCountUp(result ? Math.round(result.total / 10000) : 0);
   const animatedInterest = useCountUp(result ? Math.round(result.interest / 10000) : 0);
 
-  const lowestVariable = RATE_DATA.filter((b) => b.variable).sort((a, b) => a.variable - b.variable)[0];
+  const lowestVariable = rateData.filter((b) => b.variable).sort((a, b) => a.variable - b.variable)[0];
 
   const fmt = (n) => Math.round(n).toLocaleString('ja-JP');
 
@@ -224,8 +252,11 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
         <div style={{ background: 'white', borderRadius: '24px', padding: '32px', border: '1px solid #E5E7EB', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', margin: 0 }}>最新住宅ローン金利比較</h2>
-            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>最終更新日：{LAST_UPDATED}　参考値</span>
+            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>最終更新日：{rateLastUpdated}　参考値</span>
           </div>
+          {rateLoading ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>金利データを読み込み中...</div>
+          ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
               <thead>
@@ -236,7 +267,7 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
                 </tr>
               </thead>
               <tbody>
-                {RATE_DATA.map((bank, i) => (
+                {rateData.map((bank, i) => (
                   <tr
                     key={bank.bank}
                     onMouseEnter={() => setHoveredBank(i)}
@@ -267,6 +298,7 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
               </tbody>
             </table>
           </div>
+          )}
         </div>
 
         {/* AI金利分析 */}

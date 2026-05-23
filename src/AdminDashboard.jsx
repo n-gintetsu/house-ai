@@ -22,6 +22,7 @@ const TABS = [
   { id: 'community', label: '🏘️ コミュニティ管理' },
   { id: 'ads', label: '📢 広告・PR管理' },
   { id: 'growth', label: '📈 KPI/分析' },
+  { id: 'rates', label: '金利管理' },
 ]
 
 
@@ -912,6 +913,12 @@ export default function AdminDashboard() {
   const [allMembers, setAllMembers] = useState([])
   const [communityFilter, setCommunityFilter] = useState('all')
   const [communitySearch, setCommunitySearch] = useState('')
+  const [mortgageRates, setMortgageRates] = useState([])
+  const [aiCollecting, setAiCollecting] = useState(false)
+  const [aiResult, setAiResult] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [adoptedRows, setAdoptedRows] = useState([])
+  const [reflectDone, setReflectDone] = useState(false)
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -982,6 +989,13 @@ export default function AdminDashboard() {
     if (selectedAgency) { fetchAgencyNotes(selectedAgency.id); setAgencyNoteInput('') }
     else setAgencyNotes([])
   }, [selectedAgency])
+
+  useEffect(() => {
+    if (tab === 'rates') {
+      supabase.from('mortgage_rates').select('*').order('bank_name')
+        .then(({ data }) => setMortgageRates(data || []))
+    }
+  }, [tab])
 
   async function deletePost(id) {
     if (!window.confirm('この投稿を削除しますか？')) return
@@ -1094,6 +1108,89 @@ export default function AdminDashboard() {
     await supabase.from('admin_notes').insert({ target_type: targetType, target_id: targetId, content: agencyNoteInput, admin_name: '管理者' })
     setAgencyNoteInput('')
     fetchAgencyNotes(targetId)
+  }
+
+  function handleRateChange(i, field, value) {
+    setMortgageRates(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: value } : r))
+  }
+
+  async function handleSaveRates() {
+    setSaving(true)
+    for (const r of mortgageRates) {
+      await supabase.from('mortgage_rates').update({
+        bank_name: r.bank_name,
+        variable_rate: r.variable_rate,
+        fixed10_rate: r.fixed10_rate,
+        fixed35_rate: r.fixed35_rate,
+        tag: r.tag,
+      }).eq('id', r.id)
+    }
+    setSaving(false)
+  }
+
+  async function handleAiCollect() {
+    setAiCollecting(true)
+    setAiResult(null)
+    setReflectDone(false)
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          system: '住宅ローン金利の専門家です。各銀行の最新金利をJSON形式で返してください。',
+          messages: [{
+            role: 'user',
+            content: '2026年の主要銀行の住宅ローン金利を調べてください。三菱UFJ・三井住友・みずほ・PayPay銀行・auじぶん銀行・SBI新生銀行・楽天銀行・ARUHI・住信SBIネット銀行の変動金利・10年固定・35年固定を以下のJSON形式のみで返してください（説明文不要）：[{"bank_name":"銀行名","variable_rate":数値またはnull,"fixed10_rate":数値またはnull,"fixed35_rate":数値またはnull}]'
+          }]
+        })
+      })
+      const data = await res.json()
+      const textBlock = (data.content || []).find(c => c.type === 'text')
+      const text = textBlock ? textBlock.text : ''
+      const jsonMatch = text.match(/\[[\s\S]*\]/)
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0])
+          if (Array.isArray(parsed)) {
+            setAiResult(parsed)
+            setAdoptedRows(parsed.map(() => false))
+          }
+        } catch (e) {
+          console.error('JSON parse error:', e)
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    setAiCollecting(false)
+  }
+
+  async function handleReflect() {
+    if (!aiResult) return
+    const selected = aiResult.filter((_, i) => adoptedRows[i])
+    if (selected.length === 0) return
+    const now = new Date().toISOString()
+    for (const r of selected) {
+      await supabase.from('mortgage_rates').upsert({
+        bank_name: r.bank_name,
+        variable_rate: r.variable_rate,
+        fixed10_rate: r.fixed10_rate,
+        fixed35_rate: r.fixed35_rate,
+        last_updated: now,
+        is_active: true,
+      }, { onConflict: 'bank_name' })
+    }
+    setReflectDone(true)
+    const { data } = await supabase.from('mortgage_rates').select('*').order('bank_name')
+    setMortgageRates(data || [])
   }
 
   // ログイン画面
@@ -1719,6 +1816,110 @@ export default function AdminDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {tab === 'rates' && (
+            <div>
+              <h2 style={{ margin: '0 0 8px', color: '#1a3a5c', fontSize: 20 }}>住宅ローン金利管理</h2>
+              <p style={{ margin: '0 0 24px', color: '#777', fontSize: 13 }}>最終更新日を確認して、AIで最新金利を収集できます</p>
+
+              <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 15 }}>現在の金利データ（{mortgageRates.length}件）</h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc' }}>
+                        {['銀行名', '変動金利', '10年固定', '35年固定', 'タグ', '最終更新'].map(h => (
+                          <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: '#64748b', fontWeight: 700, borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mortgageRates.map((r, i) => (
+                        <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '8px 12px' }}>
+                            <input value={r.bank_name || ''} onChange={e => handleRateChange(i, 'bank_name', e.target.value)}
+                              style={{ width: '130px', padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <input value={r.variable_rate !== null && r.variable_rate !== undefined ? r.variable_rate : ''} onChange={e => handleRateChange(i, 'variable_rate', e.target.value === '' ? null : Number(e.target.value))}
+                              type="number" step="0.001"
+                              style={{ width: '80px', padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <input value={r.fixed10_rate !== null && r.fixed10_rate !== undefined ? r.fixed10_rate : ''} onChange={e => handleRateChange(i, 'fixed10_rate', e.target.value === '' ? null : Number(e.target.value))}
+                              type="number" step="0.001"
+                              style={{ width: '80px', padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <input value={r.fixed35_rate !== null && r.fixed35_rate !== undefined ? r.fixed35_rate : ''} onChange={e => handleRateChange(i, 'fixed35_rate', e.target.value === '' ? null : Number(e.target.value))}
+                              type="number" step="0.001"
+                              style={{ width: '80px', padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <input value={r.tag || ''} onChange={e => handleRateChange(i, 'tag', e.target.value)}
+                              style={{ width: '80px', padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                          </td>
+                          <td style={{ padding: '8px 12px', color: '#94a3b8', fontSize: 12, whiteSpace: 'nowrap' }}>
+                            {r.last_updated ? new Date(r.last_updated).toLocaleDateString('ja-JP') : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button onClick={handleSaveRates} disabled={saving}
+                  style={{ marginTop: 16, padding: '9px 24px', background: saving ? '#94a3b8' : '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
+                  {saving ? '保存中...' : '保存'}
+                </button>
+              </div>
+
+              <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1a3a5c', fontSize: 15 }}>AI金利収集</h3>
+                <button onClick={handleAiCollect} disabled={aiCollecting}
+                  style={{ padding: '10px 24px', background: aiCollecting ? '#94a3b8' : '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: aiCollecting ? 'not-allowed' : 'pointer' }}>
+                  {aiCollecting ? '収集中...' : 'AIで最新金利を収集する'}
+                </button>
+              </div>
+
+              {aiResult !== null ? (
+                <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <h3 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 15 }}>AI収集結果</h3>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          {['採用', '銀行名', '変動金利', '10年固定', '35年固定'].map(h => (
+                            <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: '#64748b', fontWeight: 700, borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aiResult.map((r, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: adoptedRows[i] ? '#eff6ff' : 'white' }}>
+                            <td style={{ padding: '8px 12px' }}>
+                              <input type="checkbox" checked={adoptedRows[i] || false}
+                                onChange={e => setAdoptedRows(prev => prev.map((v, idx) => idx === i ? e.target.checked : v))} />
+                            </td>
+                            <td style={{ padding: '8px 12px', fontWeight: 600, color: '#1a3a5c' }}>{r.bank_name}</td>
+                            <td style={{ padding: '8px 12px' }}>{r.variable_rate !== null && r.variable_rate !== undefined ? `${r.variable_rate}%` : '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>{r.fixed10_rate !== null && r.fixed10_rate !== undefined ? `${r.fixed10_rate}%` : '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>{r.fixed35_rate !== null && r.fixed35_rate !== undefined ? `${r.fixed35_rate}%` : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <button onClick={handleReflect}
+                      style={{ padding: '9px 24px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      選択した金利をSupabaseに反映する
+                    </button>
+                    {reflectDone ? <span style={{ color: '#16a34a', fontWeight: 700, fontSize: 14 }}>反映しました</span> : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
