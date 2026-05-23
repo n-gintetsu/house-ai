@@ -1178,8 +1178,9 @@ export default function AdminDashboard() {
     const selected = aiResult.filter((_, i) => adoptedRows[i])
     if (selected.length === 0) return
     const now = new Date().toISOString()
+    let hasError = false
     for (const r of selected) {
-      await supabase.from('mortgage_rates').upsert({
+      const { error } = await supabase.from('mortgage_rates').upsert({
         bank_name: r.bank_name,
         variable_rate: r.variable_rate,
         fixed10_rate: r.fixed10_rate,
@@ -1187,8 +1188,16 @@ export default function AdminDashboard() {
         last_updated: now,
         is_active: true,
       }, { onConflict: 'bank_name' })
+      if (error) {
+        console.log('upsert失敗:', r.bank_name, error.message)
+        hasError = true
+      } else {
+        console.log('upsert成功:', r.bank_name)
+      }
     }
-    setReflectDone(true)
+    if (!hasError) {
+      setReflectDone(true)
+    }
     const { data } = await supabase.from('mortgage_rates').select('*').order('bank_name')
     setMortgageRates(data || [])
   }
