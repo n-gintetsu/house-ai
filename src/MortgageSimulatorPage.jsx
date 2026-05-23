@@ -16,7 +16,11 @@ const RATE_DATA = [
   { bank: '楽天銀行', variable: 0.298, fixed10: 1.10, fixed35: null, url: 'https://www.rakuten-bank.co.jp', tag: '人気' },
   { bank: 'ARUHI', variable: null, fixed10: null, fixed35: 1.82, url: 'https://aruhi-corp.co.jp', tag: '固定向き' },
   { bank: '住信SBIネット銀行', variable: 0.298, fixed10: 1.12, fixed35: 1.98, url: 'https://www.netbk.co.jp', tag: 'AIおすすめ' },
-];
+].sort((a, b) => {
+  if (a.variable === null) return 1;
+  if (b.variable === null) return -1;
+  return a.variable - b.variable;
+});
 
 const AI_LOG_MESSAGES = [
   '住宅ローン相談が増えています…',
@@ -116,7 +120,11 @@ export default function MortgageSimulatorPage({ onBack, onOpenConcierge }) {
             fixed35: r.fixed35_rate,
             tag: r.tag,
             url: r.bank_url,
-          })));
+          })).sort((a, b) => {
+            if (a.variable === null) return 1;
+            if (b.variable === null) return -1;
+            return a.variable - b.variable;
+          }));
           const latest = data.reduce((a, b) => new Date(a.last_updated) > new Date(b.last_updated) ? a : b);
           const d = new Date(latest.last_updated);
           setRateLastUpdated(`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`);
