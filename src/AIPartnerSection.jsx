@@ -7,6 +7,7 @@ import ToolHubPage from './ToolHubPage';
 import CostCalculatorPage from './CostCalculatorPage';
 import DictionaryPage from './DictionaryPage';
 import MortgageSimulatorPage from './MortgageSimulatorPage';
+import InvestorDrillPage from './InvestorDrillPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,6 +30,9 @@ export default function AIPartnerSection({ onTabChange }) {
     } else if (toolId === 'mortgage') {
       setSelectedTool('mortgage');
       setCurrentView('tool-detail');
+    } else if (toolId === 'beginner') {
+      setSelectedTool('beginner');
+      setCurrentView('tool-detail');
     } else {
       onTabChange('chat');
     }
@@ -49,6 +53,12 @@ export default function AIPartnerSection({ onTabChange }) {
   if (currentView === 'tool-detail' && selectedTool === 'mortgage') {
     return (
       <MortgageSimulatorPage onBack={() => setCurrentView('toolHub')} onOpenConcierge={() => {}} />
+    );
+  }
+
+  if (currentView === 'tool-detail' && selectedTool === 'beginner') {
+    return (
+      <InvestorDrillPage onBack={() => setCurrentView('toolHub')} />
     );
   }
 
