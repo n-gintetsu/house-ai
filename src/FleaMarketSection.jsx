@@ -158,7 +158,7 @@ export default function FleaMarketSection() {
             エリア限定スタート・古物商許可対応・売れる可能性をAIが整理
           </div>
           <div style={{ marginTop: '8px', fontSize: '11px', color: '#9CA3AF' }}>
-            古物商許可番号：
+            古物商許可番号：第431060069560号
           </div>
         </div>
 
