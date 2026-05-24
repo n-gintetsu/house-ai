@@ -19,6 +19,7 @@ import Community from './Community'
 import ExpertDashboard from './ExpertDashboard'
 import ExpertRegister from './ExpertRegister'
 import AIConcierge from './AIConcierge'
+import HouseAiRankingPage from './HouseAiRankingPage'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -272,6 +273,7 @@ export default function App() {
   )
 
   const [tab, setTab] = useState('home')
+  const [showRanking, setShowRanking] = useState(false)
   const prevTab = useRef('home')
   useEffect(() => {
     if (tab === 'properties') window.scrollTo(0, 0)
@@ -577,6 +579,10 @@ export default function App() {
   /* ---- 共通: 入力 ---- */
   const fieldClass = 'ha-field'
   const labelClass = 'ha-label'
+
+  if (showRanking) {
+    return <HouseAiRankingPage onBack={() => setShowRanking(false)} />
+  }
 
   return (
     <>

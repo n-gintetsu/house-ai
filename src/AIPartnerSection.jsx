@@ -9,7 +9,7 @@ import DictionaryPage from './DictionaryPage';
 import MortgageSimulatorPage from './MortgageSimulatorPage';
 import InvestorDrillPage from './InvestorDrillPage';
 import InvestmentLoanPage from './InvestmentLoanPage';
-import DrillRankingPage from './DrillRankingPage';
+import HouseAiRankingPage from './HouseAiRankingPage';
 import AISateiPage from './AISateiPage';
 
 export default function AIPartnerSection({ onTabChange }) {
@@ -67,7 +67,7 @@ export default function AIPartnerSection({ onTabChange }) {
   }
 
   if (showRanking) {
-    return <DrillRankingPage onBack={() => setShowRanking(false)} />;
+    return <HouseAiRankingPage onBack={() => setShowRanking(false)} />;
   }
 
   if (currentView === 'tool-detail' && selectedTool === 'satei') {
