@@ -37,6 +37,19 @@ const regionMap = [
 
 const defaultRegion = { cx: 290, cy: 260, name: 'エリア' };
 
+const aiLogs = [
+  'MARKET SIGNAL DETECTED',
+  'PUBLIC PRICE DATABASE CONNECTED',
+  'SIMILAR PROPERTY FOUND: 5',
+  'AREA DEMAND ANALYSIS: HIGH',
+  'AI PRICE ENGINE INITIALIZED',
+  'TRANSACTION HISTORY VERIFIED',
+  'INVESTMENT SCORE CALCULATED',
+  'LOCATION SCORE: 87/100',
+  'MARKET TEMPERATURE: NORMAL',
+  'AI ANALYSIS COMPLETE',
+];
+
 export default function AISateiPage({ onBack }) {
   const [address, setAddress] = useState('');
   const [propertyType, setPropertyType] = useState('');
@@ -51,6 +64,10 @@ export default function AISateiPage({ onBack }) {
   const [mapStatus, setMapStatus] = useState(0);
   const [usedToday, setUsedToday] = useState(false);
   const [user, setUser] = useState(null);
+  const [displayPrice, setDisplayPrice] = useState(0);
+  const [logText, setLogText] = useState('SYSTEM READY...');
+  const [logIndex, setLogIndex] = useState(0);
+  const [typePos, setTypePos] = useState(0);
 
   useEffect(() => {
     if (!address) {
@@ -83,6 +100,40 @@ export default function AISateiPage({ onBack }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fullText = aiLogs[logIndex];
+    if (typePos < fullText.length) {
+      const t = setTimeout(() => {
+        setLogText(fullText.slice(0, typePos + 1));
+        setTypePos(prev => prev + 1);
+      }, 45);
+      return () => clearTimeout(t);
+    } else {
+      const t = setTimeout(() => {
+        setLogIndex(prev => (prev + 1) % aiLogs.length);
+        setTypePos(0);
+      }, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [logIndex, typePos]);
+
+  useEffect(() => {
+    if (!result) { setDisplayPrice(0); return; }
+    const target = result.low;
+    const duration = 1200;
+    const steps = 40;
+    const increment = target / steps;
+    let current = 0;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      current = Math.min(Math.round(increment * step), target);
+      setDisplayPrice(current);
+      if (step >= steps) clearInterval(timer);
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [result]);
 
   const handleAnalyze = () => {
     if (!address || !propertyType || !area || !age || !purpose) return;
@@ -122,6 +173,11 @@ export default function AISateiPage({ onBack }) {
 
   const canSubmit = address && propertyType && area && age && purpose && (!usedToday || user !== null) && !analyzing;
 
+  const isHighDemand = mapRegion !== null && (
+    mapRegion.name === '東京都' || mapRegion.name === '神奈川県' ||
+    mapRegion.name === '大阪府' || mapRegion.name === '近畿'
+  );
+
   return (
     <div style={{ background: '#0F172A', color: 'white', minHeight: '100vh', fontFamily: 'inherit', overflowY: 'auto' }}>
       <SEOHead
@@ -141,6 +197,25 @@ export default function AISateiPage({ onBack }) {
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes priceFlash {
+          0% { opacity: 1; }
+          20% { opacity: 0.3; }
+          40% { opacity: 1; }
+          60% { opacity: 0.6; }
+          100% { opacity: 1; }
+        }
+        @keyframes gaugeGrow {
+          from { width: 0%; }
+          to { width: 78%; }
+        }
+        @keyframes lockPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+        @keyframes djGlow {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
         }
         .satei-input {
           width: 100%;
@@ -170,6 +245,7 @@ export default function AISateiPage({ onBack }) {
           font-family: inherit;
         }
         .type-btn:hover { border-color: rgba(212,175,55,0.3); color: rgba(212,175,55,0.8); }
+        .price-flash { animation: priceFlash 0.6s ease; }
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent)', animation: 'scanline 6s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
@@ -189,7 +265,7 @@ export default function AISateiPage({ onBack }) {
           <div>
             <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '4px', marginBottom: '6px' }}>AI REAL ESTATE ANALYSIS</div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: 'white' }}>AI不動産整理査定</div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>まずはAIが相場感を整理します</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>AIが不動産市場をリアルタイム解析します</div>
           </div>
         </div>
         {user !== null ? (
@@ -333,7 +409,7 @@ export default function AISateiPage({ onBack }) {
                   fontFamily: 'inherit',
                 }}
               >
-                {usedToday === true ? (user !== null ? 'AIで相場感を整理する' : '本日の無料査定は利用済みです') : 'AIで相場感を整理する'}
+                {usedToday === true ? (user !== null ? '30秒で無料AI分析を開始' : '本日の無料分析は利用済みです') : '30秒で無料AI分析を開始'}
               </button>
             )}
           </div>
@@ -349,9 +425,28 @@ export default function AISateiPage({ onBack }) {
             mapStatus={mapStatus}
           />
 
+          {/* AIログエリア */}
+          <div style={{
+            background: 'rgba(0,8,20,0.9)',
+            border: '1px solid rgba(96,165,250,0.15)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginTop: '10px',
+            marginBottom: '12px',
+            minHeight: '36px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e', animation: 'djGlow 1.5s infinite' }} />
+              <span style={{ fontSize: '9px', color: 'rgba(96,165,250,0.5)', letterSpacing: '3px', fontFamily: 'monospace' }}>AI ANALYSIS LOG</span>
+            </div>
+            <div style={{ fontSize: '11px', color: 'rgba(34,197,94,0.9)', fontFamily: 'monospace', letterSpacing: '1px', minHeight: '16px' }}>
+              {logText}<span style={{ animation: 'lockPulse 0.8s infinite', color: 'rgba(34,197,94,0.6)' }}>_</span>
+            </div>
+          </div>
+
           {/* 解析ステータス */}
           {analyzing ? (
-            <div style={{ marginTop: '12px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', padding: '12px' }}>
+            <div style={{ marginBottom: '12px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', padding: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>AI解析ステータス</span>
                 <span style={{ fontSize: '10px', color: '#D4AF37' }}>解析中...</span>
@@ -365,61 +460,119 @@ export default function AISateiPage({ onBack }) {
 
           {/* AI分析結果 */}
           {result !== null ? (
-            <div style={{ marginTop: '16px', animation: 'fadeUp 0.6s ease' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', marginBottom: '6px' }}>AI参考価格（概算）</div>
-                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#D4AF37' }}>{result.low.toLocaleString()}〜{result.high.toLocaleString()}万円</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.4)', marginTop: '4px' }}>※参考値 実際の査定とは異なります</div>
+            <div style={{ animation: 'fadeUp 0.6s ease' }}>
+
+              {/* 全カードグリッド */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+
+                {/* 価格カード（全幅） */}
+                <div style={{
+                  gridColumn: '1 / -1',
+                  background: 'rgba(212,175,55,0.06)',
+                  border: '1px solid rgba(212,175,55,0.3)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '8px', fontFamily: 'monospace' }}>AI PRICE ESTIMATE</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <div style={{
+                      fontSize: '32px', fontWeight: '700', color: '#D4AF37',
+                      fontFamily: 'monospace', letterSpacing: '1px',
+                      textShadow: '0 0 20px rgba(212,175,55,0.5)',
+                    }}>
+                      {displayPrice.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '16px', color: 'rgba(212,175,55,0.7)', fontWeight: '600' }}>万円〜</div>
+                    <div style={{ fontSize: '20px', fontWeight: '700', color: 'rgba(212,175,55,0.6)', fontFamily: 'monospace' }}>
+                      {result.high.toLocaleString()}万円
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.35)', marginTop: '6px' }}>※AI概算 実際の査定とは異なります</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginBottom: '6px' }}>売却難易度（AI推定）</div>
-                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#4ade80' }}>低い（売れやすい）</div>
+
+                {/* MARKET SIGNAL */}
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>MARKET SIGNAL</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#22c55e', fontFamily: 'monospace' }}>低い（売れやすい）</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginBottom: '6px' }}>エリア人気度</div>
-                  <div style={{ fontSize: '13px', fontWeight: '700', color: (mapRegion !== null && (mapRegion.name === '東京都' || mapRegion.name === '神奈川県' || mapRegion.name === '大阪府' || mapRegion.name === '近畿')) ? '#4ade80' : '#fbbf24' }}>
-                    {(mapRegion !== null && (mapRegion.name === '東京都' || mapRegion.name === '神奈川県' || mapRegion.name === '大阪府' || mapRegion.name === '近畿')) ? '高い' : '標準'}
+
+                {/* AREA DEMAND */}
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>AREA DEMAND</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: isHighDemand ? '#22d3ee' : '#fbbf24', fontFamily: 'monospace' }}>
+                    {isHighDemand ? 'HIGH' : 'NORMAL'}
                   </div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginBottom: '6px' }}>投資適性（参考）</div>
-                  <div style={{ fontSize: '13px', fontWeight: '700', color: purpose === 'high' ? '#4ade80' : purpose === 'speed' ? '#fbbf24' : 'rgba(255,255,255,0.4)' }}>
-                    {purpose === 'high' ? '高め' : purpose === 'speed' ? '標準' : '参考値'}
+
+                {/* INVEST SCORE */}
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>INVEST SCORE</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: purpose === 'high' ? '#22c55e' : purpose === 'speed' ? '#fbbf24' : 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
+                    {purpose === 'high' ? 'HIGH' : purpose === 'speed' ? 'NORMAL' : 'REF ONLY'}
                   </div>
                 </div>
-              </div>
 
-              {/* AIコメント */}
-              <div style={{ marginTop: '12px', background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', padding: '14px' }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
-                  <div style={{ width: '5px', height: '5px', background: '#D4AF37', borderRadius: '50%', animation: 'goldBreath 2s infinite' }} />
-                  <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px' }}>AI ANALYSIS</span>
+                {/* PRICE/TSUBO */}
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>PRICE/TSUBO</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>145万円</div>
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.8' }}>
-                  現在このエリアでは需要が安定しています。築年数の影響はありますが、条件次第で比較検討価値があります。AIが目的に合う業者を整理することで、より良い条件での売却が検討できます。
-                </div>
-              </div>
 
-              {/* AIお断りテンプレ */}
-              <div style={{ marginTop: '12px' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginBottom: '8px', letterSpacing: '1px' }}>AIお断りテンプレ（ワンタップ送信可能）</div>
-                {[
-                  '今回は比較検討段階のため、売却時期は未定です。',
-                  '今回は相場確認のみ希望しています。',
-                ].map((txt, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '10px 14px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', width: '100%', marginBottom: '6px', textAlign: 'left', fontFamily: 'inherit' }}
-                  >
-                    {txt}
-                  </button>
-                ))}
+                {/* MARKET TEMPERATURE（全幅） */}
+                <div style={{
+                  gridColumn: '1 / -1',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '10px',
+                  padding: '12px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace' }}>MARKET TEMPERATURE</span>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>78%</span>
+                  </div>
+                  <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #1d6fcc, #22c55e, #D4AF37)',
+                      borderRadius: '2px',
+                      animation: 'gaugeGrow 1.5s ease forwards',
+                    }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>COLD</span>
+                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>HOT</span>
+                  </div>
+                </div>
+
+                {/* PRO ONLY - 将来予測 */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
+                      <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
+                      <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
+                  </div>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>FORECAST +6M</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>+4.2%</div>
+                </div>
+
+                {/* PRO ONLY - AI信頼度 */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
+                      <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
+                      <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
+                  </div>
+                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>AI CONFIDENCE</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>92%</div>
+                </div>
               </div>
 
               {user !== null ? (
-                <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ marginTop: '4px', padding: '10px 14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', flexShrink: 0 }} />
                   <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.7)' }}>
                     会員特典：査定履歴が自動保存されます
