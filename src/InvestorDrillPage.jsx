@@ -47,6 +47,8 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const [liveStats, setLiveStats] = useState(null);
   const [reactions, setReactions] = useState({ hard: 0, great: 0, good: 0, beaten: 0, explain: 0 });
   const [myReaction, setMyReaction] = useState(null);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (phase !== 'result') return;
@@ -84,6 +86,16 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
       }
     };
     fetchLiveStats();
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session ? session.user : null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session ? session.user : null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   function startQuiz(count) {
@@ -155,6 +167,21 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
       badge,
     });
     if (!error) setScoreSaved(true);
+  }
+
+  async function handleMidSave() {
+    if (!user) return;
+    setSaveStatus('saving');
+    const rate = Math.round(score / (questions.length || 1) * 100);
+    const { error } = await supabase.from('drill_scores').insert({
+      user_name: user.email,
+      score,
+      total: questions.length,
+      rate,
+      streak: maxStreak,
+      badge: null,
+    });
+    setSaveStatus(error ? null : 'saved');
   }
 
   const progressPct = questions.length > 0 ? (currentIndex / questions.length) * 100 : 0;
@@ -381,6 +408,14 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.4; transform: scale(0.8); }
           }
+          @keyframes submitSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes savePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+            50% { box-shadow: 0 0 0 4px rgba(212,175,55,0.2); }
+          }
         `}</style>
 
         {/* スキャンライン */}
@@ -394,8 +429,23 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
         {/* 左カラム */}
         <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
           {/* ヘッダー */}
-          <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0F172A' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  setPhase('modeSelect');
+                  setCurrentIndex(0);
+                  setSelectedAnswer(null);
+                  setShowResult(false);
+                  setScore(0);
+                  setStreak(0);
+                  setMaxStreak(0);
+                  setSaveStatus(null);
+                }}
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', color: 'rgba(255,255,255,0.5)', fontSize: '12px', padding: '4px 10px', cursor: 'pointer', lineHeight: 1.4 }}
+              >
+                戻る
+              </button>
               <span style={{ color: '#D4AF37', fontWeight: 700, fontSize: '16px' }}>
                 Q.{currentIndex + 1} / {questions.length}
               </span>
@@ -406,9 +456,35 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 <span style={{ fontSize: '9px', fontWeight: '700', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.6)', padding: '2px 6px', borderRadius: '3px', letterSpacing: '1px' }}>EXTREME</span>
               ) : null}
             </div>
-            <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
-              スコア {score}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              {user !== null ? (
+                <button
+                  onClick={handleMidSave}
+                  disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+                  style={{
+                    background: saveStatus === 'saved' ? 'rgba(34,197,94,0.1)' : 'rgba(212,175,55,0.08)',
+                    border: saveStatus === 'saved' ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(212,175,55,0.3)',
+                    borderRadius: '6px',
+                    color: saveStatus === 'saved' ? '#22C55E' : '#D4AF37',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    cursor: saveStatus === 'saving' || saveStatus === 'saved' ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    animation: saveStatus === null ? 'savePulse 2s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  {saveStatus === 'saving' ? (
+                    <span style={{ display: 'inline-block', width: '10px', height: '10px', border: '2px solid rgba(212,175,55,0.3)', borderTopColor: '#D4AF37', borderRadius: '50%', animation: 'submitSpin 0.7s linear infinite' }} />
+                  ) : null}
+                  {saveStatus === 'saved' ? '保存済み' : saveStatus === 'saving' ? '保存中' : '途中保存'}
+                </button>
+              ) : null}
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
+                スコア {score}
+              </span>
+            </div>
           </div>
 
           {/* 進捗バー */}
