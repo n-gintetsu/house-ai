@@ -487,8 +487,8 @@ var css = `
 @keyframes shieldFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-12px)} }
 @keyframes shieldGlow { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.4))} 50%{filter:drop-shadow(0 0 50px rgba(201,168,76,.9))} }
 @keyframes shieldScaleIn { from{transform:scaleX(0)} to{transform:scaleX(1)} }
-.shield-scale-in { animation:shieldScaleIn .8s ease-out forwards; }
-.shield-img { width:280px; display:block; margin:0 auto; animation:shieldFloat 6s ease-in-out infinite,shieldGlow 3s ease-in-out infinite; }
+.shield-scale-in { animation:shieldScaleIn .8s ease-out forwards; width:100%; }
+.shield-img { width:100%; max-width:400px; display:block; margin:0 auto; animation:shieldFloat 6s ease-in-out infinite,shieldGlow 3s ease-in-out infinite; }
 .badges-row-img { width:100%; display:block; margin-top:22px; cursor:pointer; transition:transform .2s ease,filter .2s ease; }
 .badges-row-img:hover { transform:scale(1.15); filter:drop-shadow(0 0 15px rgba(201,168,76,.8)); }
 `;
