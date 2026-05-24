@@ -357,10 +357,10 @@ var css = `
 .brand-sub { color: #d9a441; letter-spacing: .15em; font-size: 11px; white-space: nowrap; }
 .hero-grid {
   position: relative; z-index: 2;
-  display: grid; grid-template-columns: 320px 1fr 300px; gap: 32px; align-items: start; padding-top: 20px;
+  display: grid; grid-template-columns: 320px 1fr 300px; gap: 32px; align-items: start; padding-top: 0;
 }
-.badge-stage { min-height: auto; display: flex; align-items: center; justify-content: center; padding-top: 20px; }
-.main-badge-wrap { position: relative; width: 340px; text-align: center; filter: drop-shadow(0 35px 55px rgba(0,0,0,.75)); }
+.badge-stage { min-height: auto; display: flex; align-items: flex-start; justify-content: center; padding-top: 0; }
+.main-badge-wrap { position: relative; width: 340px; text-align: center; filter: drop-shadow(0 35px 55px rgba(0,0,0,.75)); padding-bottom: 20px; }
 .main-badge {
   width: 280px; height: 350px; margin: 0 auto; position: relative;
   clip-path: polygon(50% 0%,88% 13%,88% 57%,50% 100%,12% 57%,12% 13%);
@@ -399,9 +399,9 @@ var css = `
 .flare { position:absolute; width:95px; height:95px; background:radial-gradient(circle,#fff 0%,#ffe07a 20%,transparent 60%); z-index:8; animation:flarePulse 2.8s ease-in-out infinite; }
 .flare-one { left:82px; top:20px; }
 @keyframes flarePulse { 0%,100%{opacity:.65;transform:scale(.9)} 50%{opacity:1;transform:scale(1.2)} }
-.rank-no { margin-top:30px; font-size:76px; color:#fff1a8; text-shadow:0 0 24px rgba(217,164,65,.8); }
-.rank-copy { color:#d9a441; font-size:18px; }
-.main-message { margin-top:20px; font-size:clamp(18px,2vw,28px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); white-space:nowrap; }
+.rank-no { margin-top:16px; font-size:64px; color:#fff1a8; text-shadow:0 0 24px rgba(217,164,65,.8); line-height:1; }
+.rank-copy { color:#d9a441; font-size:15px; margin-top:4px; line-height:1.4; }
+.main-message { margin-top:16px; font-size:clamp(16px,1.8vw,24px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); white-space:nowrap; }
 .hero-copy { text-align:center; }
 .eyebrow { color:#d9a441; font-size:14px; margin-bottom:12px; white-space:nowrap; }
 .hero-copy h1 { font-size:clamp(28px,3.5vw,56px); margin:0 0 8px; color:#fff1a8; text-shadow:0 0 32px rgba(217,164,65,.65); letter-spacing:.06em; line-height:1.1; white-space:nowrap; }
