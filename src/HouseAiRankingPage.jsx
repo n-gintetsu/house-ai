@@ -53,13 +53,18 @@ function MainLegendBadge() {
   return (
     <div className="main-badge-wrap">
       <div className="flare flare-one" />
-      <div className="shield-scale-in">
-        <img
-          src="/shield-main.png"
-          alt="HOUSE-AI LEGEND BADGE"
-          className="shield-img"
-        />
-      </div>
+      <img
+        src="/shield-main.png"
+        alt="shield"
+        style={{
+          width: '100%',
+          maxWidth: '380px',
+          height: 'auto',
+          display: 'block',
+          margin: '0 auto',
+          animation: 'shieldFloat 6s ease-in-out infinite, shieldGlow 3s ease-in-out infinite'
+        }}
+      />
       <div className="blue-ribbon left" />
       <div className="blue-ribbon right" />
       <div className="rank-no">No.1</div>
@@ -195,7 +200,15 @@ export default function HouseAiRankingPage({ onBack }) {
 
       <section className="badge-list-section">
         <div className="section-title">CHALLENGER BADGES</div>
-        <img src="/badges-row.png" alt="CHALLENGER BADGES" className="badges-row-img" />
+        <img
+          src="/badges-row.png"
+          alt="badges"
+          style={{
+            width: '100%',
+            height: 'auto',
+            display: 'block'
+          }}
+        />
       </section>
 
       <section className="bottom-grid">
@@ -482,13 +495,7 @@ var css = `
   .hero-copy h1{font-size:44px}
   .english{letter-spacing:.22em}
   .gold-ribbon{font-size:18px;padding:12px 28px}
-  .shield-img{width:200px}
 }
-@keyframes shieldFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-12px)} }
-@keyframes shieldGlow { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.4))} 50%{filter:drop-shadow(0 0 50px rgba(201,168,76,.9))} }
-@keyframes shieldScaleIn { from{transform:scaleX(0)} to{transform:scaleX(1)} }
-.shield-scale-in { animation:shieldScaleIn .8s ease-out forwards; width:100%; }
-.shield-img { width:100%; max-width:400px; display:block; margin:0 auto; animation:shieldFloat 6s ease-in-out infinite,shieldGlow 3s ease-in-out infinite; }
-.badges-row-img { width:100%; display:block; margin-top:22px; cursor:pointer; transition:transform .2s ease,filter .2s ease; }
-.badges-row-img:hover { transform:scale(1.15); filter:drop-shadow(0 0 15px rgba(201,168,76,.8)); }
+@keyframes shieldFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-14px)} }
+@keyframes shieldGlow { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.5))} 50%{filter:drop-shadow(0 0 50px rgba(201,168,76,1.0))} }
 `;
