@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SEOHead from './SEOHead';
+import { supabase } from './lib/supabase';
 
 const propertyTypes = ['戸建', 'マンション', '一棟アパート', '一棟ビル', '土地', '収益物件'];
 
@@ -47,6 +48,7 @@ export default function AISateiPage({ onBack }) {
   const [result, setResult] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
   const [usedToday, setUsedToday] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (!address) { setMapRegion(null); return; }
@@ -59,9 +61,23 @@ export default function AISateiPage({ onBack }) {
     if (localStorage.getItem(key)) setUsedToday(true);
   }, []);
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session ? session.user : null);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session ? session.user : null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleAnalyze = () => {
     if (!address || !propertyType || !area || !age || !purpose) return;
-    if (usedToday) return;
+    if (usedToday && user === null) return;
 
     setAnalyzing(true);
     setAnalysisStep(0);
@@ -85,8 +101,8 @@ export default function AISateiPage({ onBack }) {
 
             setResult({ low, high });
             const key = 'satei_used_' + new Date().toDateString();
-            localStorage.setItem(key, '1');
-            setUsedToday(true);
+            user === null ? localStorage.setItem(key, '1') : null;
+            user === null ? setUsedToday(true) : null;
           }, 600);
           return prev;
         }
@@ -95,7 +111,7 @@ export default function AISateiPage({ onBack }) {
     }, 900);
   };
 
-  const canSubmit = address && propertyType && area && age && purpose && !usedToday && !analyzing;
+  const canSubmit = address && propertyType && area && age && purpose && (!usedToday || user !== null) && !analyzing;
 
   return (
     <div style={{ background: '#0F172A', color: 'white', minHeight: '100vh', fontFamily: 'inherit', overflowY: 'auto' }}>
@@ -167,16 +183,23 @@ export default function AISateiPage({ onBack }) {
             <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>まずはAIが相場感を整理します</div>
           </div>
         </div>
-        {usedToday === false ? (
+        {user !== null ? (
           <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>本日の無料AI査定</div>
-            <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37' }}>残り1回</div>
+            <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>会員ステータス</div>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37' }}>無制限利用中</div>
           </div>
         ) : (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', marginBottom: '2px' }}>次回更新</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>明日0:00</div>
-          </div>
+          usedToday === false ? (
+            <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>本日の無料AI査定</div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37' }}>残り1回</div>
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', marginBottom: '2px' }}>次回更新</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>明日0:00</div>
+            </div>
+          )
         )}
       </div>
 
@@ -301,7 +324,7 @@ export default function AISateiPage({ onBack }) {
                   fontFamily: 'inherit',
                 }}
               >
-                {usedToday ? '本日の無料査定は利用済みです' : 'AIで相場感を整理する'}
+                {usedToday === true ? (user !== null ? 'AIで相場感を整理する' : '本日の無料査定は利用済みです') : 'AIで相場感を整理する'}
               </button>
             )}
           </div>
@@ -463,6 +486,15 @@ export default function AISateiPage({ onBack }) {
                   </button>
                 ))}
               </div>
+
+              {user !== null ? (
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', flexShrink: 0 }} />
+                  <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.7)' }}>
+                    会員特典：査定履歴が自動保存されます
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
