@@ -342,16 +342,27 @@ export default function AISateiPage({ onBack }) {
 
       {showVendorForm === true ? (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 1001,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1001,
           background: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '16px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: '80px',
+          overflowY: 'auto',
         }}>
           <div style={{
             background: '#F9FAFB',
             borderRadius: '24px',
             width: '100%', maxWidth: '520px',
-            maxHeight: '90vh',
+            maxHeight: 'calc(100vh - 96px)',
             overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
             boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
