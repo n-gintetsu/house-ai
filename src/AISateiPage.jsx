@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SEOHead from './SEOHead';
 import { supabase } from './lib/supabase';
+import DigitalJapanMap from './DigitalJapanMap';
 
 const propertyTypes = ['戸建', 'マンション', '一棟アパート', '一棟ビル', '土地', '収益物件'];
 
@@ -19,22 +20,22 @@ const analysisSteps = [
 ];
 
 const regionMap = [
-  { keywords: ['東京', '千代田', '新宿', '渋谷', '港', '品川', '目黒', '世田谷', '杉並', '中野', '豊島', '北区', '板橋', '練馬', '足立', '葛飾', '江戸川', '墨田', '江東', '荒川', '台東', '文京', '中央'], cx: 183, cy: 110, name: '東京都' },
-  { keywords: ['横浜', '川崎', '神奈川', '相模', '厚木', '藤沢', '鎌倉', '逗子', '三浦', '横須賀'], cx: 183, cy: 118, name: '神奈川県' },
-  { keywords: ['大阪', '梅田', '難波', '心斎橋', '天王寺', '堺', '豊中', '吹田', '枚方', '東大阪'], cx: 132, cy: 118, name: '大阪府' },
-  { keywords: ['名古屋', '愛知', '豊田', '岡崎', '一宮', '豊橋', '春日井'], cx: 152, cy: 112, name: '愛知県' },
-  { keywords: ['札幌', '北海道', '函館', '旭川', '釧路', '帯広', '小樽'], cx: 192, cy: 38, name: '北海道' },
-  { keywords: ['福岡', '博多', '北九州', '久留米'], cx: 100, cy: 138, name: '福岡県' },
-  { keywords: ['佐賀', '長崎', '熊本', '鹿児島', '宮崎', '大分'], cx: 100, cy: 145, name: '九州南部' },
-  { keywords: ['仙台', '宮城', '岩手', '青森', '秋田', '山形', '福島'], cx: 188, cy: 75, name: '東北' },
-  { keywords: ['広島', '岡山', '山口', '鳥取', '島根'], cx: 118, cy: 125, name: '中国地方' },
-  { keywords: ['高知', '愛媛', '香川', '徳島'], cx: 124, cy: 147, name: '四国' },
-  { keywords: ['京都', '兵庫', '神戸', '奈良', '滋賀', '和歌山', '三重'], cx: 135, cy: 118, name: '近畿' },
-  { keywords: ['新潟', '富山', '石川', '福井', '長野', '岐阜', '静岡', '山梨'], cx: 155, cy: 105, name: '中部' },
-  { keywords: ['沖縄', '那覇'], cx: 90, cy: 188, name: '沖縄県' },
+  { keywords: ['東京', '千代田', '新宿', '渋谷', '港', '品川', '目黒', '世田谷', '杉並', '中野', '豊島', '北区', '板橋', '練馬', '足立', '葛飾', '江戸川', '墨田', '江東', '荒川', '台東', '文京', '中央'], cx: 255, cy: 148, name: '東京都' },
+  { keywords: ['横浜', '川崎', '神奈川', '相模', '厚木', '藤沢', '鎌倉', '逗子', '三浦', '横須賀'], cx: 255, cy: 162, name: '神奈川県' },
+  { keywords: ['大阪', '梅田', '難波', '心斎橋', '天王寺', '堺', '豊中', '吹田', '枚方', '東大阪'], cx: 194, cy: 170, name: '大阪府' },
+  { keywords: ['名古屋', '愛知', '豊田', '岡崎', '一宮', '豊橋', '春日井'], cx: 226, cy: 170, name: '愛知県' },
+  { keywords: ['札幌', '北海道', '函館', '旭川', '釧路', '帯広', '小樽'], cx: 275, cy: 48, name: '北海道' },
+  { keywords: ['福岡', '博多', '北九州', '久留米'], cx: 138, cy: 184, name: '福岡県' },
+  { keywords: ['佐賀', '長崎', '熊本', '鹿児島', '宮崎', '大分'], cx: 138, cy: 196, name: '九州南部' },
+  { keywords: ['仙台', '宮城', '岩手', '青森', '秋田', '山形', '福島'], cx: 262, cy: 104, name: '東北' },
+  { keywords: ['広島', '岡山', '山口', '鳥取', '島根'], cx: 166, cy: 176, name: '中国地方' },
+  { keywords: ['高知', '愛媛', '香川', '徳島'], cx: 175, cy: 212, name: '四国' },
+  { keywords: ['京都', '兵庫', '神戸', '奈良', '滋賀', '和歌山', '三重'], cx: 196, cy: 168, name: '近畿' },
+  { keywords: ['新潟', '富山', '石川', '福井', '長野', '岐阜', '静岡', '山梨'], cx: 220, cy: 152, name: '中部' },
+  { keywords: ['沖縄', '那覇'], cx: 116, cy: 262, name: '沖縄県' },
 ];
 
-const defaultRegion = { cx: 145, cy: 115, name: 'エリア' };
+const defaultRegion = { cx: 230, cy: 155, name: 'エリア' };
 
 export default function AISateiPage({ onBack }) {
   const [address, setAddress] = useState('');
@@ -169,20 +170,6 @@ export default function AISateiPage({ onBack }) {
           font-family: inherit;
         }
         .type-btn:hover { border-color: rgba(212,175,55,0.3); color: rgba(212,175,55,0.8); }
-        @keyframes mapScan {
-          0% { transform: translateY(0px); opacity: 0.4; }
-          100% { transform: translateY(280px); opacity: 0; }
-        }
-        @keyframes particleMove {
-          0% { transform: translate(0, 0); opacity: 0.6; }
-          50% { transform: translate(8px, -12px); opacity: 0.3; }
-          100% { transform: translate(0, 0); opacity: 0.6; }
-        }
-        @keyframes statusCycle {
-          0%, 30% { opacity: 1; }
-          35%, 65% { opacity: 0; }
-          70%, 100% { opacity: 1; }
-        }
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent)', animation: 'scanline 6s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
@@ -356,152 +343,11 @@ export default function AISateiPage({ onBack }) {
         <div style={{ width: '400px', minWidth: '400px', padding: '28px 20px', position: 'sticky', top: 0 }}>
           <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '12px' }}>AI LOCATION ANALYSIS</div>
 
-          {/* 地図SVG */}
-          <svg width="100%" height="280" viewBox="0 0 300 280" style={{ display: 'block' }}>
-            {/* 背景 */}
-            <rect width="300" height="280" fill="rgba(3,8,20,0.95)" rx="8"/>
-
-            {/* グリッドライン */}
-            {[40,80,120,160,200,240].map(y => (
-              <line key={y} x1="0" y1={y} x2="300" y2={y} stroke="rgba(26,58,92,0.3)" strokeWidth="0.5" strokeDasharray="4,8"/>
-            ))}
-            {[50,100,150,200,250].map(x => (
-              <line key={x} x1={x} y1="0" x2={x} y2="280" stroke="rgba(26,58,92,0.3)" strokeWidth="0.5" strokeDasharray="4,8"/>
-            ))}
-
-            {/* 海のグロー効果 */}
-            <ellipse cx="150" cy="140" rx="130" ry="110" fill="rgba(15,30,60,0.4)"/>
-
-            {/* 北海道 本島 */}
-            <path d="M175 22 Q182 18 192 20 Q200 17 207 23 Q215 20 220 28 Q226 35 224 44 Q220 52 213 56 Q206 62 198 59 Q191 65 183 61 Q175 66 168 60 Q161 64 158 57 Q153 50 157 42 Q160 34 168 28 Z" fill="rgba(22,50,100,0.7)" stroke="rgba(100,160,255,0.35)" strokeWidth="0.8"/>
-            {/* 北海道 知床・根室 */}
-            <path d="M224 44 Q232 40 238 47 Q242 54 236 60 Q229 64 224 58 Q220 52 224 44Z" fill="rgba(22,50,100,0.6)" stroke="rgba(100,160,255,0.3)" strokeWidth="0.7"/>
-            {/* 道南 */}
-            <path d="M168 60 Q172 65 168 71 Q163 75 158 70 Q156 64 160 60Z" fill="rgba(22,50,100,0.55)" stroke="rgba(100,160,255,0.25)" strokeWidth="0.7"/>
-
-            {/* 東北 */}
-            <path d="M172 75 Q178 70 186 72 Q194 69 200 75 Q206 81 204 90 Q201 99 193 102 Q185 106 177 102 Q169 98 168 89 Q167 80 172 75Z" fill="rgba(22,50,100,0.65)" stroke="rgba(100,160,255,0.3)" strokeWidth="0.8"/>
-            {/* 三陸海岸 */}
-            <path d="M200 80 Q205 78 207 85 Q208 92 203 95 Q199 92 200 85Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.2)" strokeWidth="0.6"/>
-
-            {/* 関東 */}
-            <path d="M170 108 Q177 103 185 106 Q193 103 198 110 Q203 117 200 126 Q196 134 188 136 Q180 139 172 134 Q164 129 163 120 Q162 111 170 108Z" fill="rgba(22,50,100,0.65)" stroke="rgba(100,160,255,0.3)" strokeWidth="0.8"/>
-            {/* 房総半島 */}
-            <path d="M196 122 Q202 119 205 126 Q207 133 202 138 Q197 139 195 133 Q193 126 196 122Z" fill="rgba(22,50,100,0.55)" stroke="rgba(100,160,255,0.25)" strokeWidth="0.7"/>
-            {/* 三浦・伊豆 */}
-            <path d="M175 136 Q179 133 183 138 Q185 144 181 148 Q177 149 175 144 Q173 139 175 136Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.2)" strokeWidth="0.6"/>
-
-            {/* 北陸・甲信越 */}
-            <path d="M148 105 Q156 100 163 104 Q167 111 164 120 Q160 128 152 128 Q144 126 141 118 Q139 109 148 105Z" fill="rgba(22,50,100,0.6)" stroke="rgba(100,160,255,0.28)" strokeWidth="0.8"/>
-            {/* 能登半島 */}
-            <path d="M140 97 Q146 92 151 97 Q153 103 148 106 Q142 107 139 102Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.22)" strokeWidth="0.6"/>
-
-            {/* 東海・中部 */}
-            <path d="M155 124 Q162 119 169 123 Q173 130 170 139 Q165 146 157 146 Q149 143 147 134 Q145 125 155 124Z" fill="rgba(22,50,100,0.6)" stroke="rgba(100,160,255,0.28)" strokeWidth="0.8"/>
-            {/* 伊勢湾 */}
-            <path d="M159 142 Q163 139 166 144 Q167 150 163 153 Q159 153 158 148Z" fill="rgba(22,50,100,0.45)" stroke="rgba(100,160,255,0.2)" strokeWidth="0.6"/>
-
-            {/* 近畿 */}
-            <path d="M130 118 Q138 113 146 116 Q151 123 148 132 Q143 140 134 141 Q125 139 122 130 Q119 121 130 118Z" fill="rgba(22,50,100,0.65)" stroke="rgba(100,160,255,0.3)" strokeWidth="0.8"/>
-            {/* 紀伊半島 */}
-            <path d="M130 141 Q137 138 142 145 Q145 153 140 159 Q133 161 128 155 Q123 148 130 141Z" fill="rgba(22,50,100,0.55)" stroke="rgba(100,160,255,0.25)" strokeWidth="0.7"/>
-
-            {/* 中国地方 */}
-            <path d="M108 122 Q117 116 126 120 Q131 127 128 136 Q122 143 113 142 Q104 139 102 130 Q100 121 108 122Z" fill="rgba(22,50,100,0.6)" stroke="rgba(100,160,255,0.28)" strokeWidth="0.8"/>
-            {/* 島根半島 */}
-            <path d="M106 118 Q112 114 117 119 Q116 124 110 124 Q105 122 106 118Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.2)" strokeWidth="0.6"/>
-
-            {/* 四国 */}
-            <path d="M117 148 Q126 143 135 147 Q140 154 137 163 Q131 170 121 169 Q111 166 109 157 Q107 148 117 148Z" fill="rgba(22,50,100,0.6)" stroke="rgba(100,160,255,0.28)" strokeWidth="0.8"/>
-
-            {/* 九州 */}
-            <path d="M96 138 Q105 132 114 136 Q120 143 118 153 Q114 163 105 166 Q95 167 89 159 Q83 150 88 141 Q92 136 96 138Z" fill="rgba(22,50,100,0.65)" stroke="rgba(100,160,255,0.3)" strokeWidth="0.8"/>
-            {/* 薩摩半島 */}
-            <path d="M93 166 Q98 163 103 168 Q105 175 100 179 Q94 179 92 173Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.22)" strokeWidth="0.7"/>
-            {/* 大隅半島 */}
-            <path d="M103 166 Q108 163 111 169 Q112 176 107 179 Q102 178 101 172Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.22)" strokeWidth="0.7"/>
-
-            {/* 沖縄本島 */}
-            <path d="M86 198 Q91 195 95 199 Q96 204 92 206 Q87 206 86 202Z" fill="rgba(22,50,100,0.5)" stroke="rgba(100,160,255,0.22)" strokeWidth="0.6"/>
-            {/* 先島 */}
-            <path d="M72 206 Q76 204 78 207 Q79 210 76 211 Q73 211 72 208Z" fill="rgba(22,50,100,0.45)" stroke="rgba(100,160,255,0.18)" strokeWidth="0.5"/>
-
-            {/* スキャンライン */}
-            <line x1="0" y1="0" x2="300" y2="0" stroke="rgba(100,160,255,0.25)" strokeWidth="1.5">
-              <animateTransform attributeName="transform" type="translate" from="0,0" to="0,280" dur="5s" repeatCount="indefinite"/>
-            </line>
-
-            {/* データ粒子 */}
-            <circle cx="140" cy="85" r="1.5" fill="rgba(212,175,55,0.4)">
-              <animateTransform attributeName="transform" type="translate" values="0,0; 6,-10; 0,0" dur="4s" repeatCount="indefinite"/>
-              <animate attributeName="opacity" values="0.4;0.8;0.4" dur="4s" repeatCount="indefinite"/>
-            </circle>
-            <circle cx="185" cy="120" r="1.2" fill="rgba(100,200,255,0.4)">
-              <animateTransform attributeName="transform" type="translate" values="0,0; -5,8; 0,0" dur="5s" repeatCount="indefinite"/>
-              <animate attributeName="opacity" values="0.3;0.7;0.3" dur="5s" repeatCount="indefinite"/>
-            </circle>
-            <circle cx="115" cy="155" r="1.5" fill="rgba(212,175,55,0.35)">
-              <animateTransform attributeName="transform" type="translate" values="0,0; 8,5; 0,0" dur="6s" repeatCount="indefinite"/>
-              <animate attributeName="opacity" values="0.3;0.6;0.3" dur="6s" repeatCount="indefinite"/>
-            </circle>
-
-            {/* 発光ポイント */}
-            {mapRegion !== null ? (
-              <g>
-                <circle cx={mapRegion.cx} cy={mapRegion.cy} r="4" fill="#D4AF37" opacity="0.95"/>
-                <circle cx={mapRegion.cx} cy={mapRegion.cy} r="4" fill="rgba(212,175,55,0.3)">
-                  <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/>
-                  <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx={mapRegion.cx} cy={mapRegion.cy} r="4" fill="none" stroke="rgba(212,175,55,0.6)" strokeWidth="1">
-                  <animate attributeName="r" from="6" to="24" dur="2s" repeatCount="indefinite"/>
-                  <animate attributeName="opacity" from="0.7" to="0" dur="2s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx={mapRegion.cx} cy={mapRegion.cy} r="4" fill="none" stroke="rgba(212,175,55,0.4)" strokeWidth="0.8">
-                  <animate attributeName="r" from="6" to="36" dur="2s" begin="0.6s" repeatCount="indefinite"/>
-                  <animate attributeName="opacity" from="0.5" to="0" dur="2s" begin="0.6s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx={mapRegion.cx} cy={mapRegion.cy} r="4" fill="none" stroke="rgba(212,175,55,0.2)" strokeWidth="0.6">
-                  <animate attributeName="r" from="6" to="50" dur="2s" begin="1.2s" repeatCount="indefinite"/>
-                  <animate attributeName="opacity" from="0.4" to="0" dur="2s" begin="1.2s" repeatCount="indefinite"/>
-                </circle>
-                <line x1={mapRegion.cx - 10} y1={mapRegion.cy} x2={mapRegion.cx - 6} y2={mapRegion.cy} stroke="rgba(212,175,55,0.6)" strokeWidth="0.8"/>
-                <line x1={mapRegion.cx + 6} y1={mapRegion.cy} x2={mapRegion.cx + 10} y2={mapRegion.cy} stroke="rgba(212,175,55,0.6)" strokeWidth="0.8"/>
-                <line x1={mapRegion.cx} y1={mapRegion.cy - 10} x2={mapRegion.cx} y2={mapRegion.cy - 6} stroke="rgba(212,175,55,0.6)" strokeWidth="0.8"/>
-                <line x1={mapRegion.cx} y1={mapRegion.cy + 6} x2={mapRegion.cx} y2={mapRegion.cy + 10} stroke="rgba(212,175,55,0.6)" strokeWidth="0.8"/>
-                <rect x={mapRegion.cx - 24} y={mapRegion.cy + 12} width="48" height="14" rx="3" fill="rgba(212,175,55,0.15)" stroke="rgba(212,175,55,0.4)" strokeWidth="0.5"/>
-                <text x={mapRegion.cx} y={mapRegion.cy + 22} textAnchor="middle" fontSize="8" fill="#D4AF37" fontWeight="bold">{mapRegion.name}</text>
-              </g>
-            ) : null}
-
-            {/* 成約事例ドット */}
-            {result !== null ? (
-              mapRegion !== null ? (
-                <g>
-                  <circle cx={mapRegion.cx - 18} cy={mapRegion.cy - 14} r="2.5" fill="rgba(74,222,128,0.7)" stroke="rgba(74,222,128,0.4)" strokeWidth="0.5"/>
-                  <circle cx={mapRegion.cx + 16} cy={mapRegion.cy + 12} r="2.5" fill="rgba(74,222,128,0.7)" stroke="rgba(74,222,128,0.4)" strokeWidth="0.5"/>
-                  <circle cx={mapRegion.cx - 8} cy={mapRegion.cy + 18} r="2" fill="rgba(74,222,128,0.6)"/>
-                  <circle cx={mapRegion.cx + 22} cy={mapRegion.cy - 6} r="2" fill="rgba(74,222,128,0.5)"/>
-                  <circle cx={mapRegion.cx - 24} cy={mapRegion.cy + 6} r="1.5" fill="rgba(74,222,128,0.4)"/>
-                </g>
-              ) : null
-            ) : null}
-
-            {/* ステータステキスト */}
-            {mapStatus === 0 ? (
-              <text x="150" y="268" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.2)">住所を入力するとエリアが発光します</text>
-            ) : (
-              mapStatus === 1 ? (
-                <text x="150" y="268" textAnchor="middle" fontSize="9" fill="rgba(212,175,55,0.6)">{mapRegion ? mapRegion.name : 'エリア'}を解析中…</text>
-              ) : (
-                result === null ? (
-                  <text x="150" y="268" textAnchor="middle" fontSize="9" fill="rgba(74,222,128,0.7)">周辺データ取得完了 — 査定実行可能</text>
-                ) : (
-                  <text x="150" y="268" textAnchor="middle" fontSize="9" fill="rgba(74,222,128,0.8)">周辺成約事例 5件取得 — 解析完了</text>
-                )
-              )
-            )}
-          </svg>
+          <DigitalJapanMap
+            activeArea={mapRegion}
+            areaName={mapRegion ? mapRegion.name : ''}
+            mapStatus={mapStatus}
+          />
 
           {/* 解析ステータス */}
           {analyzing ? (
