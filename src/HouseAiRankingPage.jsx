@@ -357,7 +357,7 @@ var css = `
 .brand-sub { color: #d9a441; letter-spacing: .25em; font-size: 13px; }
 .hero-grid {
   position: relative; z-index: 2;
-  display: grid; grid-template-columns: 380px 1fr 320px; gap: 40px; align-items: start; padding-top: 20px;
+  display: grid; grid-template-columns: 320px 1fr 300px; gap: 32px; align-items: start; padding-top: 20px;
 }
 .badge-stage { min-height: auto; display: flex; align-items: center; justify-content: center; padding-top: 20px; }
 .main-badge-wrap { position: relative; width: 340px; text-align: center; filter: drop-shadow(0 35px 55px rgba(0,0,0,.75)); }
@@ -401,17 +401,18 @@ var css = `
 @keyframes flarePulse { 0%,100%{opacity:.65;transform:scale(.9)} 50%{opacity:1;transform:scale(1.2)} }
 .rank-no { margin-top:30px; font-size:76px; color:#fff1a8; text-shadow:0 0 24px rgba(217,164,65,.8); }
 .rank-copy { color:#d9a441; font-size:18px; }
-.main-message { margin-top:30px; font-size:clamp(24px,3vw,40px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); }
+.main-message { margin-top:20px; font-size:clamp(18px,2vw,28px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); white-space:nowrap; }
 .hero-copy { text-align:center; }
-.eyebrow { color:#d9a441; font-size:18px; margin-bottom:20px; }
-.hero-copy h1 { font-size:clamp(36px,5vw,72px); margin:0 0 8px; color:#fff1a8; text-shadow:0 0 32px rgba(217,164,65,.65); letter-spacing:.08em; line-height:1.1; }
-.english { color:#d9a441; letter-spacing:.5em; font-size:16px; }
+.eyebrow { color:#d9a441; font-size:14px; margin-bottom:12px; white-space:nowrap; }
+.hero-copy h1 { font-size:clamp(28px,3.5vw,56px); margin:0 0 8px; color:#fff1a8; text-shadow:0 0 32px rgba(217,164,65,.65); letter-spacing:.06em; line-height:1.1; white-space:nowrap; }
+.english { color:#d9a441; letter-spacing:.3em; font-size:13px; white-space:nowrap; }
 .gold-ribbon {
-  display:inline-block; margin:28px auto; padding:16px 56px; color:#1b1204;
-  font-weight:900; font-size:24px;
+  display:inline-block; margin:20px auto; padding:14px 40px; color:#1b1204;
+  font-weight:900; font-size:18px;
   background:linear-gradient(90deg,#8b5a16,#fff1a8,#d9a441,#fff7c2,#8b5a16);
   clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%);
   box-shadow:0 0 26px rgba(217,164,65,.45);
+  white-space:nowrap;
 }
 .feature-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:20px; }
 .feature-card, .rank-panel, .badge-list-section, .info-box, .cta-block {
@@ -471,6 +472,11 @@ var css = `
   .feature-grid{grid-template-columns:repeat(2,1fr)}
   .tier-grid{grid-template-columns:repeat(4,1fr)}
   .badge-stage{min-height:auto;margin:0 auto;max-width:380px}
+  .hero-copy h1{white-space:normal;font-size:clamp(32px,6vw,56px)}
+  .main-message{white-space:normal}
+  .eyebrow{white-space:normal}
+  .english{white-space:normal;letter-spacing:.15em}
+  .gold-ribbon{white-space:normal;font-size:16px;padding:12px 24px}
 }
 @media(max-width:640px){
   .house-ai-ranking{padding:18px}
