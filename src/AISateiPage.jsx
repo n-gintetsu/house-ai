@@ -85,6 +85,18 @@ export default function AISateiPage({ onBack }) {
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [vendorPurpose, setVendorPurpose] = useState(null);
   const [vendorConfirmed, setVendorConfirmed] = useState(false);
+  const [showVendorForm, setShowVendorForm] = useState(false);
+  const [vendorFormData, setVendorFormData] = useState({
+    nickname: '',
+    sellTiming: '',
+    desiredPrice: '',
+    hasLoan: '',
+    loanBalance: '',
+    contactMethod: 'chat',
+    freeText: '',
+  });
+  const [vendorSubmitting, setVendorSubmitting] = useState(false);
+  const [vendorSubmitted, setVendorSubmitted] = useState(false);
 
   useEffect(() => {
     if (!address) {
@@ -310,10 +322,7 @@ export default function AISateiPage({ onBack }) {
                     NO — 戻る
                   </button>
                   <button
-                    onClick={() => {
-                      setShowVendorModal(false);
-                      alert('次フェーズ：入力フォームを実装します');
-                    }}
+                    onClick={() => { setVendorConfirmed(false); setShowVendorModal(false); setShowVendorForm(true); }}
                     style={{
                       flex: 2, padding: '14px',
                       background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
@@ -323,6 +332,284 @@ export default function AISateiPage({ onBack }) {
                     }}
                   >
                     YES — 進める
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {showVendorForm === true ? (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1001,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '16px',
+        }}>
+          <div style={{
+            background: '#F9FAFB',
+            borderRadius: '24px',
+            width: '100%', maxWidth: '520px',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+          }}>
+            {vendorSubmitted === true ? (
+              <div style={{
+                padding: '48px 32px',
+                textAlign: 'center',
+                animation: 'completeFade 0.6s ease',
+                flex: 1, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 28px' }}>
+                  <div style={{
+                    position: 'absolute', inset: 0, borderRadius: '50%',
+                    border: '2px solid rgba(26,58,92,0.15)',
+                    animation: 'ringExpand 1.5s ease-out infinite',
+                  }} />
+                  <div style={{
+                    width: '80px', height: '80px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                      <path d="M8 18L15 25L28 11" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ strokeDasharray: 50, strokeDashoffset: 0, animation: 'checkDraw 0.8s ease forwards' }}/>
+                    </svg>
+                  </div>
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: '700', color: '#111827', marginBottom: '10px' }}>
+                  送信が完了しました
+                </div>
+                <div style={{ fontSize: '15px', color: '#6B7280', lineHeight: '1.7', marginBottom: '8px' }}>
+                  査定依頼を受け付けました。
+                </div>
+                <div style={{
+                  fontSize: '14px', color: '#374151', lineHeight: '1.7',
+                  padding: '16px 20px',
+                  background: 'rgba(26,58,92,0.05)',
+                  borderRadius: '14px',
+                  marginBottom: '28px',
+                  border: '1px solid rgba(26,58,92,0.1)',
+                }}>
+                  結果は会員ページのお知らせに届きます。<br/>
+                  やり取りはすべて会員ページ内で完結します。
+                </div>
+                <button
+                  onClick={() => { setShowVendorForm(false); setVendorSubmitted(false); setVendorPurpose(null); }}
+                  style={{
+                    padding: '14px 40px',
+                    background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)',
+                    color: 'white', border: 'none', borderRadius: '14px',
+                    fontSize: '16px', fontWeight: '600', cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  閉じる
+                </button>
+              </div>
+            ) : null}
+            {vendorSubmitted === false ? (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                <div style={{
+                  padding: '20px 24px 16px',
+                  borderBottom: '1px solid #E5E7EB',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'white', flexShrink: 0,
+                }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF', letterSpacing: '2px', marginBottom: '2px' }}>
+                      {vendorPurpose === 'A' ? 'HIGH VALUE SALE' : vendorPurpose === 'B' ? 'SPEED SALE' : vendorPurpose === 'C' ? 'MARKET CHECK' : 'CONSULTATION'}
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>
+                      {vendorPurpose === 'A' ? '高く売りたい' : vendorPurpose === 'B' ? 'スピード重視' : vendorPurpose === 'C' ? '相場観を確認' : '相談してから決める'}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowVendorForm(false)}
+                    style={{ background: '#F3F4F6', border: 'none', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', fontSize: '18px', color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    x
+                  </button>
+                </div>
+                <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px' }}>
+                  <div style={{
+                    background: 'white', border: '1px solid #E5E7EB',
+                    borderRadius: '16px', padding: '16px', marginBottom: '20px',
+                  }}>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF', letterSpacing: '2px', marginBottom: '12px' }}>物件情報（自動反映）</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {[
+                        { label: '住所', value: address || '未入力' },
+                        { label: '種別', value: propertyType || '未選択' },
+                        { label: '面積', value: area ? area + '㎡' : '未入力' },
+                        { label: '築年数', value: age ? age + '年' : '未入力' },
+                      ].map((item, i) => (
+                        <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: '10px' }}>
+                          <div style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '3px' }}>{item.label}</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="vendor-section">
+                    <label className="vendor-label">ニックネーム <span style={{ color: '#EF4444', fontSize: '12px' }}>必須</span></label>
+                    <input
+                      className="vendor-input"
+                      type="text"
+                      placeholder="例：Takeshi（匿名OK）"
+                      value={vendorFormData.nickname}
+                      onChange={(e) => setVendorFormData(prev => ({ ...prev, nickname: e.target.value }))}
+                    />
+                    <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '5px' }}>実名不要。会員ページ内での表示名です。</div>
+                  </div>
+                  {(vendorPurpose === 'A' || vendorPurpose === 'B') ? (
+                    <div className="vendor-section">
+                      <label className="vendor-label">希望売却時期 <span style={{ color: '#EF4444', fontSize: '12px' }}>必須</span></label>
+                      <select
+                        className="vendor-input"
+                        value={vendorFormData.sellTiming}
+                        onChange={(e) => setVendorFormData(prev => ({ ...prev, sellTiming: e.target.value }))}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <option value="">選択してください</option>
+                        <option>できるだけ早く（1ヶ月以内）</option>
+                        <option>3ヶ月以内</option>
+                        <option>半年以内</option>
+                        <option>1年以内</option>
+                        <option>時期は未定</option>
+                      </select>
+                    </div>
+                  ) : null}
+                  {vendorPurpose === 'A' ? (
+                    <div className="vendor-section">
+                      <label className="vendor-label">希望売却価格（任意）</label>
+                      <input
+                        className="vendor-input"
+                        type="text"
+                        placeholder="例：4,500万円以上"
+                        value={vendorFormData.desiredPrice}
+                        onChange={(e) => setVendorFormData(prev => ({ ...prev, desiredPrice: e.target.value }))}
+                      />
+                    </div>
+                  ) : null}
+                  {(vendorPurpose === 'A' || vendorPurpose === 'B') ? (
+                    <div className="vendor-section">
+                      <label className="vendor-label">現在のローン</label>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {['あり', 'なし', '不明'].map(v => (
+                          <button
+                            key={v}
+                            onClick={() => setVendorFormData(prev => ({ ...prev, hasLoan: v }))}
+                            style={{
+                              flex: 1, padding: '12px',
+                              background: vendorFormData.hasLoan === v ? '#1a3a5c' : 'white',
+                              color: vendorFormData.hasLoan === v ? 'white' : '#374151',
+                              border: vendorFormData.hasLoan === v ? '1px solid #1a3a5c' : '1px solid #E5E7EB',
+                              borderRadius: '10px', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit',
+                            }}
+                          >{v}</button>
+                        ))}
+                      </div>
+                      {vendorFormData.hasLoan === 'あり' ? (
+                        <input
+                          className="vendor-input"
+                          type="text"
+                          placeholder="残債額（例：2,000万円）"
+                          value={vendorFormData.loanBalance}
+                          onChange={(e) => setVendorFormData(prev => ({ ...prev, loanBalance: e.target.value }))}
+                          style={{ marginTop: '10px' }}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {vendorPurpose === 'D' ? (
+                    <div className="vendor-section">
+                      <label className="vendor-label">お悩み・相談内容</label>
+                      <textarea
+                        className="vendor-input"
+                        rows={4}
+                        placeholder="例：相続した物件をどうすればいいか分からない。まず何から始めるべきか相談したい。"
+                        value={vendorFormData.freeText}
+                        onChange={(e) => setVendorFormData(prev => ({ ...prev, freeText: e.target.value }))}
+                        style={{ resize: 'vertical', fontSize: '16px' }}
+                      />
+                    </div>
+                  ) : null}
+                  <div className="vendor-section">
+                    <label className="vendor-label">連絡方法</label>
+                    <div style={{
+                      padding: '14px 16px',
+                      background: 'rgba(26,58,92,0.04)',
+                      border: '1px solid rgba(26,58,92,0.12)',
+                      borderRadius: '12px',
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                    }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a3a5c', flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>会員ページ内チャットのみ</div>
+                        <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>電話番号の開示は不要です。安心してご利用いただけます。</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '14px 16px',
+                    background: '#F0FDF4',
+                    border: '1px solid #BBF7D0',
+                    borderRadius: '12px',
+                    marginBottom: '8px',
+                  }}>
+                    <div style={{ fontSize: '12px', color: '#15803D', lineHeight: '1.7' }}>
+                      しつこい営業は一切ございません。
+                      やり取りはすべて会員ページ内で完結します。
+                      結果はお知らせにてご連絡いたします。
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  padding: '16px 24px',
+                  background: 'white',
+                  borderTop: '1px solid #E5E7EB',
+                  flexShrink: 0,
+                }}>
+                  <button
+                    onClick={async () => {
+                      if (!vendorFormData.nickname.trim()) return;
+                      setVendorSubmitting(true);
+                      await new Promise(r => setTimeout(r, 2200));
+                      setVendorSubmitting(false);
+                      setVendorSubmitted(true);
+                    }}
+                    disabled={vendorSubmitting || !vendorFormData.nickname.trim()}
+                    style={{
+                      width: '100%', padding: '16px',
+                      background: vendorSubmitting
+                        ? '#E5E7EB'
+                        : vendorFormData.nickname.trim()
+                          ? 'linear-gradient(135deg, #1a3a5c, #2a5a8c)'
+                          : '#E5E7EB',
+                      color: vendorFormData.nickname.trim() && !vendorSubmitting ? 'white' : '#9CA3AF',
+                      border: 'none', borderRadius: '14px',
+                      fontSize: '16px', fontWeight: '700',
+                      cursor: vendorFormData.nickname.trim() && !vendorSubmitting ? 'pointer' : 'default',
+                      fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    }}
+                  >
+                    {vendorSubmitting ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          border: '2px solid rgba(26,58,92,0.2)',
+                          borderTopColor: '#1a3a5c',
+                          animation: 'submitSpin 0.8s linear infinite',
+                        }} />
+                        <span style={{ color: '#6B7280', fontSize: '15px' }}>送信中...</span>
+                      </div>
+                    ) : '査定依頼を送信する'}
                   </button>
                 </div>
               </div>
@@ -407,6 +694,51 @@ export default function AISateiPage({ onBack }) {
           }
           .type-btn:hover { border-color: rgba(212,175,55,0.3); color: rgba(212,175,55,0.8); }
           .price-flash { animation: priceFlash 0.6s ease; }
+          @keyframes submitSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes checkDraw {
+            0% { stroke-dashoffset: 50; opacity: 0; }
+            50% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 1; }
+          }
+          @keyframes completeFade {
+            0% { opacity: 0; transform: scale(0.92); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes ringExpand {
+            0% { transform: scale(0.5); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+          }
+          .vendor-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            color: #111827;
+            background: white;
+            box-sizing: border-box;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+          }
+          .vendor-input:focus {
+            border-color: #1a3a5c;
+            box-shadow: 0 0 0 3px rgba(26,58,92,0.08);
+          }
+          .vendor-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            display: block;
+          }
+          .vendor-section {
+            margin-bottom: 20px;
+          }
         `}</style>
 
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent)', animation: 'scanline 6s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
