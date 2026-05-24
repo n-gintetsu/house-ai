@@ -346,7 +346,7 @@ var css = `
 @keyframes particleMove { from{transform:translateY(0)} to{transform:translateY(-180px)} }
 .brand-header {
   position: relative; z-index: 2; display: flex; align-items: center;
-  justify-content: center; gap: 18px; margin-bottom: 28px;
+  justify-content: flex-start; gap: 18px; margin-bottom: 32px; padding: 0 8px;
 }
 .brand-mark {
   width: 70px; height: 70px; display: grid; place-items: center;
@@ -357,12 +357,12 @@ var css = `
 .brand-sub { color: #d9a441; letter-spacing: .25em; font-size: 13px; }
 .hero-grid {
   position: relative; z-index: 2;
-  display: grid; grid-template-columns: 1.05fr 1.25fr .95fr; gap: 28px; align-items: center;
+  display: grid; grid-template-columns: 380px 1fr 320px; gap: 40px; align-items: start; padding-top: 20px;
 }
-.badge-stage { min-height: 650px; display: grid; place-items: center; }
-.main-badge-wrap { position: relative; width: min(100%,500px); text-align: center; filter: drop-shadow(0 35px 55px rgba(0,0,0,.75)); }
+.badge-stage { min-height: auto; display: flex; align-items: center; justify-content: center; padding-top: 20px; }
+.main-badge-wrap { position: relative; width: 340px; text-align: center; filter: drop-shadow(0 35px 55px rgba(0,0,0,.75)); }
 .main-badge {
-  width: 300px; height: 380px; margin: 0 auto; position: relative;
+  width: 280px; height: 350px; margin: 0 auto; position: relative;
   clip-path: polygon(50% 0%,88% 13%,88% 57%,50% 100%,12% 57%,12% 13%);
   background: linear-gradient(120deg,#5d3608,#ffe889 18%,#b87918 38%,#fff6b8 55%,#7a4d12 74%,#ffda5e);
   padding: 14px; animation: badgeGlow 3.8s ease-in-out infinite;
@@ -390,12 +390,12 @@ var css = `
 .badge-brand { font-size: 28px; color: #2b1a05; font-weight: 900; letter-spacing: .03em; }
 .badge-caption { color: #2b1a05; font-size: 11px; letter-spacing: .15em; text-align: center; line-height: 1.5; }
 .blue-ribbon {
-  position: absolute; width: 210px; height: 58px; bottom: 184px;
+  position: absolute; width: 190px; height: 50px; bottom: 190px;
   background: linear-gradient(90deg,#001c38,#00608e,#001b35);
   border: 1px solid #d9a441; box-shadow: 0 15px 30px rgba(0,0,0,.65); z-index: -1;
 }
-.blue-ribbon.left { left:10px; transform:rotate(-16deg); border-radius:999px 30px 30px 999px; }
-.blue-ribbon.right { right:10px; transform:rotate(16deg); border-radius:30px 999px 999px 30px; }
+.blue-ribbon.left { left:-20px; transform:rotate(-14deg); border-radius:999px 30px 30px 999px; }
+.blue-ribbon.right { right:-20px; transform:rotate(14deg); border-radius:30px 999px 999px 30px; }
 .flare { position:absolute; width:95px; height:95px; background:radial-gradient(circle,#fff 0%,#ffe07a 20%,transparent 60%); z-index:8; animation:flarePulse 2.8s ease-in-out infinite; }
 .flare-one { left:82px; top:20px; }
 @keyframes flarePulse { 0%,100%{opacity:.65;transform:scale(.9)} 50%{opacity:1;transform:scale(1.2)} }
@@ -404,7 +404,7 @@ var css = `
 .main-message { margin-top:30px; font-size:clamp(24px,3vw,40px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); }
 .hero-copy { text-align:center; }
 .eyebrow { color:#d9a441; font-size:18px; margin-bottom:20px; }
-.hero-copy h1 { font-size:clamp(48px,7vw,96px); margin:0; color:#fff1a8; text-shadow:0 0 32px rgba(217,164,65,.65); letter-spacing:.08em; }
+.hero-copy h1 { font-size:clamp(36px,5vw,72px); margin:0 0 8px; color:#fff1a8; text-shadow:0 0 32px rgba(217,164,65,.65); letter-spacing:.08em; line-height:1.1; }
 .english { color:#d9a441; letter-spacing:.5em; font-size:16px; }
 .gold-ribbon {
   display:inline-block; margin:28px auto; padding:16px 56px; color:#1b1204;
@@ -422,9 +422,9 @@ var css = `
 .feature-card { padding:24px 14px; border-radius:16px; transition:.25s ease; }
 .feature-card:hover { transform:translateY(-6px); box-shadow:0 0 30px rgba(217,164,65,.35); }
 .feature-icon { margin-bottom:8px; }
-.feature-card h3 { color:#fff1a8; margin-bottom:8px; font-size:13px; }
-.feature-card p { color:#d4d4d8; font-size:12px; }
-.rank-panel { border-radius:22px; padding:22px; }
+.feature-card h3 { color:#fff1a8; margin-bottom:8px; font-size:12px; line-height:1.4; word-break:keep-all; }
+.feature-card p { color:#d4d4d8; font-size:11px; line-height:1.5; }
+.rank-panel { border-radius:22px; padding:22px; max-height:600px; overflow-y:auto; }
 .rank-panel h2, .section-title, .info-box h3 {
   color:#fff1a8; letter-spacing:.22em; border-bottom:1px solid rgba(217,164,65,.35); padding-bottom:14px; margin-bottom:12px;
 }
@@ -466,10 +466,11 @@ var css = `
 @keyframes ctaPulse { 0%,100%{box-shadow:0 0 0 rgba(217,164,65,0)} 50%{box-shadow:0 0 28px rgba(217,164,65,.45)} }
 .info-item { color:#e5e7eb; margin:12px 0; display:flex; align-items:flex-start; font-size:14px; }
 @media(max-width:1100px){
-  .hero-grid,.bottom-grid{grid-template-columns:1fr}
+  .hero-grid{grid-template-columns:1fr}
+  .bottom-grid{grid-template-columns:1fr}
   .feature-grid{grid-template-columns:repeat(2,1fr)}
   .tier-grid{grid-template-columns:repeat(4,1fr)}
-  .badge-stage{min-height:auto}
+  .badge-stage{min-height:auto;margin:0 auto;max-width:380px}
 }
 @media(max-width:640px){
   .house-ai-ranking{padding:18px}
