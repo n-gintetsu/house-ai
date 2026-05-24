@@ -349,12 +349,12 @@ var css = `
   justify-content: flex-start; gap: 18px; margin-bottom: 32px; padding: 0 8px;
 }
 .brand-mark {
-  width: 70px; height: 70px; display: grid; place-items: center;
-  border: 2px solid #d9a441; border-radius: 18px;
-  box-shadow: 0 0 30px rgba(217,164,65,.55);
+  width: 56px; height: 56px; display: grid; place-items: center;
+  border: 2px solid #d9a441; border-radius: 14px;
+  box-shadow: 0 0 20px rgba(217,164,65,.45); flex-shrink: 0;
 }
-.brand-name { font-size: clamp(30px,4vw,54px); letter-spacing: .08em; color: #fff1a8; text-shadow: 0 0 18px rgba(217,164,65,.7); }
-.brand-sub { color: #d9a441; letter-spacing: .25em; font-size: 13px; }
+.brand-name { font-size: clamp(20px,2.5vw,36px); letter-spacing: .08em; color: #fff1a8; text-shadow: 0 0 18px rgba(217,164,65,.7); white-space: nowrap; }
+.brand-sub { color: #d9a441; letter-spacing: .15em; font-size: 11px; white-space: nowrap; }
 .hero-grid {
   position: relative; z-index: 2;
   display: grid; grid-template-columns: 320px 1fr 300px; gap: 32px; align-items: start; padding-top: 20px;
@@ -375,7 +375,7 @@ var css = `
   position: absolute; inset: 18px;
   clip-path: polygon(50% 0%,84% 14%,84% 56%,50% 92%,16% 56%,16% 14%);
   background: radial-gradient(circle at 30% 20%,#fff8c9,transparent 28%), linear-gradient(110deg,#9b6a18,#f7df82 35%,#ffeeb0 50%,#b17a22 75%,#f9d466);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 20px 12px;
 }
 .badge-shine {
   position: absolute; inset: -40%;
@@ -387,8 +387,8 @@ var css = `
   0%,45%{transform:translateX(-80%) rotate(12deg)}
   70%,100%{transform:translateX(80%) rotate(12deg)}
 }
-.badge-brand { font-size: 28px; color: #2b1a05; font-weight: 900; letter-spacing: .03em; }
-.badge-caption { color: #2b1a05; font-size: 11px; letter-spacing: .15em; text-align: center; line-height: 1.5; }
+.badge-brand { font-size: 20px; color: #2b1a05; font-weight: 900; letter-spacing: .02em; margin-top: 4px; white-space: nowrap; }
+.badge-caption { color: #2b1a05; font-size: 9px; letter-spacing: .08em; text-align: center; line-height: 1.4; padding: 0 8px; word-break: keep-all; }
 .blue-ribbon {
   position: absolute; width: 190px; height: 50px; bottom: 190px;
   background: linear-gradient(90deg,#001c38,#00608e,#001b35);
@@ -436,9 +436,9 @@ var css = `
   clip-path:polygon(50% 0,88% 18%,88% 62%,50% 100%,12% 62%,12% 18%);
   color:#1b1204; position:relative;
 }
-.rank-user strong { color:#f7f2df; display:block; }
+.rank-user strong { color:#f7f2df; display:block; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
 .rank-user span { color:#d9a441; font-size:12px; }
-.rank-score { color:#ffe58a; font-weight:900; font-size:18px; }
+.rank-score { color:#ffe58a; font-weight:900; font-size:16px; white-space:nowrap; }
 .and-more { text-align:right; color:#d4d4d8; padding-top:14px; font-size:13px; }
 .badge-list-section { position:relative; z-index:2; border-radius:22px; padding:22px; margin-top:34px; }
 .section-title { font-size:16px; font-weight:700; letter-spacing:.3em; }
