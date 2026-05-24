@@ -50,6 +50,13 @@ const aiLogs = [
   'AI ANALYSIS COMPLETE',
 ];
 
+const vendorOptions = [
+  { key: 'A', label: '高く売りたい', desc: '複数業者を比較しながら、できるだけ高値売却を目指したい' },
+  { key: 'B', label: 'スピード重視', desc: '早期売却・即現金化を優先したい' },
+  { key: 'C', label: 'まず相場観を知りたい', desc: '査定だけ受けて、売却は検討中' },
+  { key: 'D', label: '相談してから決めたい', desc: '何から始めればいいか、AIや専門家に相談したい' },
+];
+
 export default function AISateiPage({ onBack }) {
   const [address, setAddress] = useState('');
   const [propertyType, setPropertyType] = useState('');
@@ -68,6 +75,16 @@ export default function AISateiPage({ onBack }) {
   const [logText, setLogText] = useState('SYSTEM READY...');
   const [logIndex, setLogIndex] = useState(0);
   const [typePos, setTypePos] = useState(0);
+  const [floor, setFloor] = useState('');
+  const [roomType, setRoomType] = useState('');
+  const [landArea, setLandArea] = useState('');
+  const [buildingArea, setBuildingArea] = useState('');
+  const [units, setUnits] = useState('');
+  const [occupancy, setOccupancy] = useState('');
+  const [annualRent, setAnnualRent] = useState('');
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [vendorPurpose, setVendorPurpose] = useState(null);
+  const [vendorConfirmed, setVendorConfirmed] = useState(false);
 
   useEffect(() => {
     if (!address) {
@@ -178,411 +195,704 @@ export default function AISateiPage({ onBack }) {
     mapRegion.name === '大阪府' || mapRegion.name === '近畿'
   );
 
+  const vendorLabel = vendorPurpose === 'A' ? '高く売りたい'
+    : vendorPurpose === 'B' ? 'スピード重視'
+    : vendorPurpose === 'C' ? 'まず相場観を知りたい'
+    : '相談してから決めたい';
+
   return (
-    <div style={{ background: '#0F172A', color: 'white', minHeight: '100vh', fontFamily: 'inherit', overflowY: 'auto' }}>
-      <SEOHead
-        title="AI不動産整理査定 | House-AI"
-        description="AIが不動産の相場感を整理します。住所・種別・面積を入力するだけで、AI推定価格・売却難易度・エリア分析を無料で確認できます。しつこい営業なし。"
-        url="https://house-ai.co.jp/satei"
-      />
-      <style>{`
-        @keyframes scanline {
-          0% { transform: translateY(-100%); opacity: 0.6; }
-          100% { transform: translateY(400px); opacity: 0; }
-        }
-        @keyframes goldBreath {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes priceFlash {
-          0% { opacity: 1; }
-          20% { opacity: 0.3; }
-          40% { opacity: 1; }
-          60% { opacity: 0.6; }
-          100% { opacity: 1; }
-        }
-        @keyframes gaugeGrow {
-          from { width: 0%; }
-          to { width: 78%; }
-        }
-        @keyframes lockPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-        }
-        @keyframes djGlow {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
-        }
-        .satei-input {
-          width: 100%;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 10px;
-          padding: 12px 14px;
-          font-size: 16px;
-          color: white;
-          outline: none;
-          box-sizing: border-box;
-          font-family: inherit;
-          transition: border-color 0.2s;
-        }
-        .satei-input:focus { border-color: rgba(212,175,55,0.5); }
-        .satei-input::placeholder { color: rgba(255,255,255,0.25); }
-        .type-btn {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 8px;
-          padding: 9px 6px;
-          font-size: 13px;
-          color: rgba(255,255,255,0.6);
-          cursor: pointer;
-          text-align: center;
-          transition: all 0.15s;
-          font-family: inherit;
-        }
-        .type-btn:hover { border-color: rgba(212,175,55,0.3); color: rgba(212,175,55,0.8); }
-        .price-flash { animation: priceFlash 0.6s ease; }
-      `}</style>
-
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent)', animation: 'scanline 6s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
-
-      {/* ヘッダー */}
-      <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {onBack ? (
+    <>
+      {showVendorModal === true ? (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.75)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}>
+          <div style={{
+            background: '#0F172A',
+            border: '1px solid rgba(212,175,55,0.3)',
+            borderRadius: '20px',
+            padding: '32px 28px',
+            maxWidth: '480px', width: '100%',
+            position: 'relative',
+          }}>
             <button
-              type="button"
-              onClick={onBack}
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 14px', color: 'rgba(255,255,255,0.7)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+              onClick={() => { setShowVendorModal(false); setVendorPurpose(null); setVendorConfirmed(false); }}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '20px', cursor: 'pointer', lineHeight: 1, fontFamily: 'inherit' }}
             >
-              戻る
+              x
             </button>
-          ) : null}
-          <div>
-            <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '4px', marginBottom: '6px' }}>AI REAL ESTATE ANALYSIS</div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: 'white' }}>AI不動産整理査定</div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>AIが不動産市場をリアルタイム解析します</div>
+
+            {vendorConfirmed === false ? (
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '12px', fontFamily: 'monospace' }}>VENDOR MATCHING</div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: 'white', marginBottom: '6px' }}>業者査定依頼</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px', lineHeight: '1.6' }}>
+                  やり取りは会員ページ内で完結。しつこい営業はございません。安心してご利用いただけます。
+                </div>
+                {vendorOptions.map((opt) => (
+                  <div
+                    key={opt.key}
+                    onClick={() => setVendorPurpose(opt.key)}
+                    style={{
+                      padding: '14px 16px',
+                      marginBottom: '8px',
+                      border: vendorPurpose === opt.key ? '1px solid rgba(212,175,55,0.6)' : '1px solid rgba(255,255,255,0.08)',
+                      background: vendorPurpose === opt.key ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.02)',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                    }}
+                  >
+                    <div style={{
+                      width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                      background: vendorPurpose === opt.key ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: vendorPurpose === opt.key ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '12px', fontWeight: '700',
+                      color: vendorPurpose === opt.key ? '#D4AF37' : 'rgba(255,255,255,0.3)',
+                      fontFamily: 'monospace',
+                    }}>{opt.key}</div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: vendorPurpose === opt.key ? '#D4AF37' : 'white', marginBottom: '2px' }}>{opt.label}</div>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.5' }}>{opt.desc}</div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => vendorPurpose !== null ? setVendorConfirmed(true) : null}
+                  style={{
+                    width: '100%', marginTop: '16px', padding: '16px',
+                    background: vendorPurpose !== null ? 'linear-gradient(135deg, #D4AF37, #c9a84c)' : 'rgba(255,255,255,0.05)',
+                    color: vendorPurpose !== null ? '#0F172A' : 'rgba(255,255,255,0.2)',
+                    border: 'none', borderRadius: '12px',
+                    fontSize: '16px', fontWeight: '700', cursor: vendorPurpose !== null ? 'pointer' : 'default',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  この条件で進める
+                </button>
+              </div>
+            ) : null}
+
+            {vendorConfirmed === true ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '16px', fontFamily: 'monospace' }}>AI MATCHING READY</div>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px solid rgba(212,175,55,0.4)', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'goldPulseBtn 1.5s ease-in-out infinite' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(212,175,55,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="8" stroke="#D4AF37" strokeWidth="1.5"/>
+                      <path d="M7 10L9 12L13 8" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: 'white', marginBottom: '8px' }}>
+                  {vendorLabel}
+                </div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', lineHeight: '1.6' }}>
+                  選択した条件で進めてよろしいですか？
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', marginBottom: '28px', padding: '10px', background: 'rgba(212,175,55,0.05)', borderRadius: '8px' }}>
+                  AIが条件に合う業者を整理します。やり取りは会員ページ内で完結します。
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => { setShowVendorModal(false); setVendorPurpose(null); setVendorConfirmed(false); }}
+                    style={{
+                      flex: 1, padding: '14px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '12px', color: 'rgba(255,255,255,0.5)',
+                      fontSize: '15px', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    NO — 戻る
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowVendorModal(false);
+                      alert('次フェーズ：入力フォームを実装します');
+                    }}
+                    style={{
+                      flex: 2, padding: '14px',
+                      background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
+                      border: 'none', borderRadius: '12px',
+                      color: '#0F172A', fontSize: '15px', fontWeight: '700',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    YES — 進める
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
-        {user !== null ? (
-          <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>会員ステータス</div>
-            <div style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37' }}>無制限利用中</div>
+      ) : null}
+
+      <div style={{ background: '#0F172A', color: 'white', minHeight: '100vh', fontFamily: 'inherit', overflowY: 'auto' }}>
+        <SEOHead
+          title="AI不動産整理査定 | House-AI"
+          description="AIが不動産の相場感を整理します。住所・種別・面積を入力するだけで、AI推定価格・売却難易度・エリア分析を無料で確認できます。しつこい営業なし。"
+          url="https://house-ai.co.jp/satei"
+        />
+        <style>{`
+          @keyframes scanline {
+            0% { transform: translateY(-100%); opacity: 0.6; }
+            100% { transform: translateY(400px); opacity: 0; }
+          }
+          @keyframes goldBreath {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+          }
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes priceFlash {
+            0% { opacity: 1; }
+            20% { opacity: 0.3; }
+            40% { opacity: 1; }
+            60% { opacity: 0.6; }
+            100% { opacity: 1; }
+          }
+          @keyframes gaugeGrow {
+            from { width: 0%; }
+            to { width: 78%; }
+          }
+          @keyframes lockPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+          }
+          @keyframes djGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+          }
+          @keyframes goldShine {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+          }
+          @keyframes goldPulseBtn {
+            0%, 100% { box-shadow: 0 0 20px rgba(212,175,55,0.4), 0 4px 15px rgba(212,175,55,0.3); }
+            50% { box-shadow: 0 0 40px rgba(212,175,55,0.7), 0 4px 25px rgba(212,175,55,0.5); }
+          }
+          .satei-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 16px;
+            color: white;
+            outline: none;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s;
+          }
+          .satei-input:focus { border-color: rgba(212,175,55,0.5); }
+          .satei-input::placeholder { color: rgba(255,255,255,0.25); }
+          .satei-input option { background: #0F172A; color: white; }
+          .type-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 9px 6px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            font-family: inherit;
+          }
+          .type-btn:hover { border-color: rgba(212,175,55,0.3); color: rgba(212,175,55,0.8); }
+          .price-flash { animation: priceFlash 0.6s ease; }
+        `}</style>
+
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent)', animation: 'scanline 6s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
+
+        {/* ヘッダー */}
+        <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {onBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 14px', color: 'rgba(255,255,255,0.7)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                戻る
+              </button>
+            ) : null}
+            <div>
+              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '4px', marginBottom: '6px' }}>AI REAL ESTATE ANALYSIS</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: 'white' }}>AI不動産整理査定</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>AIが不動産市場をリアルタイム解析します</div>
+            </div>
           </div>
-        ) : (
-          usedToday === false ? (
+          {user !== null ? (
             <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>本日の無料AI査定</div>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37' }}>残り1回</div>
+              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>会員ステータス</div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37' }}>無制限利用中</div>
             </div>
           ) : (
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', marginBottom: '2px' }}>次回更新</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>明日0:00</div>
-            </div>
-          )
-        )}
-      </div>
-
-      {/* メインコンテンツ 2カラム */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', maxWidth: '1100px', margin: '0 auto' }}>
-
-        {/* 左カラム */}
-        <div style={{ flex: 1, padding: '28px 24px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-
-          {/* 住所 */}
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>住所（市区町村まで入力）</label>
-            <input className="satei-input" type="text" placeholder="例：東京都渋谷区..." value={address} onChange={(e) => setAddress(e.target.value)} />
-          </div>
-
-          {/* 種別 */}
-          <div style={{ marginTop: '20px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>物件種別</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
-              {propertyTypes.map(t => (
-                <button
-                  key={t}
-                  className="type-btn"
-                  onClick={() => setPropertyType(t)}
-                  style={{
-                    background: propertyType === t ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: propertyType === t ? '1px solid rgba(212,175,55,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                    color: propertyType === t ? '#D4AF37' : 'rgba(255,255,255,0.6)',
-                  }}
-                >{t}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* 面積・築年数 */}
-          <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>面積（㎡）</label>
-              <input className="satei-input" type="number" placeholder="85" value={area} onChange={(e) => setArea(e.target.value)} style={{ fontSize: '16px' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>築年数</label>
-              <input className="satei-input" type="number" placeholder="10" value={age} onChange={(e) => setAge(e.target.value)} style={{ fontSize: '16px' }} />
-            </div>
-          </div>
-
-          {/* 査定目的 */}
-          <div style={{ marginTop: '20px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>査定の目的</label>
-            {purposes.map(p => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPurpose(p.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  width: '100%', marginBottom: '8px',
-                  border: purpose === p.key ? '1px solid rgba(212,175,55,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                  background: purpose === p.key ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.02)',
-                  borderRadius: '10px', padding: '12px 14px',
-                  cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                }}
-              >
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: purpose === p.key ? '#D4AF37' : 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: purpose === p.key ? '#D4AF37' : 'rgba(255,255,255,0.7)' }}>{p.label}</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>{p.desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* 備考 */}
-          <div style={{ marginTop: '20px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>備考・特記事項（任意）</label>
-            <textarea className="satei-input" rows={3} placeholder="気になる点や状況など" value={memo} onChange={(e) => setMemo(e.target.value)} style={{ resize: 'vertical' }} />
-          </div>
-
-          {/* 安心感ボックス */}
-          <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: '12px', padding: '16px' }}>
-            <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '8px' }}>SAFE POLICY</div>
-            {[
-              'しつこい営業はありません',
-              'やり取りは会員ページ内で完結。電話番号を公開せず相談できます。',
-              'AIが希望条件を整理するため、合わない業者は自動で除外されます。',
-            ].map((txt, i) => (
-              <div key={i} style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.6' }}>
-                <div style={{ width: '6px', height: '6px', background: '#4ade80', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
-                <span>{txt}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* CTAボタン */}
-          <div style={{ marginTop: '20px' }}>
-            {analyzing ? (
-              <div style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '13px', color: 'rgba(212,175,55,0.8)', marginBottom: '10px' }}>
-                  {analysisSteps[analysisStep]}
-                </div>
-                <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #D4AF37, #c9a84c)',
-                    width: `${((analysisStep + 1) / analysisSteps.length) * 100}%`,
-                    transition: 'width 0.8s ease',
-                    borderRadius: '2px',
-                  }} />
-                </div>
+            usedToday === false ? (
+              <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', marginBottom: '2px' }}>本日の無料AI査定</div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37' }}>残り1回</div>
               </div>
             ) : (
-              <button
-                onClick={handleAnalyze}
-                disabled={!canSubmit}
-                style={{
-                  width: '100%', padding: '16px',
-                  background: canSubmit ? 'linear-gradient(135deg, #D4AF37, #c9a84c)' : 'rgba(255,255,255,0.05)',
-                  color: canSubmit ? '#0F172A' : 'rgba(255,255,255,0.2)',
-                  border: canSubmit ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px', fontSize: '16px', fontWeight: '700',
-                  cursor: canSubmit ? 'pointer' : 'default',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {usedToday === true ? (user !== null ? '30秒で無料AI分析を開始' : '本日の無料分析は利用済みです') : '30秒で無料AI分析を開始'}
-              </button>
-            )}
-          </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', marginBottom: '2px' }}>次回更新</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>明日0:00</div>
+              </div>
+            )
+          )}
         </div>
 
-        {/* 右カラム */}
-        <div style={{ width: '400px', minWidth: '400px', padding: '28px 20px', position: 'sticky', top: 0 }}>
-          <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '12px' }}>AI LOCATION ANALYSIS</div>
+        {/* メインコンテンツ 2カラム */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', maxWidth: '1100px', margin: '0 auto' }}>
 
-          <DigitalJapanMap
-            activeArea={mapRegion}
-            areaName={mapRegion ? mapRegion.name : ''}
-            mapStatus={mapStatus}
-          />
+          {/* 左カラム */}
+          <div style={{ flex: 1, padding: '28px 24px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
 
-          {/* AIログエリア */}
-          <div style={{
-            background: 'rgba(0,8,20,0.9)',
-            border: '1px solid rgba(96,165,250,0.15)',
-            borderRadius: '10px',
-            padding: '10px 14px',
-            marginTop: '10px',
-            marginBottom: '12px',
-            minHeight: '36px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e', animation: 'djGlow 1.5s infinite' }} />
-              <span style={{ fontSize: '9px', color: 'rgba(96,165,250,0.5)', letterSpacing: '3px', fontFamily: 'monospace' }}>AI ANALYSIS LOG</span>
+            {/* 住所 */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>住所（市区町村まで入力）</label>
+              <input className="satei-input" type="text" placeholder="例：東京都渋谷区..." value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(34,197,94,0.9)', fontFamily: 'monospace', letterSpacing: '1px', minHeight: '16px' }}>
-              {logText}<span style={{ animation: 'lockPulse 0.8s infinite', color: 'rgba(34,197,94,0.6)' }}>_</span>
-            </div>
-          </div>
 
-          {/* 解析ステータス */}
-          {analyzing ? (
-            <div style={{ marginBottom: '12px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', padding: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>AI解析ステータス</span>
-                <span style={{ fontSize: '10px', color: '#D4AF37' }}>解析中...</span>
+            {/* 種別 */}
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>物件種別</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
+                {propertyTypes.map(t => (
+                  <button
+                    key={t}
+                    className="type-btn"
+                    onClick={() => setPropertyType(t)}
+                    style={{
+                      background: propertyType === t ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.04)',
+                      border: propertyType === t ? '1px solid rgba(212,175,55,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                      color: propertyType === t ? '#D4AF37' : 'rgba(255,255,255,0.6)',
+                    }}
+                  >{t}</button>
+                ))}
               </div>
-              <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', margin: '8px 0' }}>
-                <div style={{ width: `${((analysisStep + 1) / analysisSteps.length) * 100}%`, background: 'linear-gradient(90deg,#D4AF37,#c9a84c)', height: '100%', transition: 'width 0.8s' }} />
-              </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{analysisSteps[analysisStep]}</div>
             </div>
-          ) : null}
 
-          {/* AI分析結果 */}
-          {result !== null ? (
-            <div style={{ animation: 'fadeUp 0.6s ease' }}>
+            {/* 面積・築年数 */}
+            <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>面積（㎡）</label>
+                <input className="satei-input" type="number" placeholder="85" value={area} onChange={(e) => setArea(e.target.value)} style={{ fontSize: '16px' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>築年数</label>
+                <input className="satei-input" type="number" placeholder="10" value={age} onChange={(e) => setAge(e.target.value)} style={{ fontSize: '16px' }} />
+              </div>
+            </div>
 
-              {/* 全カードグリッド */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-
-                {/* 価格カード（全幅） */}
-                <div style={{
-                  gridColumn: '1 / -1',
-                  background: 'rgba(212,175,55,0.06)',
-                  border: '1px solid rgba(212,175,55,0.3)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                }}>
-                  <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '8px', fontFamily: 'monospace' }}>AI PRICE ESTIMATE</div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                    <div style={{
-                      fontSize: '32px', fontWeight: '700', color: '#D4AF37',
-                      fontFamily: 'monospace', letterSpacing: '1px',
-                      textShadow: '0 0 20px rgba(212,175,55,0.5)',
-                    }}>
-                      {displayPrice.toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: '16px', color: 'rgba(212,175,55,0.7)', fontWeight: '600' }}>万円〜</div>
-                    <div style={{ fontSize: '20px', fontWeight: '700', color: 'rgba(212,175,55,0.6)', fontFamily: 'monospace' }}>
-                      {result.high.toLocaleString()}万円
-                    </div>
+            {/* 物件種別追加入力 — マンション */}
+            {propertyType === 'マンション' ? (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'monospace' }}>DETAIL INPUT — マンション</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>階数</div>
+                    <input className="satei-input" type="number" placeholder="例：8" value={floor} onChange={(e) => setFloor(e.target.value)} style={{ fontSize: '16px' }} />
                   </div>
-                  <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.35)', marginTop: '6px' }}>※AI概算 実際の査定とは異なります</div>
-                </div>
-
-                {/* MARKET SIGNAL */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>MARKET SIGNAL</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#22c55e', fontFamily: 'monospace' }}>低い（売れやすい）</div>
-                </div>
-
-                {/* AREA DEMAND */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>AREA DEMAND</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: isHighDemand ? '#22d3ee' : '#fbbf24', fontFamily: 'monospace' }}>
-                    {isHighDemand ? 'HIGH' : 'NORMAL'}
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>間取り</div>
+                    <select className="satei-input" value={roomType} onChange={(e) => setRoomType(e.target.value)} style={{ fontSize: '16px', cursor: 'pointer' }}>
+                      <option value="">選択してください</option>
+                      <option>1R</option>
+                      <option>1K</option>
+                      <option>1DK</option>
+                      <option>1LDK</option>
+                      <option>2LDK</option>
+                      <option>3LDK</option>
+                      <option>4LDK以上</option>
+                    </select>
                   </div>
                 </div>
+              </div>
+            ) : null}
 
-                {/* INVEST SCORE */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>INVEST SCORE</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: purpose === 'high' ? '#22c55e' : purpose === 'speed' ? '#fbbf24' : 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
-                    {purpose === 'high' ? 'HIGH' : purpose === 'speed' ? 'NORMAL' : 'REF ONLY'}
+            {/* 物件種別追加入力 — 戸建 */}
+            {propertyType === '戸建' ? (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'monospace' }}>DETAIL INPUT — 戸建</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>土地面積（㎡）</div>
+                    <input className="satei-input" type="number" placeholder="例：120" value={landArea} onChange={(e) => setLandArea(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>延床面積（㎡）</div>
+                    <input className="satei-input" type="number" placeholder="例：95" value={buildingArea} onChange={(e) => setBuildingArea(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>間取り</div>
+                    <select className="satei-input" value={roomType} onChange={(e) => setRoomType(e.target.value)} style={{ fontSize: '16px', cursor: 'pointer' }}>
+                      <option value="">選択してください</option>
+                      <option>2LDK</option>
+                      <option>3LDK</option>
+                      <option>4LDK</option>
+                      <option>5LDK以上</option>
+                    </select>
                   </div>
                 </div>
+              </div>
+            ) : null}
 
-                {/* PRICE/TSUBO */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>PRICE/TSUBO</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>145万円</div>
-                </div>
-
-                {/* MARKET TEMPERATURE（全幅） */}
-                <div style={{
-                  gridColumn: '1 / -1',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace' }}>MARKET TEMPERATURE</span>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>78%</span>
+            {/* 物件種別追加入力 — 土地 */}
+            {propertyType === '土地' ? (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'monospace' }}>DETAIL INPUT — 土地</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>土地面積（㎡）</div>
+                    <input className="satei-input" type="number" placeholder="例：150" value={landArea} onChange={(e) => setLandArea(e.target.value)} style={{ fontSize: '16px' }} />
                   </div>
-                  <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>用途地域</div>
+                    <select className="satei-input" value={roomType} onChange={(e) => setRoomType(e.target.value)} style={{ fontSize: '16px', cursor: 'pointer' }}>
+                      <option value="">選択してください</option>
+                      <option>第一種低層住居専用</option>
+                      <option>第二種低層住居専用</option>
+                      <option>第一種中高層住居専用</option>
+                      <option>準住居地域</option>
+                      <option>商業地域</option>
+                      <option>準工業地域</option>
+                      <option>不明</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* 物件種別追加入力 — 収益物件 */}
+            {(propertyType === '一棟アパート' || propertyType === '一棟ビル' || propertyType === '収益物件') ? (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.5)', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'monospace' }}>DETAIL INPUT — 収益物件</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>総戸数・区画数</div>
+                    <input className="satei-input" type="number" placeholder="例：8" value={units} onChange={(e) => setUnits(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>現在入居率（%）</div>
+                    <input className="satei-input" type="number" placeholder="例：85" value={occupancy} onChange={(e) => setOccupancy(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>年間家賃収入（万円）</div>
+                    <input className="satei-input" type="number" placeholder="例：480" value={annualRent} onChange={(e) => setAnnualRent(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>土地面積（㎡）</div>
+                    <input className="satei-input" type="number" placeholder="例：200" value={landArea} onChange={(e) => setLandArea(e.target.value)} style={{ fontSize: '16px' }} />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* 査定目的 */}
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>査定の目的</label>
+              {purposes.map(p => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPurpose(p.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    width: '100%', marginBottom: '8px',
+                    border: purpose === p.key ? '1px solid rgba(212,175,55,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                    background: purpose === p.key ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.02)',
+                    borderRadius: '10px', padding: '12px 14px',
+                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                  }}
+                >
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: purpose === p.key ? '#D4AF37' : 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: purpose === p.key ? '#D4AF37' : 'rgba(255,255,255,0.7)' }}>{p.label}</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>{p.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* 備考 */}
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '1px' }}>備考・特記事項（任意）</label>
+              <textarea className="satei-input" rows={3} placeholder="気になる点や状況など" value={memo} onChange={(e) => setMemo(e.target.value)} style={{ resize: 'vertical' }} />
+            </div>
+
+            {/* 安心感ボックス */}
+            <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '8px' }}>SAFE POLICY</div>
+              {[
+                'しつこい営業はありません',
+                'やり取りは会員ページ内で完結。電話番号を公開せず相談できます。',
+                'AIが希望条件を整理するため、合わない業者は自動で除外されます。',
+              ].map((txt, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.6' }}>
+                  <div style={{ width: '6px', height: '6px', background: '#4ade80', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
+                  <span>{txt}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* CTAボタン */}
+            <div style={{ marginTop: '20px' }}>
+              {analyzing ? (
+                <div style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: 'rgba(212,175,55,0.8)', marginBottom: '10px' }}>
+                    {analysisSteps[analysisStep]}
+                  </div>
+                  <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%',
-                      background: 'linear-gradient(90deg, #1d6fcc, #22c55e, #D4AF37)',
+                      background: 'linear-gradient(90deg, #D4AF37, #c9a84c)',
+                      width: `${((analysisStep + 1) / analysisSteps.length) * 100}%`,
+                      transition: 'width 0.8s ease',
                       borderRadius: '2px',
-                      animation: 'gaugeGrow 1.5s ease forwards',
                     }} />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>COLD</span>
-                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>HOT</span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleAnalyze}
+                  disabled={!canSubmit}
+                  style={{
+                    width: '100%',
+                    padding: '18px',
+                    background: canSubmit
+                      ? 'linear-gradient(90deg, #c9a84c, #f0d060, #D4AF37, #f0d060, #c9a84c)'
+                      : 'rgba(255,255,255,0.05)',
+                    backgroundSize: '200% auto',
+                    animation: canSubmit ? 'goldShine 3s linear infinite, goldPulseBtn 2s ease-in-out infinite' : 'none',
+                    color: canSubmit ? '#0F172A' : 'rgba(255,255,255,0.2)',
+                    border: canSubmit ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '14px',
+                    fontSize: '17px',
+                    fontWeight: '700',
+                    cursor: canSubmit ? 'pointer' : 'default',
+                    fontFamily: 'inherit',
+                    letterSpacing: '1px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {usedToday === true ? (user !== null ? '30秒で無料AI分析を開始' : '本日の無料分析は利用済みです') : '30秒で無料AI分析を開始'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 右カラム */}
+          <div style={{ width: '400px', minWidth: '400px', padding: '28px 20px', position: 'sticky', top: 0 }}>
+            <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '12px' }}>AI LOCATION ANALYSIS</div>
+
+            <DigitalJapanMap
+              activeArea={mapRegion}
+              areaName={mapRegion ? mapRegion.name : ''}
+              mapStatus={mapStatus}
+            />
+
+            {/* 成約事例件数バッジ */}
+            {result !== null ? (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '10px', marginBottom: '0', flexWrap: 'wrap' }}>
+                {[
+                  { label: '周辺成約事例', value: '5件', color: 'rgba(74,222,128,0.8)' },
+                  { label: '類似物件', value: '12件', color: 'rgba(96,165,250,0.8)' },
+                  { label: '公示地点', value: '3地点', color: 'rgba(212,175,55,0.8)' },
+                ].map((item, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}>
+                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: '1px' }}>{item.label}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: item.color, fontFamily: 'monospace' }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* AIログエリア */}
+            <div style={{
+              background: 'rgba(0,8,20,0.9)',
+              border: '1px solid rgba(96,165,250,0.15)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginTop: '10px',
+              marginBottom: '12px',
+              minHeight: '36px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e', animation: 'djGlow 1.5s infinite' }} />
+                <span style={{ fontSize: '9px', color: 'rgba(96,165,250,0.5)', letterSpacing: '3px', fontFamily: 'monospace' }}>AI ANALYSIS LOG</span>
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(34,197,94,0.9)', fontFamily: 'monospace', letterSpacing: '1px', minHeight: '16px' }}>
+                {logText}<span style={{ animation: 'lockPulse 0.8s infinite', color: 'rgba(34,197,94,0.6)' }}>_</span>
+              </div>
+            </div>
+
+            {/* 解析ステータス */}
+            {analyzing ? (
+              <div style={{ marginBottom: '12px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', padding: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>AI解析ステータス</span>
+                  <span style={{ fontSize: '10px', color: '#D4AF37' }}>解析中...</span>
+                </div>
+                <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', margin: '8px 0' }}>
+                  <div style={{ width: `${((analysisStep + 1) / analysisSteps.length) * 100}%`, background: 'linear-gradient(90deg,#D4AF37,#c9a84c)', height: '100%', transition: 'width 0.8s' }} />
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{analysisSteps[analysisStep]}</div>
+              </div>
+            ) : null}
+
+            {/* AI分析結果 */}
+            {result !== null ? (
+              <div style={{ animation: 'fadeUp 0.6s ease' }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+
+                  {/* 価格カード（全幅） */}
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    background: 'rgba(212,175,55,0.06)',
+                    border: '1px solid rgba(212,175,55,0.3)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                  }}>
+                    <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.5)', letterSpacing: '3px', marginBottom: '8px', fontFamily: 'monospace' }}>AI PRICE ESTIMATE</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                      <div style={{ fontSize: '32px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace', letterSpacing: '1px', textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>
+                        {displayPrice.toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '16px', color: 'rgba(212,175,55,0.7)', fontWeight: '600' }}>万円〜</div>
+                      <div style={{ fontSize: '20px', fontWeight: '700', color: 'rgba(212,175,55,0.6)', fontFamily: 'monospace' }}>
+                        {result.high.toLocaleString()}万円
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.35)', marginTop: '6px' }}>※AI概算 実際の査定とは異なります</div>
+                  </div>
+
+                  {/* MARKET SIGNAL */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>MARKET SIGNAL</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#22c55e', fontFamily: 'monospace' }}>低い（売れやすい）</div>
+                  </div>
+
+                  {/* AREA DEMAND */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>AREA DEMAND</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: isHighDemand ? '#22d3ee' : '#fbbf24', fontFamily: 'monospace' }}>
+                      {isHighDemand ? 'HIGH' : 'NORMAL'}
+                    </div>
+                  </div>
+
+                  {/* INVEST SCORE */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>INVEST SCORE</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: purpose === 'high' ? '#22c55e' : purpose === 'speed' ? '#fbbf24' : 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
+                      {purpose === 'high' ? 'HIGH' : purpose === 'speed' ? 'NORMAL' : 'REF ONLY'}
+                    </div>
+                  </div>
+
+                  {/* PRICE/TSUBO */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '6px' }}>PRICE/TSUBO</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>145万円</div>
+                  </div>
+
+                  {/* MARKET TEMPERATURE（全幅） */}
+                  <div style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', fontFamily: 'monospace' }}>MARKET TEMPERATURE</span>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#D4AF37', fontFamily: 'monospace' }}>78%</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: 'linear-gradient(90deg, #1d6fcc, #22c55e, #D4AF37)', borderRadius: '2px', animation: 'gaugeGrow 1.5s ease forwards' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                      <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>COLD</span>
+                      <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>HOT</span>
+                    </div>
+                  </div>
+
+                  {/* PRO ONLY - 将来予測 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
+                        <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
+                        <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                      <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
+                    </div>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>FORECAST +6M</div>
+                    <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>+4.2%</div>
+                  </div>
+
+                  {/* PRO ONLY - AI信頼度 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
+                        <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
+                        <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                      <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
+                    </div>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>AI CONFIDENCE</div>
+                    <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>92%</div>
                   </div>
                 </div>
 
-                {/* PRO ONLY - 将来予測 */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
-                      <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
-                      <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
+                {user !== null ? (
+                  <div style={{ marginTop: '4px', padding: '10px 14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', flexShrink: 0 }} />
+                    <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.7)' }}>
+                      会員特典：査定履歴が自動保存されます
+                    </div>
                   </div>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>FORECAST +6M</div>
-                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>+4.2%</div>
-                </div>
+                ) : null}
 
-                {/* PRO ONLY - AI信頼度 */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '12px', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(4px)', background: 'rgba(5,11,29,0.6)', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginBottom: '4px', animation: 'lockPulse 2s infinite' }}>
-                      <rect x="2" y="6" width="10" height="8" rx="1.5" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2"/>
-                      <path d="M4 6V4.5C4 2.8 5.3 1.5 7 1.5C8.7 1.5 10 2.8 10 4.5V6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    <span style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '2px', fontFamily: 'monospace' }}>PRO ONLY</span>
-                  </div>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '6px', fontFamily: 'monospace' }}>AI CONFIDENCE</div>
-                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'rgba(74,222,128,0.5)', fontFamily: 'monospace' }}>92%</div>
+                {/* CTA 2本 */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button
+                    onClick={() => window.open('https://house-ai.co.jp', '_blank')}
+                    style={{
+                      flex: 1, padding: '12px 8px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '10px', color: 'rgba(255,255,255,0.7)',
+                      fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    公示価格を見る
+                  </button>
+                  <button
+                    onClick={() => setShowVendorModal(true)}
+                    style={{
+                      flex: 1, padding: '12px 8px',
+                      background: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08))',
+                      border: '1px solid rgba(212,175,55,0.4)',
+                      borderRadius: '10px', color: '#D4AF37',
+                      fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    業者査定依頼（無料）
+                  </button>
                 </div>
               </div>
-
-              {user !== null ? (
-                <div style={{ marginTop: '4px', padding: '10px 14px', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', flexShrink: 0 }} />
-                  <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.7)' }}>
-                    会員特典：査定履歴が自動保存されます
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
