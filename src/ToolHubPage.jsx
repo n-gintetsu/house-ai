@@ -11,6 +11,7 @@ const tools = [
   { id: 'dictionary', icon: BookOpen, title: '宅建用語集', description: '難しい言葉を整理', labels: ['登録不要'] },
   { id: 'insurance', icon: Shield, title: '火災保険整理', description: '補償内容を比較', labels: ['登録不要', 'AI整理'] },
   { id: 'moving', icon: Home, title: '引越し費用比較', description: '相場確認・条件比較', labels: ['登録不要'] },
+  { id: 'satei', icon: null, title: 'AI不動産整理査定', description: '相場感をAIが整理', labels: ['登録不要', 'AI査定'] },
 ];
 
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
@@ -19,6 +20,7 @@ const labelStyle = (label) => {
   if (label === '登録不要') return { background: '#F0FDF4', color: '#15803d' };
   if (label === '人気') return { background: '#FFF7ED', color: '#c2410c' };
   if (label === 'AI整理') return { background: '#EFF6FF', color: '#1d4ed8' };
+  if (label === 'AI査定') return { background: '#FFFBEB', color: '#b45309' };
   return { background: '#FAF5FF', color: '#7e22ce' };
 };
 
@@ -65,6 +67,7 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
           {tools.map((tool, idx) => {
             const Icon = tool.icon;
+            const isSatei = tool.id === 'satei';
             return (
               <motion.button
                 key={tool.id}
@@ -87,8 +90,16 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                   transform: hoveredCard === tool.id ? 'translateY(-4px)' : 'translateY(0)',
                 }}
               >
-                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: hoveredCard === tool.id ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px', transition: 'background 0.25s ease' }}>
-                  <Icon size={32} color="white" />
+                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: isSatei ? 'linear-gradient(135deg, #c9a84c, #D4AF37)' : hoveredCard === tool.id ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px', transition: 'background 0.25s ease' }}>
+                  {isSatei ? (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 11L12 3L21 11V21H15V15H9V21H3V11Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <circle cx="19" cy="6" r="4" fill="#D4AF37"/>
+                      <text x="19" y="9" textAnchor="middle" fontSize="5" fill="white" fontWeight="bold">AI</text>
+                    </svg>
+                  ) : (
+                    <Icon size={32} color="white" />
+                  )}
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px', margin: '0 0 8px 0' }}>{tool.title}</h3>
                 <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px', lineHeight: 1.6, margin: '0 0 16px 0' }}>{tool.description}</p>

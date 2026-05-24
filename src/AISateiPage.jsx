@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SEOHead from './SEOHead';
 
 const propertyTypes = ['戸建', 'マンション', '一棟アパート', '一棟ビル', '土地', '収益物件'];
 
@@ -94,6 +95,11 @@ export default function AISateiPage({ onBack }) {
 
   return (
     <div style={{ background: '#0F172A', color: 'white', minHeight: '100vh', fontFamily: 'inherit', overflowY: 'auto' }}>
+      <SEOHead
+        title="AI不動産整理査定 | House-AI"
+        description="AIが不動産の相場感を整理します。住所・種別・面積を入力するだけで、AI推定価格・売却難易度・エリア分析を無料で確認できます。しつこい営業なし。"
+        url="https://house-ai.co.jp/satei"
+      />
       <style>{`
         @keyframes scanline {
           0% { transform: translateY(-100%); opacity: 0.6; }

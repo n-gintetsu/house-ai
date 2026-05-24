@@ -10,6 +10,7 @@ import MortgageSimulatorPage from './MortgageSimulatorPage';
 import InvestorDrillPage from './InvestorDrillPage';
 import InvestmentLoanPage from './InvestmentLoanPage';
 import DrillRankingPage from './DrillRankingPage';
+import AISateiPage from './AISateiPage';
 
 export default function AIPartnerSection({ onTabChange }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -39,6 +40,9 @@ export default function AIPartnerSection({ onTabChange }) {
     } else if (toolId === 'investment') {
       setSelectedTool('investment');
       setCurrentView('tool-detail');
+    } else if (toolId === 'satei') {
+      setSelectedTool('satei');
+      setCurrentView('tool-detail');
     } else {
       onTabChange('chat');
     }
@@ -64,6 +68,14 @@ export default function AIPartnerSection({ onTabChange }) {
 
   if (showRanking) {
     return <DrillRankingPage onBack={() => setShowRanking(false)} />;
+  }
+
+  if (currentView === 'tool-detail' && selectedTool === 'satei') {
+    return (
+      <AISateiPage
+        onBack={() => setCurrentView('toolHub')}
+      />
+    );
   }
 
   if (currentView === 'tool-detail' && selectedTool === 'investment') {
