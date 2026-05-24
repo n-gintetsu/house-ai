@@ -231,6 +231,92 @@ export default function HouseAiRankingPage({ onBack }) {
         />
       </section>
 
+      <section style={{
+        marginTop: '40px',
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.9), rgba(10,5,0,0.95))',
+        border: '1px solid rgba(212,175,55,0.4)',
+        borderRadius: '20px',
+        padding: '40px 32px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'400px', height:'200px', background:'radial-gradient(ellipse,rgba(212,175,55,0.08),transparent 70%)', pointerEvents:'none' }} />
+
+        <div style={{ textAlign:'center', marginBottom:'32px' }}>
+          <div style={{ fontSize:'10px', color:'rgba(212,175,55,0.5)', letterSpacing:'5px', fontFamily:'monospace', marginBottom:'8px' }}>BEYOND EXTREME</div>
+          <div style={{ fontSize:'28px', fontWeight:'900', color:'#D4AF37', letterSpacing:'4px', marginBottom:'4px', textShadow:'0 0 20px rgba(212,175,55,0.5)' }}>IQ 500 CHALLENGE</div>
+          <div style={{ fontSize:'13px', color:'rgba(255,255,255,0.4)', letterSpacing:'2px' }}>ネットで調べても解けない・本物の投資家だけが解ける領域</div>
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px' }}>
+          {[
+            {
+              num:'01',
+              title:'不動産DCF最適化問題',
+              desc:'NOI成長率・ターミナルキャップレート・WACC・レバレッジ効果を同時最適化し、IRR最大化のための最適LTV比率を導出せよ。',
+              tag:'DCF / IRR / WACC',
+            },
+            {
+              num:'02',
+              title:'税務ストラクチャー設計',
+              desc:'個人・法人・信託を組み合わせた複合ストラクチャーで、相続税・譲渡税・法人税の合計税負担を最小化する最適な資産移転スキームを設計せよ。',
+              tag:'法人化 / 信託 / 相続',
+            },
+            {
+              num:'03',
+              title:'市場分析・総合判断',
+              desc:'人口減少1.2%/年・空室率上昇のB市において、表面利回り9%・築15年・RC造・積算評価率85%の一棟マンション。10年保有・出口キャップレートを現在より1.5%高く想定した場合、このIRRの分岐点となる借入金利の上限値はいくらか。',
+              tag:'IRR / DCF / 融資戦略',
+              isFree: true,
+            },
+          ].map((q, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: i === 2 ? '1px solid rgba(212,175,55,0.5)' : '1px solid rgba(212,175,55,0.2)',
+              borderRadius: '16px',
+              padding: '24px',
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
+                <div style={{ fontSize:'10px', color:'rgba(212,175,55,0.5)', letterSpacing:'3px', fontFamily:'monospace' }}>QUESTION {q.num}</div>
+                {i === 2 ? (
+                  <div style={{ fontSize:'9px', padding:'3px 8px', background:'rgba(212,175,55,0.15)', border:'1px solid rgba(212,175,55,0.4)', borderRadius:'4px', color:'#D4AF37', letterSpacing:'1px' }}>自由記述式</div>
+                ) : (
+                  <div style={{ fontSize:'9px', padding:'3px 8px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'4px', color:'rgba(255,255,255,0.3)', letterSpacing:'1px' }}>LOCKED</div>
+                )}
+              </div>
+
+              <div style={{ fontSize:'10px', color:'rgba(212,175,55,0.6)', marginBottom:'10px', fontFamily:'monospace' }}>{q.tag}</div>
+
+              <div style={{ fontSize:'15px', fontWeight:'700', color:'white', marginBottom:'10px', lineHeight:'1.4' }}>{q.title}</div>
+
+              <div style={{
+                fontSize:'12px',
+                color:'rgba(255,255,255,0.55)',
+                lineHeight:'1.7',
+                filter: i !== 2 ? 'blur(3px)' : 'none',
+                userSelect: i !== 2 ? 'none' : 'auto',
+              }}>{q.desc}</div>
+
+              {i !== 2 ? (
+                <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'6px' }}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="9" width="14" height="10" rx="2" stroke="rgba(212,175,55,0.6)" strokeWidth="1.5"/>
+                    <path d="M6 9V6.5C6 4.6 7.8 3 10 3C12.2 3 14 4.6 14 6.5V9" stroke="rgba(212,175,55,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <div style={{ fontSize:'10px', color:'rgba(212,175,55,0.5)', letterSpacing:'2px', fontFamily:'monospace' }}>IQ500認定者のみ</div>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ textAlign:'center', marginTop:'24px', fontSize:'11px', color:'rgba(255,255,255,0.25)', letterSpacing:'2px' }}>
+          EXTREME全問正解者のみ閲覧可能 — IQ500認定への最終関門
+        </div>
+      </section>
+
       <style>{css}</style>
     </div>
   );

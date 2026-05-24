@@ -1325,6 +1325,7 @@ export default function App() {
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
+                          if (item.id === 'drill') setShowRanking(true);
                           setTab(item.id);
                           setMenuOpen(false);
                         }}
