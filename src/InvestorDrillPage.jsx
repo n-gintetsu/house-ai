@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { drillLevel1, drillExtreme } from './drillData';
+import { drillLevel1, drillExtreme, drillLevel2, drillLevel3 } from './drillData';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -202,38 +202,38 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
 
-          {/* LEVEL 2 COMING SOON */}
+          {/* LEVEL 2 */}
           <div
-            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', cursor: 'default', opacity: 0.5, display: 'flex', alignItems: 'center', gap: '16px' }}
+            onClick={() => { setSelectedLevel('lv2'); setPhase('modeSelect'); }}
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(100,160,255,0.3)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
           >
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>LV</div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>2</div>
+            <div style={{ background: 'rgba(100,160,255,0.05)', border: '1px solid rgba(100,160,255,0.2)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: '#60a0ff', letterSpacing: '2px' }}>LV</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#60a0ff', lineHeight: 1 }}>2</div>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>収益化チャレンジャー</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>キャッシュフロー・融資・出口戦略</div>
+              <div style={{ fontSize: '11px', color: 'rgba(100,160,255,0.6)', marginTop: '8px' }}>全50問</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>
-              COMING SOON
-            </div>
+            <div style={{ color: 'rgba(100,160,255,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
 
-          {/* LEVEL 3 COMING SOON */}
+          {/* LEVEL 3 */}
           <div
-            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.08)', borderRadius: '16px', padding: '24px', cursor: 'default', opacity: 0.5, display: 'flex', alignItems: 'center', gap: '16px' }}
+            onClick={() => { setSelectedLevel('lv3'); setPhase('modeSelect'); }}
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
           >
-            <div style={{ background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.1)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.4)', letterSpacing: '2px' }}>LV</div>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(212,175,55,0.4)', lineHeight: 1 }}>3</div>
+            <div style={{ background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '8px', padding: '8px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: '#D4AF37', letterSpacing: '2px' }}>LV</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#D4AF37', lineHeight: 1 }}>3</div>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>プロ投資家</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>IRR・積算・法人化・相続・レバレッジ</div>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>
-              COMING SOON
-            </div>
+            <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
 
           {/* EXTREME */}
@@ -264,7 +264,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
   if (phase === 'modeSelect') {
     const isExtreme = selectedLevel === 'extreme';
-    const counts = isExtreme ? [5, 10, 20, drillExtreme.length] : [5, 10, 30, 50];
+    const counts = selectedLevel === 'extreme' ? [5, 10, 20, drillExtreme.length]
+      : selectedLevel === 'lv2' ? [5, 10, 30, 50]
+      : selectedLevel === 'lv3' ? [5, 10, 30, 50]
+      : [5, 10, 30, 50];
     const labels = isExtreme
       ? ['5問チャレンジ（超難問）', '10問チャレンジ（超難問）', '20問（本気モード）', '全問挑戦（伝説級）']
       : ['5問チャレンジ', '10問チャレンジ', '30問チャレンジ', '全50問挑戦'];
@@ -283,6 +286,16 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ color: '#D4AF37', fontSize: '24px', fontWeight: 700, letterSpacing: '2px' }}>AI EXTREME TEST</div>
             <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '12px', marginTop: '8px' }}>本物の投資家領域への挑戦</div>
           </div>
+        ) : selectedLevel === 'lv2' ? (
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{ color: 'white', fontSize: '22px', fontWeight: 700 }}>LEVEL 2 ｜ 収益化チャレンジャー</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '8px' }}>問題数を選択してください</div>
+          </div>
+        ) : selectedLevel === 'lv3' ? (
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{ color: '#D4AF37', fontSize: '22px', fontWeight: 700 }}>LEVEL 3 ｜ プロ投資家</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '8px' }}>問題数を選択してください</div>
+          </div>
         ) : (
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
             <div style={{ color: 'white', fontSize: '22px', fontWeight: 700 }}>LEVEL 1 ｜ 投資見習い</div>
@@ -295,7 +308,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <button
               key={index}
               onClick={() => {
-                const pool = isExtreme ? drillExtreme : drillLevel1;
+                const pool = selectedLevel === 'extreme' ? drillExtreme
+                  : selectedLevel === 'lv2' ? drillLevel2
+                  : selectedLevel === 'lv3' ? drillLevel3
+                  : drillLevel1;
                 setQuestions(pool.slice(0, counts[index]));
                 setPhase('quiz');
                 setCurrentIndex(0);
