@@ -1412,6 +1412,10 @@
 
 .feed-phone-frame {
   width: 360px;
+  height: auto;
+  min-height: 580px;
+  max-height: 680px;
+  overflow: hidden;
   background: #0B1F33;
   border-radius: 34px;
   padding: 12px;
@@ -1450,10 +1454,11 @@
 }
 
 .feed-phone-screen {
-  height: 520px;
+  height: auto;
   border-radius: 26px;
-  overflow: hidden;
+  overflow: visible;
   background: #000;
+  padding-bottom: 24px;
 }
 
 .feed-track {
