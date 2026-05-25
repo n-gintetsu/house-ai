@@ -149,3 +149,38 @@ code {
   50% { transform: scale(1.025); filter: brightness(1.12); }
   100% { transform: scale(1); filter: brightness(1); }
 }
+
+.challenger-badges-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.challenger-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.challenger-badge-item img {
+  width: 88px;
+  height: auto;
+  filter: drop-shadow(0 0 6px rgba(201,168,76,0.4));
+  transition: filter 0.2s, transform 0.2s;
+}
+.challenger-badge-item:hover img {
+  filter: drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15);
+  transform: translateY(-4px) scale(1.08);
+}
+.challenger-badge-item .badge-label {
+  color: #c9a84c;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+.challenger-badge-item .badge-range {
+  color: #64748b;
+  font-size: 10px;
+}

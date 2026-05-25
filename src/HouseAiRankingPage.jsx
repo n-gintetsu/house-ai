@@ -65,9 +65,7 @@ function MainLegendBadge() {
           animation: 'shieldFloat 6s ease-in-out infinite, shieldGlow 3s ease-in-out infinite'
         }}
       />
-      <div className="blue-ribbon left" />
-      <div className="blue-ribbon right" />
-      <div className="rank-no">No.1</div>
+<div className="rank-no">No.1</div>
       <div className="rank-copy">知識 x 思考力 x 発想力</div>
       <div className="main-message">真の知性が、ここに証明される。</div>
     </div>
@@ -209,19 +207,12 @@ export default function HouseAiRankingPage({ onBack }) {
 
       <section className="badge-list-section">
         <div className="section-title">CHALLENGER BADGES</div>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="challenger-badges-grid">
           {badges.map((b) => (
-            <div key={b.label} style={{ textAlign: 'center', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.querySelector('img').style.filter = 'drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15)'}
-              onMouseLeave={e => e.currentTarget.querySelector('img').style.filter = 'drop-shadow(0 0 6px rgba(201,168,76,0.4))'}
-            >
-              <img src={b.src} alt={b.label} style={{
-                width: 80, height: 'auto', display: 'block', margin: '0 auto',
-                filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.4))',
-                transition: 'filter 0.2s'
-              }} />
-              <div style={{ color: '#c9a84c', fontSize: 11, marginTop: 6, fontWeight: 'bold' }}>{b.label}</div>
-              <div style={{ color: '#64748b', fontSize: 10, marginTop: 2 }}>{b.range}</div>
+            <div key={b.label} className="challenger-badge-item">
+              <img src={b.src} alt={b.label} />
+              <span className="badge-label">{b.label}</span>
+              <span className="badge-range">{b.range}</span>
             </div>
           ))}
         </div>
