@@ -18,7 +18,6 @@ const tiers = [
   ['SILVER', '10,000 - 19,999pt', 'silver'],
   ['GOLD', '20,000 - 49,999pt', 'gold'],
   ['PLATINUM', '50,000 - 99,999pt', 'platinum'],
-  ['DIAMOND', '100,000pt〜', 'diamond'],
   ['LEGEND', '頂点の証', 'legend'],
 ];
 
@@ -149,6 +148,7 @@ export default function HouseAiRankingPage({ onBack }) {
     { src: '/badge-silver.png', label: 'シルバー', range: '10,000〜19,999pt' },
     { src: '/badge-gold.png', label: 'ゴールド', range: '20,000〜49,999pt' },
     { src: '/badge-platinum.png', label: 'プラチナ', range: '50,000〜99,999pt' },
+    { src: '/badges/daimond.png', label: 'ダイヤモンド', range: '100,000pt〜' },
     { src: '/badge-legend.png', label: 'レジェンド', range: '頂点の証' },
   ];
   return (
