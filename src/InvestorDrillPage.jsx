@@ -174,7 +174,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   function showAiMessage(msg) {
     if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
     setAiMessage(msg);
-    aiMessageTimerRef.current = setTimeout(() => setAiMessage(null), 1500);
+    aiMessageTimerRef.current = setTimeout(() => setAiMessage(null), 2500);
   }
 
   function triggerGameOver() {
@@ -524,9 +524,9 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             25% { transform: translateX(-2px) rotate(-2deg); }
             75% { transform: translateX(2px) rotate(2deg); }
           }
-          @keyframes aiFadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          @keyframes aiSlideIn {
+            from { opacity: 0; transform: translateX(-16px); }
+            to { opacity: 1; transform: translateX(0); }
           }
           @keyframes redFlash {
             0% { opacity: 0.6; }
@@ -537,28 +537,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
         {/* 赤フラッシュ */}
         {flashRed ? (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(239,68,68,0.5)', zIndex: 9999, pointerEvents: 'none', animation: 'redFlash 0.5s ease-out forwards' }} />
-        ) : null}
-
-        {/* AIメッセージオーバーレイ */}
-        {aiMessage !== null ? (
-          <div style={{
-            position: 'fixed', bottom: 32, left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(5,12,40,0.97)',
-            border: '1px solid rgba(201,168,76,0.5)',
-            borderRadius: '12px',
-            padding: '12px 28px',
-            color: '#c9a84c',
-            fontSize: '15px',
-            fontWeight: 600,
-            letterSpacing: '0.5px',
-            zIndex: 1000,
-            whiteSpace: 'nowrap',
-            boxShadow: '0 4px 32px rgba(0,0,0,0.7)',
-            animation: 'aiFadeIn 0.3s ease',
-          }}>
-            {aiMessage}
-          </div>
         ) : null}
 
         {/* スキャンライン */}
@@ -673,9 +651,27 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 transition: 'background 0.3s ease',
               }}
             >
-              <p style={{ fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.6, margin: '0 0 28px' }}>
+              <p style={{ fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.6, margin: '0 0 16px' }}>
                 {q.question}
               </p>
+              <div style={{
+                overflow: 'hidden',
+                maxHeight: aiMessage !== null ? '120px' : '0',
+                opacity: aiMessage !== null ? 1 : 0,
+                transition: 'max-height 0.4s ease, opacity 0.3s ease',
+              }}>
+                <div style={{
+                  borderLeft: '3px solid #c9a84c',
+                  background: 'rgba(201,168,76,0.08)',
+                  borderRadius: '0 8px 8px 0',
+                  padding: '10px 16px',
+                  marginBottom: '16px',
+                  animation: aiMessage !== null ? 'aiSlideIn 0.4s ease' : 'none',
+                }}>
+                  <div style={{ fontSize: '9px', color: 'rgba(201,168,76,0.6)', letterSpacing: '2px', marginBottom: '4px' }}>▶ AI ANALYZER</div>
+                  <div style={{ color: '#c9a84c', fontSize: '14px', fontStyle: 'italic' }}>{aiMessage || ''}</div>
+                </div>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {q.choices.map((choice, idx) => {
                   var bg = 'rgba(255,255,255,0.05)';
