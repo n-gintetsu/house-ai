@@ -1410,12 +1410,19 @@
   justify-content: center;
 }
 
-.feed-phone-frame {
+.feed-phone-clip {
   width: 360px;
   height: auto;
   min-height: 580px;
   max-height: 680px;
   overflow: hidden;
+  border-radius: 34px;
+}
+
+.feed-phone-frame {
+  width: 360px;
+  height: auto;
+  overflow: visible;
   background: #0B1F33;
   border-radius: 34px;
   padding: 12px;
@@ -1481,9 +1488,11 @@
 
 .feed-card {
   position: relative;
-  height: 520px;
+  min-height: 520px;
+  height: auto;
   overflow: hidden;
   cursor: pointer;
+  padding-bottom: 32px;
 }
 
 .feed-card-img {
