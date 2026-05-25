@@ -142,14 +142,14 @@ function InfoBox({ title, items }) {
 
 export default function HouseAiRankingPage({ onBack }) {
   var badges = [
-    { src: '/badge-rookie.png', label: 'ルーキー', range: '0〜1,999pt' },
-    { src: '/badge-iron.png', label: 'アイアン', range: '2,000〜4,999pt' },
-    { src: '/badge-bronze.png', label: 'ブロンズ', range: '5,000〜9,999pt' },
-    { src: '/badge-silver.png', label: 'シルバー', range: '10,000〜19,999pt' },
-    { src: '/badge-gold.png', label: 'ゴールド', range: '20,000〜49,999pt' },
-    { src: '/badge-platinum.png', label: 'プラチナ', range: '50,000〜99,999pt' },
+    { src: '/badges/rookie.png', label: 'ルーキー', range: '0〜1,999pt' },
+    { src: '/badges/iron.png', label: 'アイアン', range: '2,000〜4,999pt' },
+    { src: '/badges/bronze.png', label: 'ブロンズ', range: '5,000〜9,999pt' },
+    { src: '/badges/silver.png', label: 'シルバー', range: '10,000〜19,999pt' },
+    { src: '/badges/gold.png', label: 'ゴールド', range: '20,000〜49,999pt' },
+    { src: '/badges/platinum.png', label: 'プラチナ', range: '50,000〜99,999pt' },
     { src: '/badges/daimond.png', label: 'ダイヤモンド', range: '100,000pt〜' },
-    { src: '/badge-legend.png', label: 'レジェンド', range: '頂点の証' },
+    { src: '/badges/legend.png', label: 'レジェンド', range: '頂点の証' },
   ];
   return (
     <div className="house-ai-ranking">
