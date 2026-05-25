@@ -1,15 +1,5 @@
-import React from 'react';
-
-const rankers = [
-  { rank: 1, name: 'nori', score: '98,765pt', tier: 'GOLD' },
-  { rank: 2, name: 'Morioka', score: '91,342pt', tier: 'SILVER' },
-  { rank: 3, name: 'Takayuki', score: '87,654pt', tier: 'BRONZE' },
-  { rank: 4, name: 'AI-Challenger', score: '82,019pt' },
-  { rank: 5, name: 'BrainStormer', score: '79,450pt' },
-  { rank: 6, name: 'QuizMaster', score: '77,331pt' },
-  { rank: 7, name: 'LogicKing', score: '75,880pt' },
-  { rank: 8, name: 'ThinkAI', score: '73,210pt' },
-];
+import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 
 const tiers = [
   ['ROOKIE', '0 - 1,999pt', 'rookie'],
@@ -72,29 +62,108 @@ function MainLegendBadge() {
 }
 
 function RankerPanel() {
+  var fallbackRankers = [
+    { rank: 1, name: 'nori', score: 98765, badge: 'GOLD' },
+    { rank: 2, name: 'Morioka', score: 91342, badge: 'SILVER' },
+    { rank: 3, name: 'Takayuki', score: 87654, badge: 'BRONZE' },
+    { rank: 4, name: 'AI-Challenger', score: 82019, badge: null },
+    { rank: 5, name: 'BrainStormer', score: 79450, badge: null },
+    { rank: 6, name: 'QuizMaster', score: 77331, badge: null },
+    { rank: 7, name: 'LogicKing', score: 75880, badge: null },
+    { rank: 8, name: 'ThinkAI', score: 73210, badge: null },
+  ];
+
+  var [rankers, setRankers] = useState(null);
+  var [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('drill_scores')
+      .select('user_name, score, badge')
+      .order('score', { ascending: false })
+      .limit(10)
+      .then(function({ data, error }) {
+        if (error || !data || data.length === 0) {
+          setRankers(fallbackRankers);
+        } else {
+          setRankers(data.map(function(row, i) {
+            return {
+              rank: i + 1,
+              name: row.user_name || '名無し',
+              score: row.score,
+              badge: row.badge || null,
+            };
+          }));
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  var displayRankers = rankers || fallbackRankers;
+
+  var rankImages = { 1: '/rank-1st.png', 2: '/rank-2nd.png', 3: '/rank-3rd.png' };
   var tierColors = {
     GOLD: 'linear-gradient(135deg,#ffe98a,#a56813)',
     SILVER: 'linear-gradient(135deg,#fff,#8e99a5)',
     BRONZE: 'linear-gradient(135deg,#ffd0a0,#a95313)',
   };
+  var rowStyles = {
+    1: { background: 'rgba(201,168,76,0.15)', borderLeft: '3px solid #c9a84c', paddingLeft: '12px' },
+    2: { background: 'rgba(180,190,210,0.1)', borderLeft: '3px solid #b4bed2', paddingLeft: '12px' },
+    3: { background: 'rgba(180,100,40,0.1)', borderLeft: '3px solid #b46428', paddingLeft: '12px' },
+  };
+
   return (
     <aside className="rank-panel">
       <h2>TOP RANKERS</h2>
-      {rankers.map((r) => (
-        <div className={'rank-row rank-' + r.rank} key={r.rank}>
-          <div className="rank-badge-mini" style={{ background: tierColors[r.tier] || 'linear-gradient(135deg,#333,#666)' }}>
-            <span>{r.rank}</span>
-            <div style={{ position: 'absolute', bottom: '14px', opacity: 0.6 }}>
-              <HouseLogo size={16}/>
+      {loading ? (
+        [1, 2, 3, 4, 5, 6, 7, 8].map(function(i) {
+          return (
+            <div key={i} className={'rank-row rank-' + i} style={{ opacity: 0.35 }}>
+              <div className="rank-badge-mini" style={{ background: 'linear-gradient(135deg,#333,#555)' }}>
+                <span>{i}</span>
+              </div>
+              <div className="rank-user">
+                <strong style={{ background: '#444', color: 'transparent', borderRadius: '4px' }}>Loading</strong>
+                <span>No.{i}</span>
+              </div>
+              <div className="rank-score" style={{ background: '#444', color: 'transparent', borderRadius: '4px' }}>000pt</div>
             </div>
-          </div>
-          <div className="rank-user">
-            <strong>{r.name}</strong>
-            <span>No.{r.rank}</span>
-          </div>
-          <div className="rank-score">{r.score}</div>
-        </div>
-      ))}
+          );
+        })
+      ) : (
+        displayRankers.map(function(r) {
+          return (
+            <div
+              key={r.rank}
+              className={'rank-row rank-' + r.rank}
+              style={rowStyles[r.rank] || {}}
+            >
+              {rankImages[r.rank] ? (
+                <img
+                  src={rankImages[r.rank]}
+                  alt={r.rank + '位'}
+                  style={{ width: '52px', height: 'auto', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }}
+                />
+              ) : (
+                <div className="rank-badge-mini" style={{ background: tierColors[r.badge] || 'linear-gradient(135deg,#333,#666)' }}>
+                  <span>{r.rank}</span>
+                  <div style={{ position: 'absolute', bottom: '14px', opacity: 0.6 }}>
+                    <HouseLogo size={16}/>
+                  </div>
+                </div>
+              )}
+              <div className="rank-user">
+                <strong>{r.name}</strong>
+                <span>No.{r.rank}</span>
+              </div>
+              <div className="rank-score">
+                {typeof r.score === 'number' ? r.score.toLocaleString() + 'pt' : r.score}
+              </div>
+            </div>
+          );
+        })
+      )}
       <div className="and-more">... and more</div>
     </aside>
   );
