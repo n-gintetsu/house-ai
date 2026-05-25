@@ -53,7 +53,8 @@ export default function PhoneMockup() {
 
       <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: 'min(760px,85vh)', maxHeight: '760px' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
         <div className="absolute inset-0 rounded-[3rem] opacity-30" style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.4) 0%, transparent 100%)', filter: 'blur(40px)', transform: 'translateY(20px)' }} />
-        <div className="relative w-full h-full rounded-[3rem] overflow-hidden shadow-2xl" style={{ background: 'linear-gradient(180deg, #091224 0%, #0B1730 40%, #0A1328 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 30px 80px rgba(0,0,0,0.35), 0 0 60px rgba(58,123,255,0.12)' }}>
+        <div className="relative w-full h-full rounded-[3rem] overflow-hidden">
+        <div className="relative w-full h-full rounded-[3rem] shadow-2xl" style={{ background: 'linear-gradient(180deg, #091224 0%, #0B1730 40%, #0A1328 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 30px 80px rgba(0,0,0,0.35), 0 0 60px rgba(58,123,255,0.12)' }}>
           <motion.div className="absolute top-6 left-1/2 -translate-x-1/2 h-8 rounded-full bg-black z-50 flex items-center justify-center gap-2 px-3 overflow-hidden" animate={{ width: isAnimating ? 160 : 130 }} transition={{ duration: 0.4 }}>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-full" />
             <div className="flex gap-0.5">
@@ -70,7 +71,7 @@ export default function PhoneMockup() {
             <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent" animate={{ x:['-100%','100%'] }} transition={{ duration: 2, repeat: Infinity }} />
           </motion.div>
 
-          <div className="relative w-full h-full pt-16 pb-8 px-6 overflow-hidden">
+          <div className="relative w-full h-full pt-16 pb-8 px-6">
             <div className="absolute inset-0 opacity-20" style={{ backgroundImage:'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize:'24px 24px' }} />
             {isInView ? (
               <motion.div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" animate={{ top:['0%','100%'], opacity:[0,0.6,0] }} transition={{ duration: 5, repeat: Infinity }} />
@@ -84,13 +85,13 @@ export default function PhoneMockup() {
               <h3 className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">AIツール実行中</h3>
             </div>
 
-            <div className="relative flex items-center justify-center" style={{ height: '480px' }}>
+            <div className="relative flex items-center justify-center" style={{ minHeight: '480px', height: 'auto' }}>
               <AnimatePresence mode="wait">
                 <motion.div key={currentTool.id} initial={{ x:300, opacity:0, scale:0.8, filter:'blur(10px)' }} animate={{ x:0, opacity:1, scale: isAnimating?1:1.05, filter:'blur(0px) brightness(1.1)' }} exit={{ x:-300, opacity:0, scale:0.8, filter:'blur(10px)' }} transition={{ duration: 0.6, ease:[0.23,1,0.32,1] }} className="w-full">
                   <div className="relative rounded-2xl overflow-hidden" style={{ background:`linear-gradient(135deg, ${currentTool.gradientFrom} 0%, ${currentTool.gradientTo} 100%)` }}>
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 to-slate-800/95" style={{ backgroundImage:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize:'20px 20px' }} />
                     <motion.div className={`absolute -inset-1 bg-gradient-to-r ${currentTool.categoryColor} rounded-2xl blur-xl`} animate={{ opacity: isAnimating?[0.2,0.5,0.2]:[0.2,0.35,0.2] }} transition={{ duration: isAnimating?0.6:2, repeat: isAnimating?0:Infinity }} />
-                    <div className="relative p-6">
+                    <div className="relative p-6 pb-8">
                       <motion.div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentTool.categoryColor} flex items-center justify-center mb-4 text-white`} animate={{ scale: isAnimating?[1,1.1,1]:1 }} transition={{ duration: 0.4 }}>
                         {currentTool.icon}
                       </motion.div>
@@ -144,6 +145,7 @@ export default function PhoneMockup() {
               ))}
             </div>
           </div>
+        </div>
         </div>
       </motion.div>
     </div>
