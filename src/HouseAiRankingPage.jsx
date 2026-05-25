@@ -62,109 +62,144 @@ function MainLegendBadge() {
 }
 
 function RankerPanel() {
-  var fallbackRankers = [
-    { rank: 1, name: 'nori', score: 98765, badge: 'GOLD' },
-    { rank: 2, name: 'Morioka', score: 91342, badge: 'SILVER' },
-    { rank: 3, name: 'Takayuki', score: 87654, badge: 'BRONZE' },
-    { rank: 4, name: 'AI-Challenger', score: 82019, badge: null },
-    { rank: 5, name: 'BrainStormer', score: 79450, badge: null },
-    { rank: 6, name: 'QuizMaster', score: 77331, badge: null },
-    { rank: 7, name: 'LogicKing', score: 75880, badge: null },
-    { rank: 8, name: 'ThinkAI', score: 73210, badge: null },
-  ];
-
   var [rankers, setRankers] = useState(null);
   var [loading, setLoading] = useState(true);
+  var [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     supabase
       .from('drill_scores')
       .select('user_name, score, badge')
       .order('score', { ascending: false })
-      .limit(10)
+      .limit(20)
       .then(function({ data, error }) {
-        if (error || !data || data.length === 0) {
-          setRankers(fallbackRankers);
-        } else {
-          setRankers(data.map(function(row, i) {
-            return {
-              rank: i + 1,
-              name: row.user_name || '名無し',
-              score: row.score,
-              badge: row.badge || null,
-            };
-          }));
+        if (error) {
+          console.error('TOP RANKERS fetch error:', error);
+          setLoading(false);
+          return;
         }
+        setRankers((data || []).map(function(row, i) {
+          return {
+            rank: i + 1,
+            name: row.user_name || '名無し',
+            score: row.score,
+          };
+        }));
         setLoading(false);
       });
   }, []);
 
-  var displayRankers = rankers || fallbackRankers;
+  function formatScore(score) {
+    return typeof score === 'number' ? score.toLocaleString() + 'pt' : (score || '');
+  }
 
-  var rankImages = { 1: '/rank-1st.png', 2: '/rank-2nd.png', 3: '/rank-3rd.png' };
-  var tierColors = {
-    GOLD: 'linear-gradient(135deg,#ffe98a,#a56813)',
-    SILVER: 'linear-gradient(135deg,#fff,#8e99a5)',
-    BRONZE: 'linear-gradient(135deg,#ffd0a0,#a95313)',
+  var top3Config = {
+    1: {
+      row: { background: 'rgba(201,168,76,0.12)', borderLeft: '3px solid #c9a84c', padding: '12px 16px 12px 12px', borderRadius: '6px', marginBottom: '4px' },
+      src: '/rank-1st.png',
+      imgStyle: { width: '56px', height: 'auto', filter: 'drop-shadow(0 0 10px rgba(201,168,76,0.8))' },
+      nameStyle: { fontSize: '18px', color: '#c9a84c', fontWeight: 'bold', lineHeight: 1.2 },
+      scoreStyle: { fontSize: '22px', color: '#c9a84c', fontWeight: 'bold', marginLeft: 'auto', whiteSpace: 'nowrap' },
+    },
+    2: {
+      row: { background: 'rgba(180,190,210,0.08)', borderLeft: '3px solid #a0b0c0', padding: '10px 16px 10px 12px', borderRadius: '6px', marginBottom: '4px' },
+      src: '/rank-2nd.png',
+      imgStyle: { width: '48px', height: 'auto', filter: 'drop-shadow(0 0 8px rgba(180,190,210,0.6))' },
+      nameStyle: { fontSize: '16px', color: '#c0ccd8', fontWeight: 'bold', lineHeight: 1.2 },
+      scoreStyle: { fontSize: '18px', color: '#c0ccd8', marginLeft: 'auto', whiteSpace: 'nowrap' },
+    },
+    3: {
+      row: { background: 'rgba(180,100,40,0.08)', borderLeft: '3px solid #c07840', padding: '10px 16px 10px 12px', borderRadius: '6px', marginBottom: '4px' },
+      src: '/rank-3rd.png',
+      imgStyle: { width: '48px', height: 'auto', filter: 'drop-shadow(0 0 8px rgba(180,100,40,0.6))' },
+      nameStyle: { fontSize: '16px', color: '#c07840', fontWeight: 'bold', lineHeight: 1.2 },
+      scoreStyle: { fontSize: '18px', color: '#c07840', marginLeft: 'auto', whiteSpace: 'nowrap' },
+    },
   };
-  var rowStyles = {
-    1: { background: 'rgba(201,168,76,0.15)', borderLeft: '3px solid #c9a84c', paddingLeft: '12px' },
-    2: { background: 'rgba(180,190,210,0.1)', borderLeft: '3px solid #b4bed2', paddingLeft: '12px' },
-    3: { background: 'rgba(180,100,40,0.1)', borderLeft: '3px solid #b46428', paddingLeft: '12px' },
-  };
+
+  function renderSimpleRow(r) {
+    return (
+      <div
+        key={r.rank}
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '13px', color: '#94a3b8' }}
+      >
+        <span style={{ width: '22px', flexShrink: 0, color: '#64748b', textAlign: 'right' }}>{r.rank}</span>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+        <span style={{ whiteSpace: 'nowrap' }}>{formatScore(r.score)}</span>
+      </div>
+    );
+  }
+
+  var top3 = (rankers || []).slice(0, 3);
+  var mid = (rankers || []).slice(3, 9);
+  var rest = (rankers || []).slice(9);
 
   return (
-    <aside className="rank-panel">
-      <h2>TOP RANKERS</h2>
+    <aside
+      className="rank-panel"
+      style={{ background: 'rgba(10,14,32,0.9)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: '16px', padding: '20px 0 4px', boxSizing: 'border-box', width: '100%' }}
+    >
+      <div style={{ fontSize: '13px', letterSpacing: '4px', color: 'rgba(201,168,76,0.7)', fontWeight: 600, padding: '0 16px', marginBottom: '16px' }}>TOP RANKERS</div>
+
       {loading ? (
-        [1, 2, 3, 4, 5, 6, 7, 8].map(function(i) {
-          return (
-            <div key={i} className={'rank-row rank-' + i} style={{ opacity: 0.35 }}>
-              <div className="rank-badge-mini" style={{ background: 'linear-gradient(135deg,#333,#555)' }}>
-                <span>{i}</span>
-              </div>
-              <div className="rank-user">
-                <strong style={{ background: '#444', color: 'transparent', borderRadius: '4px' }}>Loading</strong>
-                <span>No.{i}</span>
-              </div>
-              <div className="rank-score" style={{ background: '#444', color: 'transparent', borderRadius: '4px' }}>000pt</div>
-            </div>
-          );
-        })
-      ) : (
-        displayRankers.map(function(r) {
-          return (
-            <div
-              key={r.rank}
-              className={'rank-row rank-' + r.rank}
-              style={rowStyles[r.rank] || {}}
-            >
-              {rankImages[r.rank] ? (
-                <img
-                  src={rankImages[r.rank]}
-                  alt={r.rank + '位'}
-                  style={{ width: '52px', height: 'auto', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }}
-                />
-              ) : (
-                <div className="rank-badge-mini" style={{ background: tierColors[r.badge] || 'linear-gradient(135deg,#333,#666)' }}>
-                  <span>{r.rank}</span>
-                  <div style={{ position: 'absolute', bottom: '14px', opacity: 0.6 }}>
-                    <HouseLogo size={16}/>
-                  </div>
+        <div style={{ padding: '0 12px' }}>
+          {[1, 2, 3].map(function(i) {
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: '6px', marginBottom: '4px', background: 'rgba(255,255,255,0.03)' }}>
+                <div style={{ width: i === 1 ? '56px' : '48px', height: i === 1 ? '56px' : '48px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: '72px', height: '13px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', marginBottom: '6px' }} />
+                  <div style={{ width: '36px', height: '10px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px' }} />
                 </div>
-              )}
-              <div className="rank-user">
-                <strong>{r.name}</strong>
-                <span>No.{r.rank}</span>
+                <div style={{ width: '56px', height: '16px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px' }} />
               </div>
-              <div className="rank-score">
-                {typeof r.score === 'number' ? r.score.toLocaleString() + 'pt' : r.score}
+            );
+          })}
+        </div>
+      ) : (
+        <div>
+          <div style={{ padding: '0 12px', marginBottom: '8px' }}>
+            {top3.map(function(r) {
+              var c = top3Config[r.rank];
+              return (
+                <div key={r.rank} style={{ ...c.row, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={c.src} alt={r.rank + '位'} style={c.imgStyle} />
+                  <div>
+                    <div style={c.nameStyle}>{r.name}</div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>No.{r.rank}</div>
+                  </div>
+                  <div style={c.scoreStyle}>{formatScore(r.score)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div>
+            {mid.map(function(r) { return renderSimpleRow(r); })}
+          </div>
+
+          {rest.length > 0 ? (
+            showMore ? (
+              <div>
+                {rest.map(function(r) { return renderSimpleRow(r); })}
+                <button
+                  onClick={() => setShowMore(false)}
+                  style={{ display: 'block', width: '100%', padding: '10px', background: 'none', border: 'none', color: '#c9a84c', fontSize: '13px', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
+                >
+                  閉じる ▲
+                </button>
               </div>
-            </div>
-          );
-        })
+            ) : (
+              <button
+                onClick={() => setShowMore(true)}
+                style={{ display: 'block', width: '100%', padding: '10px', background: 'none', border: 'none', color: '#c9a84c', fontSize: '13px', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
+              >
+                さらに表示 ▼
+              </button>
+            )
+          ) : null}
+        </div>
       )}
-      <div className="and-more">... and more</div>
     </aside>
   );
 }
