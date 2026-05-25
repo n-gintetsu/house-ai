@@ -303,20 +303,73 @@ export default function HouseAiRankingPage({ onBack }) {
 
           <div className="feature-grid">
             {[
-              ['M', '超難問に挑戦', '選び抜かれた最難関の問題群'],
-              ['R', 'ランキングで競う', '全国の挑戦者とスコアを競え'],
-              ['T', '思考力を極める', '解くほどに知性が進化する'],
-              ['C', '称号を獲得', '実力の証をプロフィールに刻む'],
-            ].map((item) => (
-              <div className="feature-card" key={item[1]}>
-                <div className="feature-icon">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                    <circle cx="14" cy="14" r="12" stroke="#d9a441" strokeWidth="1.5" fill="rgba(217,164,65,0.08)"/>
-                    <text x="14" y="19" textAnchor="middle" fontSize="13" fontWeight="700" fill="#d9a441" fontFamily="monospace">{item[0]}</text>
+              {
+                key: '超難問に挑戦',
+                title: '超難問に挑戦',
+                desc: '選び抜かれた最難関の問題群',
+                svg: (
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <ellipse cx="24" cy="22" rx="14" ry="13" stroke="#c9a84c" strokeWidth="2"/>
+                    <path d="M24 9 Q18 9 16 14 Q12 14 12 19 Q10 21 12 24 Q10 27 13 29 Q13 33 17 34 Q19 37 24 37 Q29 37 31 34 Q35 33 35 29 Q38 27 36 24 Q38 21 36 19 Q36 14 32 14 Q30 9 24 9Z" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
+                    <line x1="24" y1="9" x2="24" y2="37" stroke="#c9a84c" strokeWidth="1.5"/>
+                    <path d="M24 15 Q20 17 19 21 Q20 25 24 26" stroke="#c9a84c" strokeWidth="1.2" fill="none"/>
+                    <path d="M24 15 Q28 17 29 21 Q28 25 24 26" stroke="#c9a84c" strokeWidth="1.2" fill="none"/>
+                    <circle cx="19" cy="19" r="1.5" fill="#c9a84c"/>
+                    <circle cx="29" cy="19" r="1.5" fill="#c9a84c"/>
+                    <circle cx="17" cy="25" r="1.5" fill="#c9a84c"/>
+                    <circle cx="31" cy="25" r="1.5" fill="#c9a84c"/>
                   </svg>
-                </div>
-                <h3>{item[1]}</h3>
-                <p>{item[2]}</p>
+                ),
+              },
+              {
+                key: 'ランキングで競う',
+                title: 'ランキングで競う',
+                desc: '全国の挑戦者とスコアを競え',
+                svg: (
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect x="6" y="28" width="8" height="14" rx="2" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <rect x="20" y="18" width="8" height="24" rx="2" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <rect x="34" y="8" width="8" height="34" rx="2" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <path d="M8 26 L22 16 L36 6" stroke="#c9a84c" strokeWidth="1.5" strokeDasharray="2,2"/>
+                    <polygon points="36,4 42,8 36,8" fill="#c9a84c"/>
+                  </svg>
+                ),
+              },
+              {
+                key: '思考力を極める',
+                title: '思考力を極める',
+                desc: '解くほどに知性が進化する',
+                svg: (
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="18" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <circle cx="24" cy="24" r="12" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <circle cx="24" cy="24" r="6" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <circle cx="24" cy="24" r="2.5" fill="#c9a84c"/>
+                    <line x1="38" y1="10" x2="28" y2="20" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <polygon points="40,6 44,14 36,12" fill="#c9a84c"/>
+                  </svg>
+                ),
+              },
+              {
+                key: '称号とバッジを獲得',
+                title: '称号とバッジを獲得',
+                desc: '実力の証をプロフィールに刻む',
+                svg: (
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <path d="M16 8 L32 8 L32 24 Q32 34 24 36 Q16 34 16 24 Z" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <path d="M10 10 L16 10 L16 22 Q10 20 10 14 Z" stroke="#c9a84c" strokeWidth="1.5"/>
+                    <path d="M38 10 L32 10 L32 22 Q38 20 38 14 Z" stroke="#c9a84c" strokeWidth="1.5"/>
+                    <line x1="24" y1="36" x2="24" y2="40" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <rect x="16" y="40" width="16" height="3" rx="1.5" stroke="#c9a84c" strokeWidth="1.8"/>
+                    <polygon points="24,14 25.5,19 30,19 26.5,22 28,27 24,24 20,27 21.5,22 18,19 22.5,19" fill="#c9a84c" opacity="0.8"/>
+                  </svg>
+                ),
+              },
+            ].map((item) => (
+              <div className="feature-card" key={item.key}>
+                <div className="feature-icon">{item.svg}</div>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -550,16 +603,16 @@ var css = `
   white-space:nowrap;
 }
 .feature-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:20px; }
-.feature-card, .rank-panel, .badge-list-section, .info-box, .cta-block {
+.rank-panel, .badge-list-section, .info-box, .cta-block {
   background:rgba(5,8,15,.78); border:1px solid rgba(217,164,65,.42);
   box-shadow:inset 0 0 28px rgba(217,164,65,.08),0 18px 40px rgba(0,0,0,.5);
   backdrop-filter:blur(10px);
 }
-.feature-card { padding:24px 14px; border-radius:16px; transition:.25s ease; }
-.feature-card:hover { transform:translateY(-6px); box-shadow:0 0 30px rgba(217,164,65,.35); }
+.feature-card { background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.2); border-radius:12px; padding:20px 16px; text-align:center; transition:all 0.3s; }
+.feature-card:hover { background:rgba(201,168,76,0.12); border-color:rgba(201,168,76,0.5); transform:translateY(-4px); }
 .feature-icon { margin-bottom:8px; }
-.feature-card h3 { color:#fff1a8; margin-bottom:8px; font-size:12px; line-height:1.4; word-break:keep-all; }
-.feature-card p { color:#d4d4d8; font-size:11px; line-height:1.5; }
+.feature-card h3 { color:#c9a84c; margin-top:12px; margin-bottom:0; font-size:15px; font-weight:bold; line-height:1.4; word-break:keep-all; }
+.feature-card p { color:#64748b; font-size:12px; margin-top:6px; line-height:1.5; }
 .rank-panel { border-radius:22px; padding:22px; max-height:600px; overflow-y:auto; }
 .rank-panel h2, .section-title, .info-box h3 {
   color:#fff1a8; letter-spacing:.22em; border-bottom:1px solid rgba(217,164,65,.35); padding-bottom:14px; margin-bottom:12px;
