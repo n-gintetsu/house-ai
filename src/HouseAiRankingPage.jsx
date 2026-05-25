@@ -58,7 +58,7 @@ function MainLegendBadge() {
         alt="shield"
         style={{
           width: '100%',
-          maxWidth: '380px',
+          maxWidth: '360px',
           height: 'auto',
           display: 'block',
           margin: '0 auto',
@@ -144,6 +144,15 @@ function InfoBox({ title, items }) {
 }
 
 export default function HouseAiRankingPage({ onBack }) {
+  var badges = [
+    { src: '/badge-rookie.png', label: 'ルーキー', range: '0〜1,999pt' },
+    { src: '/badge-iron.png', label: 'アイアン', range: '2,000〜4,999pt' },
+    { src: '/badge-bronze.png', label: 'ブロンズ', range: '5,000〜9,999pt' },
+    { src: '/badge-silver.png', label: 'シルバー', range: '10,000〜19,999pt' },
+    { src: '/badge-gold.png', label: 'ゴールド', range: '20,000〜49,999pt' },
+    { src: '/badge-platinum.png', label: 'プラチナ', range: '50,000〜99,999pt' },
+    { src: '/badge-legend.png', label: 'レジェンド', range: '頂点の証' },
+  ];
   return (
     <div className="house-ai-ranking">
       <div className="particles" />
@@ -200,15 +209,22 @@ export default function HouseAiRankingPage({ onBack }) {
 
       <section className="badge-list-section">
         <div className="section-title">CHALLENGER BADGES</div>
-        <img
-          src="/badges-row.png"
-          alt="badges"
-          style={{
-            width: '100%',
-            height: 'auto',
-            display: 'block'
-          }}
-        />
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {badges.map((b) => (
+            <div key={b.label} style={{ textAlign: 'center', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.querySelector('img').style.filter = 'drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15)'}
+              onMouseLeave={e => e.currentTarget.querySelector('img').style.filter = 'drop-shadow(0 0 6px rgba(201,168,76,0.4))'}
+            >
+              <img src={b.src} alt={b.label} style={{
+                width: 80, height: 'auto', display: 'block', margin: '0 auto',
+                filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.4))',
+                transition: 'filter 0.2s'
+              }} />
+              <div style={{ color: '#c9a84c', fontSize: 11, marginTop: 6, fontWeight: 'bold' }}>{b.label}</div>
+              <div style={{ color: '#64748b', fontSize: 10, marginTop: 2 }}>{b.range}</div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="bottom-grid">
@@ -497,5 +513,5 @@ var css = `
   .gold-ribbon{font-size:18px;padding:12px 28px}
 }
 @keyframes shieldFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-14px)} }
-@keyframes shieldGlow { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.5))} 50%{filter:drop-shadow(0 0 50px rgba(201,168,76,1.0))} }
+@keyframes shieldGlow { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.5))} 50%{filter:drop-shadow(0 0 55px rgba(201,168,76,1.0)) brightness(1.1)} }
 `;
