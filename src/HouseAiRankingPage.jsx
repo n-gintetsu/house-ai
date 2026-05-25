@@ -430,7 +430,7 @@ var css = `
 .flare { position:absolute; width:95px; height:95px; background:radial-gradient(circle,#fff 0%,#ffe07a 20%,transparent 60%); z-index:8; animation:flarePulse 2.8s ease-in-out infinite; }
 .flare-one { left:82px; top:20px; }
 @keyframes flarePulse { 0%,100%{opacity:.65;transform:scale(.9)} 50%{opacity:1;transform:scale(1.2)} }
-.rank-no { margin-top:16px; font-size:64px; color:#fff1a8; text-shadow:0 0 24px rgba(217,164,65,.8); line-height:1; }
+.rank-no { margin-top:4px; font-size:64px; color:#fff1a8; text-shadow:0 0 24px rgba(217,164,65,.8); line-height:1; }
 .rank-copy { color:#d9a441; font-size:15px; margin-top:4px; line-height:1.4; }
 .main-message { margin-top:16px; font-size:clamp(16px,1.8vw,24px); color:#ffe58a; text-shadow:0 0 20px rgba(217,164,65,.5); white-space:nowrap; }
 .hero-copy { text-align:center; }

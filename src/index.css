@@ -163,10 +163,14 @@ code {
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  background: #0d1225;
+  border-radius: 8px;
+  padding: 8px;
 }
 .challenger-badge-item img {
   width: 88px;
   height: auto;
+  background: transparent;
   filter: drop-shadow(0 0 6px rgba(201,168,76,0.4)) contrast(1.05);
   transition: filter 0.2s, transform 0.2s;
 }
