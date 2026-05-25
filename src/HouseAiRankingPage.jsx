@@ -225,7 +225,7 @@ export default function HouseAiRankingPage({ onBack }) {
         <div className="section-title">CHALLENGER BADGES</div>
         <div className="challenger-badges-grid">
           {badges.map((b) => (
-            <div key={b.label} className="challenger-badge-item">
+            <div key={b.label} className="challenger-badge-card">
               <img src={b.src} alt={b.label} />
               <span className="badge-label">{b.label}</span>
               <span className="badge-range">{b.range}</span>

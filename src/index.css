@@ -151,13 +151,15 @@ code {
 }
 
 .challenger-badges-grid {
-  display: flex;
-  gap: 20px;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  padding: 8px 24px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 16px;
+  justify-items: center;
+  align-items: end;
+  width: 100%;
+  padding: 8px 16px;
 }
-.challenger-badge-item {
+.challenger-badge-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -166,25 +168,38 @@ code {
   background: #0d1225;
   border-radius: 8px;
   padding: 8px;
+  width: 100%;
 }
-.challenger-badge-item img {
-  width: 88px;
-  height: auto;
+.challenger-badge-card img {
+  width: 100%;
+  max-width: 90px;
+  height: 90px;
+  object-fit: contain;
   background: transparent;
   filter: drop-shadow(0 0 6px rgba(201,168,76,0.4)) contrast(1.05);
   transition: filter 0.2s, transform 0.2s;
 }
-.challenger-badge-item:hover img {
+.challenger-badge-card:hover img {
   filter: drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15) contrast(1.05);
   transform: translateY(-4px) scale(1.08);
 }
-.challenger-badge-item .badge-label {
+.challenger-badge-card .badge-label {
   color: #c9a84c;
   font-size: 12px;
   font-weight: bold;
   letter-spacing: 0.5px;
 }
-.challenger-badge-item .badge-range {
+.challenger-badge-card .badge-range {
   color: #64748b;
   font-size: 10px;
+}
+@media (max-width: 900px) {
+  .challenger-badges-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .challenger-badges-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
