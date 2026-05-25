@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { drillLevel1, drillExtreme, drillLevel2, drillLevel3 } from './drillData';
 import { createClient } from '@supabase/supabase-js';
 
@@ -28,6 +28,48 @@ const reactionItems = [
   { key: 'explain', label: '解説ほしい' },
 ];
 
+const TIMER_LIMITS = { lv1: 60, lv2: 45, lv3: 30, extreme: 30 };
+
+function CircleTimer({ timeLeft, totalTime }) {
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const ratio = totalTime > 0 ? timeLeft / totalTime : 0;
+  const dashOffset = circumference * (1 - ratio);
+  const color = timeLeft <= 5 ? '#EF4444' : timeLeft <= 15 ? '#EAB308' : '#22C55E';
+  return (
+    <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+      <svg width="52" height="52" style={{ animation: timeLeft <= 5 ? 'shake 0.3s ease-in-out infinite' : 'none' }}>
+        <circle cx="26" cy="26" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+        <circle
+          cx="26" cy="26" r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          transform="rotate(-90 26 26)"
+          style={{ transition: 'stroke-dashoffset 0.8s linear, stroke 0.3s' }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '14px', fontWeight: 700, color,
+      }}>
+        {timeLeft}
+      </div>
+    </div>
+  );
+}
+
+function HeartIcon({ filled }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? '#EF4444' : 'rgba(255,255,255,0.15)'}>
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
+
 export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking }) {
   const [phase, setPhase] = useState('select');
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -36,6 +78,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [praiseIndex] = useState(() => Math.floor(Math.random() * correctComments.length));
@@ -49,18 +92,48 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const [myReaction, setMyReaction] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null);
   const [user, setUser] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [lives, setLives] = useState(3);
+  const [aiMessage, setAiMessage] = useState(null);
+  const [flashRed, setFlashRed] = useState(false);
+  const aiMessageTimerRef = useRef(null);
+
+  // タイマー：問題切り替え時にリセット
+  useEffect(() => {
+    if (phase !== 'quiz') return;
+    const limit = TIMER_LIMITS[selectedLevel] || 60;
+    setTimeLeft(limit);
+  }, [currentIndex, phase]);
+
+  // タイマー：カウントダウン
+  useEffect(() => {
+    if (phase !== 'quiz' || showResult) return;
+    const id = setInterval(() => setTimeLeft(t => (t <= 1 ? 0 : t - 1)), 1000);
+    return () => clearInterval(id);
+  }, [phase, showResult, currentIndex]);
+
+  // タイマー：0秒でミス
+  useEffect(() => {
+    if (phase === 'quiz' && !showResult && timeLeft === 0) {
+      handleMiss();
+    }
+  }, [timeLeft]);
+
+  // タイマー：5秒警告
+  useEffect(() => {
+    if (phase === 'quiz' && !showResult && timeLeft === 5) {
+      showAiMessage('...時間がない。');
+    }
+  }, [timeLeft]);
 
   useEffect(() => {
     if (phase !== 'result') return;
     const fetchPercentile = async () => {
-      const { data } = await supabase
-        .from('drill_scores')
-        .select('rate');
+      const { data } = await supabase.from('drill_scores').select('rate');
       if (data && data.length > 0) {
-        const myRate = Math.round(score / questions.length * 100);
+        const myRate = Math.round(correctCount / questions.length * 100);
         const above = data.filter(d => d.rate < myRate).length;
-        const percentile = Math.round((above / data.length) * 100);
-        setUserPercentile(percentile);
+        setUserPercentile(Math.round((above / data.length) * 100));
       }
     };
     fetchPercentile();
@@ -98,15 +171,35 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     return () => subscription.unsubscribe();
   }, []);
 
-  function startQuiz(count) {
-    setQuestions(drillLevel1.slice(0, count));
-    setPhase('quiz');
-    setCurrentIndex(0);
+  function showAiMessage(msg) {
+    if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
+    setAiMessage(msg);
+    aiMessageTimerRef.current = setTimeout(() => setAiMessage(null), 1500);
+  }
+
+  function triggerGameOver() {
+    setFlashRed(true);
+    setTimeout(() => setFlashRed(false), 500);
+    if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
+    setAiMessage('...惜しい。もう一度挑戦するか？');
+    aiMessageTimerRef.current = setTimeout(() => {
+      setAiMessage(null);
+      setPhase('gameover');
+    }, 3000);
+  }
+
+  function handleMiss() {
+    setShowResult(true);
     setSelectedAnswer(null);
-    setShowResult(false);
-    setScore(0);
-    setStreak(0);
-    setMaxStreak(0);
+    const newLives = lives - 1;
+    setLives(newLives);
+    if (newLives === 0) {
+      triggerGameOver();
+    } else if (newLives === 2) {
+      showAiMessage('残り2。まだ余裕はある。');
+    } else if (newLives === 1) {
+      showAiMessage('残り1。集中しろ。');
+    }
   }
 
   function handleAnswer(choiceIndex) {
@@ -116,11 +209,24 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     const q = questions[currentIndex];
     if (choiceIndex === q.correct) {
       const newStreak = streak + 1;
-      setScore(s => s + 1);
       setStreak(newStreak);
       setMaxStreak(m => Math.max(m, newStreak));
+      setCorrectCount(c => c + 1);
+      const multiplier = timeLeft >= 50 ? 3 : timeLeft >= 30 ? 2 : 1;
+      const speedBonus = timeLeft * 2;
+      setScore(s => s + 100 * multiplier + speedBonus);
+      showAiMessage(timeLeft >= 40 ? '正解。思考速度が高い。' : '...正解だ。だが、もっと速くなれる。');
     } else {
       setStreak(0);
+      const newLives = lives - 1;
+      setLives(newLives);
+      if (newLives === 0) {
+        triggerGameOver();
+      } else {
+        showAiMessage('違う。思考を整理しろ。');
+        if (newLives === 2) setTimeout(() => showAiMessage('残り2。まだ余裕はある。'), 1600);
+        if (newLives === 1) setTimeout(() => showAiMessage('残り1。集中しろ。'), 1600);
+      }
     }
   }
 
@@ -143,6 +249,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     setSelectedAnswer(null);
     setShowResult(false);
     setScore(0);
+    setCorrectCount(0);
     setStreak(0);
     setMaxStreak(0);
     setShowNameInput(false);
@@ -152,11 +259,16 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     setUserPercentile(null);
     setReactions({ hard: 0, great: 0, good: 0, beaten: 0, explain: 0 });
     setMyReaction(null);
+    setLives(3);
+    setTimeLeft(60);
+    setAiMessage(null);
+    setFlashRed(false);
+    if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
   }
 
   async function handleSaveScore() {
     if (!playerName.trim()) return;
-    const rate = Math.round(score / questions.length * 100);
+    const rate = Math.round(correctCount / questions.length * 100);
     const badge = rate >= 95 ? 'GOLD' : rate >= 80 ? 'SILVER' : rate >= 60 ? 'BRONZE' : null;
     const { error } = await supabase.from('drill_scores').insert({
       user_name: playerName.trim(),
@@ -172,7 +284,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   async function handleMidSave() {
     if (!user) return;
     setSaveStatus('saving');
-    const rate = Math.round(score / (questions.length || 1) * 100);
+    const rate = Math.round(correctCount / (questions.length || 1) * 100);
     const { error } = await supabase.from('drill_scores').insert({
       user_name: user.email,
       score,
@@ -187,6 +299,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const progressPct = questions.length > 0 ? (currentIndex / questions.length) * 100 : 0;
   const q = questions[currentIndex];
 
+  // ---- SELECT ----
   if (phase === 'select') {
     return (
       <div style={{ minHeight: '100vh', background: '#0F172A', padding: '24px', boxSizing: 'border-box' }}>
@@ -198,21 +311,12 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             戻る
           </button>
         ) : null}
-
         <div style={{ textAlign: 'center', marginBottom: '48px', paddingTop: '24px' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>
-            AI INVESTOR TRAINING
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: 'white' }}>
-            投資家育成ドリル
-          </div>
-          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
-            レベルを選択してください
-          </div>
+          <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>AI INVESTOR TRAINING</div>
+          <div style={{ fontSize: '28px', fontWeight: '700', color: 'white' }}>投資家育成ドリル</div>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>レベルを選択してください</div>
         </div>
-
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* LEVEL 1 */}
           <div
             onClick={() => { setSelectedLevel('lv1'); setQuestions(drillLevel1.slice(0, 50)); setPhase('modeSelect'); }}
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
@@ -224,12 +328,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>投資見習い</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>利回り・空室・修繕・ローン基礎</div>
-              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問</div>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問 ／ 60秒制限</div>
             </div>
             <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
-
-          {/* LEVEL 2 */}
           <div
             onClick={() => { setSelectedLevel('lv2'); setPhase('modeSelect'); }}
             style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(100,160,255,0.3)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
@@ -241,12 +343,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>収益化チャレンジャー</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>キャッシュフロー・融資・出口戦略</div>
-              <div style={{ fontSize: '11px', color: 'rgba(100,160,255,0.6)', marginTop: '8px' }}>全50問</div>
+              <div style={{ fontSize: '11px', color: 'rgba(100,160,255,0.6)', marginTop: '8px' }}>全50問 ／ 45秒制限</div>
             </div>
             <div style={{ color: 'rgba(100,160,255,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
-
-          {/* LEVEL 3 */}
           <div
             onClick={() => { setSelectedLevel('lv3'); setPhase('modeSelect'); }}
             style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '16px', padding: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
@@ -258,12 +358,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>プロ投資家</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>IRR・積算・法人化・相続・レバレッジ</div>
-              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問</div>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', marginTop: '8px' }}>全50問 ／ 30秒制限</div>
             </div>
             <div style={{ color: 'rgba(212,175,55,0.5)', fontSize: '20px' }}>{'>'}</div>
           </div>
-
-          {/* EXTREME */}
           <div
             onClick={() => { setSelectedLevel('extreme'); setPhase('modeSelect'); }}
             style={{ background: 'linear-gradient(135deg, rgba(20,0,0,0.8), rgba(10,10,10,0.9))', border: '1px solid rgba(212,175,55,0.6)', borderRadius: '16px', padding: '28px', cursor: 'pointer', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '16px' }}
@@ -276,11 +374,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#D4AF37', letterSpacing: '1px' }}>AI EXTREME TEST</div>
               <div style={{ fontSize: '12px', color: 'rgba(212,175,55,0.6)', marginTop: '4px' }}>ネットで調べても解けない超難問</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>本物の投資家だけが解ける領域</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>本物の投資家だけが解ける領域 ／ 30秒制限</div>
             </div>
             <div style={{ color: '#D4AF37', fontSize: '20px' }}>{'>'}</div>
           </div>
-
           <div style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '8px' }}>
             EXTREME は登録不要・全問正解者は全国TOP認定
           </div>
@@ -289,6 +386,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     );
   }
 
+  // ---- MODE SELECT ----
   if (phase === 'modeSelect') {
     const isExtreme = selectedLevel === 'extreme';
     const counts = selectedLevel === 'extreme' ? [5, 10, 20, drillExtreme.length]
@@ -307,7 +405,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
         >
           戻る
         </button>
-
         {isExtreme ? (
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
             <div style={{ color: '#D4AF37', fontSize: '24px', fontWeight: 700, letterSpacing: '2px' }}>AI EXTREME TEST</div>
@@ -329,7 +426,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '8px' }}>問題数を選択してください</div>
           </div>
         )}
-
         <div style={{ maxWidth: '440px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {labels.map((label, index) => (
             <button
@@ -345,8 +441,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 setSelectedAnswer(null);
                 setShowResult(false);
                 setScore(0);
+                setCorrectCount(0);
                 setStreak(0);
                 setMaxStreak(0);
+                setLives(3);
+                setAiMessage(null);
+                setFlashRed(false);
+                if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
               }}
               style={{
                 background: isExtreme ? 'rgba(212,175,55,0.06)' : 'rgba(255,255,255,0.04)',
@@ -367,8 +468,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     );
   }
 
+  // ---- QUIZ ----
   if (phase === 'quiz') {
-    const isCorrect = selectedAnswer === q.correct;
+    const isCorrect = selectedAnswer !== null && selectedAnswer === q.correct;
+    const totalTime = TIMER_LIMITS[selectedLevel] || 60;
 
     const streakLabel =
       streak >= 10 ? 'AIが異常な成長速度を検知しました。' :
@@ -385,7 +488,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     const sidePanelDisplay = typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : 'flex';
 
     return (
-      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', fontFamily: 'inherit', display: 'flex' }}>
+      <div style={{ minHeight: '100vh', background: '#0F172A', color: 'white', fontFamily: 'inherit', display: 'flex', position: 'relative' }}>
         <style>{`
           @keyframes scanline {
             0% { transform: translateY(-100%); opacity: 0.3; }
@@ -416,12 +519,50 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
             50% { box-shadow: 0 0 0 4px rgba(212,175,55,0.2); }
           }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-2px) rotate(-2deg); }
+            75% { transform: translateX(2px) rotate(2deg); }
+          }
+          @keyframes aiFadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          }
+          @keyframes redFlash {
+            0% { opacity: 0.6; }
+            100% { opacity: 0; }
+          }
         `}</style>
+
+        {/* 赤フラッシュ */}
+        {flashRed ? (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(239,68,68,0.5)', zIndex: 9999, pointerEvents: 'none', animation: 'redFlash 0.5s ease-out forwards' }} />
+        ) : null}
+
+        {/* AIメッセージオーバーレイ */}
+        {aiMessage !== null ? (
+          <div style={{
+            position: 'fixed', bottom: 32, left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(5,12,40,0.97)',
+            border: '1px solid rgba(201,168,76,0.5)',
+            borderRadius: '12px',
+            padding: '12px 28px',
+            color: '#c9a84c',
+            fontSize: '15px',
+            fontWeight: 600,
+            letterSpacing: '0.5px',
+            zIndex: 1000,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.7)',
+            animation: 'aiFadeIn 0.3s ease',
+          }}>
+            {aiMessage}
+          </div>
+        ) : null}
 
         {/* スキャンライン */}
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent)', animation: 'scanline 4s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
-
-        {/* 微粒子 */}
         <div style={{ position: 'fixed', top: '20%', right: '5%', width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(212,175,55,0.4)', animation: 'particleFloat 3s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'fixed', top: '60%', left: '3%', width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(212,175,55,0.3)', animation: 'particleFloat 5s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'fixed', top: '40%', right: '8%', width: '2px', height: '2px', borderRadius: '50%', background: 'rgba(212,175,55,0.2)', animation: 'particleFloat 7s ease-in-out infinite', pointerEvents: 'none' }} />
@@ -438,9 +579,14 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                   setSelectedAnswer(null);
                   setShowResult(false);
                   setScore(0);
+                  setCorrectCount(0);
                   setStreak(0);
                   setMaxStreak(0);
+                  setLives(3);
                   setSaveStatus(null);
+                  setAiMessage(null);
+                  setFlashRed(false);
+                  if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
                 }}
                 style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', color: 'rgba(255,255,255,0.5)', fontSize: '12px', padding: '4px 10px', cursor: 'pointer', lineHeight: 1.4 }}
               >
@@ -456,7 +602,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 <span style={{ fontSize: '9px', fontWeight: '700', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.6)', padding: '2px 6px', borderRadius: '3px', letterSpacing: '1px' }}>EXTREME</span>
               ) : null}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              {/* ライフ */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <HeartIcon filled={lives >= 1} />
+                <HeartIcon filled={lives >= 2} />
+                <HeartIcon filled={lives >= 3} />
+              </div>
               {user !== null ? (
                 <button
                   onClick={handleMidSave}
@@ -482,7 +634,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 </button>
               ) : null}
               <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
-                スコア {score}
+                {score}pt
               </span>
             </div>
           </div>
@@ -501,6 +653,17 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
           {/* 問題カード */}
           <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }}>
+            {/* タイマー + AI ANALYSIS ヘッダー */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <CircleTimer timeLeft={timeLeft} totalTime={totalTime} />
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'goldBreath 3s ease-in-out infinite', flexShrink: 0 }} />
+                <span style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '3px', fontWeight: '600' }}>AI ANALYSIS</span>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.4), transparent)' }} />
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>Q.{currentIndex + 1}</span>
+              </div>
+            </div>
+
             <div
               style={{
                 background: showResult && isCorrect ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.05)',
@@ -508,34 +671,23 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 padding: '32px',
                 marginBottom: '24px',
                 transition: 'background 0.3s ease',
-                opacity: 1,
               }}
             >
-              {/* AI解析ヘッダー */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', animation: 'goldBreath 3s ease-in-out infinite' }} />
-                <span style={{ fontSize: '10px', color: 'rgba(212,175,55,0.7)', letterSpacing: '3px', fontWeight: '600' }}>AI ANALYSIS</span>
-                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.4), transparent)' }} />
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>Q.{currentIndex + 1}</span>
-              </div>
-
               <p style={{ fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.6, margin: '0 0 28px' }}>
                 {q.question}
               </p>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {q.choices.map((choice, idx) => {
-                  let bg = 'rgba(255,255,255,0.05)';
-                  let borderColor = 'rgba(255,255,255,0.1)';
-                  let color = 'white';
-                  let opacity = 1;
-
+                  var bg = 'rgba(255,255,255,0.05)';
+                  var borderColor = 'rgba(255,255,255,0.1)';
+                  var color = 'white';
+                  var opacity = 1;
                   if (showResult) {
                     if (idx === q.correct) {
                       bg = 'rgba(212,175,55,0.2)';
                       borderColor = '#D4AF37';
                       color = '#D4AF37';
-                    } else if (idx === selectedAnswer) {
+                    } else if (idx === selectedAnswer && selectedAnswer !== null) {
                       bg = 'rgba(239,68,68,0.1)';
                       borderColor = '#EF4444';
                       color = '#EF4444';
@@ -543,7 +695,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                       opacity = 0.4;
                     }
                   }
-
                   return (
                     <button
                       key={idx}
@@ -569,7 +720,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               </div>
             </div>
 
-            {/* 正解・不正解演出 */}
             {showResult ? (
               isCorrect ? (
                 <div style={{ color: '#D4AF37', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
@@ -582,7 +732,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               )
             ) : null}
 
-            {/* 解説 */}
             {showResult ? (
               <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid #D4AF37', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.7, margin: 0 }}>
@@ -591,21 +740,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               </div>
             ) : null}
 
-            {/* 次へボタン */}
             {showResult ? (
               <button
                 onClick={handleNext}
                 style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '16px 40px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
-                  color: '#0F172A',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  cursor: 'pointer',
+                  display: 'block', width: '100%', padding: '16px 40px', borderRadius: '12px',
+                  border: 'none', background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
+                  color: '#0F172A', fontWeight: 700, fontSize: '16px', cursor: 'pointer',
                 }}
               >
                 {currentIndex < questions.length - 1 ? '次の問題へ' : '結果を見る'}
@@ -614,21 +755,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
           </div>
         </div>
 
-        {/* 右カラム（AI伴走モニター） */}
+        {/* 右カラム */}
         <div style={{
-          width: '220px',
-          minWidth: '220px',
-          borderLeft: '1px solid rgba(255,255,255,0.06)',
-          background: 'rgba(5,5,15,0.8)',
-          minHeight: '100vh',
-          display: sidePanelDisplay,
-          flexDirection: 'column',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          overflowY: 'auto',
+          width: '220px', minWidth: '220px', borderLeft: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(5,5,15,0.8)', minHeight: '100vh',
+          display: sidePanelDisplay, flexDirection: 'column',
+          position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
         }}>
-          {/* Zone 1: AI ANALYZER */}
           <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ fontSize: '9px', color: 'rgba(212,175,55,0.6)', letterSpacing: '3px', marginBottom: '12px' }}>AI ANALYZER</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '16px' }}>
@@ -651,8 +784,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               </div>
             ) : null}
           </div>
-
-          {/* Zone 2: LIVE LOG */}
           <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', animation: 'livePulse 2s ease-in-out infinite' }} />
@@ -671,8 +802,6 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>ログなし</div>
             )}
           </div>
-
-          {/* Zone 3: REACTION */}
           <div style={{ padding: '16px' }}>
             <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', marginBottom: '10px' }}>REACTION</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -694,15 +823,10 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                   style={{
                     background: myReaction === item.key ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.03)',
                     border: myReaction === item.key ? '1px solid rgba(212,175,55,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '6px',
-                    padding: '6px 10px',
+                    borderRadius: '6px', padding: '6px 10px',
                     color: myReaction === item.key ? '#D4AF37' : 'rgba(255,255,255,0.5)',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    textAlign: 'left',
+                    fontSize: '12px', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left',
                   }}
                 >
                   <span>{item.label}</span>
@@ -716,8 +840,86 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     );
   }
 
+  // ---- GAME OVER ----
+  if (phase === 'gameover') {
+    const totalAttempted = currentIndex + 1;
+    const gameOverRate = totalAttempted > 0 ? Math.round(correctCount / totalAttempted * 100) : 0;
+    const iq = gameOverRate === 100 ? 500
+      : gameOverRate >= 86 ? 148
+      : gameOverRate >= 71 ? 135
+      : gameOverRate >= 51 ? 120
+      : gameOverRate >= 31 ? 105
+      : 90;
+    const shareText = 'HOUSE-AI 超難問ドリルで IQ' + iq + ' を記録！ #HOUSEAI #IQ診断 https://house-ai.co.jp';
+    const twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <img
+          src="/badges/daimond.png"
+          alt=""
+          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '420px', opacity: 0.07, pointerEvents: 'none' }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '480px', width: '100%' }}>
+          <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', letterSpacing: '6px', marginBottom: '20px' }}>GAME OVER</div>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>あなたのIQは</div>
+          <div style={{ fontSize: '88px', fontWeight: 900, color: '#D4AF37', lineHeight: 1, marginBottom: '4px', textShadow: '0 0 40px rgba(212,175,55,0.5)' }}>
+            {iq}
+          </div>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginBottom: '40px', letterSpacing: '1px' }}>
+            {iq === 500 ? 'IQ 500 — 完璧な思考力' : 'IQ ' + iq}
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '1px' }}>スコア</div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: '#D4AF37' }}>{score}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '1px' }}>正答率</div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: 'white' }}>{gameOverRate}%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '1px' }}>到達問題数</div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: 'white' }}>{totalAttempted}</div>
+              </div>
+            </div>
+          </div>
+
+          <a
+            href={twitterUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'block', padding: '14px', borderRadius: '12px',
+              background: '#000', border: '1px solid #1d9bf0',
+              color: '#1d9bf0', fontSize: '15px', fontWeight: 700,
+              textDecoration: 'none', marginBottom: '12px',
+              textAlign: 'center',
+            }}
+          >
+            𝕏 でシェアする
+          </a>
+
+          <button
+            onClick={handleReset}
+            style={{
+              display: 'block', width: '100%', padding: '16px', borderRadius: '12px',
+              border: 'none', background: 'linear-gradient(135deg, #D4AF37, #c9a84c)',
+              color: '#0F172A', fontWeight: 700, fontSize: '16px', cursor: 'pointer',
+            }}
+          >
+            もう一度挑戦
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- RESULT ----
   if (phase === 'result') {
-    const rate = Math.round(score / questions.length * 100);
+    const rate = Math.round(correctCount / questions.length * 100);
     const badge = rate >= 95 ? 'GOLD' : rate >= 80 ? 'SILVER' : rate >= 60 ? 'BRONZE' : null;
     const pct = rate;
     const aiComment =
@@ -730,37 +932,23 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
     const badgeConfig =
       badge === 'GOLD' ? {
         bg: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05))',
-        border: '1px solid #D4AF37',
-        color: '#D4AF37',
-        text: 'GOLD INVESTOR 認定',
-        sub: 'ここまで来るユーザーはかなり少数です',
+        border: '1px solid #D4AF37', color: '#D4AF37',
+        text: 'GOLD INVESTOR 認定', sub: 'ここまで来るユーザーはかなり少数です',
         animation: 'goldPulse 2s ease-in-out infinite alternate',
       } : badge === 'SILVER' ? {
-        bg: 'transparent',
-        border: '1px solid #C0C0C0',
-        color: '#C0C0C0',
-        text: 'SILVER INVESTOR 認定',
-        sub: '本物の投資家レベルに近づいています',
+        bg: 'transparent', border: '1px solid #C0C0C0', color: '#C0C0C0',
+        text: 'SILVER INVESTOR 認定', sub: '本物の投資家レベルに近づいています',
         animation: 'none',
       } : badge === 'BRONZE' ? {
-        bg: 'transparent',
-        border: '1px solid #CD7F32',
-        color: '#CD7F32',
-        text: 'BRONZE INVESTOR 認定',
-        sub: '投資の基礎が身についてきました',
+        bg: 'transparent', border: '1px solid #CD7F32', color: '#CD7F32',
+        text: 'BRONZE INVESTOR 認定', sub: '投資の基礎が身についてきました',
         animation: 'none',
       } : null;
 
     const navBtnStyle = {
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.1)',
-      color: 'rgba(255,255,255,0.8)',
-      fontSize: '14px',
-      padding: '14px',
-      borderRadius: '10px',
-      width: '100%',
-      cursor: 'pointer',
-      textAlign: 'left',
+      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+      color: 'rgba(255,255,255,0.8)', fontSize: '14px', padding: '14px',
+      borderRadius: '10px', width: '100%', cursor: 'pointer', textAlign: 'left',
     };
 
     return (
@@ -783,19 +971,13 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             50% { opacity: 1; transform: scale(1.3); }
           }
         `}</style>
-
-        {/* スキャンライン */}
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent)', animation: 'scanline 3s linear infinite', pointerEvents: 'none', zIndex: 999 }} />
 
         <div style={{ width: '100%', maxWidth: '480px', textAlign: 'center' }}>
           {resultPhase === 0 ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.8)', letterSpacing: '4px', marginBottom: '24px' }}>
-                AI ANALYSIS COMPLETE
-              </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>
-                データを解析しています…
-              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.8)', letterSpacing: '4px', marginBottom: '24px' }}>AI ANALYSIS COMPLETE</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>データを解析しています…</div>
               <div style={{ width: '200px', height: '2px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '24px auto 0', overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: 'linear-gradient(90deg, #D4AF37, #c9a84c)', animation: 'aiScan 1.2s ease-out forwards' }} />
               </div>
@@ -803,13 +985,9 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
           ) : null}
 
           {resultPhase >= 1 ? (
-            <div style={{ textAlign: 'center', marginBottom: '24px', opacity: 1, transition: 'opacity 0.8s' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>
-                AI ANALYSIS COMPLETE
-              </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', marginBottom: '8px' }}>
-                あなたの分析力は
-              </div>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '11px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>AI ANALYSIS COMPLETE</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', marginBottom: '8px' }}>あなたの分析力は</div>
               <div style={{ fontSize: '48px', fontWeight: '700', color: '#D4AF37', lineHeight: 1 }}>
                 上位{userPercentile !== null ? userPercentile : Math.floor(Math.random() * 20 + 5)}%
               </div>
@@ -822,23 +1000,12 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
           {resultPhase >= 2 ? (
             badge !== null ? (
               <div style={{
-                background: badgeConfig.bg,
-                border: badgeConfig.border,
-                borderRadius: '16px',
-                padding: '24px',
-                textAlign: 'center',
-                marginBottom: '24px',
-                animation: badgeConfig.animation,
-                opacity: 1,
-                transition: 'opacity 0.8s',
-                transform: 'scale(1)',
+                background: badgeConfig.bg, border: badgeConfig.border,
+                borderRadius: '16px', padding: '24px', textAlign: 'center',
+                marginBottom: '24px', animation: badgeConfig.animation,
               }}>
-                <div style={{ fontSize: '22px', fontWeight: 700, color: badgeConfig.color, letterSpacing: '3px' }}>
-                  {badgeConfig.text}
-                </div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>
-                  {badgeConfig.sub}
-                </div>
+                <div style={{ fontSize: '22px', fontWeight: 700, color: badgeConfig.color, letterSpacing: '3px' }}>{badgeConfig.text}</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>{badgeConfig.sub}</div>
               </div>
             ) : null
           ) : null}
@@ -872,9 +1039,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
                 )
               ) : (
                 <div>
-                  <p style={{ color: '#D4AF37', textAlign: 'center', fontSize: '14px', marginBottom: '16px' }}>
-                    ランキングに登録しました！
-                  </p>
+                  <p style={{ color: '#D4AF37', textAlign: 'center', fontSize: '14px', marginBottom: '16px' }}>ランキングに登録しました！</p>
                   <button
                     onClick={() => { if (onShowRanking) onShowRanking(); }}
                     style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontSize: '14px', padding: '12px', borderRadius: '10px', cursor: 'pointer', width: '100%', marginBottom: '16px' }}
@@ -886,21 +1051,23 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
 
               <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '32px', marginBottom: '24px' }}>
                 <div style={{ fontSize: '56px', fontWeight: 700, color: 'white', lineHeight: 1 }}>
-                  {score} <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.5)' }}>/ {questions.length}</span>
+                  {correctCount} <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.5)' }}>/ {questions.length}</span>
                 </div>
                 <div style={{ fontSize: '32px', fontWeight: 700, color: '#D4AF37', margin: '8px 0 24px' }}>{pct}%</div>
-
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginBottom: '24px' }}>
                   <div>
                     <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>正答率</div>
                     <div style={{ fontSize: '18px', fontWeight: 700, color: 'white' }}>{pct}%</div>
                   </div>
                   <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>獲得ポイント</div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#D4AF37' }}>{score}pt</div>
+                  </div>
+                  <div>
                     <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>最大連続正解</div>
                     <div style={{ fontSize: '18px', fontWeight: 700, color: '#D4AF37' }}>{maxStreak}連続</div>
                   </div>
                 </div>
-
                 <div style={{ background: 'rgba(212,175,55,0.08)', borderLeft: '3px solid #D4AF37', borderRadius: '8px', padding: '16px', textAlign: 'left' }}>
                   <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.7, margin: 0 }}>{aiComment}</p>
                 </div>
@@ -922,24 +1089,14 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', margin: '24px 0' }} />
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', textAlign: 'center', marginBottom: '16px' }}>
-                次のステップへ
-              </div>
-              <button
-                onClick={() => { if (onOpenTool) onOpenTool('investment'); }}
-                style={navBtnStyle}
-              >
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', textAlign: 'center', marginBottom: '16px' }}>次のステップへ</div>
+              <button onClick={() => { if (onOpenTool) onOpenTool('investment'); }} style={navBtnStyle}>
                 投資ローンをシミュレーションする
               </button>
-              <button
-                style={{ ...navBtnStyle, opacity: 0.5, marginTop: '8px', cursor: 'default' }}
-              >
+              <button style={{ ...navBtnStyle, opacity: 0.5, marginTop: '8px', cursor: 'default' }}>
                 AIコンシェルジュに相談する
               </button>
-              <button
-                onClick={() => { if (onOpenTool) onOpenTool('dictionary'); }}
-                style={{ ...navBtnStyle, marginTop: '8px' }}
-              >
+              <button onClick={() => { if (onOpenTool) onOpenTool('dictionary'); }} style={{ ...navBtnStyle, marginTop: '8px' }}>
                 宅建用語集で知識を深める
               </button>
             </div>
