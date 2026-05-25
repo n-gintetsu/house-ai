@@ -1080,7 +1080,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
 
           {/* 左：縦型フィード */}
           <div className="feed-phone-wrap">
-            <div className="feed-phone-clip">
             <div className="feed-phone-frame">
               <div className="feed-phone-header">
                 <span className="feed-phone-label">HOUSE-AI FEED</span>
@@ -1134,7 +1133,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                   ))}
                 </div>
               </div>
-            </div>
             </div>
           </div>
 
