@@ -96,6 +96,7 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   const [lives, setLives] = useState(3);
   const [aiMessage, setAiMessage] = useState(null);
   const [flashRed, setFlashRed] = useState(false);
+  const [showInstagramModal, setShowInstagramModal] = useState(false);
   const aiMessageTimerRef = useRef(null);
 
   // タイマー：問題切り替え時にリセット
@@ -846,8 +847,11 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
       : gameOverRate >= 51 ? 120
       : gameOverRate >= 31 ? 105
       : 90;
-    const shareText = 'HOUSE-AI 超難問ドリルで IQ' + iq + ' を記録！ #HOUSEAI #IQ診断 https://house-ai.co.jp';
-    const twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+    const shareText = 'HOUSE-AI 超難問ドリルで IQ' + iq + ' を記録！あなたは挑戦できる？ #HOUSEAI #IQ診断 #不動産投資';
+    const shareUrl = 'https://house-ai.co.jp';
+    const twitterHref = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(shareUrl);
+    const lineHref = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(shareUrl + '?iq=' + iq) + '&text=' + encodeURIComponent(shareText);
+    const facebookHref = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl) + '&quote=' + encodeURIComponent(shareText);
 
     return (
       <div style={{ background: '#000', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', boxSizing: 'border-box', overflow: 'hidden' }}>
@@ -883,20 +887,58 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             </div>
           </div>
 
-          <a
-            href={twitterUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'block', padding: '14px', borderRadius: '12px',
-              background: '#000', border: '1px solid #1d9bf0',
-              color: '#1d9bf0', fontSize: '15px', fontWeight: 700,
-              textDecoration: 'none', marginBottom: '12px',
-              textAlign: 'center',
-            }}
-          >
-            𝕏 でシェアする
-          </a>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <a
+              href={twitterHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block', padding: '14px', borderRadius: '12px',
+                background: '#000', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'white', fontSize: '14px', fontWeight: 700,
+                textDecoration: 'none', textAlign: 'center',
+              }}
+            >
+              𝕏 でシェア
+            </a>
+            <a
+              href={lineHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block', padding: '14px', borderRadius: '12px',
+                background: '#06C755',
+                color: 'white', fontSize: '14px', fontWeight: 700,
+                textDecoration: 'none', textAlign: 'center',
+              }}
+            >
+              LINEでシェア
+            </a>
+            <a
+              href={facebookHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block', padding: '14px', borderRadius: '12px',
+                background: '#1877F2',
+                color: 'white', fontSize: '14px', fontWeight: 700,
+                textDecoration: 'none', textAlign: 'center',
+              }}
+            >
+              Facebookでシェア
+            </a>
+            <button
+              onClick={() => setShowInstagramModal(true)}
+              style={{
+                display: 'block', padding: '14px', borderRadius: '12px',
+                background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                color: 'white', fontSize: '13px', fontWeight: 700,
+                border: 'none', cursor: 'pointer', textAlign: 'center',
+              }}
+            >
+              📸 画像保存してInstagramへ
+            </button>
+          </div>
 
           <button
             onClick={handleReset}
@@ -909,6 +951,35 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
             もう一度挑戦
           </button>
         </div>
+
+        {showInstagramModal ? (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '24px' }}
+            onClick={() => setShowInstagramModal(false)}
+          >
+            <div
+              style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '20px', padding: '32px', maxWidth: '360px', width: '100%', textAlign: 'center' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ fontSize: '40px', marginBottom: '16px' }}>📸</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '16px' }}>Instagramへシェア</div>
+              <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: '24px' }}>
+                スクリーンショットを撮ってInstagramのストーリーに投稿してね！<br />
+                <span style={{ color: '#c9a84c' }}>#HOUSEAI #IQ診断</span>
+              </div>
+              <button
+                onClick={() => setShowInstagramModal(false)}
+                style={{
+                  padding: '14px', width: '100%', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                  color: 'white', fontWeight: 700, fontSize: '15px', border: 'none', cursor: 'pointer',
+                }}
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
