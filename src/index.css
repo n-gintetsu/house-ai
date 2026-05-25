@@ -152,10 +152,10 @@ code {
 
 .challenger-badges-grid {
   display: flex;
-  gap: 12px;
-  justify-content: center;
+  gap: 20px;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  padding: 8px 0;
+  padding: 8px 24px;
 }
 .challenger-badge-item {
   display: flex;
@@ -167,11 +167,11 @@ code {
 .challenger-badge-item img {
   width: 88px;
   height: auto;
-  filter: drop-shadow(0 0 6px rgba(201,168,76,0.4));
+  filter: drop-shadow(0 0 6px rgba(201,168,76,0.4)) contrast(1.05);
   transition: filter 0.2s, transform 0.2s;
 }
 .challenger-badge-item:hover img {
-  filter: drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15);
+  filter: drop-shadow(0 0 16px rgba(201,168,76,0.9)) brightness(1.15) contrast(1.05);
   transform: translateY(-4px) scale(1.08);
 }
 .challenger-badge-item .badge-label {

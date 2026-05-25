@@ -156,12 +156,28 @@ export default function HouseAiRankingPage({ onBack }) {
       <div className="particles" />
 
       <header className="brand-header">
-        <div className="brand-mark">
-          <HouseLogo size={38} gold={true} />
-        </div>
-        <div>
-          <div className="brand-name">HOUSE-AI</div>
-          <div className="brand-sub">知性が未来を創る。</div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '12px 20px',
+        }}>
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            border: '2px solid #c9a84c',
+            overflow: 'hidden',
+            boxShadow: '0 0 12px rgba(201,168,76,0.6), 0 0 24px rgba(201,168,76,0.3)',
+            flexShrink: 0,
+            background: '#0a0e1a',
+          }}>
+            <img src="/favicon-src.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div>
+            <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 'bold', letterSpacing: 2, lineHeight: 1.2 }}>HOUSE-AI</div>
+            <div style={{ color: '#64748b', fontSize: 10, letterSpacing: 1.5 }}>知性が未来を創る。</div>
+          </div>
         </div>
         {onBack ? (
           <button onClick={onBack} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '8px 16px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
