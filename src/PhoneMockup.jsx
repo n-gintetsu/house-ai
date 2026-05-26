@@ -87,7 +87,7 @@ export default function PhoneMockup() {
 
             <div className="relative flex items-center justify-center" style={{ minHeight: '480px', height: 'auto' }}>
               <AnimatePresence mode="wait">
-                <motion.div key={currentTool.id} initial={{ x:300, opacity:0, scale:0.8, filter:'blur(10px)' }} animate={{ x:0, opacity:1, scale: isAnimating?1:1.05, filter:'blur(0px) brightness(1.1)' }} exit={{ x:-300, opacity:0, scale:0.8, filter:'blur(10px)' }} transition={{ duration: 0.6, ease:[0.23,1,0.32,1] }} className="w-full">
+                <motion.div key={currentTool.id} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration: 0.5 }} className="w-full">
                   <div className="relative rounded-2xl overflow-hidden" style={{ background:`linear-gradient(135deg, ${currentTool.gradientFrom} 0%, ${currentTool.gradientTo} 100%)` }}>
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 to-slate-800/95" style={{ backgroundImage:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize:'20px 20px' }} />
                     <motion.div className={`absolute -inset-1 bg-gradient-to-r ${currentTool.categoryColor} rounded-2xl blur-xl`} animate={{ opacity: isAnimating?[0.2,0.5,0.2]:[0.2,0.35,0.2] }} transition={{ duration: isAnimating?0.6:2, repeat: isAnimating?0:Infinity }} />
@@ -125,12 +125,12 @@ export default function PhoneMockup() {
             </div>
 
             <motion.div className="absolute bottom-10 left-0 right-0 px-6" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}>
-              <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-2 overflow-hidden">
+              <div className="relative bg-slate-900/80 border border-slate-700/50 rounded-lg px-3 py-2 overflow-hidden">
                 <motion.div className="absolute inset-0 rounded-lg border border-blue-400/30" animate={{ opacity:[0.3,0.6,0.3] }} transition={{ duration:2, repeat:Infinity }} />
                 <div className="relative flex items-center gap-2">
                   <motion.div className="w-1.5 h-1.5 rounded-full bg-blue-400" animate={{ opacity:[0.5,1,0.5], scale:[1,1.2,1] }} transition={{ duration:1.5, repeat:Infinity }} />
                   <AnimatePresence mode="wait">
-                    <motion.span key={currentLog} initial={{ opacity:0, y:5, filter:'blur(4px)' }} animate={{ opacity:1, y:0, filter:'blur(0px)' }} exit={{ opacity:0, y:-5, filter:'blur(4px)' }} transition={{ duration:0.4 }} className="text-xs text-slate-300 font-medium">
+                    <motion.span key={currentLog} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration:0.4 }} className="text-xs text-slate-300 font-medium">
                       {aiProcessingLogs[currentLog]}
                     </motion.span>
                   </AnimatePresence>
