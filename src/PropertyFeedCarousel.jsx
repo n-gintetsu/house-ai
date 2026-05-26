@@ -10,14 +10,38 @@ const dummyProperties = [
   { id:5, image:'/properties/sample5.jpg', location:'蕨市', title:'蕨駅4分 築浅1LDK', aiInsight:'単身者・投資両用。東京都心へのアクセスも良好です。', likes:9, comments:2, agentName:'GINTETSU', trend:'単身向け' },
 ]
 
-const CARD_W = 300
+const GAP = 8
+
+const getCardConfig = (dist) => {
+  if (dist === 0) return { w: 220, h: 340, borderRadius: 36, opacity: 1 }
+  if (dist === 1) return { w: 140, h: 240, borderRadius: 28, opacity: 0.65 }
+  return { w: 100, h: 180, borderRadius: 22, opacity: 0.35 }
+}
+
+const getCardCenterX = (idx, cur) => {
+  let x = 0
+  for (let j = 0; j < idx; j++) {
+    const { w } = getCardConfig(Math.abs(j - cur))
+    x += w + GAP * 2
+  }
+  const { w } = getCardConfig(Math.abs(idx - cur))
+  x += w / 2
+  return x
+}
 
 export default function PropertyFeedCarousel({ properties: propsProp, user, onNavigate }) {
   const [properties, setProperties] = useState(propsProp && propsProp.length > 0 ? propsProp : dummyProperties)
   const [cur, setCur] = useState(1)
   const [likedIds, setLikedIds] = useState([])
   const [playing, setPlaying] = useState(false)
+  const [vw, setVw] = useState(window.innerWidth)
   const timerRef = useRef(null)
+
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     supabase
@@ -49,31 +73,36 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
   const goPrev = () => setCur(p => (p - 1 + properties.length) % properties.length)
   const goNext = () => setCur(p => (p + 1) % properties.length)
 
+  const trackX = vw / 2 - getCardCenterX(cur, cur)
+
   return (
     <div style={{ minHeight: '100dvh', background: '#f9fafb', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, paddingBottom: 80 }}>
       <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 24, textAlign: 'center' }}>物件フィード</h2>
 
-      <div style={{ width: '100%', overflow: 'hidden', paddingBottom: 16 }}>
+      <div style={{ width: '100%', height: 360, overflow: 'hidden', paddingBottom: 16 }}>
         <div style={{
           display: 'flex',
-          transform: `translateX(calc(50vw - 150px - ${cur * CARD_W}px))`,
+          alignItems: 'center',
+          height: '100%',
+          transform: `translateX(${trackX}px)`,
           transition: 'transform 0.4s cubic-bezier(.25,.46,.45,.94)',
           willChange: 'transform',
         }}>
           {properties.map((property, i) => {
-            const isCenter = i === cur
+            const dist = Math.abs(i - cur)
+            const { w, h, borderRadius, opacity } = getCardConfig(dist)
             return (
               <div
                 key={property.id}
                 style={{
-                  minWidth: 280,
-                  margin: '0 10px',
-                  background: '#fff',
-                  borderRadius: 24,
+                  width: w,
+                  height: h,
+                  margin: `0 ${GAP}px`,
+                  borderRadius,
+                  opacity,
                   overflow: 'hidden',
+                  background: '#fff',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                  transform: isCenter ? 'scale(1)' : 'scale(0.85)',
-                  opacity: isCenter ? 1 : 0.6,
                   transition: 'all 0.4s cubic-bezier(.25,.46,.45,.94)',
                   flexShrink: 0,
                 }}
@@ -81,41 +110,40 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
                 <div style={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden' }}>
                   <img src={property.image} alt={property.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6))' }} />
-                  <div style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(139,92,246,0.9)', color: '#fff', padding: '6px 14px', borderRadius: 999, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <TrendingUp size={14} /> {property.trend}
+                  <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(139,92,246,0.9)', color: '#fff', padding: '4px 10px', borderRadius: 999, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <TrendingUp size={12} /> {property.trend}
                   </div>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 20px', color: '#fff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 13 }}>
-                      <MapPin size={14} /> {property.location}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 14px 14px', color: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4, fontSize: 11 }}>
+                      <MapPin size={11} /> {property.location}
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 600 }}>{property.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{property.title}</div>
                   </div>
                 </div>
 
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#8b5cf6,#ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>AI</div>
-                    <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.6, margin: 0 }}>{property.aiInsight}</p>
+                <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#8b5cf6,#ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>AI</div>
+                    <p style={{ fontSize: 11, color: '#4b5563', lineHeight: 1.5, margin: 0 }}>{property.aiInsight}</p>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <button onClick={() => toggleLike(property.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <Heart size={18} style={{ color: likedIds.includes(property.id) ? '#ef4444' : '#9ca3af', fill: likedIds.includes(property.id) ? '#ef4444' : 'none' }} />
-                        <span style={{ fontSize: 13, color: '#6b7280' }}>{(property.likes || 0) + (likedIds.includes(property.id) ? 1 : 0)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f3f4f6', paddingTop: 10 }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <button onClick={() => toggleLike(property.id)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <Heart size={15} style={{ color: likedIds.includes(property.id) ? '#ef4444' : '#9ca3af', fill: likedIds.includes(property.id) ? '#ef4444' : 'none' }} />
+                        <span style={{ fontSize: 11, color: '#6b7280' }}>{(property.likes || 0) + (likedIds.includes(property.id) ? 1 : 0)}</span>
                       </button>
-                      <button style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <MessageCircle size={18} style={{ color: '#9ca3af' }} />
-                        <span style={{ fontSize: 13, color: '#6b7280' }}>{property.comments}</span>
+                      <button style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <MessageCircle size={15} style={{ color: '#9ca3af' }} />
+                        <span style={{ fontSize: 11, color: '#6b7280' }}>{property.comments}</span>
                       </button>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <Share2 size={18} style={{ color: '#9ca3af' }} />
+                        <Share2 size={15} style={{ color: '#9ca3af' }} />
                       </button>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#6b7280' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#6b7280' }}>
                         {(property.agentName || 'G')[0]}
                       </div>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>{property.agentName}</span>
                     </div>
                   </div>
                 </div>
