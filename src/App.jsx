@@ -14,6 +14,7 @@ import InvestmentSimulator from './InvestmentSimulator'
 import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
+import PropertyFeedCarousel from './PropertyFeedCarousel'
 import MemberDashboard from './MemberDashboard'
 import Community from './Community'
 import ExpertDashboard from './ExpertDashboard'
@@ -1396,13 +1397,7 @@ export default function App() {
         <main className="ha-main" style={tab === 'properties' ? { margin: 0, border: 'none', borderRadius: 0, overflow: 'hidden', minHeight: '100dvh', boxShadow: 'none' } : {}}>
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <TikTokPropertyFeed properties={properties} user={user} onNavigate={setTab} onDM={() => {
-                if (user) {
-                  setTab('member');
-                } else {
-                  setShowAuthSheet(true);
-                }
-              }} />
+              <PropertyFeedCarousel properties={properties} user={user} onNavigate={setTab} />
             </div>
           )}
           {tab === 'vendors' && (
