@@ -124,7 +124,7 @@ export default function PhoneMockup() {
               </AnimatePresence>
             </div>
 
-            <motion.div className="absolute bottom-16 left-0 right-0 px-6" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}>
+            <motion.div className="absolute bottom-10 left-0 right-0 px-6" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}>
               <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-2 overflow-hidden">
                 <motion.div className="absolute inset-0 rounded-lg border border-blue-400/30" animate={{ opacity:[0.3,0.6,0.3] }} transition={{ duration:2, repeat:Infinity }} />
                 <div className="relative flex items-center gap-2">
