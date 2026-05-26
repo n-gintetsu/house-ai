@@ -93,7 +93,7 @@ const logMessages = [
 
 export default function PropertyCinemaFeed({ properties = demoProperties }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [panel, setPanel] = useState("detail");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentLog, setCurrentLog] = useState("AIが条件に合う物件を整理します");
@@ -313,6 +313,9 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
             <p>
               類似条件の非公開物件を保有している可能性のある業者があります。
               AIが希望条件を整理して、会員ページ内で安全に相談できます。
+            </p>
+            <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', margin: '12px 0 0' }}>
+              しつこい営業はありません。やり取りは会員ページ内で完結します。AIが希望条件を整理してから、条件に合う業者だけに相談できます。
             </p>
             <button>
               <Search size={18} />
