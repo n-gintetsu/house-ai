@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'motion/react'
 import { Heart, MessageCircle, Share2, MapPin, TrendingUp, Building2, Bot, SkipBack, SkipForward, Play, Pause } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
@@ -64,12 +63,15 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
           {properties.map((property, i) => {
             const isCenter = i === cur
             return (
-              <motion.div
+              <div
                 key={property.id}
-                className="bg-white rounded-3xl overflow-hidden shadow-sm"
                 style={{
                   minWidth: 280,
                   margin: '0 10px',
+                  background: '#fff',
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                   transform: isCenter ? 'scale(1)' : 'scale(0.85)',
                   opacity: isCenter ? 1 : 0.6,
                   transition: 'all 0.4s cubic-bezier(.25,.46,.45,.94)',
@@ -99,7 +101,7 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                       <button onClick={() => toggleLike(property.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}>
                         <Heart size={18} style={{ color: likedIds.includes(property.id) ? '#ef4444' : '#9ca3af', fill: likedIds.includes(property.id) ? '#ef4444' : 'none' }} />
-                        <span style={{ fontSize: 13, color: '#6b7280' }}>{property.likes + (likedIds.includes(property.id) ? 1 : 0)}</span>
+                        <span style={{ fontSize: 13, color: '#6b7280' }}>{(property.likes || 0) + (likedIds.includes(property.id) ? 1 : 0)}</span>
                       </button>
                       <button style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}>
                         <MessageCircle size={18} style={{ color: '#9ca3af' }} />
@@ -111,13 +113,13 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#6b7280' }}>
-                        {property.agentName[0]}
+                        {(property.agentName || 'G')[0]}
                       </div>
                       <span style={{ fontSize: 12, color: '#6b7280' }}>{property.agentName}</span>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
         </div>
