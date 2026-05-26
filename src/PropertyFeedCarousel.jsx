@@ -13,9 +13,9 @@ const dummyProperties = [
 const GAP = 8
 
 const getCardConfig = (dist) => {
-  if (dist === 0) return { w: 220, h: 340, borderRadius: 36, opacity: 1 }
-  if (dist === 1) return { w: 140, h: 240, borderRadius: 28, opacity: 0.65 }
-  return { w: 100, h: 180, borderRadius: 22, opacity: 0.35 }
+  if (dist === 0) return { w: 300, h: 480, borderRadius: 36, opacity: 1 }
+  if (dist === 1) return { w: 190, h: 340, borderRadius: 28, opacity: 0.65 }
+  return { w: 130, h: 240, borderRadius: 22, opacity: 0.35 }
 }
 
 const getCardCenterX = (idx, cur) => {
@@ -79,7 +79,7 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
     <div style={{ minHeight: '100dvh', background: '#f9fafb', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, paddingBottom: 80 }}>
       <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 24, textAlign: 'center' }}>物件フィード</h2>
 
-      <div style={{ width: '100%', height: 360, overflow: 'hidden', paddingBottom: 16 }}>
+      <div style={{ width: '100%', height: 500, overflow: 'hidden', paddingBottom: 16 }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -153,7 +153,7 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginTop: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginTop: 28 }}>
         <button onClick={goPrev} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
           <SkipBack size={22} />
         </button>
@@ -165,7 +165,7 @@ export default function PropertyFeedCarousel({ properties: propsProp, user, onNa
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 28, marginTop: 20, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 28, marginTop: 36, justifyContent: 'center' }}>
         {[
           { icon: <Heart size={20} />, label: '保存' },
           { icon: <MessageCircle size={20} />, label: '質問' },
