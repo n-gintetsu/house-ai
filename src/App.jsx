@@ -15,6 +15,7 @@ import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
 import PropertyFeedCarousel from './PropertyFeedCarousel'
+import PropertyCinemaFeed from './PropertyCinemaFeed'
 import MemberDashboard from './MemberDashboard'
 import Community from './Community'
 import ExpertDashboard from './ExpertDashboard'
@@ -1397,6 +1398,7 @@ export default function App() {
         <main className="ha-main" style={tab === 'properties' ? { margin: 0, border: 'none', borderRadius: 0, overflow: 'hidden', minHeight: '100dvh', boxShadow: 'none' } : {}}>
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
+              <PropertyCinemaFeed />
               <PropertyFeedCarousel properties={properties} user={user} onNavigate={setTab} />
             </div>
           )}
