@@ -51,7 +51,7 @@ export default function PhoneMockup() {
         <motion.div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%)', filter: 'blur(70px)' }} animate={isInView ? { scale: [1,1.15,1], opacity: [0.4,0.6,0.4] } : {}} transition={{ duration: 5, repeat: Infinity }} />
       </motion.div>
 
-      <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: '600px', maxHeight: '600px', overflow: 'hidden' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
+      <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: '640px', maxHeight: '640px', overflow: 'hidden' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
         <div className="absolute inset-0 rounded-[3rem] opacity-30" style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.4) 0%, transparent 100%)', filter: 'blur(40px)', transform: 'translateY(20px)' }} />
         <div className="relative w-full h-full rounded-[3rem] overflow-hidden">
         <div className="relative w-full h-full rounded-[3rem] shadow-2xl" style={{ background: 'linear-gradient(180deg, #091224 0%, #0B1730 40%, #0A1328 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 30px 80px rgba(0,0,0,0.35), 0 0 60px rgba(58,123,255,0.12)' }}>
@@ -85,7 +85,7 @@ export default function PhoneMockup() {
               <h3 className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">AIツール実行中</h3>
             </div>
 
-            <div className="relative flex items-center justify-center" style={{ height: 'auto', minHeight: '300px', maxHeight: '400px', overflow: 'hidden' }}>
+            <div className="relative flex items-center justify-center" style={{ height: 'auto', minHeight: '300px', maxHeight: '400px', overflow: 'visible', paddingTop: '12px' }}>
               <AnimatePresence mode="wait">
                 <motion.div key={currentTool.id} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration: 0.5 }} className="w-full">
                   <div className="relative rounded-2xl overflow-hidden" style={{ background:`linear-gradient(135deg, ${currentTool.gradientFrom} 0%, ${currentTool.gradientTo} 100%)` }}>
@@ -114,7 +114,7 @@ export default function PhoneMockup() {
                           </motion.div>
                         ) : null}
                       </AnimatePresence>
-                      <motion.button className={`w-full py-2.5 px-4 rounded-lg bg-gradient-to-r ${currentTool.categoryColor} text-white text-sm font-medium relative overflow-hidden`} animate={{ boxShadow: isAnimating?'0 4px 20px rgba(59,130,246,0.3)':['0 4px 20px rgba(59,130,246,0.3)','0 6px 30px rgba(59,130,246,0.6)','0 4px 20px rgba(59,130,246,0.3)'] }} transition={{ duration:2, repeat:Infinity }}>
+                      <motion.button className={`w-full py-2.5 px-4 rounded-lg bg-gradient-to-r ${currentTool.categoryColor} text-white text-sm font-medium relative overflow-hidden`} style={{ marginBottom: '12px' }} animate={{ boxShadow: isAnimating?'0 4px 20px rgba(59,130,246,0.3)':['0 4px 20px rgba(59,130,246,0.3)','0 6px 30px rgba(59,130,246,0.6)','0 4px 20px rgba(59,130,246,0.3)'] }} transition={{ duration:2, repeat:Infinity }}>
                         <span className="relative z-10">AIで分析</span>
                         <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" animate={{ x:['-100%','100%'] }} transition={{ duration:2, repeat:Infinity }} />
                       </motion.button>
