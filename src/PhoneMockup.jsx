@@ -44,6 +44,7 @@ export default function PhoneMockup() {
   }, [isInView, isAnimating]);
 
   const currentTool = aiTools[currentIndex];
+  const isWindows = navigator.userAgent.includes('Windows');
 
   return (
     <div ref={containerRef} className="relative">
@@ -51,7 +52,7 @@ export default function PhoneMockup() {
         <motion.div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%)', filter: 'blur(70px)' }} animate={isInView ? { scale: [1,1.15,1], opacity: [0.4,0.6,0.4] } : {}} transition={{ duration: 5, repeat: Infinity }} />
       </motion.div>
 
-      <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: 'min(760px,85vh)', maxHeight: '760px' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
+      <motion.div className="relative w-[min(380px,90vw)] mx-auto" style={{ height: 'auto', maxHeight: isWindows ? '560px' : '680px', overflow: 'hidden' }} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={isInView ? { scale:1, opacity:1, y:0 } : { scale:0.95, opacity:0, y:20 }} transition={{ duration: 0.8, ease: [0.23,1,0.32,1] }}>
         <div className="absolute inset-0 rounded-[3rem] opacity-30" style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.4) 0%, transparent 100%)', filter: 'blur(40px)', transform: 'translateY(20px)' }} />
         <div className="relative w-full h-full rounded-[3rem] overflow-hidden">
         <div className="relative w-full h-full rounded-[3rem] shadow-2xl" style={{ background: 'linear-gradient(180deg, #091224 0%, #0B1730 40%, #0A1328 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 30px 80px rgba(0,0,0,0.35), 0 0 60px rgba(58,123,255,0.12)' }}>
@@ -85,7 +86,7 @@ export default function PhoneMockup() {
               <h3 className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">AIツール実行中</h3>
             </div>
 
-            <div className="relative flex items-center justify-center" style={{ minHeight: '480px', height: 'auto' }}>
+            <div className="relative flex items-center justify-center" style={{ maxHeight: isWindows ? '420px' : '520px', overflowY: 'auto', overflowX: 'hidden' }}>
               <AnimatePresence mode="wait">
                 <motion.div key={currentTool.id} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration: 0.5 }} className="w-full">
                   <div className="relative rounded-2xl overflow-hidden" style={{ background:`linear-gradient(135deg, ${currentTool.gradientFrom} 0%, ${currentTool.gradientTo} 100%)` }}>
