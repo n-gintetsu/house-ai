@@ -73,14 +73,19 @@
   animation: aiCinemaPulse 1.4s infinite;
 }
 
-.ai-cinema-stage {
-  max-width: 1120px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 0.82fr 1.08fr 0.82fr;
-  gap: 24px;
-  align-items: center;
+.ai-cinema-stage-wrap {
+  width: 100%;
+  overflow: hidden;
   min-height: 560px;
+  display: flex;
+  align-items: center;
+}
+
+.ai-cinema-stage {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  will-change: transform;
 }
 
 .ai-cinema-card {
@@ -89,7 +94,8 @@
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
-  transition: 0.45s ease;
+  transition: opacity 0.35s ease-out, filter 0.35s ease-out;
+  flex-shrink: 0;
 }
 
 .ai-cinema-card.is-active {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -91,29 +91,54 @@ const logMessages = [
   "AI MATCH COMPLETE",
 ];
 
+const GAP = 24;
+
+const getCardWidth = (dist) => {
+  if (dist === 0) return 400;
+  return 280;
+};
+
+const getCardCenterX = (idx, cur) => {
+  let x = 0;
+  for (let j = 0; j < idx; j++) {
+    x += getCardWidth(Math.abs(j - cur)) + GAP;
+  }
+  x += getCardWidth(Math.abs(idx - cur)) / 2;
+  return x;
+};
+
 export default function PropertyCinemaFeed({ properties = demoProperties }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [panel, setPanel] = useState("detail");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentLog, setCurrentLog] = useState("AIが条件に合う物件を整理します");
+  const [vw, setVw] = useState(window.innerWidth);
+  const isAnimatingRef = useRef(false);
 
   const activeProperty = properties[activeIndex];
+  const trackX = vw / 2 - getCardCenterX(activeIndex, activeIndex);
 
-  const visibleCards = useMemo(() => {
-    const prev = (activeIndex - 1 + properties.length) % properties.length;
-    const next = (activeIndex + 1) % properties.length;
-    return [properties[prev], properties[activeIndex], properties[next]];
-  }, [activeIndex, properties]);
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const goNext = () => {
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
     setActiveIndex((prev) => (prev + 1) % properties.length);
     setCurrentLog("AIが次の候補を整理しました");
+    setTimeout(() => { isAnimatingRef.current = false; }, 380);
   };
 
   const goPrev = () => {
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
     setActiveIndex((prev) => (prev - 1 + properties.length) % properties.length);
     setCurrentLog("前の候補を再解析しました");
+    setTimeout(() => { isAnimatingRef.current = false; }, 380);
   };
 
   useEffect(() => {
@@ -156,62 +181,71 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         <span>{currentLog}</span>
       </div>
 
-      <div className="ai-cinema-stage">
-        {visibleCards.map((property, index) => {
-          const isCenter = index === 1;
-          return (
-            <article
-              key={`${property.id}-${index}`}
-              className={`ai-cinema-card ${isCenter ? "is-active" : "is-side"}`}
-            >
-              <div
-                className="ai-cinema-image"
-                style={{ backgroundImage: `url(${property.image})` }}
+      <div className="ai-cinema-stage-wrap">
+        <div
+          className="ai-cinema-stage"
+          style={{
+            transform: `translateX(${trackX}px)`,
+            transition: "transform 0.35s ease-out",
+          }}
+        >
+          {properties.map((property, i) => {
+            const dist = Math.abs(i - activeIndex);
+            return (
+              <article
+                key={property.id}
+                className={`ai-cinema-card ${dist === 0 ? "is-active" : "is-side"}`}
+                style={{ width: getCardWidth(dist), flexShrink: 0 }}
               >
-                <div className="ai-cinema-gradient" />
-                <div className="ai-cinema-badge">
-                  <Sparkles size={14} />
-                  AI解析済み
-                </div>
-                <div className="ai-cinema-location">
-                  <MapPin size={16} />
-                  {property.area}
-                </div>
-                <h3>{property.title}</h3>
-              </div>
-
-              <div className="ai-cinema-body">
-                <div className="ai-cinema-match">
-                  <span>AI相性</span>
-                  <strong>{property.match}%</strong>
+                <div
+                  className="ai-cinema-image"
+                  style={{ backgroundImage: `url(${property.image})` }}
+                >
+                  <div className="ai-cinema-gradient" />
+                  <div className="ai-cinema-badge">
+                    <Sparkles size={14} />
+                    AI解析済み
+                  </div>
+                  <div className="ai-cinema-location">
+                    <MapPin size={16} />
+                    {property.area}
+                  </div>
+                  <h3>{property.title}</h3>
                 </div>
 
-                <div className="ai-cinema-ai-comment">
-                  <div className="ai-cinema-ai-icon">AI</div>
-                  <p>{property.aiComment}</p>
-                </div>
+                <div className="ai-cinema-body">
+                  <div className="ai-cinema-match">
+                    <span>AI相性</span>
+                    <strong>{property.match}%</strong>
+                  </div>
 
-                <div className="ai-cinema-tags">
-                  {property.tags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
+                  <div className="ai-cinema-ai-comment">
+                    <div className="ai-cinema-ai-icon">AI</div>
+                    <p>{property.aiComment}</p>
+                  </div>
 
-                <div className="ai-cinema-meta">
-                  <span>
-                    <Heart size={17} /> {property.likes}
-                  </span>
-                  <span>
-                    <MessageCircle size={17} /> {property.comments}
-                  </span>
-                  <span>
-                    <Building2 size={17} /> {property.agent}
-                  </span>
+                  <div className="ai-cinema-tags">
+                    {property.tags.map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+
+                  <div className="ai-cinema-meta">
+                    <span>
+                      <Heart size={17} /> {property.likes}
+                    </span>
+                    <span>
+                      <MessageCircle size={17} /> {property.comments}
+                    </span>
+                    <span>
+                      <Building2 size={17} /> {property.agent}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </article>
-          );
-        })}
+              </article>
+            );
+          })}
+        </div>
       </div>
 
       <div className="ai-cinema-controls">
@@ -268,16 +302,16 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
       </div>
 
       <div className="ai-cinema-info-panel">
-        {panel === "detail" && (
+        {panel === "detail" ? (
           <div className="ai-cinema-grid-info">
             <InfoBox label="価格/賃料" value={activeProperty.detail.price} />
             <InfoBox label="間取り" value={activeProperty.detail.layout} />
             <InfoBox label="築年数" value={activeProperty.detail.age} />
             <InfoBox label="駅距離" value={activeProperty.detail.station} />
           </div>
-        )}
+        ) : null}
 
-        {panel === "area" && (
+        {panel === "area" ? (
           <div className="ai-cinema-text-panel">
             <h4>AREA ANALYSIS COMPLETE</h4>
             <p>
@@ -285,9 +319,9 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
               夜は比較的静かで、在宅ワークや単身世帯にも向いています。
             </p>
           </div>
-        )}
+        ) : null}
 
-        {panel === "market" && (
+        {panel === "market" ? (
           <div className="ai-cinema-text-panel">
             <h4>MARKET SCAN COMPLETE</h4>
             <p>
@@ -295,18 +329,18 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
               ただし人気エリアのため、良条件の物件は早期終了する可能性があります。
             </p>
           </div>
-        )}
+        ) : null}
 
-        {panel === "visit" && (
+        {panel === "visit" ? (
           <div className="ai-cinema-grid-info">
             <InfoBox icon={<CalendarDays size={20} />} label="内見候補日" value="今週末" />
             <InfoBox icon={<CloudSun size={20} />} label="天気" value="くもり時々晴れ" />
             <InfoBox icon={<Train size={20} />} label="交通手段" value="電車＋徒歩9分" />
             <InfoBox label="AIメモ" value="駅から少し歩くため、雨天時は傘推奨です。" />
           </div>
-        )}
+        ) : null}
 
-        {panel === "private" && (
+        {panel === "private" ? (
           <div className="ai-cinema-private-panel">
             <LockKeyhole size={26} />
             <h4>この条件に近い非公開物件を検出</h4>
@@ -322,7 +356,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
               AIに相談して確認する
             </button>
           </div>
-        )}
+        ) : null}
       </div>
 
       {isAnalyzing ? (
