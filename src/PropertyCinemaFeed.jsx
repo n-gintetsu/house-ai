@@ -91,54 +91,48 @@ const logMessages = [
   "AI MATCH COMPLETE",
 ];
 
-const GAP = 24;
-
-const getCardWidth = (dist) => {
-  if (dist === 0) return 400;
-  return 280;
-};
-
-const getCardCenterX = (idx, cur) => {
-  let x = 0;
-  for (let j = 0; j < idx; j++) {
-    x += getCardWidth(Math.abs(j - cur)) + GAP;
-  }
-  x += getCardWidth(Math.abs(idx - cur)) / 2;
-  return x;
-};
+const SLOT_CLASSES = ["pos-center", "pos-next1", "pos-next2", "pos-prev2", "pos-prev1"];
+const SLOT_OFFSETS = [0, 1, 2, -2, -1];
 
 export default function PropertyCinemaFeed({ properties = demoProperties }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [centerSlot, setCenterSlot] = useState(2);
   const [isPlaying, setIsPlaying] = useState(true);
   const [panel, setPanel] = useState("detail");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentLog, setCurrentLog] = useState("AIが条件に合う物件を整理します");
-  const [vw, setVw] = useState(window.innerWidth);
   const isAnimatingRef = useRef(false);
 
   const activeProperty = properties[activeIndex];
-  const trackX = vw / 2 - getCardCenterX(activeIndex, activeIndex);
+  const N = properties.length;
 
-  useEffect(() => {
-    const onResize = () => setVw(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+  const getSlotClass = (slotIdx) => {
+    const relative = (slotIdx - centerSlot + 5) % 5;
+    return SLOT_CLASSES[relative];
+  };
+
+  const getSlotProperty = (slotIdx) => {
+    const relative = (slotIdx - centerSlot + 5) % 5;
+    const offset = SLOT_OFFSETS[relative];
+    return properties[(activeIndex + offset + N * 10) % N];
+  };
 
   const goNext = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
-    setActiveIndex((prev) => (prev + 1) % properties.length);
+    setActiveIndex((prev) => (prev + 1) % N);
+    setCenterSlot((prev) => (prev + 1) % 5);
     setCurrentLog("AIが次の候補を整理しました");
-    setTimeout(() => { isAnimatingRef.current = false; }, 380);
+    setTimeout(() => { isAnimatingRef.current = false; }, 500);
   };
 
   const goPrev = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
-    setActiveIndex((prev) => (prev - 1 + properties.length) % properties.length);
+    setActiveIndex((prev) => (prev - 1 + N) % N);
+    setCenterSlot((prev) => (prev - 1 + 5) % 5);
     setCurrentLog("前の候補を再解析しました");
-    setTimeout(() => { isAnimatingRef.current = false; }, 380);
+    setTimeout(() => { isAnimatingRef.current = false; }, 500);
   };
 
   useEffect(() => {
@@ -182,21 +176,12 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
       </div>
 
       <div className="ai-cinema-stage-wrap">
-        <div
-          className="ai-cinema-stage"
-          style={{
-            transform: `translateX(${trackX}px)`,
-            transition: "transform 0.35s ease-out",
-          }}
-        >
-          {properties.map((property, i) => {
-            const dist = Math.abs(i - activeIndex);
+        <div className="ai-cinema-stage">
+          {[0, 1, 2, 3, 4].map((slotIdx) => {
+            const property = getSlotProperty(slotIdx);
+            const posClass = getSlotClass(slotIdx);
             return (
-              <article
-                key={property.id}
-                className={`ai-cinema-card ${dist === 0 ? "is-active" : "is-side"}`}
-                style={{ width: getCardWidth(dist), flexShrink: 0 }}
-              >
+              <article key={slotIdx} className={`ai-cinema-card ${posClass}`}>
                 <div
                   className="ai-cinema-image"
                   style={{ backgroundImage: `url(${property.image})` }}

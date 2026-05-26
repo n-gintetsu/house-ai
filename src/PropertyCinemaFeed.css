@@ -76,35 +76,37 @@
 .ai-cinema-stage-wrap {
   width: 100%;
   overflow: hidden;
-  min-height: 560px;
-  display: flex;
-  align-items: center;
 }
 
 .ai-cinema-stage {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  will-change: transform;
+  position: relative;
+  max-width: 1120px;
+  margin: 0 auto;
+  height: 580px;
 }
 
 .ai-cinema-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
   border-radius: 28px;
   background: #ffffff;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
-  transition: opacity 0.35s ease-out, filter 0.35s ease-out;
-  flex-shrink: 0;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.1, 0.64, 1),
+    opacity 0.45s ease;
 }
 
-.ai-cinema-card.is-active {
-  transform: scale(1);
+.ai-cinema-card.pos-center {
+  transform: translate(-50%, -50%) scale(1);
   opacity: 1;
-  filter: none;
+  z-index: 3;
 }
 
-.ai-cinema-card.is-active::after {
+.ai-cinema-card.pos-center::after {
   content: "";
   display: block;
   height: 3px;
@@ -112,10 +114,30 @@
   animation: aiCinemaScanLine 1.6s ease;
 }
 
-.ai-cinema-card.is-side {
-  transform: scale(0.88);
-  opacity: 0.48;
-  filter: blur(1px);
+.ai-cinema-card.pos-prev1 {
+  transform: translate(calc(-50% - 290px), -50%) scale(0.72);
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.ai-cinema-card.pos-next1 {
+  transform: translate(calc(-50% + 290px), -50%) scale(0.72);
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.ai-cinema-card.pos-prev2 {
+  transform: translate(calc(-50% - 520px), -50%) scale(0.55);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ai-cinema-card.pos-next2 {
+  transform: translate(calc(-50% + 520px), -50%) scale(0.55);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .ai-cinema-image {
