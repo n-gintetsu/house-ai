@@ -14,7 +14,6 @@ import InvestmentSimulator from './InvestmentSimulator'
 import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
 import TikTokPropertyFeed from './TikTokPropertyFeed'
-import PropertyFeedCarousel from './PropertyFeedCarousel'
 import PropertyCinemaFeed from './PropertyCinemaFeed'
 import MemberDashboard from './MemberDashboard'
 import Community from './Community'
@@ -1399,7 +1398,6 @@ export default function App() {
           {tab === 'properties' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <PropertyCinemaFeed />
-              <PropertyFeedCarousel properties={properties} user={user} onNavigate={setTab} />
             </div>
           )}
           {tab === 'vendors' && (
