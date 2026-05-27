@@ -164,10 +164,6 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         <p className="ai-cinema-kicker">AI PROPERTY CINEMA</p>
         <h2>AI物件フィード</h2>
         <p>AIがあなたに合う暮らしを整理します</p>
-        <button className="ai-cinema-main-cta" onClick={startAiAnalyze}>
-          <Sparkles size={18} />
-          AIに条件で探してもらう
-        </button>
       </div>
 
       <div className="ai-cinema-layout">
@@ -269,80 +265,103 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         </button>
       </div>
 
-      <div className="ai-cinema-panel-tabs">
-        <button className={panel === "detail" ? "active" : ""} onClick={() => setPanel("detail")}>
-          詳細を見る
+      <div className="ai-cinema-right-col">
+        <button className="ai-cinema-main-cta" onClick={startAiAnalyze}>
+          <Sparkles size={18} />
+          AIに条件で探してもらう
         </button>
-        <button className={panel === "area" ? "active" : ""} onClick={() => setPanel("area")}>
-          周辺環境
-        </button>
-        <button className={panel === "market" ? "active" : ""} onClick={() => setPanel("market")}>
-          周辺相場
-        </button>
-        <button className={panel === "visit" ? "active" : ""} onClick={() => setPanel("visit")}>
-          内見予約
-        </button>
-        <button className={panel === "private" ? "active" : ""} onClick={() => setPanel("private")}>
-          非公開物件
-        </button>
-      </div>
 
-      <div className="ai-cinema-info-panel">
-        {panel === "detail" ? (
-          <div className="ai-cinema-grid-info">
-            <InfoBox label="価格/賃料" value={activeProperty.detail.price} />
-            <InfoBox label="間取り" value={activeProperty.detail.layout} />
-            <InfoBox label="築年数" value={activeProperty.detail.age} />
-            <InfoBox label="駅距離" value={activeProperty.detail.station} />
+        <div className="ai-cinema-right-summary">
+          <div className="ai-cinema-match">
+            <span>AI相性</span>
+            <strong>{activeProperty.match}%</strong>
           </div>
-        ) : null}
+          <div className="ai-cinema-tags">
+            {activeProperty.tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
+          <div className="ai-cinema-ai-comment">
+            <div className="ai-cinema-ai-icon">AI</div>
+            <p>{activeProperty.aiComment}</p>
+          </div>
+        </div>
 
-        {panel === "area" ? (
-          <div className="ai-cinema-text-panel">
-            <h4>AREA ANALYSIS COMPLETE</h4>
-            <p>
-              周辺にはスーパー・カフェ・公園が揃っており、日常生活の利便性が高いエリアです。
-              夜は比較的静かで、在宅ワークや単身世帯にも向いています。
-            </p>
-          </div>
-        ) : null}
+        <div className="ai-cinema-panel-tabs">
+          <button className={panel === "detail" ? "active" : ""} onClick={() => setPanel("detail")}>
+            詳細を見る
+          </button>
+          <button className={panel === "area" ? "active" : ""} onClick={() => setPanel("area")}>
+            周辺環境
+          </button>
+          <button className={panel === "market" ? "active" : ""} onClick={() => setPanel("market")}>
+            周辺相場
+          </button>
+          <button className={panel === "visit" ? "active" : ""} onClick={() => setPanel("visit")}>
+            内見予約
+          </button>
+          <button className={panel === "private" ? "active" : ""} onClick={() => setPanel("private")}>
+            非公開物件
+          </button>
+        </div>
 
-        {panel === "market" ? (
-          <div className="ai-cinema-text-panel">
-            <h4>MARKET SCAN COMPLETE</h4>
-            <p>
-              周辺相場と比較すると、現在の条件ではやや割安傾向です。
-              ただし人気エリアのため、良条件の物件は早期終了する可能性があります。
-            </p>
-          </div>
-        ) : null}
+        <div className="ai-cinema-info-panel">
+          {panel === "detail" ? (
+            <div className="ai-cinema-grid-info">
+              <InfoBox label="価格/賃料" value={activeProperty.detail.price} />
+              <InfoBox label="間取り" value={activeProperty.detail.layout} />
+              <InfoBox label="築年数" value={activeProperty.detail.age} />
+              <InfoBox label="駅距離" value={activeProperty.detail.station} />
+            </div>
+          ) : null}
 
-        {panel === "visit" ? (
-          <div className="ai-cinema-grid-info">
-            <InfoBox icon={<CalendarDays size={20} />} label="内見候補日" value="今週末" />
-            <InfoBox icon={<CloudSun size={20} />} label="天気" value="くもり時々晴れ" />
-            <InfoBox icon={<Train size={20} />} label="交通手段" value="電車＋徒歩9分" />
-            <InfoBox label="AIメモ" value="駅から少し歩くため、雨天時は傘推奨です。" />
-          </div>
-        ) : null}
+          {panel === "area" ? (
+            <div className="ai-cinema-text-panel">
+              <h4>AREA ANALYSIS COMPLETE</h4>
+              <p>
+                周辺にはスーパー・カフェ・公園が揃っており、日常生活の利便性が高いエリアです。
+                夜は比較的静かで、在宅ワークや単身世帯にも向いています。
+              </p>
+            </div>
+          ) : null}
 
-        {panel === "private" ? (
-          <div className="ai-cinema-private-panel">
-            <LockKeyhole size={26} />
-            <h4>この条件に近い非公開物件を検出</h4>
-            <p>
-              類似条件の非公開物件を保有している可能性のある業者があります。
-              AIが希望条件を整理して、会員ページ内で安全に相談できます。
-            </p>
-            <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', margin: '12px 0 0' }}>
-              しつこい営業はありません。やり取りは会員ページ内で完結します。AIが希望条件を整理してから、条件に合う業者だけに相談できます。
-            </p>
-            <button>
-              <Search size={18} />
-              AIに相談して確認する
-            </button>
-          </div>
-        ) : null}
+          {panel === "market" ? (
+            <div className="ai-cinema-text-panel">
+              <h4>MARKET SCAN COMPLETE</h4>
+              <p>
+                周辺相場と比較すると、現在の条件ではやや割安傾向です。
+                ただし人気エリアのため、良条件の物件は早期終了する可能性があります。
+              </p>
+            </div>
+          ) : null}
+
+          {panel === "visit" ? (
+            <div className="ai-cinema-grid-info">
+              <InfoBox icon={<CalendarDays size={20} />} label="内見候補日" value="今週末" />
+              <InfoBox icon={<CloudSun size={20} />} label="天気" value="くもり時々晴れ" />
+              <InfoBox icon={<Train size={20} />} label="交通手段" value="電車＋徒歩9分" />
+              <InfoBox label="AIメモ" value="駅から少し歩くため、雨天時は傘推奨です。" />
+            </div>
+          ) : null}
+
+          {panel === "private" ? (
+            <div className="ai-cinema-private-panel">
+              <LockKeyhole size={26} />
+              <h4>この条件に近い非公開物件を検出</h4>
+              <p>
+                類似条件の非公開物件を保有している可能性のある業者があります。
+                AIが希望条件を整理して、会員ページ内で安全に相談できます。
+              </p>
+              <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', margin: '12px 0 0' }}>
+                しつこい営業はありません。やり取りは会員ページ内で完結します。AIが希望条件を整理してから、条件に合う業者だけに相談できます。
+              </p>
+              <button>
+                <Search size={18} />
+                AIに相談して確認する
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
       </div>
 

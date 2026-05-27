@@ -10,31 +10,31 @@
 .ai-cinema-header {
   text-align: center;
   max-width: 760px;
-  margin: 0 auto 28px;
+  margin: 0 auto 16px;
 }
 
 .ai-cinema-kicker {
   letter-spacing: 0.28em;
-  font-size: 12px;
+  font-size: 10px;
   color: #8b5cf6;
   font-weight: 700;
   margin-bottom: 8px;
 }
 
 .ai-cinema-header h2 {
-  font-size: clamp(32px, 5vw, 56px);
+  font-size: clamp(22px, 3vw, 32px);
   color: #0f172a;
   margin: 0 0 10px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ai-cinema-header p {
   color: #64748b;
-  font-size: 17px;
+  font-size: 13px;
 }
 
 .ai-cinema-main-cta {
-  margin-top: 22px;
+  margin-top: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -79,7 +79,7 @@
 
 .ai-cinema-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 3fr 1fr;
   gap: 0 32px;
   align-items: start;
 }
@@ -91,15 +91,14 @@
   grid-column: 1;
 }
 
-.ai-cinema-layout .ai-cinema-panel-tabs {
+.ai-cinema-layout .ai-cinema-right-col {
   grid-column: 2;
-  grid-row: 1;
-  margin-top: 0;
-}
-
-.ai-cinema-layout .ai-cinema-info-panel {
-  grid-column: 2;
-  grid-row: 2;
+  grid-row: 1 / 5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 .ai-cinema-stage {
@@ -428,6 +427,60 @@
   cursor: pointer;
 }
 
+.ai-cinema-right-col .ai-cinema-main-cta {
+  width: 100%;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.ai-cinema-right-summary {
+  background: #f8fafc;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+}
+
+.ai-cinema-right-summary .ai-cinema-match {
+  margin-bottom: 10px;
+}
+
+.ai-cinema-right-summary .ai-cinema-match strong {
+  font-size: 22px;
+}
+
+.ai-cinema-right-summary .ai-cinema-tags {
+  margin: 6px 0 10px;
+}
+
+.ai-cinema-right-summary .ai-cinema-ai-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.ai-cinema-right-col .ai-cinema-panel-tabs {
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.ai-cinema-right-col .ai-cinema-info-panel {
+  margin: 0;
+  padding: 16px;
+}
+
+.ai-cinema-right-col .ai-cinema-grid-info {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ai-cinema-right-col .ai-cinema-info-box {
+  min-height: auto;
+  padding: 12px;
+}
+
+.ai-cinema-right-col .ai-cinema-info-box strong {
+  font-size: 16px;
+}
+
 .ai-cinema-overlay {
   position: fixed;
   inset: 0;
@@ -521,5 +574,12 @@
 @media (max-width: 900px) {
   .ai-cinema-section {
     display: none;
+  }
+  .ai-cinema-layout {
+    display: block;
+  }
+  .ai-cinema-layout .ai-cinema-right-col {
+    max-height: none;
+    overflow-y: visible;
   }
 }
