@@ -386,6 +386,7 @@
   background: #fff;
   border-radius: 999px;
   padding: 10px 16px;
+  text-align: center;
 }
 
 .ai-cinema-panel-tabs button.active {
