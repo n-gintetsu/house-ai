@@ -170,6 +170,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         </button>
       </div>
 
+      <div className="ai-cinema-layout">
       <div className="ai-cinema-logbar">
         <span className="ai-cinema-live-dot" />
         <span>{currentLog}</span>
@@ -342,6 +343,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
             </button>
           </div>
         ) : null}
+      </div>
       </div>
 
       {isAnalyzing ? (

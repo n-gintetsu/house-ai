@@ -77,11 +77,36 @@
   width: 100%;
 }
 
+.ai-cinema-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0 32px;
+  align-items: start;
+}
+
+.ai-cinema-layout .ai-cinema-logbar,
+.ai-cinema-layout .ai-cinema-stage-wrap,
+.ai-cinema-layout .ai-cinema-controls,
+.ai-cinema-layout .ai-cinema-actions {
+  grid-column: 1;
+}
+
+.ai-cinema-layout .ai-cinema-panel-tabs {
+  grid-column: 2;
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.ai-cinema-layout .ai-cinema-info-panel {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .ai-cinema-stage {
   position: relative;
   max-width: 1120px;
   margin: 0 auto;
-  height: min(580px, 62vh);
+  height: min(520px, 56vh);
 }
 
 .ai-cinema-card {
@@ -141,7 +166,7 @@
 
 .ai-cinema-image {
   position: relative;
-  height: min(340px, 38vh);
+  height: min(300px, 45vh);
   background-size: cover;
   background-position: center;
   color: #fff;
