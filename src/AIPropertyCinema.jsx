@@ -1,7 +1,10 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import "./AIPropertyCinema.css";
 
+/* =====================================================
+   DATA
+   ===================================================== */
 const properties = [
   {
     id: "1",
@@ -72,6 +75,235 @@ const examples = [
   "表参道のデザイナーズマンション、眺望が良く静かな環境",
 ];
 
+/* =====================================================
+   AILogPanel: ログ一覧（タイピングアニメーション付き）
+   ===================================================== */
+function AILogItem({ text }) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(id);
+        setDone(true);
+      }
+    }, 30);
+    return () => clearInterval(id);
+  }, [text]);
+
+  return (
+    <motion.div
+      className={`apc-logpanel-item${done ? " apc-logpanel-done" : ""}`}
+      initial={{ opacity: 0, x: -14 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="apc-logpanel-icon">
+        {done ? (
+          <span className="apc-logpanel-check">✓</span>
+        ) : (
+          <span className="apc-logpanel-spinner" />
+        )}
+      </div>
+      <div className="apc-logpanel-content">
+        <span className="apc-logpanel-text">{displayed}</span>
+        {done ? null : (
+          <div className="apc-logpanel-bar">
+            <div className="apc-logpanel-bar-fill" />
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function AILogPanel({ logs }) {
+  return (
+    <div className="apc-logpanel">
+      {logs.map((log, i) => (
+        <AILogItem key={i} text={log} />
+      ))}
+    </div>
+  );
+}
+
+/* =====================================================
+   AIMatchScore: SVG円形プログレスバッジ
+   ===================================================== */
+function AIMatchScore({ score }) {
+  const radius = 24;
+  const cx = 30;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - score / 100);
+  const color =
+    score >= 94 ? "#F3D97B" : score >= 90 ? "#22D3EE" : "#5B8CFF";
+
+  return (
+    <div className="apc-match-score">
+      <svg viewBox="0 0 60 60" width="60" height="60" className="apc-match-svg">
+        <circle
+          cx={cx}
+          cy={cx}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="3.5"
+        />
+        <circle
+          cx={cx}
+          cy={cx}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="3.5"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cx})`}
+        />
+      </svg>
+      <div className="apc-match-score-center">
+        <span className="apc-match-score-num" style={{ color }}>
+          {score}%
+        </span>
+        <span className="apc-match-score-tag">Match</span>
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
+   AIPersonalityBadge: price/tagsからAIタイプを自動判定
+   ===================================================== */
+const PERSONALITY = {
+  LUX_AI:    { label: "LUX AI",    color: "#F3D97B", bg: "rgba(243,217,123,0.14)" },
+  WORK_AI:   { label: "WORK AI",   color: "#9C6BFF", bg: "rgba(156,107,255,0.14)" },
+  LIFE_AI:   { label: "LIFE AI",   color: "#5B8CFF", bg: "rgba(91,140,255,0.14)"  },
+  INVEST_AI: { label: "INVEST AI", color: "#FACC15", bg: "rgba(250,204,21,0.14)"  },
+};
+
+function detectPersonality(price, tags) {
+  const num = parseInt((price || "").replace(/[^0-9]/g, ""), 10) || 0;
+  const lbls = (tags || []).map((t) => t.label);
+  if (num >= 300000 || lbls.includes("高級感")) return "LUX_AI";
+  if (lbls.some((l) => ["在宅向き", "Wi-Fi完備", "リノベ済"].includes(l))) return "WORK_AI";
+  if (lbls.some((l) => ["資産価値", "新築"].includes(l))) return "INVEST_AI";
+  return "LIFE_AI";
+}
+
+function AIPersonalityBadge({ price, tags }) {
+  const type = detectPersonality(price, tags);
+  const cfg = PERSONALITY[type];
+  return (
+    <span
+      className="apc-personality-badge"
+      style={{
+        color: cfg.color,
+        background: cfg.bg,
+        border: `1px solid ${cfg.color}55`,
+      }}
+    >
+      {cfg.label}
+    </span>
+  );
+}
+
+/* =====================================================
+   AIScanEffect: ホバー時スキャン演出ラッパー
+   ===================================================== */
+function AIScanEffect({ active, children }) {
+  return (
+    <div className="apc-scan-wrap">
+      {children}
+      {active ? (
+        <motion.div
+          className="apc-scan-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18 }}
+        >
+          <div className="apc-scan-line-sweep" />
+          <div className="apc-scan-corner apc-scan-tl" />
+          <div className="apc-scan-corner apc-scan-tr" />
+          <div className="apc-scan-corner apc-scan-bl" />
+          <div className="apc-scan-corner apc-scan-br" />
+          <span className="apc-scan-text">ANALYZING...</span>
+        </motion.div>
+      ) : null}
+    </div>
+  );
+}
+
+/* =====================================================
+   CinemaIntroEffect: blackout→grid→particles→ripple→complete
+   ===================================================== */
+function CinemaIntroEffect({ onComplete }) {
+  const [stage, setStage] = useState(0);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    if (stage < 4) {
+      const t = setTimeout(() => setStage((s) => s + 1), 600);
+      return () => clearTimeout(t);
+    }
+    // stage 4: フェードアウト後にコールバック
+    const t = setTimeout(() => onCompleteRef.current(), 500);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  return (
+    <motion.div
+      className="apc-intro"
+      animate={{ opacity: stage >= 4 ? 0 : 1 }}
+      transition={{ duration: 0.45 }}
+    >
+      {stage >= 1 ? <div className="apc-intro-grid" /> : null}
+
+      {stage >= 2 ? (
+        <div className="apc-intro-ptcl-layer">
+          {Array.from({ length: 14 }, (_, i) => (
+            <motion.div
+              key={i}
+              className="apc-intro-particle"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.8 }}
+              transition={{ delay: i * 0.045, duration: 0.32 }}
+              style={{
+                left: `${6 + i * 6.3}%`,
+                top: `${38 + (i % 4) * 9}%`,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {stage === 3 ? <div className="apc-intro-ripple" key="ripple" /> : null}
+
+      {stage >= 1 ? (
+        <motion.div
+          className="apc-intro-text"
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <p className="apc-badge">AI PROPERTY</p>
+          <h2 className="apc-intro-title">CINEMA</h2>
+        </motion.div>
+      ) : null}
+    </motion.div>
+  );
+}
+
+/* =====================================================
+   SCREEN: Top
+   ===================================================== */
 function TopScreen({ query, setQuery, startAnalysis }) {
   return (
     <motion.div
@@ -117,6 +349,9 @@ function TopScreen({ query, setQuery, startAnalysis }) {
   );
 }
 
+/* =====================================================
+   SCREEN: Analysis（AILogPanel使用）
+   ===================================================== */
 function AnalysisScreen({ logs }) {
   return (
     <motion.div
@@ -135,39 +370,38 @@ function AnalysisScreen({ logs }) {
         <div className="apc-orb" />
       </div>
 
-      <div className="apc-log-list">
-        {logs.map((log, i) => (
-          <motion.div
-            key={i}
-            className="apc-log-item"
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <span className="apc-log-dot" />
-            {log}
-          </motion.div>
-        ))}
-      </div>
+      <AILogPanel logs={logs} />
     </motion.div>
   );
 }
 
+/* =====================================================
+   CARD: CinemaCard（AIMatchScore・AIPersonalityBadge・AIScanEffect使用）
+   ===================================================== */
 function CinemaCard({ prop, position }) {
+  const [hovered, setHovered] = useState(false);
+  const isCenter = position === "center";
+
   return (
-    <div className={`apc-card apc-card-${position}`}>
-      <div className="apc-card-image">
-        <img src={prop.image} alt={prop.title} loading="lazy" />
-        <div className="apc-card-img-overlay" />
-        <span className="apc-area-badge">📍 {prop.area}</span>
-        <div className="apc-score-badge">
-          <span className="apc-score-num">{prop.aiScore}%</span>
-          <span className="apc-score-label">AI Match</span>
+    <div
+      className={`apc-card apc-card-${position}`}
+      onMouseEnter={isCenter ? () => setHovered(true) : undefined}
+      onMouseLeave={isCenter ? () => setHovered(false) : undefined}
+    >
+      <AIScanEffect active={isCenter && hovered}>
+        <div className="apc-card-image">
+          <img src={prop.image} alt={prop.title} loading="lazy" />
+          <div className="apc-card-img-overlay" />
+          <span className="apc-area-badge">📍 {prop.area}</span>
+          <AIMatchScore score={prop.aiScore} />
         </div>
-      </div>
+      </AIScanEffect>
 
       <div className="apc-card-body">
-        <p className="apc-card-price">{prop.price}</p>
+        <div className="apc-card-price-row">
+          <p className="apc-card-price">{prop.price}</p>
+          <AIPersonalityBadge price={prop.price} tags={prop.tags} />
+        </div>
         <h3 className="apc-card-title">{prop.title}</h3>
 
         <div className="apc-card-comment">
@@ -193,7 +427,12 @@ function CinemaCard({ prop, position }) {
   );
 }
 
+/* =====================================================
+   SCREEN: Cinema（CinemaIntroEffect使用）
+   ===================================================== */
 function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase }) {
+  const [showIntro, setShowIntro] = useState(true);
+
   const getPosition = (index) => {
     if (index === activeIndex) return "center";
     if (index === activeIndex - 1) return "left";
@@ -202,57 +441,71 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase }) {
   };
 
   return (
-    <div className="apc-cinema">
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <p className="apc-badge">AI PROPERTY CINEMA</p>
-        <h2 className="apc-cinema-title">AIが提案する住まい</h2>
-        <p className="apc-cinema-sub">3件の物件が見つかりました</p>
-      </motion.div>
+    <>
+      {showIntro ? (
+        <CinemaIntroEffect onComplete={() => setShowIntro(false)} />
+      ) : null}
 
-      <div className="apc-stage">
-        {properties.map((prop, index) => (
-          <CinemaCard
-            key={prop.id}
-            prop={prop}
-            position={getPosition(index)}
-          />
-        ))}
-      </div>
-
-      <div className="apc-controls">
-        <button
-          className="apc-ctrl-btn"
-          onClick={() => setActiveIndex(Math.max(activeIndex - 1, 0))}
+      <div className="apc-cinema">
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          ⏮
-        </button>
-        <button
-          className="apc-ctrl-btn"
-          onClick={() => setActiveIndex(Math.min(activeIndex + 1, properties.length - 1))}
-        >
-          ⏭
-        </button>
-      </div>
+          <p className="apc-badge">AI PROPERTY CINEMA</p>
+          <h2 className="apc-cinema-title">AIが提案する住まい</h2>
+          <p className="apc-cinema-sub">3件の物件が見つかりました</p>
+        </motion.div>
 
-      <div className="apc-actions">
-        <button className="apc-action-btn apc-action-primary" onClick={() => setPhase("detail")}>
-          詳細を見る
-        </button>
-        <button className="apc-action-btn" onClick={() => setPhase("compare")}>
-          比較モード
-        </button>
-        <button className="apc-action-btn apc-action-secret">
-          非公開物件
-        </button>
+        <div className="apc-stage">
+          {properties.map((prop, index) => (
+            <CinemaCard
+              key={prop.id}
+              prop={prop}
+              position={getPosition(index)}
+            />
+          ))}
+        </div>
+
+        <div className="apc-controls">
+          <button
+            className="apc-ctrl-btn"
+            onClick={() => setActiveIndex(Math.max(activeIndex - 1, 0))}
+          >
+            ⏮
+          </button>
+          <button
+            className="apc-ctrl-btn"
+            onClick={() =>
+              setActiveIndex(Math.min(activeIndex + 1, properties.length - 1))
+            }
+          >
+            ⏭
+          </button>
+        </div>
+
+        <div className="apc-actions">
+          <button
+            className="apc-action-btn apc-action-primary"
+            onClick={() => setPhase("detail")}
+          >
+            詳細を見る
+          </button>
+          <button className="apc-action-btn" onClick={() => setPhase("compare")}>
+            比較モード
+          </button>
+          <button className="apc-action-btn apc-action-secret">
+            非公開物件
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
+/* =====================================================
+   SCREEN: Detail
+   ===================================================== */
 function DetailScreen({ property, setPhase }) {
   return (
     <motion.div
@@ -322,6 +575,9 @@ function DetailScreen({ property, setPhase }) {
   );
 }
 
+/* =====================================================
+   SCREEN: Compare
+   ===================================================== */
 function CompareScreen({ properties, setPhase }) {
   const [axis, setAxis] = useState("通勤特化");
   const axes = ["通勤特化", "在宅ワーク特化", "資産価値重視"];
@@ -382,6 +638,9 @@ function CompareScreen({ properties, setPhase }) {
   );
 }
 
+/* =====================================================
+   MAIN EXPORT
+   ===================================================== */
 export default function AIPropertyCinema() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
