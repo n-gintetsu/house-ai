@@ -60,16 +60,16 @@
 }
 
 .ai-cinema-card-bottom .ai-cinema-actions button {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .ai-cinema-card-bottom .ai-cinema-actions button svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 }
 
 .ai-cinema-card-bottom .ai-cinema-actions button span {
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .ai-cinema-detail-cta {
@@ -331,7 +331,7 @@
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin: 20px 0 20px;
+  margin: 36px 0 20px;
 }
 
 .ai-cinema-controls button {

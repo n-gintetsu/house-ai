@@ -207,6 +207,10 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
                 <div className="ai-cinema-card-bottom">
                   <div className="ai-cinema-actions">
                     <button>
+                      <Heart size={16} />
+                      <span>いいね</span>
+                    </button>
+                    <button>
                       <Bookmark size={18} />
                       <span>保存</span>
                     </button>
