@@ -19,6 +19,7 @@ import {
   Search,
 } from "lucide-react";
 import "./PropertyCinemaFeed.css";
+import AIPropertyCinema from "./AIPropertyCinema";
 
 const demoProperties = [
   {
@@ -260,10 +261,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
           <h2>AI物件フィード</h2>
           <p>AIがあなたに合う暮らしを整理します</p>
         </div>
-        <button className="ai-cinema-main-cta" onClick={startAiAnalyze}>
-          <Sparkles size={18} />
-          AIに条件で探してもらう
-        </button>
+        <AIPropertyCinema />
 
         <div className="ai-cinema-right-summary">
           <div className="ai-cinema-match">
