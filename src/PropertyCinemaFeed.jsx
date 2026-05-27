@@ -172,11 +172,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
     <section className="ai-cinema-section">
       <div className="ai-cinema-layout">
       <div className="ai-cinema-left-col">
-      <div className="ai-cinema-logbar">
-        <span className="ai-cinema-live-dot" />
-        <span>{currentLog}</span>
-      </div>
-
+      <div className="ai-cinema-main-card">
       <div className="ai-cinema-stage-wrap">
         <div className="ai-cinema-stage">
           {[0, 1, 2, 3, 4].map((slotIdx) => {
@@ -243,18 +239,6 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         </div>
       </div>
 
-      <div className="ai-cinema-controls">
-        <button onClick={goPrev}>
-          <ChevronLeft size={24} />
-        </button>
-        <button onClick={() => setIsPlaying((v) => !v)} className="is-primary">
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-        </button>
-        <button onClick={goNext}>
-          <ChevronRight size={24} />
-        </button>
-      </div>
-
       <div className="ai-cinema-actions">
         <button>
           <Bookmark size={20} />
@@ -275,6 +259,22 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
         <button>
           <Share2 size={20} />
           シェア
+        </button>
+      </div>
+      <button className="ai-cinema-detail-cta">
+        この物件を詳しく見る
+      </button>
+      </div>
+
+      <div className="ai-cinema-controls">
+        <button onClick={goPrev}>
+          <ChevronLeft size={24} />
+        </button>
+        <button onClick={() => setIsPlaying((v) => !v)} className="is-primary">
+          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+        </button>
+        <button onClick={goNext}>
+          <ChevronRight size={24} />
         </button>
       </div>
       </div>
