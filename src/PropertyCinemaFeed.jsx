@@ -172,14 +172,14 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
     <section className="ai-cinema-section">
       <div className="ai-cinema-layout">
       <div className="ai-cinema-left-col">
-      <div className="ai-cinema-main-card">
       <div className="ai-cinema-stage-wrap">
         <div className="ai-cinema-stage">
           {[0, 1, 2, 3, 4].map((slotIdx) => {
             const property = getSlotProperty(slotIdx);
             const posClass = getSlotClass(slotIdx);
+            const activityClass = posClass === "pos-center" ? "is-active" : "is-side";
             return (
-              <article key={slotIdx} className={`ai-cinema-card ${posClass}`}>
+              <article key={slotIdx} className={`ai-cinema-card ${posClass} ${activityClass}`}>
                 <div
                   className="ai-cinema-image"
                   style={{ backgroundImage: `url(${property.image})` }}
@@ -204,66 +204,37 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
                   <h3>{property.title}</h3>
                 </div>
 
-                <div className="ai-cinema-body">
-                  <div className="ai-cinema-match">
-                    <span>AI相性</span>
-                    <strong>{property.match}%</strong>
+                <div className="ai-cinema-card-bottom">
+                  <div className="ai-cinema-actions">
+                    <button>
+                      <Bookmark size={18} />
+                      <span>保存</span>
+                    </button>
+                    <button>
+                      <MessageCircle size={18} />
+                      <span>質問</span>
+                    </button>
+                    <button>
+                      <Building2 size={18} />
+                      <span>業者</span>
+                    </button>
+                    <button className="is-gold">
+                      <Bot size={18} />
+                      <span>AI相談</span>
+                    </button>
+                    <button>
+                      <Share2 size={18} />
+                      <span>シェア</span>
+                    </button>
                   </div>
-
-                  <div className="ai-cinema-ai-comment">
-                    <div className="ai-cinema-ai-icon">AI</div>
-                    <p>{property.aiComment}</p>
-                  </div>
-
-                  <div className="ai-cinema-tags">
-                    {property.tags.map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
-
-                  <div className="ai-cinema-meta">
-                    <span>
-                      <Heart size={17} /> {property.likes}
-                    </span>
-                    <span>
-                      <MessageCircle size={17} /> {property.comments}
-                    </span>
-                    <span>
-                      <Building2 size={17} /> {property.agent}
-                    </span>
-                  </div>
+                  <button className="ai-cinema-detail-cta">
+                    この物件を詳しく見る
+                  </button>
                 </div>
               </article>
             );
           })}
         </div>
-      </div>
-
-      <div className="ai-cinema-actions">
-        <button>
-          <Bookmark size={20} />
-          保存
-        </button>
-        <button>
-          <MessageCircle size={20} />
-          質問
-        </button>
-        <button>
-          <Building2 size={20} />
-          業者
-        </button>
-        <button className="is-gold">
-          <Bot size={20} />
-          AI相談
-        </button>
-        <button>
-          <Share2 size={20} />
-          シェア
-        </button>
-      </div>
-      <button className="ai-cinema-detail-cta">
-        この物件を詳しく見る
-      </button>
       </div>
 
       <div className="ai-cinema-controls">

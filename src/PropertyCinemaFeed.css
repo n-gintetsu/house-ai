@@ -48,35 +48,52 @@
   box-shadow: 0 18px 40px rgba(212, 175, 55, 0.28);
 }
 
-.ai-cinema-main-card {
+.ai-cinema-card-bottom {
   background: #ffffff;
-  border-radius: 20px;
-  overflow: visible;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.10);
+  padding: 12px 16px 14px;
 }
 
-.ai-cinema-main-card .ai-cinema-actions {
-  padding: 14px 20px;
-  margin: 0;
-  border-bottom: 1px solid #f1f5f9;
+.ai-cinema-card-bottom .ai-cinema-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
 }
 
 .ai-cinema-detail-cta {
+  width: 100%;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: calc(100% - 32px);
-  margin: 12px 16px 16px;
-  background: #0f172a;
-  color: #ffffff;
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
+  gap: 6px;
+}
+
+.ai-cinema-card.is-active .ai-cinema-image {
+  height: min(340px, 48vh);
+}
+
+.ai-cinema-card.is-side .ai-cinema-image {
+  height: min(220px, 32vh);
+}
+
+.ai-cinema-card.is-side .ai-cinema-card-bottom {
+  padding: 8px 12px 10px;
+}
+
+.ai-cinema-card.is-side .ai-cinema-detail-cta {
+  font-size: 10px;
+  padding: 8px;
+}
+
+.ai-cinema-card.is-side .ai-cinema-actions button span {
+  display: none;
 }
 
 .ai-cinema-stage-wrap {
@@ -94,9 +111,6 @@
   grid-column: 1;
 }
 
-.ai-cinema-left-col .ai-cinema-body {
-  display: none;
-}
 
 .ai-cinema-layout .ai-cinema-right-col {
   grid-column: 2;
