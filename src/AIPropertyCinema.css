@@ -164,7 +164,7 @@
 
 .property-stage {
   position: relative;
-  height: 620px;
+  height: 520px;
   margin-top: 42px;
 }
 
@@ -172,13 +172,13 @@
   position: absolute;
   top: 0;
   left: 50%;
-  width: min(420px, 82vw);
+  width: min(340px, 72vw);
   background: white;
   color: #0f172a;
   border-radius: 28px;
   overflow: hidden;
   box-shadow: 0 30px 80px rgba(0,0,0,0.38);
-  transition: 0.65s ease;
+  transition: all 0.5s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 
 .cinema-card.center {
@@ -188,21 +188,21 @@
 }
 
 .cinema-card.left {
-  transform: translateX(-138%) scale(0.82);
-  opacity: 0.32;
-  filter: blur(2px);
+  transform: translateX(calc(-50% - 280px)) scale(0.78);
+  opacity: 0.45;
+  filter: blur(1px);
   z-index: 1;
 }
 
 .cinema-card.right {
-  transform: translateX(38%) scale(0.82);
-  opacity: 0.32;
-  filter: blur(2px);
+  transform: translateX(calc(-50% + 280px)) scale(0.78);
+  opacity: 0.45;
+  filter: blur(1px);
   z-index: 1;
 }
 
 .cinema-image {
-  height: 280px;
+  height: 220px;
   position: relative;
   background: linear-gradient(180deg, #dbeafe, #64748b);
 }
@@ -225,7 +225,7 @@
 }
 
 .cinema-body {
-  padding: 24px;
+  padding: 16px;
   text-align: left;
 }
 
@@ -237,11 +237,11 @@
 
 .cinema-meta strong {
   color: #2563eb;
-  font-size: 34px;
+  font-size: 26px;
 }
 
 .cinema-body h3 {
-  font-size: 28px;
+  font-size: 20px;
   margin: 8px 0 18px;
 }
 
