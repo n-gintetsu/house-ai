@@ -167,6 +167,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
       </div>
 
       <div className="ai-cinema-layout">
+      <div className="ai-cinema-left-col">
       <div className="ai-cinema-logbar">
         <span className="ai-cinema-live-dot" />
         <span>{currentLog}</span>
@@ -263,6 +264,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
           <Share2 size={20} />
           シェア
         </button>
+      </div>
       </div>
 
       <div className="ai-cinema-right-col">
@@ -385,7 +387,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
 function InfoBox({ label, value, icon }) {
   return (
     <div className="ai-cinema-info-box">
-      {icon}
+      {icon ? icon : null}
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
