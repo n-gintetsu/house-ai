@@ -98,14 +98,14 @@
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 140px);
 }
 
 .ai-cinema-stage {
   position: relative;
   max-width: 1120px;
   margin: 0 auto;
-  height: min(520px, 56vh);
+  height: min(540px, 64vh);
 }
 
 .ai-cinema-card {
@@ -165,14 +165,14 @@
 
 .ai-cinema-image {
   position: relative;
-  height: min(380px, 55vh);
+  height: min(460px, 62vh);
   background-size: cover;
   background-position: center;
   color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 26px;
+  padding: 26px 26px 50px;
 }
 
 .ai-cinema-gradient {
@@ -427,6 +427,23 @@
   cursor: pointer;
 }
 
+.ai-cinema-type-badge {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 2;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.ai-cinema-right-col .ai-cinema-header {
+  text-align: left;
+  margin: 0 0 8px;
+}
+
 .ai-cinema-right-col .ai-cinema-main-cta {
   width: 100%;
   justify-content: center;
@@ -459,8 +476,18 @@
 }
 
 .ai-cinema-right-col .ai-cinema-panel-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
   margin: 0;
-  justify-content: flex-start;
+}
+
+.ai-cinema-right-col .ai-cinema-panel-tabs button {
+  font-size: 11px;
+  padding: 6px 4px;
+  text-align: center;
+  white-space: nowrap;
+  border-radius: 8px;
 }
 
 .ai-cinema-right-col .ai-cinema-info-panel {

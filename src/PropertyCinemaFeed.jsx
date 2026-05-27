@@ -31,6 +31,7 @@ const demoProperties = [
     match: 94,
     likes: 234,
     comments: 45,
+    type: "賃貸",
     tags: ["在宅ワーク向き", "駅近", "人気急上昇"],
     aiComment:
       "このエリアは再開発が進み、資産価値が上昇傾向です。駅直結で利便性が高く、在宅ワーカーに人気のエリアです。",
@@ -51,6 +52,7 @@ const demoProperties = [
     match: 91,
     likes: 189,
     comments: 32,
+    type: "売買",
     tags: ["自然光", "落ち着く", "リノベ済み"],
     aiComment:
       "築年数はありますが、フルリノベーションで新築同様です。自然光が入りやすく、緑豊かな住環境が魅力です。",
@@ -71,6 +73,7 @@ const demoProperties = [
     match: 88,
     likes: 512,
     comments: 89,
+    type: "収益",
     tags: ["高級感", "眺望", "ホテルライク"],
     aiComment:
       "東京タワーを望める贅沢な眺望。コンシェルジュサービスやフィットネスジムなど、共用施設が充実しています。",
@@ -93,6 +96,13 @@ const logMessages = [
 
 const SLOT_CLASSES = ["pos-center", "pos-next1", "pos-next2", "pos-prev2", "pos-prev1"];
 const SLOT_OFFSETS = [0, 1, 2, -2, -1];
+
+const getTypeBadgeColor = (type) => {
+  if (type === "賃貸") return "#3b82f6";
+  if (type === "売買") return "#10b981";
+  if (type === "収益") return "#f59e0b";
+  return "#6b7280";
+};
 
 export default function PropertyCinemaFeed({ properties = demoProperties }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -160,12 +170,6 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
 
   return (
     <section className="ai-cinema-section">
-      <div className="ai-cinema-header">
-        <p className="ai-cinema-kicker">AI PROPERTY CINEMA</p>
-        <h2>AI物件フィード</h2>
-        <p>AIがあなたに合う暮らしを整理します</p>
-      </div>
-
       <div className="ai-cinema-layout">
       <div className="ai-cinema-left-col">
       <div className="ai-cinema-logbar">
@@ -189,6 +193,14 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
                     <Sparkles size={14} />
                     AI解析済み
                   </div>
+                  {property.type ? (
+                    <div
+                      className="ai-cinema-type-badge"
+                      style={{ background: getTypeBadgeColor(property.type) }}
+                    >
+                      {property.type}
+                    </div>
+                  ) : null}
                   <div className="ai-cinema-location">
                     <MapPin size={16} />
                     {property.area}
@@ -268,6 +280,11 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
       </div>
 
       <div className="ai-cinema-right-col">
+        <div className="ai-cinema-header">
+          <p className="ai-cinema-kicker">AI PROPERTY CINEMA</p>
+          <h2>AI物件フィード</h2>
+          <p>AIがあなたに合う暮らしを整理します</p>
+        </div>
         <button className="ai-cinema-main-cta" onClick={startAiAnalyze}>
           <Sparkles size={18} />
           AIに条件で探してもらう
