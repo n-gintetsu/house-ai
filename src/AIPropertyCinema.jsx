@@ -1190,7 +1190,7 @@ export default function AIPropertyCinema() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [cinemaIntroShown, setCinemaIntroShown] = useState(false);
   const [cinemaEntered, setCinemaEntered] = useState(false);
-  const [noResultTest, setNoResultTest] = useState(true);
+  const [noResultTest, setNoResultTest] = useState(false);
   const timersRef = useRef([]);
 
   const particles = useMemo(
