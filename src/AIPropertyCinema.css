@@ -463,6 +463,7 @@
   position: relative;
   height: 610px;
   margin-top: 36px;
+  perspective: 1200px;
 }
 
 /* Card base */
@@ -474,41 +475,46 @@
   background: #0d1526;
   border-radius: 22px;
   overflow: hidden;
-  transition: transform 0.5s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
 
 .apc-card-center {
-  transform: translateX(-50%) scale(1);
+  transform: perspective(1200px) translateX(-50%) translateZ(0) scale(1);
   opacity: 1;
   z-index: 10;
   border: 2px solid var(--ai-glow-blue);
   box-shadow:
     0 0 28px rgba(91, 140, 255, 0.28),
     0 20px 55px rgba(0, 0, 0, 0.55);
-  filter: blur(0px);
 }
 
 .apc-card-left {
-  transform: translateX(calc(-50% - 280px)) scale(0.85);
+  transform: perspective(1200px) translateX(calc(-50% - 220px)) translateZ(-200px) scale(0.75);
   opacity: 0.4;
   z-index: 5;
   border: 1px solid rgba(91, 140, 255, 0.18);
-  filter: blur(4px);
 }
 
 .apc-card-right {
-  transform: translateX(calc(-50% + 280px)) scale(0.85);
+  transform: perspective(1200px) translateX(calc(-50% + 220px)) translateZ(-200px) scale(0.75);
   opacity: 0.4;
   z-index: 5;
   border: 1px solid rgba(91, 140, 255, 0.18);
-  filter: blur(4px);
 }
 
 .apc-card-hidden {
-  transform: translateX(-50%) scale(0.7);
+  transform: perspective(1200px) translateX(-50%) translateZ(-600px) scale(0.3);
   opacity: 0;
   z-index: 1;
   pointer-events: none;
+}
+
+.apc-card.apc-card-leaving {
+  transform: perspective(1200px) translateX(-50%) translateZ(200px) scale(1.2);
+  opacity: 0;
+  z-index: 15;
+  pointer-events: none;
+  transition: transform 0.4s ease-in, opacity 0.35s ease-in;
 }
 
 /* Card image */
@@ -663,6 +669,12 @@
 
 .apc-ctrl-btn:hover {
   background: rgba(91, 140, 255, 0.22);
+}
+
+.apc-ctrl-btn.apc-ctrl-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Action buttons */

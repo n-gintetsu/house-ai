@@ -614,8 +614,29 @@ function CinemaCard({ prop, position }) {
    SCREEN: Cinema（CinemaIntroEffect使用）
    ===================================================== */
 function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showIntro, onIntroComplete }) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [leavingIndex, setLeavingIndex] = useState(null);
+  const navTimers = useRef([]);
+
+  useEffect(() => {
+    return () => navTimers.current.forEach(clearTimeout);
+  }, []);
+
+  const navigate = (newIndex) => {
+    if (isAnimating || newIndex === activeIndex) return;
+    if (newIndex < 0 || newIndex >= properties.length) return;
+
+    setIsAnimating(true);
+    setLeavingIndex(activeIndex);
+
+    const t1 = setTimeout(() => setActiveIndex(newIndex), 16);
+    const t2 = setTimeout(() => setLeavingIndex(null), 500);
+    const t3 = setTimeout(() => setIsAnimating(false), 750);
+    navTimers.current = [t1, t2, t3];
+  };
 
   const getPosition = (index) => {
+    if (index === leavingIndex) return "leaving";
     if (index === activeIndex) return "center";
     if (index === activeIndex - 1) return "left";
     if (index === activeIndex + 1) return "right";
@@ -651,16 +672,14 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showI
 
         <div className="apc-controls">
           <button
-            className="apc-ctrl-btn"
-            onClick={() => setActiveIndex(Math.max(activeIndex - 1, 0))}
+            className={`apc-ctrl-btn${isAnimating ? " apc-ctrl-disabled" : ""}`}
+            onClick={() => navigate(activeIndex - 1)}
           >
             ⏮
           </button>
           <button
-            className="apc-ctrl-btn"
-            onClick={() =>
-              setActiveIndex(Math.min(activeIndex + 1, properties.length - 1))
-            }
+            className={`apc-ctrl-btn${isAnimating ? " apc-ctrl-disabled" : ""}`}
+            onClick={() => navigate(activeIndex + 1)}
           >
             ⏭
           </button>
