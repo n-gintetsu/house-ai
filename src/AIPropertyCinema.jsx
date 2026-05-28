@@ -1043,9 +1043,17 @@ function SecretScreen({ setPhase }) {
             <div className="apc-secret-pulse-ring apc-secret-pulse-ring-1" />
             <div className="apc-secret-pulse-ring apc-secret-pulse-ring-2" />
             <div className="apc-secret-pulse-ring apc-secret-pulse-ring-3" />
-            <div className="apc-secret-icon-circle">🔒</div>
+            <div className="apc-secret-icon-circle">
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="28" width="44" height="32" rx="4" fill="none" stroke="#FF6B6B" strokeWidth="3"/>
+                <path d="M20 28V20C20 12.268 26.268 6 34 6V6C41.732 6 48 12.268 48 20V28" fill="none" stroke="#FF6B6B" strokeWidth="3" strokeLinecap="round"/>
+                <circle cx="32" cy="44" r="5" fill="#FF6B6B"/>
+                <rect x="29" y="46" width="6" height="8" rx="1" fill="#FF6B6B"/>
+                <circle cx="32" cy="44" r="5" fill="#FF6B6B" opacity="0.4"/>
+              </svg>
+            </div>
           </div>
-          <h2 className="apc-secret-title">🔒 非公開物件</h2>
+          <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--ai-text-primary)", margin: "1rem 0 0.5rem" }}>🔒 非公開物件</h1>
           <p className="apc-secret-sub">AIネットワークに接続して、特別な物件を閲覧できます</p>
           <div className="apc-secret-card-wrap">
             <p className="apc-secret-desc-text">
