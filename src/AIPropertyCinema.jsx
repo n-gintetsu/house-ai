@@ -75,6 +75,83 @@ const examples = [
   "新宿駅近、静かな環境、自然光が入る部屋",
 ];
 
+const compareData = [
+  {
+    id: "1",
+    overall: 92,
+    bars: [
+      { label: "利便性", score: 98 },
+      { label: "快適性", score: 90 },
+      { label: "コスパ",  score: 85 },
+      { label: "資産価値", score: 95 },
+    ],
+    merits: ["渋谷駅5分の抜群の立地", "在宅ワーク向けの防音設計", "高層階で眺望も良好"],
+    risks:  ["家賃が相場より高め", "周辺の繁華街による夜間騒音"],
+    comment: "利便性・資産価値ともにトップクラスの物件。長期入居でのコスパも優秀。",
+  },
+  {
+    id: "2",
+    overall: 88,
+    bars: [
+      { label: "利便性", score: 75 },
+      { label: "快適性", score: 95 },
+      { label: "コスパ",  score: 92 },
+      { label: "資産価値", score: 85 },
+    ],
+    merits: ["専用ワークスペースで快適な在宅勤務", "リノベ済みで設備が新しい", "三大副都心近くでアクセス良好"],
+    risks:  ["駅から徒歩7分とやや遠い", "築5年でやや資産価値が下がりやすい"],
+    comment: "コストパフォーマンスと快適性のバランスが最も優れた物件。",
+  },
+  {
+    id: "3",
+    overall: 90,
+    bars: [
+      { label: "利便性", score: 88 },
+      { label: "快適性", score: 93 },
+      { label: "コスパ",  score: 78 },
+      { label: "資産価値", score: 98 },
+    ],
+    merits: ["表参道の最高峰の立地", "デザイナーズで高い資産価値", "静かで質の高い住環境"],
+    risks:  ["家賃が最も高い", "コスパは3物件中最も低い"],
+    comment: "資産価値・快適性を最重視する方に最適。長期の資産形成にも有利。",
+  },
+];
+
+const envData = {
+  "1": { sunlight: 85, quietness: 38, floodRisk: "低 (A判定)", quakeRisk: "中 (B判定)" },
+  "2": { sunlight: 78, quietness: 30, floodRisk: "低 (A判定)", quakeRisk: "中 (B判定)" },
+  "3": { sunlight: 92, quietness: 70, floodRisk: "低 (A判定)", quakeRisk: "低 (A判定)" },
+};
+
+const secretProperties = [
+  {
+    id: "s1",
+    title: "麻布十番 プレミアムペントハウス",
+    area: "麻布十番",
+    price: "¥680,000/月",
+    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1080&auto=format&fit=crop",
+    aiScore: 99,
+    tags: [
+      { label: "非公開物件", icon: "🔒" },
+      { label: "オーナー直接", icon: "🏆" },
+      { label: "最高級",     icon: "💎" },
+    ],
+  },
+  {
+    id: "s2",
+    title: "六本木 最上階レジデンス",
+    area: "六本木",
+    price: "¥1,200,000/月",
+    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1080&auto=format&fit=crop",
+    aiScore: 98,
+    tags: [
+      { label: "非公開物件", icon: "🔒" },
+      { label: "完全非公開", icon: "🛡" },
+      { label: "超高級",    icon: "💎" },
+    ],
+  },
+];
+
 /* =====================================================
    AILogPanel: ログ一覧（タイピングアニメーション付き）
    ===================================================== */
@@ -302,6 +379,93 @@ function CinemaIntroEffect({ onComplete }) {
 }
 
 /* =====================================================
+   DetailPanel: icon + title + items（meter or value）
+   ===================================================== */
+function DetailPanel({ icon, title, items }) {
+  return (
+    <div className="apc-detail-section">
+      <h4>{icon} {title}</h4>
+      <div className="apc-info-grid">
+        {items.map((item, i) => (
+          <div key={i} className="apc-info-item">
+            <span className="apc-info-label">{item.label}</span>
+            {item.meter !== undefined ? (
+              <div className="apc-detail-meter">
+                <div
+                  className="apc-detail-meter-fill"
+                  style={{
+                    width: `${item.meter}%`,
+                    background: item.color || "var(--ai-glow-blue)",
+                  }}
+                />
+              </div>
+            ) : (
+              <span className="apc-info-value">{item.value}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
+   ComparisonEvaluation: 総合スコア + 4軸バー（motion）
+   ===================================================== */
+function ComparisonEvaluation({ data }) {
+  return (
+    <div className="apc-cmp-eval">
+      <div className="apc-cmp-overall">
+        <span className="apc-cmp-overall-num">{data.overall}</span>
+        <span className="apc-cmp-overall-label">総合評価</span>
+      </div>
+      <div className="apc-cmp-bars">
+        {data.bars.map((bar, i) => (
+          <div key={i} className="apc-cmp-bar-row">
+            <span className="apc-cmp-bar-label">{bar.label}</span>
+            <div className="apc-cmp-bar-track">
+              <motion.div
+                className="apc-cmp-bar-fill"
+                initial={{ width: "0%" }}
+                animate={{ width: `${bar.score}%` }}
+                transition={{ duration: 0.75, delay: i * 0.12 }}
+              />
+            </div>
+            <span className="apc-cmp-bar-score">{bar.score}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
+   AIAnalysisPanel: バッジ + コメント + メリット・リスク
+   ===================================================== */
+function AIAnalysisPanel({ data }) {
+  return (
+    <div className="apc-cmp-ai">
+      <span className="apc-cmp-ai-badge">AI 分析</span>
+      <p className="apc-cmp-ai-comment">{data.comment}</p>
+      <div className="apc-cmp-ai-list">
+        {data.merits.map((m, i) => (
+          <div key={i} className="apc-cmp-ai-item apc-cmp-ai-merit">
+            <span className="apc-cmp-ai-icon">✓</span>
+            <span>{m}</span>
+          </div>
+        ))}
+        {data.risks.map((r, i) => (
+          <div key={i} className="apc-cmp-ai-item apc-cmp-ai-risk">
+            <span className="apc-cmp-ai-icon">⚠</span>
+            <span>{r}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
    SCREEN: Top
    ===================================================== */
 function TopScreen({ query, setQuery, startAnalysis }) {
@@ -512,7 +676,10 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showI
           <button className="apc-action-btn" onClick={() => setPhase("compare")}>
             比較モード
           </button>
-          <button className="apc-action-btn apc-action-secret">
+          <button
+            className="apc-action-btn apc-action-secret"
+            onClick={() => setPhase("secret")}
+          >
             非公開物件
           </button>
         </div>
@@ -525,6 +692,8 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showI
    SCREEN: Detail
    ===================================================== */
 function DetailScreen({ property, setPhase }) {
+  const env = envData[property.id] || { sunlight: 80, quietness: 50, floodRisk: "低", quakeRisk: "中" };
+
   return (
     <motion.div
       className="apc-detail"
@@ -587,6 +756,36 @@ function DetailScreen({ property, setPhase }) {
               </div>
             </div>
           </div>
+
+          <DetailPanel
+            icon="🌞"
+            title="環境分析"
+            items={[
+              { label: "日当たり", meter: env.sunlight, color: "#F3D97B" },
+              { label: "静粛性",   meter: env.quietness, color: "#22D3EE" },
+            ]}
+          />
+
+          <DetailPanel
+            icon="⚡"
+            title="災害リスク"
+            items={[
+              { label: "洪水リスク", value: env.floodRisk },
+              { label: "地震リスク", value: env.quakeRisk },
+            ]}
+          />
+
+          <div className="apc-detail-reservation">
+            <p className="apc-detail-reservation-title">🗓 内見予約</p>
+            <div className="apc-detail-reservation-note">
+              <span className="apc-comment-icon">AI</span>
+              <p>
+                この物件は問い合わせ多数のため、来週末の枠が埋まりつつあります。
+                早めのご予約をおすすめします。
+              </p>
+            </div>
+            <button className="apc-detail-reservation-btn">内見を予約する</button>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -628,30 +827,182 @@ function CompareScreen({ properties, setPhase }) {
       </div>
 
       <div className="apc-compare-grid">
-        {properties.map((prop) => (
-          <div key={prop.id} className="apc-compare-card">
-            <div className="apc-compare-img">
-              <img src={prop.image} alt={prop.title} loading="lazy" />
-              <div className="apc-score-badge apc-score-sm">
-                <span className="apc-score-num">{prop.aiScore}%</span>
-                <span className="apc-score-label">AI Match</span>
+        {properties.map((prop) => {
+          const cmp = compareData.find((d) => d.id === prop.id) || compareData[0];
+          return (
+            <div key={prop.id} className="apc-compare-card">
+              <div className="apc-compare-img">
+                <img src={prop.image} alt={prop.title} loading="lazy" />
+                <div className="apc-score-badge apc-score-sm">
+                  <span className="apc-score-num">{prop.aiScore}%</span>
+                  <span className="apc-score-label">AI Match</span>
+                </div>
               </div>
-            </div>
-            <div className="apc-compare-body">
-              <h4 className="apc-compare-card-title">{prop.title}</h4>
-              <p className="apc-compare-price">{prop.price}</p>
-              <p className="apc-compare-comment">{prop.aiComment}</p>
-              <div className="apc-card-tags">
-                {prop.tags.slice(0, 3).map((tag, i) => (
-                  <span key={i} className="apc-tag">
-                    {tag.icon} {tag.label}
-                  </span>
-                ))}
+              <div className="apc-compare-body">
+                <h4 className="apc-compare-card-title">{prop.title}</h4>
+                <p className="apc-compare-price">{prop.price}</p>
+                <p className="apc-compare-comment">{prop.aiComment}</p>
+                <div className="apc-card-tags">
+                  {prop.tags.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="apc-tag">
+                      {tag.icon} {tag.label}
+                    </span>
+                  ))}
+                </div>
               </div>
+              <ComparisonEvaluation data={cmp} />
+              <AIAnalysisPanel data={cmp} />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      <div className="apc-cmp-banner">
+        <span className="apc-comment-icon">AI</span>
+        <div>
+          <p className="apc-cmp-banner-title">AI 総合評価</p>
+          <p className="apc-cmp-banner-text">
+            渋谷物件が利便性・資産価値でトップ評価。在宅ワーク重視なら新宿物件がコスパ最良。
+            長期資産形成なら表参道物件が最適です。
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* =====================================================
+   SCREEN: Secret
+   ===================================================== */
+function SecretScreen({ setPhase }) {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [unlockStage, setUnlockStage] = useState("idle");
+  const timers = useRef([]);
+
+  useEffect(() => {
+    return () => timers.current.forEach(clearTimeout);
+  }, []);
+
+  const handleUnlock = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    setUnlockStage("locked");
+    const t1 = setTimeout(() => setUnlockStage("scanning"), 1000);
+    const t2 = setTimeout(() => setUnlockStage("authorized"), 3000);
+    const t3 = setTimeout(() => {
+      setIsUnlocked(true);
+      setUnlockStage("idle");
+    }, 4600);
+    timers.current = [t1, t2, t3];
+  };
+
+  return (
+    <motion.div
+      className="apc-secret"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.45 }}
+    >
+      <button className="apc-back-btn" onClick={() => setPhase("cinema")}>
+        ← シネマモードに戻る
+      </button>
+
+      {unlockStage !== "idle" ? (
+        <div className="apc-secret-overlay">
+          {unlockStage === "locked" ? (
+            <motion.div
+              key="locked"
+              className="apc-secret-stage"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{ fontSize: 64 }}>🔒</div>
+              <p className="apc-secret-stage-text" style={{ color: "#ef4444" }}>LOCKED</p>
+              <p className="apc-secret-stage-sub">認証確認中...</p>
+            </motion.div>
+          ) : unlockStage === "scanning" ? (
+            <motion.div
+              key="scanning"
+              className="apc-secret-stage"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="apc-secret-scan-icon">🔍</div>
+              <p className="apc-secret-stage-text">SCANNING</p>
+              <p className="apc-secret-stage-sub">ネットワーク認証中</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="authorized"
+              className="apc-secret-stage"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="apc-secret-authorized-icon">✓</div>
+              <p className="apc-secret-stage-text" style={{ color: "#22c55e" }}>AUTHORIZED</p>
+              <p className="apc-secret-stage-sub">アクセスが許可されました</p>
+            </motion.div>
+          )}
+        </div>
+      ) : null}
+
+      {isUnlocked ? (
+        <motion.div
+          className="apc-secret-unlocked"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="apc-secret-unlock-header">
+            <div className="apc-secret-unlock-icon">🔓</div>
+            <h2 className="apc-secret-unlock-title">アクセス許可されました</h2>
+            <p className="apc-secret-unlock-sub">非公開物件への特別アクセスが有効です</p>
+          </div>
+          <div className="apc-secret-cards">
+            {secretProperties.map((prop) => (
+              <div key={prop.id} className="apc-secret-card">
+                <div className="apc-secret-card-img">
+                  <img src={prop.image} alt={prop.title} loading="lazy" />
+                  <span className="apc-secret-score">{prop.aiScore}%</span>
+                </div>
+                <div className="apc-secret-card-body">
+                  <span className="apc-area-badge">📍 {prop.area}</span>
+                  <h3 className="apc-secret-card-title">{prop.title}</h3>
+                  <p className="apc-secret-card-price">{prop.price}</p>
+                  <div className="apc-card-tags">
+                    {prop.tags.map((tag, i) => (
+                      <span key={i} className="apc-tag">{tag.icon} {tag.label}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        <div className="apc-secret-locked">
+          <div className="apc-secret-lock-wrap">
+            <div className="apc-secret-lock-pulse" />
+            <div className="apc-secret-lock-icon">🔒</div>
+          </div>
+          <h2 className="apc-secret-title">非公開物件へのアクセス</h2>
+          <p className="apc-secret-desc">
+            厳選された非公開物件へのアクセスには<br />
+            特別なネットワーク認証が必要です
+          </p>
+          <ul className="apc-secret-features">
+            <li>🏆 一般非公開の高級物件</li>
+            <li>🤝 オーナー直接取引可能</li>
+            <li>⚡ 優先内見予約</li>
+          </ul>
+          <button className="apc-secret-btn" onClick={handleUnlock}>
+            ネットワークに接続してアクセス
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -777,6 +1128,10 @@ export default function AIPropertyCinema() {
 
           {phase === "compare" ? (
             <CompareScreen properties={properties} setPhase={setPhase} />
+          ) : null}
+
+          {phase === "secret" ? (
+            <SecretScreen setPhase={setPhase} />
           ) : null}
         </div>
       ) : null}

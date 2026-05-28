@@ -1284,6 +1284,449 @@
 }
 
 /* ===================================================
+   DetailPanel: meter bar
+   =================================================== */
+.apc-detail-meter {
+  width: 120px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.apc-detail-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* ===================================================
+   Detail: reservation panel
+   =================================================== */
+.apc-detail-reservation {
+  border: 1px solid rgba(243, 217, 123, 0.45);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  background: rgba(243, 217, 123, 0.04);
+}
+
+.apc-detail-reservation-title {
+  color: var(--ai-gold-light);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.apc-detail-reservation-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.apc-detail-reservation-note p {
+  color: var(--ai-text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.apc-detail-reservation-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #F3D97B, #f7c455);
+  color: #07111f;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 24px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ===================================================
+   ComparisonEvaluation
+   =================================================== */
+.apc-cmp-eval {
+  padding: 14px 16px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.apc-cmp-overall {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.apc-cmp-overall-num {
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--ai-glow-blue), var(--ai-glow-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.apc-cmp-overall-label {
+  color: var(--ai-text-muted);
+  font-size: 12px;
+}
+
+.apc-cmp-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-bottom: 8px;
+}
+
+.apc-cmp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apc-cmp-bar-label {
+  color: var(--ai-text-muted);
+  font-size: 11px;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.apc-cmp-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.apc-cmp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ai-glow-blue), var(--ai-glow-purple));
+  border-radius: 999px;
+}
+
+.apc-cmp-bar-score {
+  color: var(--ai-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  width: 22px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===================================================
+   AIAnalysisPanel
+   =================================================== */
+.apc-cmp-ai {
+  padding: 12px 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.apc-cmp-ai-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--ai-glow-blue), var(--ai-glow-purple));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+
+.apc-cmp-ai-comment {
+  color: var(--ai-text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 0 0 10px;
+}
+
+.apc-cmp-ai-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.apc-cmp-ai-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.apc-cmp-ai-merit { color: #4ade80; }
+.apc-cmp-ai-risk  { color: #fb923c; }
+
+.apc-cmp-ai-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Compare banner */
+.apc-cmp-banner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: rgba(91, 140, 255, 0.08);
+  border: 1px solid rgba(91, 140, 255, 0.28);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-top: 28px;
+  text-align: left;
+}
+
+.apc-cmp-banner-title {
+  color: var(--ai-glow-blue);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.apc-cmp-banner-text {
+  color: var(--ai-text-secondary);
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 0;
+}
+
+/* ===================================================
+   SecretScreen
+   =================================================== */
+.apc-secret {
+  position: relative;
+  z-index: 2;
+  width: min(680px, calc(100% - 40px));
+  margin: 8vh auto 80px;
+  text-align: center;
+}
+
+.apc-secret-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.apc-secret-lock-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apc-secret-lock-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.22);
+  animation: apcLockPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes apcLockPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.8; }
+  50%       { transform: scale(1.45); opacity: 0.12; }
+}
+
+.apc-secret-lock-icon {
+  font-size: 46px;
+  position: relative;
+  z-index: 1;
+}
+
+.apc-secret-title {
+  font-size: clamp(24px, 4vw, 38px);
+  margin: 0 0 14px;
+}
+
+.apc-secret-desc {
+  color: var(--ai-text-secondary);
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0 0 24px;
+}
+
+.apc-secret-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.apc-secret-features li {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 18px;
+  color: var(--ai-text-secondary);
+  font-size: 14px;
+  text-align: left;
+}
+
+.apc-secret-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 17px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 10px 32px rgba(239, 68, 68, 0.42);
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Unlock overlay */
+.apc-secret-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(5, 8, 22, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apc-secret-stage {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.apc-secret-scan-icon {
+  font-size: 64px;
+  animation: apcScanSpin 1.2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes apcScanSpin {
+  to { transform: rotate(360deg); }
+}
+
+.apc-secret-authorized-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 0 28px rgba(34, 197, 94, 0.55);
+}
+
+.apc-secret-stage-text {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  margin: 0;
+  color: var(--ai-text-primary);
+}
+
+.apc-secret-stage-sub {
+  color: var(--ai-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Unlocked state */
+.apc-secret-unlocked {
+  text-align: center;
+}
+
+.apc-secret-unlock-header {
+  margin-bottom: 32px;
+}
+
+.apc-secret-unlock-icon {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+
+.apc-secret-unlock-title {
+  font-size: clamp(22px, 3.5vw, 36px);
+  margin: 0 0 10px;
+  color: var(--ai-gold-light);
+}
+
+.apc-secret-unlock-sub {
+  color: var(--ai-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.apc-secret-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  text-align: left;
+}
+
+.apc-secret-card {
+  background: #0d1526;
+  border: 1px solid rgba(243, 217, 123, 0.35);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.apc-secret-card-img {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.apc-secret-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apc-secret-score {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, var(--ai-gold-light), #f7c455);
+  color: #07111f;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.apc-secret-card-body {
+  padding: 14px 16px 16px;
+}
+
+.apc-secret-card-title {
+  color: var(--ai-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 8px 0 6px;
+  line-height: 1.45;
+}
+
+.apc-secret-card-price {
+  color: var(--ai-gold-light);
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+/* ===================================================
    RESPONSIVE
    =================================================== */
 @media (max-width: 600px) {
@@ -1291,12 +1734,17 @@
   .apc-analysis,
   .apc-cinema,
   .apc-detail,
-  .apc-compare {
+  .apc-compare,
+  .apc-secret {
     margin-top: 10vh;
   }
 
   .apc-close {
     top: 14px;
     right: 14px;
+  }
+
+  .apc-secret-cards {
+    grid-template-columns: 1fr;
   }
 }
