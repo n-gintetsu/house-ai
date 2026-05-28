@@ -1563,8 +1563,9 @@
 }
 
 .apc-secret-title {
-  font-size: clamp(24px, 4vw, 38px);
-  margin: 0 0 14px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 12px;
 }
 
 .apc-secret-desc {
@@ -1596,7 +1597,8 @@
 }
 
 .apc-secret-btn {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  width: 100%;
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
   color: #fff;
   border: none;
   border-radius: 14px;
@@ -1605,9 +1607,13 @@
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 10px 32px rgba(239, 68, 68, 0.42);
-  width: 100%;
-  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.apc-secret-btn:hover {
+  box-shadow: 0 14px 40px rgba(255, 107, 107, 0.65);
+  transform: translateY(-1px);
 }
 
 /* Unlock overlay */
@@ -1665,6 +1671,157 @@
   color: var(--ai-text-secondary);
   font-size: 14px;
   margin: 0;
+}
+
+/* Icon area with pulse rings */
+.apc-secret-icon-wrap {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apc-secret-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 107, 107, 0.5);
+  animation: apcSecretPulseRing 2s ease-out infinite;
+}
+
+.apc-secret-pulse-ring-1 { animation-delay: 0s; }
+.apc-secret-pulse-ring-2 { animation-delay: 0.4s; }
+.apc-secret-pulse-ring-3 { animation-delay: 0.8s; }
+
+@keyframes apcSecretPulseRing {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.apc-secret-icon-circle {
+  position: relative;
+  z-index: 1;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  border: 2px solid #FF6B6B;
+  background: rgba(255, 107, 107, 0.1);
+  box-shadow: 0 0 60px rgba(255, 107, 107, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+}
+
+/* Sub heading */
+.apc-secret-sub {
+  color: var(--ai-text-secondary);
+  font-size: 15px;
+  margin: 0 0 28px;
+}
+
+/* Card wrap */
+.apc-secret-card-wrap {
+  background: rgba(17, 26, 51, 0.8);
+  border: 2px solid #FF6B6B;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(255, 107, 107, 0.3);
+  padding: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* Description text */
+.apc-secret-desc-text {
+  color: var(--ai-text-secondary);
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0 0 24px;
+}
+
+.apc-secret-highlight {
+  color: var(--ai-gold-light);
+  font-weight: 700;
+}
+
+/* Feature list */
+.apc-secret-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.apc-secret-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: var(--ai-text-primary);
+  font-size: 14px;
+}
+
+.apc-secret-feature-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #FF6B6B;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SCANNING overlay: expanding rings */
+.apc-secret-scan-rings {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apc-secret-scan-ring-expand {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(91, 140, 255, 0.6);
+  animation: apcScanRingExpand 1.2s ease-out infinite;
+}
+
+.apc-secret-scan-ring-expand-2 { animation-delay: 0.4s; }
+.apc-secret-scan-ring-expand-3 { animation-delay: 0.8s; }
+
+@keyframes apcScanRingExpand {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+.apc-secret-scan-icon-inner {
+  position: relative;
+  z-index: 1;
+  font-size: 48px;
+}
+
+.apc-secret-scan-blink {
+  animation: apcSecretBlink 0.9s ease-in-out infinite;
+}
+
+@keyframes apcSecretBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
 }
 
 /* Unlocked state */

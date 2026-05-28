@@ -937,12 +937,12 @@ function SecretScreen({ setPhase }) {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setUnlockStage("locked");
-    const t1 = setTimeout(() => setUnlockStage("scanning"), 1000);
-    const t2 = setTimeout(() => setUnlockStage("authorized"), 3000);
+    const t1 = setTimeout(() => setUnlockStage("scanning"), 800);
+    const t2 = setTimeout(() => setUnlockStage("authorized"), 1600);
     const t3 = setTimeout(() => {
       setIsUnlocked(true);
       setUnlockStage("idle");
-    }, 4600);
+    }, 2400);
     timers.current = [t1, t2, t3];
   };
 
@@ -979,9 +979,14 @@ function SecretScreen({ setPhase }) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="apc-secret-scan-icon">🔍</div>
-              <p className="apc-secret-stage-text">SCANNING</p>
-              <p className="apc-secret-stage-sub">ネットワーク認証中</p>
+              <div className="apc-secret-scan-rings">
+                <div className="apc-secret-scan-ring-expand" />
+                <div className="apc-secret-scan-ring-expand apc-secret-scan-ring-expand-2" />
+                <div className="apc-secret-scan-ring-expand apc-secret-scan-ring-expand-3" />
+                <div className="apc-secret-scan-icon-inner">🔒</div>
+              </div>
+              <p className="apc-secret-stage-text" style={{ color: "#5B8CFF" }}>SCANNING</p>
+              <p className="apc-secret-stage-sub apc-secret-scan-blink">ネットワーク認証中</p>
             </motion.div>
           ) : (
             <motion.div
@@ -1034,23 +1039,38 @@ function SecretScreen({ setPhase }) {
         </motion.div>
       ) : (
         <div className="apc-secret-locked">
-          <div className="apc-secret-lock-wrap">
-            <div className="apc-secret-lock-pulse" />
-            <div className="apc-secret-lock-icon">🔒</div>
+          <div className="apc-secret-icon-wrap">
+            <div className="apc-secret-pulse-ring apc-secret-pulse-ring-1" />
+            <div className="apc-secret-pulse-ring apc-secret-pulse-ring-2" />
+            <div className="apc-secret-pulse-ring apc-secret-pulse-ring-3" />
+            <div className="apc-secret-icon-circle">🔒</div>
           </div>
-          <h2 className="apc-secret-title">非公開物件へのアクセス</h2>
-          <p className="apc-secret-desc">
-            厳選された非公開物件へのアクセスには<br />
-            特別なネットワーク認証が必要です
-          </p>
-          <ul className="apc-secret-features">
-            <li>🏆 一般非公開の高級物件</li>
-            <li>🤝 オーナー直接取引可能</li>
-            <li>⚡ 優先内見予約</li>
-          </ul>
-          <button className="apc-secret-btn" onClick={handleUnlock}>
-            ネットワークに接続してアクセス
-          </button>
+          <h2 className="apc-secret-title">🔒 非公開物件</h2>
+          <p className="apc-secret-sub">AIネットワークに接続して、特別な物件を閲覧できます</p>
+          <div className="apc-secret-card-wrap">
+            <p className="apc-secret-desc-text">
+              AIネットワークに接続すると、一般には公開されていない
+              <span className="apc-secret-highlight">プレミアム物件</span>
+              にアクセスできます。これらの物件は、条件に合う方のみに紹介される特別なものです。
+            </p>
+            <div className="apc-secret-feature-list">
+              {["一般非公開の高級物件", "オーナー直接取引可能", "優先内見予約"].map((item, i) => (
+                <motion.div
+                  key={i}
+                  className="apc-secret-feature-item"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.35 }}
+                >
+                  <span className="apc-secret-feature-check">✓</span>
+                  <span>{item}</span>
+                </motion.div>
+              ))}
+            </div>
+            <button className="apc-secret-btn" onClick={handleUnlock}>
+              🔒 ネットワークに接続してアクセス
+            </button>
+          </div>
         </div>
       )}
     </motion.div>
