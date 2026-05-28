@@ -1086,6 +1086,100 @@ function SecretScreen({ setPhase }) {
 }
 
 /* =====================================================
+   SCREEN: NoResult
+   ===================================================== */
+function NoResultScreen({ setPhase }) {
+  const merits = [
+    "条件に合う物件を業者側から提案",
+    "非公開物件に出会える可能性",
+    "諸費用が安くなる場合あり",
+    "やり取りは会員ページ内で完結",
+  ];
+
+  return (
+    <motion.div
+      className="apc-noresult"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.45 }}
+    >
+      <div className="apc-noresult-header">
+        <div className="apc-noresult-icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="22" cy="22" r="14" stroke="#7C879F" strokeWidth="2.5"/>
+            <path d="M32 32L45 45" stroke="#7C879F" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M17 17L27 27" stroke="#7C879F" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M27 17L17 27" stroke="#7C879F" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <p className="apc-noresult-main">現在の掲載物件では条件に合う物件が見つかりませんでした。</p>
+        <p className="apc-noresult-sub">でも大丈夫です。House-AIなら、掲載されていない物件や業者の非公開情報まで含めて探せます。</p>
+        <p className="apc-noresult-hint">次の方法から選んでください。</p>
+      </div>
+
+      <div className="apc-noresult-cards">
+        <motion.div
+          className="apc-noresult-card apc-noresult-card-gold"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0, duration: 0.45 }}
+        >
+          <h3 className="apc-noresult-card-title">希望条件を相談室に投稿する</h3>
+          <p className="apc-noresult-card-desc">
+            あなたの希望条件を投稿すると、条件に合う物件を扱える業者がマイページにお知らせします。投稿して待つだけで探せるので、自分で何度も検索する必要がありません。
+          </p>
+          <ul className="apc-noresult-merits">
+            {merits.map((m, i) => (
+              <li key={i} className="apc-noresult-merit">
+                <span className="apc-noresult-check">✓</span>
+                <span>{m}</span>
+              </li>
+            ))}
+          </ul>
+          <button className="apc-noresult-btn apc-noresult-btn-gold">
+            住まい相談室に投稿する
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="apc-noresult-card apc-noresult-card-blue"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.45 }}
+        >
+          <h3 className="apc-noresult-card-title">一覧検索ページで探す</h3>
+          <p className="apc-noresult-card-desc">
+            エリア・賃料・間取り・物件種別などを指定して、掲載中の物件を一覧から探せます。
+          </p>
+          <button className="apc-noresult-btn apc-noresult-btn-blue" onClick={() => setPhase("top")}>
+            一覧検索へ進む
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="apc-noresult-card apc-noresult-card-purple"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.45 }}
+        >
+          <h3 className="apc-noresult-card-title">AIに条件に合う業者を探してもらう</h3>
+          <p className="apc-noresult-card-desc">
+            希望エリアや条件に強い業者をAIが整理します。掲載物件がなくても、非公開物件や近い条件の提案を受けられる可能性があります。
+          </p>
+          <button className="apc-noresult-btn apc-noresult-btn-purple" onClick={() => setPhase("top")}>
+            業者を探してもらう
+          </button>
+        </motion.div>
+      </div>
+
+      <button className="apc-noresult-back" onClick={() => setPhase("top")}>
+        ← 条件を変えてもう一度探す
+      </button>
+    </motion.div>
+  );
+}
+
+/* =====================================================
    MAIN EXPORT
    ===================================================== */
 export default function AIPropertyCinema() {
@@ -1096,6 +1190,7 @@ export default function AIPropertyCinema() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [cinemaIntroShown, setCinemaIntroShown] = useState(false);
   const [cinemaEntered, setCinemaEntered] = useState(false);
+  const [noResultTest, setNoResultTest] = useState(false);
   const timersRef = useRef([]);
 
   const particles = useMemo(
@@ -1148,7 +1243,11 @@ export default function AIPropertyCinema() {
     });
 
     const finalT = setTimeout(() => {
-      setPhase("cinema");
+      if (noResultTest) {
+        setPhase("noResult");
+      } else {
+        setPhase("cinema");
+      }
     }, analysisLogs.length * 1200 + 1500);
     timersRef.current.push(finalT);
   };
@@ -1214,6 +1313,10 @@ export default function AIPropertyCinema() {
 
           {phase === "secret" ? (
             <SecretScreen setPhase={setPhase} />
+          ) : null}
+
+          {phase === "noResult" ? (
+            <NoResultScreen setPhase={setPhase} />
           ) : null}
         </div>
       ) : null}
