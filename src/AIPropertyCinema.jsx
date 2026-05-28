@@ -561,13 +561,19 @@ function AnalysisScreen({ logs }) {
 /* =====================================================
    CARD: CinemaCard（AIMatchScore・AIPersonalityBadge・AIScanEffect使用）
    ===================================================== */
-function CinemaCard({ prop, position }) {
+function CinemaCard({ prop, position, entrancePhase, entranceDelay }) {
   const [hovered, setHovered] = useState(false);
   const isCenter = position === "center";
+  const showEntrance = entrancePhase !== null && position !== "hidden" && position !== "leaving";
+  const extraClass = showEntrance ? ` card-${entrancePhase}` : "";
+  const cardStyle = (showEntrance && entrancePhase === "entered")
+    ? { transitionDelay: `${entranceDelay}ms` }
+    : undefined;
 
   return (
     <div
-      className={`apc-card apc-card-${position}`}
+      className={`apc-card apc-card-${position}${extraClass}`}
+      style={cardStyle || undefined}
       onMouseEnter={isCenter ? () => setHovered(true) : undefined}
       onMouseLeave={isCenter ? () => setHovered(false) : undefined}
     >
@@ -613,17 +619,33 @@ function CinemaCard({ prop, position }) {
 /* =====================================================
    SCREEN: Cinema（CinemaIntroEffect使用）
    ===================================================== */
-function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showIntro, onIntroComplete }) {
+function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showIntro, onIntroComplete, cinemaEntered, onCinemaEntered }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [leavingIndex, setLeavingIndex] = useState(null);
+  const [entrancePhase, setEntrancePhase] = useState(null);
   const navTimers = useRef([]);
+  const entranceTimers = useRef([]);
+  const onCinemaEnteredRef = useRef(onCinemaEntered);
+  onCinemaEnteredRef.current = onCinemaEntered;
 
   useEffect(() => {
     return () => navTimers.current.forEach(clearTimeout);
   }, []);
 
+  useEffect(() => {
+    if (cinemaEntered || showIntro) return;
+    setEntrancePhase("entering");
+    const t1 = setTimeout(() => setEntrancePhase("entered"), 500);
+    const t2 = setTimeout(() => {
+      setEntrancePhase(null);
+      onCinemaEnteredRef.current();
+    }, 2300);
+    entranceTimers.current = [t1, t2];
+    return () => entranceTimers.current.forEach(clearTimeout);
+  }, [showIntro, cinemaEntered]);
+
   const navigate = (newIndex) => {
-    if (isAnimating || newIndex === activeIndex) return;
+    if (isAnimating || entrancePhase !== null || newIndex === activeIndex) return;
     if (newIndex < 0 || newIndex >= properties.length) return;
 
     setIsAnimating(true);
@@ -641,6 +663,13 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showI
     if (index === activeIndex - 1) return "left";
     if (index === activeIndex + 1) return "right";
     return "hidden";
+  };
+
+  const getEntranceDelay = (pos) => {
+    if (pos === "left") return 0;
+    if (pos === "center") return 200;
+    if (pos === "right") return 400;
+    return 0;
   };
 
   return (
@@ -666,6 +695,8 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showI
               key={prop.id}
               prop={prop}
               position={getPosition(index)}
+              entrancePhase={entrancePhase}
+              entranceDelay={getEntranceDelay(getPosition(index))}
             />
           ))}
         </div>
@@ -1036,6 +1067,7 @@ export default function AIPropertyCinema() {
   const [logs, setLogs] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [cinemaIntroShown, setCinemaIntroShown] = useState(false);
+  const [cinemaEntered, setCinemaEntered] = useState(false);
   const timersRef = useRef([]);
 
   const particles = useMemo(
@@ -1064,6 +1096,7 @@ export default function AIPropertyCinema() {
     setQuery("");
     setActiveIndex(0);
     setCinemaIntroShown(false);
+    setCinemaEntered(false);
   };
 
   const handleOpen = () => {
@@ -1138,6 +1171,8 @@ export default function AIPropertyCinema() {
               setPhase={setPhase}
               showIntro={!cinemaIntroShown}
               onIntroComplete={() => setCinemaIntroShown(true)}
+              cinemaEntered={cinemaEntered}
+              onCinemaEntered={() => setCinemaEntered(true)}
             />
           ) : null}
 
