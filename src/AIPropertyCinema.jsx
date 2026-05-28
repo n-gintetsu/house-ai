@@ -468,7 +468,16 @@ function AIAnalysisPanel({ data }) {
 /* =====================================================
    SCREEN: Top
    ===================================================== */
+function getAIComment(query) {
+  if (!query.trim()) return null;
+  if (/疲れ|静か|落ち着/.test(query)) return "静かな環境と自然光を優先して解析します。";
+  if (/人生|変え|新しい/.test(query)) return "刺激と利便性を重視して都市型空間を優先します。";
+  if (/在宅|仕事|ワーク/.test(query)) return "防音性と採光バランスを優先して解析します。";
+  return "ご希望の条件でAIが解析を開始します。";
+}
+
 function TopScreen({ query, setQuery, startAnalysis }) {
+  const aiComment = getAIComment(query);
   return (
     <motion.div
       className="apc-top"
@@ -494,6 +503,13 @@ function TopScreen({ query, setQuery, startAnalysis }) {
         }}
         placeholder="例：渋谷近辺で在宅ワーク向き、ホテルライクな部屋を探しています"
       />
+
+      {aiComment !== null ? (
+        <div className="apc-ai-hint">
+          <span className="apc-ai-hint-dot" />
+          <span>{aiComment}</span>
+        </div>
+      ) : null}
 
       <div className="apc-examples">
         {examples.map((ex, i) => (
@@ -1089,12 +1105,33 @@ function SecretScreen({ setPhase }) {
    SCREEN: NoResult
    ===================================================== */
 function NoResultScreen({ setPhase }) {
+  const [isVendorSearching, setIsVendorSearching] = useState(false);
+  const [vendorShowResult, setVendorShowResult] = useState(false);
+  const vendorTimers = useRef([]);
+
   const merits = [
     "条件に合う物件を業者側から提案",
     "非公開物件に出会える可能性",
     "諸費用が安くなる場合あり",
     "やり取りは会員ページ内で完結",
   ];
+
+  useEffect(() => {
+    return () => vendorTimers.current.forEach(clearTimeout);
+  }, []);
+
+  const handleVendorSearch = () => {
+    setIsVendorSearching(true);
+    setVendorShowResult(false);
+    const t = setTimeout(() => setVendorShowResult(true), 2000);
+    vendorTimers.current = [t];
+  };
+
+  const handleVendorClose = () => {
+    vendorTimers.current.forEach(clearTimeout);
+    setIsVendorSearching(false);
+    setVendorShowResult(false);
+  };
 
   return (
     <motion.div
@@ -1103,6 +1140,74 @@ function NoResultScreen({ setPhase }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.45 }}
     >
+      <div className="apc-noresult-hud" aria-hidden="true">
+        {[
+          { text: "AREA ANALYSIS COMPLETE",           top: "12%", dur: "20s", delay: "0s"   },
+          { text: "PRIVATE INVENTORY CHECK COMPLETE", top: "32%", dur: "25s", delay: "3s"   },
+          { text: "COMMUTE ROUTE ANALYZED",           top: "55%", dur: "22s", delay: "8s"   },
+          { text: "LIFESTYLE MATCH FAILED",           top: "75%", dur: "18s", delay: "1.5s" },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="apc-noresult-hud-line"
+            style={{ top: item.top, animationDuration: item.dur, animationDelay: item.delay }}
+          >
+            {item.text}
+          </div>
+        ))}
+      </div>
+
+      {isVendorSearching ? (
+        <div className="apc-vendor-overlay">
+          <div className="apc-vendor-inner">
+            {vendorShowResult ? null : (
+              <div>
+                <p className="apc-vendor-searching-label">AI NETWORK SEARCH...</p>
+                <p className="apc-vendor-searching-sub">条件に強い業者を照合中...</p>
+              </div>
+            )}
+            {vendorShowResult ? (
+              <motion.div
+                className="apc-vendor-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45 }}
+              >
+                <div className="apc-vendor-card-header">
+                  <span className="apc-vendor-badge">AI MATCH</span>
+                  <h3 className="apc-vendor-name">渋谷不動産パートナーズ</h3>
+                </div>
+                <div className="apc-vendor-rows">
+                  <div className="apc-vendor-row">
+                    <span className="apc-vendor-row-label">得意エリア</span>
+                    <span className="apc-vendor-row-value">渋谷・恵比寿・代官山</span>
+                  </div>
+                  <div className="apc-vendor-row">
+                    <span className="apc-vendor-row-label">非公開物件保有率</span>
+                    <span className="apc-vendor-row-value apc-vendor-highlight">68%</span>
+                  </div>
+                  <div className="apc-vendor-row">
+                    <span className="apc-vendor-row-label">返信速度</span>
+                    <span className="apc-vendor-row-value">平均2時間以内</span>
+                  </div>
+                  <div className="apc-vendor-row">
+                    <span className="apc-vendor-row-label">得意ジャンル</span>
+                    <span className="apc-vendor-row-value">高級賃貸・デザイナーズ</span>
+                  </div>
+                </div>
+                <div className="apc-vendor-ai-comment">
+                  <span className="apc-comment-icon">AI</span>
+                  <p>あなたの条件に最も近い物件を保有している可能性が高い業者です</p>
+                </div>
+                <button className="apc-vendor-cta" onClick={handleVendorClose}>
+                  この業者に相談する
+                </button>
+              </motion.div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="apc-noresult-header">
         <div className="apc-noresult-icon">
           <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1112,8 +1217,8 @@ function NoResultScreen({ setPhase }) {
             <path d="M27 17L17 27" stroke="#7C879F" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
-        <p className="apc-noresult-main">現在の掲載物件では条件に合う物件が見つかりませんでした。</p>
-        <p className="apc-noresult-sub">でも大丈夫です。House-AIなら、掲載されていない物件や業者の非公開情報まで含めて探せます。</p>
+        <p className="apc-noresult-main">周辺相場・通勤導線・生活利便性・非公開流通情報まで解析しましたが、現在の掲載情報では一致する物件が見つかりませんでした。</p>
+        <p className="apc-noresult-sub">でも大丈夫です。House-AIは掲載されていない物件や、業者側保有の非公開情報まで含めて探せます。</p>
         <p className="apc-noresult-hint">次の方法から選んでください。</p>
       </div>
 
@@ -1124,6 +1229,12 @@ function NoResultScreen({ setPhase }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0, duration: 0.45 }}
         >
+          <div className="apc-noresult-badges">
+            {["待つだけ検索", "AI自動通知", "非公開物件対応"].map((badge, i) => (
+              <span key={i} className="apc-noresult-badge">{badge}</span>
+            ))}
+          </div>
+          <p className="apc-noresult-card-italic">検索する時代から、AIがあなたの代わりに探す時代へ。</p>
           <h3 className="apc-noresult-card-title">希望条件を相談室に投稿する</h3>
           <p className="apc-noresult-card-desc">
             あなたの希望条件を投稿すると、条件に合う物件を扱える業者がマイページにお知らせします。投稿して待つだけで探せるので、自分で何度も検索する必要がありません。
@@ -1166,7 +1277,7 @@ function NoResultScreen({ setPhase }) {
           <p className="apc-noresult-card-desc">
             希望エリアや条件に強い業者をAIが整理します。掲載物件がなくても、非公開物件や近い条件の提案を受けられる可能性があります。
           </p>
-          <button className="apc-noresult-btn apc-noresult-btn-purple" onClick={() => setPhase("top")}>
+          <button className="apc-noresult-btn apc-noresult-btn-purple" onClick={handleVendorSearch}>
             業者を探してもらう
           </button>
         </motion.div>
