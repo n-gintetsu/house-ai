@@ -70,9 +70,9 @@ const analysisLogs = [
 ];
 
 const examples = [
-  "渋谷近辺で在宅ワーク向き、ホテルライクな部屋を探しています",
-  "新宿エリアでリノベ済み、広めのワークスペースがある物件",
-  "表参道のデザイナーズマンション、眺望が良く静かな環境",
+  "渋谷近辺で、在宅ワーク向け、ホテルライクな部屋",
+  "表参道エリア、デザイナーズマンション、眺望良好",
+  "新宿駅近、静かな環境、自然光が入る部屋",
 ];
 
 /* =====================================================
@@ -316,10 +316,7 @@ function TopScreen({ query, setQuery, startAnalysis }) {
       <h1 className="apc-main-title">
         <span className="apc-title-gradient">House-AI</span>
       </h1>
-      <p className="apc-subtitle">
-        理想の暮らし条件を入力してください。<br />
-        AIが最適な物件を提案します。
-      </p>
+      <p className="apc-subtitle">AIと一緒に、住まいを体験する</p>
 
       <textarea
         className="apc-textarea"
@@ -342,7 +339,11 @@ function TopScreen({ query, setQuery, startAnalysis }) {
         ))}
       </div>
 
-      <button className="apc-start-btn" onClick={startAnalysis}>
+      <button
+        className="apc-start-btn"
+        onClick={startAnalysis}
+        disabled={!query.trim()}
+      >
         AI解析を開始
       </button>
     </motion.div>
@@ -353,6 +354,9 @@ function TopScreen({ query, setQuery, startAnalysis }) {
    SCREEN: Analysis（AILogPanel使用）
    ===================================================== */
 function AnalysisScreen({ logs }) {
+  const total = analysisLogs.length;
+  const current = logs.length - 1;
+
   return (
     <motion.div
       className="apc-analysis"
@@ -368,6 +372,21 @@ function AnalysisScreen({ logs }) {
         <div className="apc-ring apc-ring-2" />
         <div className="apc-ring apc-ring-3" />
         <div className="apc-orb" />
+      </div>
+
+      <div className="apc-progress-dots">
+        {Array.from({ length: total }, (_, i) => (
+          <div
+            key={i}
+            className={
+              i < current
+                ? "apc-progress-dot apc-progress-dot--done"
+                : i === current
+                ? "apc-progress-dot apc-progress-dot--active"
+                : "apc-progress-dot"
+            }
+          />
+        ))}
       </div>
 
       <AILogPanel logs={logs} />
@@ -430,8 +449,7 @@ function CinemaCard({ prop, position }) {
 /* =====================================================
    SCREEN: Cinema（CinemaIntroEffect使用）
    ===================================================== */
-function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase }) {
-  const [showIntro, setShowIntro] = useState(true);
+function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase, showIntro, onIntroComplete }) {
 
   const getPosition = (index) => {
     if (index === activeIndex) return "center";
@@ -443,7 +461,7 @@ function CinemaScreen({ properties, activeIndex, setActiveIndex, setPhase }) {
   return (
     <>
       {showIntro ? (
-        <CinemaIntroEffect onComplete={() => setShowIntro(false)} />
+        <CinemaIntroEffect onComplete={onIntroComplete} />
       ) : null}
 
       <div className="apc-cinema">
@@ -647,6 +665,7 @@ export default function AIPropertyCinema() {
   const [phase, setPhase] = useState("top");
   const [logs, setLogs] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [cinemaIntroShown, setCinemaIntroShown] = useState(false);
   const timersRef = useRef([]);
 
   const particles = useMemo(
@@ -674,6 +693,7 @@ export default function AIPropertyCinema() {
     setLogs([]);
     setQuery("");
     setActiveIndex(0);
+    setCinemaIntroShown(false);
   };
 
   const handleOpen = () => {
@@ -746,6 +766,8 @@ export default function AIPropertyCinema() {
               activeIndex={activeIndex}
               setActiveIndex={setActiveIndex}
               setPhase={setPhase}
+              showIntro={!cinemaIntroShown}
+              onIntroComplete={() => setCinemaIntroShown(true)}
             />
           ) : null}
 

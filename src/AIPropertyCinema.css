@@ -263,6 +263,13 @@
   cursor: pointer;
   box-shadow: 0 10px 32px rgba(91, 140, 255, 0.42);
   font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.apc-start-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* ===================================================
@@ -356,6 +363,38 @@
   50% {
     box-shadow: 0 0 28px rgba(91, 140, 255, 1), 0 0 55px rgba(91, 140, 255, 0.6);
   }
+}
+
+/* Progress dots */
+.apc-progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: -28px 0 36px;
+}
+
+.apc-progress-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(91, 140, 255, 0.2);
+  border: 1px solid rgba(91, 140, 255, 0.3);
+}
+
+.apc-progress-dot--done {
+  background: #22D3EE;
+  border-color: #22D3EE;
+}
+
+.apc-progress-dot--active {
+  background: var(--ai-glow-blue);
+  border-color: var(--ai-glow-blue);
+  animation: apcDotPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes apcDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.75); }
 }
 
 /* Log list */
