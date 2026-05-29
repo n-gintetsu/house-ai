@@ -35,7 +35,7 @@ export default function ExperienceAnalyzing() {
         <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.1, 0.3] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} style={{ width: 256, height: 256, borderRadius: '50%', background: '#00D4FF', filter: 'blur(60px)' }} />
       </div>
       <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 16px' }}>
-        <motion.h1 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ fontSize: '3rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 64, background: 'linear-gradient(to right, #00D4FF, #D4AF37, #00D4FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <motion.h1 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ fontSize: '3rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 64, color: '#00D4FF' }}>
           AI EXPERIENCE<br />ANALYZING...
         </motion.h1>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>

@@ -91,7 +91,7 @@ export default function ExperienceComplete() {
             <div key={bi} style={{ position: 'absolute', bottom: 0, left: b.left, width: b.width, height: b.height, background: 'linear-gradient(to top, #0d1e35, #112240)', borderTop: '1px solid rgba(0,212,255,0.19)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(4, 1fr)', gap: 3, padding: 6, height: '60%' }}>
                 {Array.from({ length: 12 }).map((_, wi) => (
-                  <div key={wi} style={{ background: Math.random() > 0.4 ? 'rgba(0,212,255,0.18)' : 'rgba(212,175,55,0.12)', borderRadius: 1, animation: `windowBlink ${1 + Math.random() * 2}s ease-in-out infinite`, animationDelay: `${Math.random() * 2}s` }} />
+                  <div key={wi} style={{ background: '#00D4FF', boxShadow: '0 0 8px #00D4FF, 0 0 16px #00D4FF', borderRadius: 1, animation: `windowBlink ${1 + Math.random() * 2}s ease-in-out infinite`, animationDelay: `${Math.random() * 2}s` }} />
                 ))}
               </div>
             </div>
