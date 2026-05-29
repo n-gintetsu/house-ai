@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView } from 'motion/react';
 import { Sparkles, TrendingUp, Home, Calculator, BarChart3, Search, ChevronRight } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 

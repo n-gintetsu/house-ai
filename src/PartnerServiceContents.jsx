@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Search, Building2, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 

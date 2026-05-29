@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 const GOLD = '#D8B33F';
 const CONFETTI_COLORS = ['#D8B33F', '#FFFFFF', '#BFDBFE', '#DDD6FE'];

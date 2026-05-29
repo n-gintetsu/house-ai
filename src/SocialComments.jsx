@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { MessageCircle, Bookmark, ThumbsUp } from 'lucide-react';
 
 const comments = [

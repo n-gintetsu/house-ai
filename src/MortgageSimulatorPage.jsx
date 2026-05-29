@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, Users, ChevronRight, ArrowRight } from 'lucide-react';
 import SEOHead from './SEOHead';
 import { supabase } from './lib/supabase';
