@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { TrendingUp, Eye, Sparkles, MessageSquare, Star } from 'lucide-react';
 
 const tagConfig = {
