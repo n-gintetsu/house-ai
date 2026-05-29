@@ -1247,7 +1247,7 @@ function NoResultScreen({ setPhase }) {
               </li>
             ))}
           </ul>
-          <button className="apc-noresult-btn apc-noresult-btn-gold">
+          <button className="apc-noresult-btn apc-noresult-btn-gold" onClick={() => { window.location.href = '/community/create' }}>
             住まい相談室に投稿する
           </button>
         </motion.div>

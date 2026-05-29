@@ -11,6 +11,8 @@ import ToolHubPage from './ToolHubPage'
 import DictionaryPage from './DictionaryPage'
 import CostCalculatorPage from './CostCalculatorPage'
 import MortgageSimulatorPage from './MortgageSimulatorPage'
+import CommunityCreatePage from './CommunityCreatePage'
+import CommunityListPage from './CommunityListPage'
 
 const TOOL_URL_MAP = {
   dictionary: '/tools/dictionary',
@@ -72,6 +74,10 @@ if (pathname === '/admin' || pathname === '/admin/') {
       onOpenConcierge={() => {}}
     />
   )
+} else if (pathname === '/community/create' || pathname === '/community/create/') {
+  Component = CommunityCreatePage
+} else if (pathname === '/community' || pathname === '/community/') {
+  Component = CommunityListPage
 }
 
 createRoot(document.getElementById('root')).render(
