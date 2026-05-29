@@ -27,7 +27,7 @@ export default function ExperienceStartScreen() {
       <div style={{ position: 'absolute', top: 80, left: 80, width: 384, height: 384, background: '#00D4FF', borderRadius: '50%', opacity: 0.2, filter: 'blur(100px)' }} />
       <div style={{ position: 'absolute', bottom: 80, right: 80, width: 384, height: 384, background: '#D4AF37', borderRadius: '50%', opacity: 0.1, filter: 'blur(100px)' }} />
       <div style={{ position: 'relative', zIndex: 10, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
-        <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} style={{ textAlign: 'center', marginBottom: 64 }}>
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} style={{ textAlign: 'center', marginBottom: 64 }}>
           <h1 style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1.2, marginBottom: 24, color: '#00D4FF' }}>
             AI体験談アシスタント
           </h1>
@@ -47,7 +47,7 @@ export default function ExperienceStartScreen() {
               onClick={() => navigate('/experiences/interview', { state: { type: card.type } })}
               onMouseEnter={() => setHoverIndex(index)}
               onMouseLeave={() => setHoverIndex(null)}
-              style={{ position: 'relative', padding: 32, borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', background: hoverIndex === index ? HOVER_STYLES[index].background : 'rgba(255,255,255,0.06)', border: hoverIndex === index ? HOVER_STYLES[index].border : '1px solid rgba(255,255,255,0.12)', boxShadow: hoverIndex === index ? HOVER_STYLES[index].boxShadow : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.3)' }}
+              style={{ position: 'relative', padding: 32, borderRadius: 16, cursor: 'pointer', transition: 'all 0.15s ease', background: hoverIndex === index ? HOVER_STYLES[index].background : 'rgba(255,255,255,0.06)', border: hoverIndex === index ? HOVER_STYLES[index].border : '1px solid rgba(255,255,255,0.12)', boxShadow: hoverIndex === index ? HOVER_STYLES[index].boxShadow : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.3)' }}
             >
               <div style={{ position: 'relative', zIndex: 10 }}>
                 <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}>
