@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
-import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft } from 'lucide-react';
+import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft, MessageSquare } from 'lucide-react';
 
 const tools = [
   { id: 'mortgage', icon: Calculator, title: '住宅ローンシミュレーション', description: '返済・固定変動を整理', labels: ['登録不要', '人気'] },
@@ -12,12 +12,13 @@ const tools = [
   { id: 'insurance', icon: Shield, title: '火災保険整理', description: '補償内容を比較', labels: ['登録不要', 'AI整理'] },
   { id: 'moving', icon: Home, title: '引越し費用比較', description: '相場確認・条件比較', labels: ['登録不要'] },
   { id: 'satei', icon: null, title: 'AI不動産整理査定', description: '相場感をAIが整理', labels: ['登録不要', 'AI査定'] },
+  { id: 'community_room', icon: MessageSquare, title: '住まい相談室', description: '希望条件投稿できます', labels: ['要登録', 'AI整理'], iconBg: 'linear-gradient(135deg, #c9a84c, #a07830)', href: '/community' },
 ];
 
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
 
 const labelStyle = (label) => {
-  if (label === '登録不要') return { background: '#F0FDF4', color: '#15803d' };
+  if (label === '登録不要' || label === '要登録') return { background: '#F0FDF4', color: '#15803d' };
   if (label === '人気') return { background: '#FFF7ED', color: '#c2410c' };
   if (label === 'AI整理') return { background: '#EFF6FF', color: '#1d4ed8' };
   if (label === 'AI査定') return { background: '#FFFBEB', color: '#b45309' };
@@ -77,7 +78,7 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                 transition={{ delay: idx * 0.05 }}
                 onMouseEnter={() => setHoveredCard(tool.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                onClick={() => handleToolClick(tool.id)}
+                onClick={() => tool.href ? (window.location.href = tool.href) : handleToolClick(tool.id)}
                 style={{
                   background: hoveredCard === tool.id ? 'linear-gradient(135deg, #EFF6FF, #F5F3FF)' : 'white',
                   borderRadius: '24px',
@@ -90,7 +91,7 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                   transform: hoveredCard === tool.id ? 'translateY(-4px)' : 'translateY(0)',
                 }}
               >
-                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: isSatei ? 'linear-gradient(135deg, #c9a84c, #D4AF37)' : hoveredCard === tool.id ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px', transition: 'background 0.25s ease' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: tool.iconBg ? tool.iconBg : isSatei ? 'linear-gradient(135deg, #c9a84c, #D4AF37)' : hoveredCard === tool.id ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '20px', transition: 'background 0.25s ease' }}>
                   {isSatei ? (
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                       <path d="M3 11L12 3L21 11V21H15V15H9V21H3V11Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
