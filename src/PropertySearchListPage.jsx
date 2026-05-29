@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ChevronDown, Heart, MessageSquare, Calendar, Home, MapPin, Train, Building } from 'lucide-react';
 import { supabase } from './supabaseClient';
@@ -247,6 +248,13 @@ export default function PropertySearchListPage() {
         style={{ padding: '10px', background: 'transparent', color: '#6b7280', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
         条件をリセット
       </button>
+      <motion.button
+        animate={{ boxShadow: ['0 0 0px rgba(234,179,8,0)', '0 0 20px rgba(234,179,8,0.8)', '0 0 0px rgba(234,179,8,0)'] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+      >
+        この条件で検索
+      </motion.button>
     </div>
   );
 
