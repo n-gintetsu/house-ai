@@ -79,9 +79,9 @@ export default function ExperienceAnalyzing() {
         <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.1, 0.3] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} style={{ width: 256, height: 256, borderRadius: '50%', background: '#00D4FF', filter: 'blur(60px)' }} />
       </div>
       <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 16px' }}>
-        <motion.h1 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ fontSize: '3rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 64, color: '#00D4FF' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '0.05em', color: '#00D4FF', lineHeight: 1.3, textAlign: 'center', marginBottom: 32 }}>
           AI EXPERIENCE<br />ANALYZING...
-        </motion.h1>
+        </h1>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
           {steps.map((step, index) => (
             <motion.div key={step} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: index * 0.1 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
