@@ -107,6 +107,35 @@ export default function ExperienceComplete() {
             </button>
           ))}
         </div>
+
+        <div style={{ marginTop: 32, textAlign: 'center' }}>
+          <button
+            onClick={() => window.location.href = '/'}
+            style={{
+              background: 'linear-gradient(135deg, #D4AF37, #FFD700, #D4AF37)',
+              color: '#0A1628',
+              border: 'none',
+              borderRadius: 50,
+              padding: '14px 48px',
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.05em',
+              boxShadow: '0 4px 20px rgba(212,175,55,0.5), 0 2px 8px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = '0 6px 28px rgba(212,175,55,0.7), 0 2px 8px rgba(0,0,0,0.3)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(212,175,55,0.5), 0 2px 8px rgba(0,0,0,0.3)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            ホームに戻る
+          </button>
+        </div>
       </div>
     </div>
   );
