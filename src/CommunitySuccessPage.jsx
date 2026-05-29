@@ -1,274 +1,126 @@
-import { useState, useEffect, useMemo } from 'react'
-
-const LOG_STEPS = [
-  { text: '提携業者へ通知中...', done: false },
-  { text: 'AIが条件を整理中...', done: false },
-  { text: '27社へ送信しました ✓', done: true },
-]
-
-function randomBetween(min, max) {
-  return min + Math.random() * (max - min)
-}
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Building2, Cpu, Zap } from 'lucide-react';
 
 export default function CommunitySuccessPage() {
-  const [visibleCount, setVisibleCount] = useState(0)
-
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, i) => ({
-        id: i,
-        x: randomBetween(5, 95),
-        y: randomBetween(5, 95),
-        size: randomBetween(1, 2.5),
-        opacity: randomBetween(0.15, 0.45),
-        duration: randomBetween(4, 9),
-        delay: randomBetween(0, 4),
-      })),
-    []
-  )
+  const navigate = useNavigate();
+  const [stage, setStage] = useState('design');
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('設計中...');
 
   useEffect(() => {
-    if (visibleCount >= LOG_STEPS.length) return
-    const delay = visibleCount === 0 ? 600 : 1200
-    const t = setTimeout(() => setVisibleCount(v => v + 1), delay)
-    return () => clearTimeout(t)
-  }, [visibleCount])
+    let progressInterval;
+    const t1 = setTimeout(() => { setStage('construction'); setMessage('建築中...'); setProgress(0); }, 2000);
+    const t2 = setTimeout(() => {
+      progressInterval = setInterval(() => {
+        setProgress(prev => { if (prev >= 100) { clearInterval(progressInterval); return 100; } return prev + 2; });
+      }, 40);
+    }, 2000);
+    const t3 = setTimeout(() => { setStage('complete'); setMessage('完成'); }, 4500);
+    const t4 = setTimeout(() => { setStage('sending'); }, 5500);
+    const t5 = setTimeout(() => { setStage('waiting'); }, 7000);
+    const t6 = setTimeout(() => { setStage('done'); }, 8500);
+    return () => { [t1,t2,t3,t4,t5,t6].forEach(clearTimeout); if (progressInterval) clearInterval(progressInterval); };
+  }, []);
+
+  const gridStyle = { position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(to right,rgba(255,255,255,0.1) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.1) 1px,transparent 1px)', backgroundSize: '40px 40px', opacity: 0.1 };
 
   return (
-    <>
-      <style>{`
-        @keyframes csFloat {
-          0%, 100% { transform: translateY(0); opacity: var(--op); }
-          50% { transform: translateY(-8px); opacity: calc(var(--op) * 0.5); }
-        }
-        @keyframes csLogIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes csPulseRing {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.25); }
-          50% { box-shadow: 0 0 0 16px rgba(201,168,76,0); }
-        }
-        @keyframes csCheck {
-          from { stroke-dashoffset: 40; }
-          to { stroke-dashoffset: 0; }
-        }
-        .cs-wrap {
-          min-height: 100svh;
-          background: #050816;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 32px 20px 60px;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-        .cs-grid {
-          position: fixed;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(100,140,255,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(100,140,255,0.04) 1px, transparent 1px);
-          background-size: 48px 48px;
-          pointer-events: none;
-          z-index: 0;
-        }
-        .cs-content {
-          position: relative;
-          z-index: 1;
-          max-width: 400px;
-          width: 100%;
-        }
-        .cs-icon {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          border: 2px solid #c9a84c;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 28px;
-          animation: csPulseRing 2.5s ease-in-out infinite;
-        }
-        .cs-check-path {
-          stroke-dasharray: 40;
-          stroke-dashoffset: 40;
-          animation: csCheck 0.6s ease-out 0.4s forwards;
-        }
-        .cs-badge {
-          display: inline-block;
-          font-size: 11px;
-          color: #c9a84c;
-          border: 1px solid rgba(201,168,76,0.4);
-          padding: 4px 14px;
-          border-radius: 999px;
-          letter-spacing: 2px;
-          margin-bottom: 16px;
-        }
-        .cs-title {
-          font-size: clamp(22px, 5vw, 28px);
-          font-weight: 800;
-          color: #fff;
-          margin: 0 0 8px;
-          line-height: 1.3;
-        }
-        .cs-subtitle {
-          font-size: 13px;
-          color: rgba(180,200,255,0.5);
-          margin: 0 0 36px;
-          line-height: 1.6;
-        }
-        .cs-logs {
-          width: 100%;
-          margin-bottom: 40px;
-          text-align: left;
-        }
-        .cs-log {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 11px 14px;
-          border-radius: 10px;
-          margin-bottom: 8px;
-          font-size: 13px;
-          animation: csLogIn 0.4s ease both;
-        }
-        .cs-log.pending {
-          background: rgba(255,255,255,0.025);
-          border: 1px solid rgba(100,140,255,0.1);
-          color: rgba(180,200,255,0.7);
-        }
-        .cs-log.done {
-          background: rgba(201,168,76,0.06);
-          border: 1px solid rgba(201,168,76,0.2);
-          color: #c9a84c;
-          font-weight: 600;
-        }
-        .cs-log-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: currentColor;
-          flex-shrink: 0;
-        }
-        .cs-main-btn {
-          display: block;
-          width: 100%;
-          padding: 15px;
-          background: linear-gradient(135deg, #c9a84c, #e8c96a);
-          color: #050816;
-          border: none;
-          border-radius: 12px;
-          font-size: 16px;
-          font-weight: 800;
-          cursor: pointer;
-          font-family: inherit;
-          margin-bottom: 14px;
-          transition: opacity 0.15s, transform 0.1s;
-          letter-spacing: 0.3px;
-        }
-        .cs-main-btn:hover {
-          opacity: 0.9;
-        }
-        .cs-main-btn:active {
-          transform: scale(0.98);
-        }
-        .cs-sub-link {
-          display: block;
-          text-align: center;
-          color: rgba(180,200,255,0.4);
-          font-size: 13px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-family: inherit;
-          padding: 0;
-          text-decoration: underline;
-        }
-        .cs-sub-link:hover {
-          color: rgba(180,200,255,0.7);
-        }
-      `}</style>
-
-      <div className="cs-wrap">
-        <div className="cs-grid" />
-
-        {/* Particles */}
-        {particles.map(p => (
-          <div
-            key={p.id}
-            style={{
-              position: 'fixed',
-              left: `${p.x}%`,
-              top: `${p.y}%`,
-              width: p.size,
-              height: p.size,
-              borderRadius: '50%',
-              background: '#c9a84c',
-              '--op': p.opacity,
-              opacity: p.opacity,
-              animation: `csFloat ${p.duration}s ${p.delay}s ease-in-out infinite`,
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
-        ))}
-
-        <div className="cs-content">
-          {/* Check icon */}
-          <div className="cs-icon">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <path
-                className="cs-check-path"
-                d="M10 18L15 23L26 13"
-                stroke="#c9a84c"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          <div className="cs-badge">POSTED</div>
-          <h1 className="cs-title">投稿が完了しました</h1>
-          <p className="cs-subtitle">
-            条件に合う業者からの提案をお待ちください。<br />
-            通常24時間以内に提案が届きます。
-          </p>
-
-          {/* Log animation */}
-          <div className="cs-logs">
-            {LOG_STEPS.slice(0, visibleCount).map((step, i) => (
-              <div
-                key={i}
-                className={`cs-log${step.done ? ' done' : ' pending'}`}
-              >
-                <span className="cs-log-dot" />
-                {step.text}
+    <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      <motion.div style={{ position: 'absolute', top: 32, left: 0, right: 0, textAlign: 'center' }} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 style={{ fontSize: 22, color: '#fff', fontWeight: 700, letterSpacing: 2 }}>House-AI Construction System</h1>
+      </motion.div>
+      <div style={gridStyle} />
+      {[...Array(6)].map((_, i) => (
+        <motion.div key={i} style={{ position: 'absolute', height: 1, background: 'linear-gradient(to right,transparent,rgba(6,182,212,0.3),transparent)', left: 0, right: 0, top: `${15 + i * 15}%` }}
+          animate={{ opacity: [0.2,0.6,0.2], scaleX: [0.8,1,0.8] }} transition={{ duration: 3, delay: i * 0.3, repeat: Infinity }} />
+      ))}
+      <div style={{ position: 'relative', zIndex: 10, maxWidth: 672, margin: '0 auto', padding: '0 16px', textAlign: 'center' }}>
+        {(stage === 'design' || stage === 'construction' || stage === 'complete') ? (
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+            <motion.div style={{ position: 'relative', width: 256, height: 256, margin: '0 auto 32px' }}>
+              <motion.div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} animate={{ opacity: stage === 'design' ? 0.3 : 1 }}>
+                <Building2 size={192} color="#22d3ee" />
+              </motion.div>
+              {stage === 'construction' ? (
+                <>
+                  <motion.div style={{ position: 'absolute', top: '25%', left: '25%' }} animate={{ y: [0,-10,0], rotate: [0,5,0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                    <Cpu size={32} color="#facc15" />
+                  </motion.div>
+                  <motion.div style={{ position: 'absolute', top: '33%', right: '25%' }} animate={{ y: [0,-8,0], rotate: [0,-5,0] }} transition={{ duration: 1.3, repeat: Infinity, delay: 0.3 }}>
+                    <Cpu size={32} color="#facc15" />
+                  </motion.div>
+                </>
+              ) : null}
+              {stage === 'design' ? (
+                <motion.div style={{ position: 'absolute', inset: 0 }} initial={{ y: '-100%' }} animate={{ y: '100%' }} transition={{ duration: 2, repeat: Infinity }}>
+                  <div style={{ height: 4, background: 'linear-gradient(to right,transparent,#22d3ee,transparent)' }} />
+                </motion.div>
+              ) : null}
+            </motion.div>
+            <motion.h2 style={{ fontSize: 30, color: '#fff', marginBottom: 24 }} animate={{ opacity: stage === 'complete' ? [0.7,1,0.7] : 1 }} transition={{ duration: 1, repeat: stage === 'complete' ? Infinity : 0 }}>
+              {message}
+            </motion.h2>
+            {stage === 'construction' ? (
+              <div style={{ maxWidth: 384, margin: '0 auto' }}>
+                <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 9999, overflow: 'hidden', marginBottom: 12 }}>
+                  <motion.div style={{ height: '100%', background: 'linear-gradient(to right,#22d3ee,#3b82f6)', width: `${progress}%` }} />
+                </div>
+                <div style={{ color: '#22d3ee', fontSize: 18, fontFamily: 'monospace' }}>{progress}%</div>
               </div>
-            ))}
-          </div>
-
-          {/* Buttons */}
-          <button
-            type="button"
-            className="cs-main-btn"
-            onClick={() => { window.location.href = '/community' }}
-          >
-            投稿一覧を見る
-          </button>
-          <button
-            type="button"
-            className="cs-sub-link"
-            onClick={() => { window.location.href = '/' }}
-          >
-            トップに戻る
-          </button>
-        </div>
+            ) : null}
+          </motion.div>
+        ) : null}
+        {stage === 'sending' ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div style={{ width: 128, height: 128, margin: '0 auto 32px' }} animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
+              <Zap size={128} color="#eab308" />
+            </motion.div>
+            <h2 style={{ fontSize: 30, color: '#fff', marginBottom: 16 }}>投稿完了</h2>
+            <motion.p style={{ fontSize: 20, color: '#d1d5db', marginBottom: 16 }} animate={{ opacity: [0.5,1,0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
+              あなたの希望が実現しますように。
+            </motion.p>
+            <p style={{ color: '#9ca3af' }}>House-AIがあなたに合う住まい探しをサポートします。</p>
+          </motion.div>
+        ) : null}
+        {stage === 'waiting' ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div style={{ width: 96, height: 96, margin: '0 auto 32px', position: 'relative' }} animate={{ scale: [1,1.1,1] }} transition={{ duration: 1.5, repeat: Infinity }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right,#22d3ee,#3b82f6)', borderRadius: '50%', opacity: 0.2, filter: 'blur(16px)' }} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Cpu size={64} color="#22d3ee" />
+              </div>
+            </motion.div>
+            <motion.p style={{ fontSize: 20, color: '#fff', marginBottom: 16 }} animate={{ opacity: [0.6,1,0.6] }} transition={{ duration: 1.5, repeat: Infinity }}>
+              House-AIがあなたの希望条件に合う業者を厳選して送信しています。
+            </motion.p>
+          </motion.div>
+        ) : null}
+        {stage === 'done' ? (
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+            <motion.div style={{ width: 128, height: 128, margin: '0 auto 32px', background: 'linear-gradient(to right,#22c55e,#10b981)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', duration: 0.6 }}>
+              <Zap size={64} color="#fff" />
+            </motion.div>
+            <motion.h2 style={{ fontSize: 28, color: '#fff', marginBottom: 16 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              条件に合う業者へ相談内容を送信しました。
+            </motion.h2>
+            <motion.p style={{ fontSize: 18, color: '#d1d5db', marginBottom: 48 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+              業者からの提案をお待ちください。
+            </motion.p>
+            <motion.div style={{ display: 'flex', gap: 16, justifyContent: 'center' }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+              <button onClick={() => navigate('/community')}
+                style={{ padding: '12px 32px', background: 'linear-gradient(to right,#22d3ee,#3b82f6)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>
+                投稿一覧を見る
+              </button>
+              <button onClick={() => navigate('/')}
+                style={{ padding: '12px 32px', background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>
+                トップに戻る
+              </button>
+            </motion.div>
+          </motion.div>
+        ) : null}
       </div>
-    </>
-  )
+    </div>
+  );
 }

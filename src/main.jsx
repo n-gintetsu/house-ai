@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
@@ -14,6 +15,19 @@ import MortgageSimulatorPage from './MortgageSimulatorPage'
 import CommunityCreatePage from './CommunityCreatePage'
 import CommunityListPage from './CommunityListPage'
 import CommunitySuccessPage from './CommunitySuccessPage'
+
+function CommunityApp() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/community" element={<CommunityListPage />} />
+        <Route path="/community/create" element={<CommunityCreatePage />} />
+        <Route path="/community/success" element={<CommunitySuccessPage />} />
+        <Route path="*" element={<Navigate to="/community" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
 
 const TOOL_URL_MAP = {
   dictionary: '/tools/dictionary',
@@ -75,12 +89,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
       onOpenConcierge={() => {}}
     />
   )
-} else if (pathname === '/community/success' || pathname === '/community/success/') {
-  Component = CommunitySuccessPage
-} else if (pathname === '/community/create' || pathname === '/community/create/') {
-  Component = CommunityCreatePage
-} else if (pathname === '/community' || pathname === '/community/') {
-  Component = CommunityListPage
+} else if (pathname.startsWith('/community')) {
+  Component = CommunityApp
 }
 
 createRoot(document.getElementById('root')).render(
