@@ -61,7 +61,7 @@ export default function ExperienceInterview() {
             >
               {message.type === 'ai' ? (
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', maxWidth: 512 }}>
-                  <img src="/logo.png" alt="House-AI" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'contain' }} />
+                  <img src="/logo.png" alt="House-AI" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #D4AF37', boxShadow: '0 0 8px rgba(212,175,55,0.5)' }} />
                   <div style={{ padding: 16, borderRadius: 16, background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)' }}>
                     <p style={{ color: '#fff', fontSize: '1rem', lineHeight: 1.6, margin: 0 }}>{message.text}</p>
                   </div>
