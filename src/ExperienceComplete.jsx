@@ -93,16 +93,16 @@ export default function ExperienceComplete() {
 
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: 2, marginBottom: 16 }}>次のアクション</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 560, margin: '0 auto', padding: '0 16px 80px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, maxWidth: 640, margin: '0 auto', padding: '0 16px 80px' }}>
           {ACTIONS.map(({ Icon, label, path }, idx) => (
             <button
               key={label}
               onClick={() => navigate(path)}
               onMouseEnter={() => setHoverIndex(idx)}
               onMouseLeave={() => setHoverIndex(null)}
-              style={{ background: hoverIndex === idx ? 'rgba(0,191,255,0.15)' : 'rgba(255,255,255,0.08)', border: hoverIndex === idx ? '1px solid rgba(0,191,255,0.5)' : '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '20px 12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'inherit', transition: 'all 0.2s ease' }}
+              style={{ background: hoverIndex === idx ? 'rgba(0,191,255,0.12)' : 'rgba(255,255,255,0.06)', border: hoverIndex === idx ? '1px solid rgba(0,191,255,0.4)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '24px 16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: hoverIndex === idx ? 'inset 0 1px 0 rgba(0,191,255,0.2), 0 4px 20px rgba(0,191,255,0.15)' : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.3)' }}
             >
-              <Icon size={28} color={hoverIndex === idx ? '#00BFFF' : '#94a3b8'} />
+              <Icon size={28} color={hoverIndex === idx ? '#00BFFF' : '#60a5fa'} />
               <p style={{ color: '#ffffff', fontSize: 13, margin: '8px 0 0' }}>{label}</p>
             </button>
           ))}
