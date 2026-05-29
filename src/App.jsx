@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MessageSquare } from 'lucide-react'
 import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
 import AuthPanel from './AuthPanel'
@@ -218,6 +219,9 @@ const NavIcons = {
       <circle cx="11" cy="7" r="3.5" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5"/>
       <path d="M3 19C3 15.7 6.6 13 11 13C15.4 13 19 15.7 19 19" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
+  ),
+  community_room: (active) => (
+    <MessageSquare size={22} color={active ? '#1a3a5c' : '#94a3b8'} />
   ),
 };
 
@@ -2346,12 +2350,15 @@ export default function App() {
             { label: 'ホーム', id: 'home' },
             { label: '物件', id: 'properties' },
             { label: '体験談', id: 'community' },
+            { label: '相談室', id: 'community_room' },
             { label: '専門家相談', id: 'expert' },
             { label: 'マイページ', id: 'member' },
           ].map(({ label, id }) => {
             const isActive = tab === id || (id === 'member' && tab === 'member');
             const handleClick = () => {
-              if ((id === 'expert' || id === 'member') && !user) {
+              if (id === 'community_room') {
+                window.location.href = '/community';
+              } else if ((id === 'expert' || id === 'member') && !user) {
                 window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
               } else if (id === 'expert') {
                 setTab('expertregister');
