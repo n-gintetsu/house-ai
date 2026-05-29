@@ -25,15 +25,17 @@ import ExperienceComplete from './ExperienceComplete'
 
 function ExperienceApp() {
   return (
-    <Routes>
-      <Route path="/experiences" element={<ExperienceStartScreen />} />
-      <Route path="/experiences/interview" element={<ExperienceInterview />} />
-      <Route path="/experiences/analyzing" element={<ExperienceAnalyzing />} />
-      <Route path="/experiences/result" element={<ExperienceResult />} />
-      <Route path="/experiences/complete" element={<ExperienceComplete />} />
-      <Route path="*" element={<Navigate to="/experiences" replace />} />
-    </Routes>
-  );
+    <BrowserRouter>
+      <Routes>
+        <Route path="/experiences" element={<ExperienceStartScreen />} />
+        <Route path="/experiences/interview" element={<ExperienceInterview />} />
+        <Route path="/experiences/analyzing" element={<ExperienceAnalyzing />} />
+        <Route path="/experiences/result" element={<ExperienceResult />} />
+        <Route path="/experiences/complete" element={<ExperienceComplete />} />
+        <Route path="*" element={<Navigate to="/experiences" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 function CommunityApp() {
