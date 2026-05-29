@@ -18,7 +18,6 @@ import {
   LockKeyhole,
   Search,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import "./PropertyCinemaFeed.css";
 import AIPropertyCinema from "./AIPropertyCinema";
 
