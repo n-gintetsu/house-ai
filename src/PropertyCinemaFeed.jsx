@@ -354,14 +354,10 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
               <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', margin: '12px 0 0' }}>
                 しつこい営業はありません。やり取りは会員ページ内で完結します。AIが希望条件を整理してから、条件に合う業者だけに相談できます。
               </p>
-              <motion.button
-                style={{ border: '2px solid transparent' }}
-                whileHover={{ boxShadow: '0 0 0 2px #3b82f6, 0 0 20px rgba(59,130,246,0.5)' }}
-                transition={{ duration: 0.2 }}
-              >
+              <button>
                 <Search size={18} />
                 AIに相談して確認する
-              </motion.button>
+              </button>
             </div>
           ) : null}
         </div>
