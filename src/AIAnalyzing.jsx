@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const msgs = ['類似相談検索中...', '利回り分析中...', '周辺価格比較中...', '空室率を分析中...', '市場データ確認中...', 'ローン条件を整理中...'];

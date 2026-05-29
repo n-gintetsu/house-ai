@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Bot, GitCompare, TrendingUp } from 'lucide-react';
 
 export function AIComparisonCTA({ title = 'あなたの場合も分析できます', onConsult }) {

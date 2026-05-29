@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence, useInView } from 'motion/react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Calculator, TrendingUp, Home, BarChart3, Search, Sparkles } from 'lucide-react';
 
 const aiTools = [

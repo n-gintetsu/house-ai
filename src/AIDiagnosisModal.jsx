@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { X, Sparkles, Search, DollarSign, Clock, ShieldCheck, Home as HomeIcon, MapPin } from 'lucide-react';
 

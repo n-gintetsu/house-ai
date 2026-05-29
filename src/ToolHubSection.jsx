@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, MessageSquare } from 'lucide-react';
 
