@@ -17,6 +17,26 @@ import CommunityListPage from './CommunityListPage'
 import CommunitySuccessPage from './CommunitySuccessPage'
 import ConsultationHubPage from './ConsultationHubPage'
 import PropertySearchListPage from './PropertySearchListPage'
+import ExperienceStartScreen from './ExperienceStartScreen'
+import ExperienceInterview from './ExperienceInterview'
+import ExperienceAnalyzing from './ExperienceAnalyzing'
+import ExperienceResult from './ExperienceResult'
+import ExperienceComplete from './ExperienceComplete'
+
+function ExperienceApp() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/experiences" element={<ExperienceStartScreen />} />
+        <Route path="/experiences/interview" element={<ExperienceInterview />} />
+        <Route path="/experiences/analyzing" element={<ExperienceAnalyzing />} />
+        <Route path="/experiences/result" element={<ExperienceResult />} />
+        <Route path="/experiences/complete" element={<ExperienceComplete />} />
+        <Route path="*" element={<Navigate to="/experiences" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
 
 function CommunityApp() {
   return (
@@ -95,6 +115,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
   )
 } else if (pathname.startsWith('/community') || pathname.startsWith('/consultation') || pathname.startsWith('/search')) {
   Component = CommunityApp
+} else if (pathname.startsWith('/experiences')) {
+  Component = ExperienceApp
 }
 
 createRoot(document.getElementById('root')).render(
