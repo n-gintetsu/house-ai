@@ -16,6 +16,7 @@ import CommunityCreatePage from './CommunityCreatePage'
 import CommunityListPage from './CommunityListPage'
 import CommunitySuccessPage from './CommunitySuccessPage'
 import ConsultationHubPage from './ConsultationHubPage'
+import PropertySearchListPage from './PropertySearchListPage'
 
 function CommunityApp() {
   return (
@@ -25,6 +26,7 @@ function CommunityApp() {
         <Route path="/community/create" element={<CommunityCreatePage />} />
         <Route path="/community/success" element={<CommunitySuccessPage />} />
         <Route path="/consultation" element={<ConsultationHubPage />} />
+        <Route path="/search" element={<PropertySearchListPage />} />
         <Route path="*" element={<Navigate to="/community" replace />} />
       </Routes>
     </BrowserRouter>
@@ -91,7 +93,7 @@ if (pathname === '/admin' || pathname === '/admin/') {
       onOpenConcierge={() => {}}
     />
   )
-} else if (pathname.startsWith('/community') || pathname.startsWith('/consultation')) {
+} else if (pathname.startsWith('/community') || pathname.startsWith('/consultation') || pathname.startsWith('/search')) {
   Component = CommunityApp
 }
 

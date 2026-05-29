@@ -1262,7 +1262,7 @@ function NoResultScreen({ setPhase }) {
           <p className="apc-noresult-card-desc">
             エリア・賃料・間取り・物件種別などを指定して、掲載中の物件を一覧から探せます。
           </p>
-          <button className="apc-noresult-btn apc-noresult-btn-blue" onClick={() => setPhase("top")}>
+          <button className="apc-noresult-btn apc-noresult-btn-blue" onClick={() => { window.location.href = '/search'; }}>
             一覧検索へ進む
           </button>
         </motion.div>
