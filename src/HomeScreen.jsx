@@ -3,7 +3,6 @@ import { AffiliateCard } from './AffiliateCard';
 import SEOHead from './SEOHead';
 import { supabase } from "./lib/supabase";
 import { trackEvent } from './lib/analytics';
-import { FigmaExperienceSection } from './FigmaExperienceSection';
 import { FigmaNewsSection } from './FigmaNewsSection';
 import { SectionTransition } from './SectionTransition';
 import AIToolsSection from './AIToolsSection';
@@ -1240,7 +1239,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
 
       {/* 7. 体験談プレビュー */}
       <SectionTransition />
-      <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
       <FigmaNewsSection onTabChange={navigate} />
       <AIPartnerSection onTabChange={navigate} />
