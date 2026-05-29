@@ -138,6 +138,7 @@ function BackModal({ onClose, onBack }) {
 export default function PropertySearchListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] });
+  const [areaInput, setAreaInput] = useState('');
   const [sortBy, setSortBy] = useState('ai');
   const [properties, setProperties] = useState(mockProperties);
   const [saved, setSaved] = useState([]);
@@ -201,7 +202,7 @@ export default function PropertySearchListPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <label style={labelStyle}>エリア</label>
-        <input type="text" placeholder="例: 渋谷区、新宿区" value={filters.area} onChange={e => setFilters(prev => ({ ...prev, area: e.target.value }))} style={inputStyle} />
+        <input type="text" placeholder="例: 渋谷区、新宿区" value={areaInput} onChange={e => setAreaInput(e.target.value)} style={inputStyle} />
       </div>
       <div>
         <label style={labelStyle}>物件種別</label>
@@ -244,11 +245,12 @@ export default function PropertySearchListPage() {
           ))}
         </div>
       </div>
-      <button onClick={() => setFilters({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] })}
+      <button onClick={() => { setFilters({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] }); setAreaInput(''); }}
         style={{ padding: '10px', background: 'transparent', color: '#6b7280', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
         条件をリセット
       </button>
       <motion.button
+        onClick={() => setFilters(prev => ({ ...prev, area: areaInput }))}
         animate={{ boxShadow: ['0 0 0px rgba(234,179,8,0)', '0 0 20px rgba(234,179,8,0.8)', '0 0 0px rgba(234,179,8,0)'] }}
         transition={{ duration: 2, repeat: Infinity }}
         style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
