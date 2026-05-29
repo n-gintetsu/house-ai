@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Search, MessageCircle, Users, Building2, UserCheck } from 'lucide-react';
@@ -50,6 +50,7 @@ function BuildingCol({ pos }) {
 
 export default function ExperienceComplete() {
   const navigate = useNavigate();
+  const [hoverIndex, setHoverIndex] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -92,15 +93,17 @@ export default function ExperienceComplete() {
 
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: 2, marginBottom: 16 }}>次のアクション</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 500, margin: '0 auto', padding: '0 16px 80px' }}>
-          {ACTIONS.map(({ Icon, label, path }) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 560, margin: '0 auto', padding: '0 16px 80px' }}>
+          {ACTIONS.map(({ Icon, label, path }, idx) => (
             <button
               key={label}
               onClick={() => navigate(path)}
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '16px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'inherit' }}
+              onMouseEnter={() => setHoverIndex(idx)}
+              onMouseLeave={() => setHoverIndex(null)}
+              style={{ background: hoverIndex === idx ? 'rgba(0,191,255,0.15)' : 'rgba(255,255,255,0.08)', border: hoverIndex === idx ? '1px solid rgba(0,191,255,0.5)' : '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '20px 12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'inherit', transition: 'all 0.2s ease' }}
             >
-              <Icon size={24} color="#94a3b8" />
-              <p style={{ color: '#ffffff', fontSize: 12, margin: '8px 0 0' }}>{label}</p>
+              <Icon size={28} color={hoverIndex === idx ? '#00BFFF' : '#94a3b8'} />
+              <p style={{ color: '#ffffff', fontSize: 13, margin: '8px 0 0' }}>{label}</p>
             </button>
           ))}
         </div>
