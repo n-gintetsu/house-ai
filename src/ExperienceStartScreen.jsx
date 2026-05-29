@@ -39,9 +39,9 @@ export default function ExperienceStartScreen() {
           {cards.map((card, index) => (
             <motion.button
               key={card.type}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.15, delay: index * 0.1 }}
               whileHover={{ scale: 1.05, y: -10 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/experiences/interview', { state: { type: card.type } })}
@@ -60,7 +60,7 @@ export default function ExperienceStartScreen() {
             </motion.button>
           ))}
         </div>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.5 }} style={{ color: 'rgba(255,255,255,0.4)', marginTop: 64, fontSize: '0.875rem' }}>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15, delay: 0.5 }} style={{ color: 'rgba(255,255,255,0.4)', marginTop: 64, fontSize: '0.875rem' }}>
           Powered by House-AI
         </motion.p>
       </div>
