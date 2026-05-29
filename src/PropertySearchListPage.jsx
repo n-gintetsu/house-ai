@@ -198,68 +198,6 @@ export default function PropertySearchListPage() {
   const inputStyle = { width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 16, boxSizing: 'border-box' };
   const labelStyle = { fontSize: 13, color: '#9ca3af', display: 'block', marginBottom: 8 };
 
-  const FilterPanel = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <label style={labelStyle}>エリア</label>
-        <input type="text" placeholder="例: 渋谷区、新宿区" value={areaInput} onChange={e => setAreaInput(e.target.value)} style={inputStyle} />
-      </div>
-      <div>
-        <label style={labelStyle}>物件種別</label>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {DEAL_TYPES.map(t => (
-            <button key={t.id} onClick={() => setFilters(prev => ({ ...prev, dealType: prev.dealType === t.id ? '' : t.id }))}
-              style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: filters.dealType === t.id ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.dealType === t.id ? '#eab308' : 'transparent', color: filters.dealType === t.id ? '#000' : '#fff', fontSize: 13, cursor: 'pointer', fontWeight: filters.dealType === t.id ? 700 : 400 }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label style={labelStyle}>賃料/価格上限（万円）</label>
-        <input type="number" placeholder="上限なし" value={filters.maxPrice} onChange={e => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))} style={inputStyle} />
-      </div>
-      <div>
-        <label style={labelStyle}>間取り</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {LAYOUTS.map(l => (
-            <button key={l} onClick={() => toggleLayout(l)}
-              style={{ padding: '6px 12px', borderRadius: 9999, border: filters.layouts.includes(l) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.layouts.includes(l) ? '#eab308' : 'transparent', color: filters.layouts.includes(l) ? '#000' : '#9ca3af', fontSize: 13, cursor: 'pointer' }}>
-              {l}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label style={labelStyle}>駅徒歩（分以内）</label>
-        <input type="number" placeholder="指定なし" value={filters.maxWalk} onChange={e => setFilters(prev => ({ ...prev, maxWalk: e.target.value }))} style={inputStyle} />
-      </div>
-      <div>
-        <label style={labelStyle}>AIおすすめ条件</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {AI_TAGS.map(t => (
-            <button key={t} onClick={() => toggleTag(t)}
-              style={{ padding: '6px 12px', borderRadius: 9999, border: filters.aiTags.includes(t) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.aiTags.includes(t) ? 'rgba(234,179,8,0.2)' : 'transparent', color: filters.aiTags.includes(t) ? '#facc15' : '#9ca3af', fontSize: 12, cursor: 'pointer' }}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button onClick={() => { setFilters({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] }); setAreaInput(''); }}
-        style={{ padding: '10px', background: 'transparent', color: '#6b7280', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
-        条件をリセット
-      </button>
-      <motion.button
-        onClick={() => setFilters(prev => ({ ...prev, area: areaInput }))}
-        animate={{ boxShadow: ['0 0 0px rgba(234,179,8,0)', '0 0 20px rgba(234,179,8,0.8)', '0 0 0px rgba(234,179,8,0)'] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-      >
-        この条件で検索
-      </motion.button>
-    </div>
-  );
-
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', paddingBottom: 80 }}>
       {/* Header */}
@@ -290,7 +228,65 @@ export default function PropertySearchListPage() {
             <h2 style={{ fontSize: 15, color: '#fff', fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
               <SlidersHorizontal size={16} color="#eab308" />検索条件
             </h2>
-            <FilterPanel />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <label style={labelStyle}>エリア</label>
+                <input type="text" placeholder="例: 渋谷区、新宿区" value={areaInput} onChange={e => setAreaInput(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>物件種別</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {DEAL_TYPES.map(t => (
+                    <button key={t.id} onClick={() => setFilters(prev => ({ ...prev, dealType: prev.dealType === t.id ? '' : t.id }))}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: filters.dealType === t.id ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.dealType === t.id ? '#eab308' : 'transparent', color: filters.dealType === t.id ? '#000' : '#fff', fontSize: 13, cursor: 'pointer', fontWeight: filters.dealType === t.id ? 700 : 400 }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>賃料/価格上限（万円）</label>
+                <input type="number" placeholder="上限なし" value={filters.maxPrice} onChange={e => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>間取り</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {LAYOUTS.map(l => (
+                    <button key={l} onClick={() => toggleLayout(l)}
+                      style={{ padding: '6px 12px', borderRadius: 9999, border: filters.layouts.includes(l) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.layouts.includes(l) ? '#eab308' : 'transparent', color: filters.layouts.includes(l) ? '#000' : '#9ca3af', fontSize: 13, cursor: 'pointer' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>駅徒歩（分以内）</label>
+                <input type="number" placeholder="指定なし" value={filters.maxWalk} onChange={e => setFilters(prev => ({ ...prev, maxWalk: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>AIおすすめ条件</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {AI_TAGS.map(t => (
+                    <button key={t} onClick={() => toggleTag(t)}
+                      style={{ padding: '6px 12px', borderRadius: 9999, border: filters.aiTags.includes(t) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.aiTags.includes(t) ? 'rgba(234,179,8,0.2)' : 'transparent', color: filters.aiTags.includes(t) ? '#facc15' : '#9ca3af', fontSize: 12, cursor: 'pointer' }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => { setFilters({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] }); setAreaInput(''); }}
+                style={{ padding: '10px', background: 'transparent', color: '#6b7280', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
+                条件をリセット
+              </button>
+              <motion.button
+                onClick={() => setFilters(prev => ({ ...prev, area: areaInput }))}
+                animate={{ boxShadow: ['0 0 0px rgba(234,179,8,0)', '0 0 20px rgba(234,179,8,0.8)', '0 0 0px rgba(234,179,8,0)'] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+              >
+                この条件で検索
+              </motion.button>
+            </div>
           </div>
         ) : null}
 
@@ -322,7 +318,65 @@ export default function PropertySearchListPage() {
               <h3 style={{ fontSize: 16, color: '#fff', fontWeight: 700 }}>検索条件</h3>
               <button onClick={() => setShowFilter(false)} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}><X size={20} /></button>
             </div>
-            <FilterPanel />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <label style={labelStyle}>エリア</label>
+                <input type="text" placeholder="例: 渋谷区、新宿区" value={areaInput} onChange={e => setAreaInput(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>物件種別</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {DEAL_TYPES.map(t => (
+                    <button key={t.id} onClick={() => setFilters(prev => ({ ...prev, dealType: prev.dealType === t.id ? '' : t.id }))}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: filters.dealType === t.id ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.dealType === t.id ? '#eab308' : 'transparent', color: filters.dealType === t.id ? '#000' : '#fff', fontSize: 13, cursor: 'pointer', fontWeight: filters.dealType === t.id ? 700 : 400 }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>賃料/価格上限（万円）</label>
+                <input type="number" placeholder="上限なし" value={filters.maxPrice} onChange={e => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>間取り</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {LAYOUTS.map(l => (
+                    <button key={l} onClick={() => toggleLayout(l)}
+                      style={{ padding: '6px 12px', borderRadius: 9999, border: filters.layouts.includes(l) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.layouts.includes(l) ? '#eab308' : 'transparent', color: filters.layouts.includes(l) ? '#000' : '#9ca3af', fontSize: 13, cursor: 'pointer' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>駅徒歩（分以内）</label>
+                <input type="number" placeholder="指定なし" value={filters.maxWalk} onChange={e => setFilters(prev => ({ ...prev, maxWalk: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>AIおすすめ条件</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {AI_TAGS.map(t => (
+                    <button key={t} onClick={() => toggleTag(t)}
+                      style={{ padding: '6px 12px', borderRadius: 9999, border: filters.aiTags.includes(t) ? 'none' : '1px solid rgba(255,255,255,0.1)', background: filters.aiTags.includes(t) ? 'rgba(234,179,8,0.2)' : 'transparent', color: filters.aiTags.includes(t) ? '#facc15' : '#9ca3af', fontSize: 12, cursor: 'pointer' }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => { setFilters({ area: '', dealType: '', layouts: [], minPrice: '', maxPrice: '', maxWalk: '', maxAge: '', aiTags: [] }); setAreaInput(''); }}
+                style={{ padding: '10px', background: 'transparent', color: '#6b7280', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
+                条件をリセット
+              </button>
+              <motion.button
+                onClick={() => setFilters(prev => ({ ...prev, area: areaInput }))}
+                animate={{ boxShadow: ['0 0 0px rgba(234,179,8,0)', '0 0 20px rgba(234,179,8,0.8)', '0 0 0px rgba(234,179,8,0)'] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+              >
+                この条件で検索
+              </motion.button>
+            </div>
             <button onClick={() => setShowFilter(false)} style={{ width: '100%', marginTop: 16, padding: '14px', background: 'linear-gradient(90deg,#eab308,#ca8a04)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
               {sorted.length}件を表示する
             </button>
