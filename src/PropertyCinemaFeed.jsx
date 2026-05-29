@@ -258,7 +258,7 @@ export default function PropertyCinemaFeed({ properties = demoProperties }) {
 
       <div className="ai-cinema-right-col">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => { window.location.href = '/'; }}
           style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.5)', borderRadius: 8, color: '#3b82f6', fontSize: 13, fontWeight: 600, padding: '7px 14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, marginTop: 16, fontFamily: 'inherit' }}
         >
           ← 戻る
