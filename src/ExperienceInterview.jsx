@@ -1,16 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles } from 'lucide-react';
 
-const questions = [
+const QUESTIONS_DEFAULT = [
   'どんなことで悩んでいましたか？',
   'どのように解決しましたか？',
   '同じ悩みを持つ人へアドバイスはありますか？',
 ];
 
+const QUESTIONS_QUESTION = [
+  'どんなことで迷っていますか？',
+  '今の状況を教えてください（まだ動いていない・物件を見始めた・契約直前・その他）',
+  '誰かに相談できていますか？',
+];
+
 export default function ExperienceInterview() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const type = (location.state || {}).type || '';
+  const questions = type === 'question' ? QUESTIONS_QUESTION : QUESTIONS_DEFAULT;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [inputValue, setInputValue] = useState('');
