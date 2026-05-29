@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import "./AIPropertyCinema.css";
-import ZeroResultsModal from './ZeroResultsModal';
 
 /* =====================================================
    DATA
@@ -1428,7 +1427,7 @@ export default function AIPropertyCinema() {
           ) : null}
 
           {phase === "noResult" ? (
-            <ZeroResultsModal onClose={() => setPhase('top')} />
+            <NoResultScreen setPhase={setPhase} />
           ) : null}
         </div>
       ) : null}
