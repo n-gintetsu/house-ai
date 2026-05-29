@@ -12,7 +12,7 @@ const tools = [
   { id: 'insurance', icon: Shield, title: '火災保険整理', description: '補償内容を比較', labels: ['登録不要', 'AI整理'] },
   { id: 'moving', icon: Home, title: '引越し費用比較', description: '相場確認・条件比較', labels: ['登録不要'] },
   { id: 'satei', icon: null, title: 'AI不動産整理査定', description: '相場感をAIが整理', labels: ['登録不要', 'AI査定'] },
-  { id: 'community_room', icon: MessageSquare, title: '住まい相談室', description: '希望条件投稿できます', labels: ['要登録', 'AI整理'], iconBg: 'linear-gradient(135deg, #c9a84c, #a07830)', href: '/community' },
+  { id: 'community_room', icon: MessageSquare, title: '住まい相談室', description: '希望条件投稿できます', labels: ['要登録', 'AI整理'], iconBg: 'linear-gradient(135deg, #c9a84c, #a07830)', href: '/consultation' },
 ];
 
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
