@@ -1365,9 +1365,14 @@ export default function AIPropertyCinema() {
 
   return (
     <>
-      <button className="apc-trigger" onClick={handleOpen}>
+      <motion.button
+        className="apc-trigger"
+        onClick={handleOpen}
+        whileHover={{ boxShadow: '0 0 0 2px #3b82f6, 0 0 20px rgba(59,130,246,0.5)' }}
+        transition={{ duration: 0.2 }}
+      >
         ✨ AIに条件で探してもらう
-      </button>
+      </motion.button>
 
       {open ? (
         <div className="apc-overlay">
