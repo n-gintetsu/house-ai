@@ -1,12 +1,50 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 
 const steps = ['内容分析', 'カテゴリ分類', 'AI要約作成', 'タグ生成', '投稿カード作成'];
 
+const generateExperience = async (answers) => {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: `不動産の体験談を以下の回答から整理してください。
+
+回答1（悩み）: ${answers[0]}
+回答2（解決方法）: ${answers[1]}
+回答3（アドバイス）: ${answers[2]}
+
+以下のJSON形式のみで返してください（他のテキスト不要）:
+{
+  "title": "体験談のタイトル（20文字以内）",
+  "summary": "3文程度の要約。ユーザーの体験を自然な文章でまとめる",
+  "tags": ["タグ1", "タグ2", "タグ3", "タグ4"],
+  "learnings": ["学び1", "学び2", "学び3"]
+}`,
+      }],
+    }),
+  });
+  const data = await response.json();
+  const text = data.content[0].text;
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+};
+
 export default function ExperienceAnalyzing() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const answers = (location.state || {}).answers || [];
   const [completedSteps, setCompletedSteps] = useState([]);
 
   useEffect(() => {
@@ -15,10 +53,16 @@ export default function ExperienceAnalyzing() {
         setCompletedSteps((prev) => [...prev, index]);
       }, (index + 1) * 600);
     });
-    setTimeout(() => {
-      navigate('/experiences/result');
-    }, 3500);
-  }, [navigate]);
+
+    generateExperience(answers)
+      .then((result) => {
+        navigate('/experiences/result', { state: { result } });
+      })
+      .catch(() => {
+        const fallback = { title: '体験談', summary: answers[0] || '', tags: [], learnings: [] };
+        navigate('/experiences/result', { state: { result: fallback } });
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

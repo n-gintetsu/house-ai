@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Edit, Send } from 'lucide-react';
 
 export default function ExperienceResult() {
   const navigate = useNavigate();
-  const tags = ['#住宅ローン', '#購入', '#初心者', '#失敗談'];
+  const location = useLocation();
+  const result = (location.state || {}).result || { title: '', summary: '', tags: [], learnings: [] };
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A1628', position: 'relative', overflow: 'hidden', padding: '48px 16px' }}>
@@ -19,7 +20,7 @@ export default function ExperienceResult() {
         </motion.div>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 24, overflow: 'hidden' }}>
           <div style={{ padding: 32, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <h2 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 600, marginBottom: 16 }}>初めての住宅購入で失敗しそうになった話</h2>
+            <h2 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 600, marginBottom: 16 }}>{result.title}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #00D4FF, #0099CC)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Sparkles size={16} color="#fff" />
@@ -27,20 +28,20 @@ export default function ExperienceResult() {
               <span style={{ color: '#00D4FF', fontSize: '0.875rem', fontWeight: 500 }}>AI要約</span>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1rem', lineHeight: 1.7, margin: 0 }}>
-              初めての住宅購入で、不動産会社の営業トークに流されそうになりましたが、複数の金融機関で住宅ローンの事前審査を受けることで、より有利な条件を引き出すことができました。焦らず比較検討することの重要性を学びました。
+              {result.summary}
             </p>
           </div>
           <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {tags.map((tag, index) => (
+            {result.tags.map((tag, index) => (
               <motion.span key={tag} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }} style={{ padding: '8px 16px', borderRadius: 9999, color: '#00D4FF', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', fontSize: '0.875rem' }}>
-                {tag}
+                #{tag}
               </motion.span>
             ))}
           </div>
           <div style={{ padding: 32 }}>
             <h3 style={{ color: '#fff', fontSize: '1.125rem', fontWeight: 600, marginBottom: 12 }}>学び</h3>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {['複数の金融機関で事前審査を受けることが重要', '営業トークに流されず、冷静に判断する', '比較検討の時間を十分に確保する'].map((learning, index) => (
+              {result.learnings.map((learning, index) => (
                 <motion.li key={index} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, color: 'rgba(255,255,255,0.7)', fontSize: '0.9375rem', marginBottom: 8 }}>
                   <span style={{ color: '#D4AF37', marginTop: 2 }}>•</span>
                   <span>{learning}</span>
