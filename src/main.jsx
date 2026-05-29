@@ -13,6 +13,7 @@ import CostCalculatorPage from './CostCalculatorPage'
 import MortgageSimulatorPage from './MortgageSimulatorPage'
 import CommunityCreatePage from './CommunityCreatePage'
 import CommunityListPage from './CommunityListPage'
+import CommunitySuccessPage from './CommunitySuccessPage'
 
 const TOOL_URL_MAP = {
   dictionary: '/tools/dictionary',
@@ -74,6 +75,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
       onOpenConcierge={() => {}}
     />
   )
+} else if (pathname === '/community/success' || pathname === '/community/success/') {
+  Component = CommunitySuccessPage
 } else if (pathname === '/community/create' || pathname === '/community/create/') {
   Component = CommunityCreatePage
 } else if (pathname === '/community' || pathname === '/community/') {
