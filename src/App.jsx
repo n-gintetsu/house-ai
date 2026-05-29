@@ -223,6 +223,11 @@ const NavIcons = {
   community_room: (active) => (
     <MessageSquare size={22} color={active ? '#1a3a5c' : '#94a3b8'} />
   ),
+  experiences: (active) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11 2L13.5 8H20L14.5 12L16.5 18L11 14L5.5 18L7.5 12L2 8H8.5L11 2Z" stroke={active ? '#1a3a5c' : '#94a3b8'} strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  ),
 };
 
 const MenuSVGs = {
