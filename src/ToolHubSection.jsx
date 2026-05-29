@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
-import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles } from 'lucide-react';
+import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, MessageSquare } from 'lucide-react';
 
 const tools = [
   { id: 'mortgage', icon: Calculator, title: '住宅ローンシミュレーション', description: '返済・固定変動を整理', labels: ['登録不要', '人気'] },
@@ -11,12 +11,13 @@ const tools = [
   { id: 'dictionary', icon: BookOpen, title: '宅建用語集', description: '難しい言葉を整理', labels: ['登録不要'] },
   { id: 'insurance', icon: Shield, title: '火災保険整理', description: '補償内容を比較', labels: ['登録不要', 'AI整理'] },
   { id: 'moving', icon: Home, title: '引越し費用比較', description: '相場確認・条件比較', labels: ['登録不要'] },
+  { id: 'community_room', icon: MessageSquare, title: '住まい相談室', description: '希望条件投稿できます', labels: ['要登録', 'AI整理'], iconBg: 'linear-gradient(135deg, #c9a84c, #a07830)', href: '/community' },
 ];
 
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
 
 const labelStyle = (label) => {
-  if (label === '登録不要') return { background: '#F0FDF4', color: '#15803d' };
+  if (label === '登録不要' || label === '要登録') return { background: '#F0FDF4', color: '#15803d' };
   if (label === '人気') return { background: '#FFF7ED', color: '#c2410c' };
   if (label === 'AI整理') return { background: '#EFF6FF', color: '#1d4ed8' };
   return { background: '#FAF5FF', color: '#7e22ce' };
@@ -70,12 +71,12 @@ export default function ToolHubSection({ onTabChange }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(11,31,51,0.12)' }}
-                onClick={() => handleToolClick(tool.id)}
+                onClick={() => tool.href ? (window.location.href = tool.href) : handleToolClick(tool.id)}
                 style={{ position: 'relative', background: 'white', borderRadius: '24px', padding: '32px', border: '1px solid #E5E7EB', textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s ease' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(96,165,250,0.5)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = '#E5E7EB'}
               >
-                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '16px', transition: 'transform 0.2s' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: tool.iconBg || 'linear-gradient(135deg, #3b82f6, #2563eb)', display: 'grid', placeItems: 'center', marginBottom: '16px', transition: 'transform 0.2s' }}>
                   <Icon size={28} color="white" />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>{tool.title}</h3>
