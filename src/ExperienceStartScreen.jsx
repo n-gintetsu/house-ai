@@ -1,9 +1,17 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, AlertTriangle, HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const HOVER_STYLES = [
+  { background: 'rgba(212,175,55,0.1)',  border: '1px solid rgba(212,175,55,0.5)',  boxShadow: 'inset 0 1px 0 rgba(212,175,55,0.2), 0 4px 20px rgba(212,175,55,0.2)'  },
+  { background: 'rgba(0,191,255,0.1)',   border: '1px solid rgba(0,191,255,0.5)',   boxShadow: 'inset 0 1px 0 rgba(0,191,255,0.2), 0 4px 20px rgba(0,191,255,0.2)'   },
+  { background: 'rgba(139,92,246,0.1)',  border: '1px solid rgba(139,92,246,0.5)', boxShadow: 'inset 0 1px 0 rgba(139,92,246,0.2), 0 4px 20px rgba(139,92,246,0.2)' },
+];
+
 export default function ExperienceStartScreen() {
   const navigate = useNavigate();
+  const [hoverIndex, setHoverIndex] = useState(null);
 
   const cards = [
     { icon: Sparkles, title: '成功談を書く', emoji: '✨', gradient: 'from-[#D4AF37] to-[#FFD700]', type: 'success' },
@@ -37,7 +45,9 @@ export default function ExperienceStartScreen() {
               whileHover={{ scale: 1.05, y: -10 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/experiences/interview', { state: { type: card.type } })}
-              style={{ position: 'relative', padding: 32, borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+              onMouseEnter={() => setHoverIndex(index)}
+              onMouseLeave={() => setHoverIndex(null)}
+              style={{ position: 'relative', padding: 32, borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', background: hoverIndex === index ? HOVER_STYLES[index].background : 'rgba(255,255,255,0.06)', border: hoverIndex === index ? HOVER_STYLES[index].border : '1px solid rgba(255,255,255,0.12)', boxShadow: hoverIndex === index ? HOVER_STYLES[index].boxShadow : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.3)' }}
             >
               <div style={{ position: 'relative', zIndex: 10 }}>
                 <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}>
