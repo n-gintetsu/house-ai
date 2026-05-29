@@ -58,7 +58,6 @@ export default function ExperienceComplete() {
           width: 2px;
           height: 100%;
           background: linear-gradient(to bottom, transparent, #00D4FF, transparent);
-          animation: rayPulse 2.4s ease-in-out infinite;
         }
         .ec-action-btn {
           padding: 24px 8px;
@@ -83,7 +82,7 @@ export default function ExperienceComplete() {
 
         {/* Vertical rays */}
         {RAYS.map((r, i) => (
-          <div key={i} className="ec-ray" style={{ left: r.left, animationDelay: r.delay }} />
+          <div key={i} className="ec-ray" style={{ left: r.left, animation: `streamPulse 2s ease-in-out infinite`, animationDelay: `${i * 0.4}s` }} />
         ))}
 
         {/* Buildings */}
@@ -92,12 +91,17 @@ export default function ExperienceComplete() {
             <div key={bi} style={{ position: 'absolute', bottom: 0, left: b.left, width: b.width, height: b.height, background: 'linear-gradient(to top, #0d1e35, #112240)', borderTop: '1px solid rgba(0,212,255,0.19)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(4, 1fr)', gap: 3, padding: 6, height: '60%' }}>
                 {Array.from({ length: 12 }).map((_, wi) => (
-                  <div key={wi} style={{ background: Math.random() > 0.4 ? 'rgba(0,212,255,0.18)' : 'rgba(212,175,55,0.12)', borderRadius: 1 }} />
+                  <div key={wi} style={{ background: Math.random() > 0.4 ? 'rgba(0,212,255,0.18)' : 'rgba(212,175,55,0.12)', borderRadius: 1, animation: `windowBlink ${1 + Math.random() * 2}s ease-in-out infinite`, animationDelay: `${Math.random() * 2}s` }} />
                 ))}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Drones */}
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ position: 'absolute', top: `${100 + i * 80}px`, width: 20, height: 20, borderRadius: '50%', background: '#00D4FF', boxShadow: '0 0 10px #00D4FF', animation: `dronefly ${15 + i * 5}s linear infinite`, pointerEvents: 'none', zIndex: 2 }} />
+        ))}
 
         {/* Center content */}
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 900, width: '100%', padding: '0 16px', textAlign: 'center' }}>
