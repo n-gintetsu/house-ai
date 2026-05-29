@@ -34,7 +34,7 @@ export default function ConsultationHubPage() {
               <p style={{ fontSize:14, color:'#9ca3af', marginBottom:16, flexGrow:1 }}>{description}</p>
               {available ? (
                 <button onClick={() => navigate(path)} style={{ width:'100%', padding:'10px 0', background:bg, color:'#000', border:'none', borderRadius:8, fontWeight:700, fontSize:14, cursor:'pointer' }}>
-                  相談する
+                  投稿する
                 </button>
               ) : (
                 <div style={{ textAlign:'center', fontSize:14, color:'#6b7280' }}>準備中</div>

@@ -52,7 +52,12 @@ export default function CommunityListPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', paddingBottom: 80 }}>
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(10,10,15,0.8)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: 896, margin: '0 auto', padding: '32px 16px' }}>
+        <div style={{ maxWidth: 896, margin: '0 auto', padding: '24px 16px 32px' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            <button onClick={() => { window.location.href = '/'; }} style={{ padding: '7px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>ホーム</button>
+            <button onClick={() => navigate(-1)} style={{ padding: '7px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← 前のページ</button>
+            <button onClick={() => { window.location.href = '/tools'; }} style={{ padding: '7px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>便利ツール</button>
+          </div>
           <h1 style={{ fontSize: 28, color: '#fff', marginBottom: 12 }}>あなたの希望を投稿してください</h1>
           <p style={{ fontSize: 16, color: '#d1d5db', marginBottom: 8 }}>AIが条件を整理し、条件に合う業者や非公開物件情報との出会いをサポートします</p>
           <p style={{ fontSize: 14, color: '#22d3ee', fontStyle: 'italic' }}>検索する時代から、AIに探してもらう時代へ</p>

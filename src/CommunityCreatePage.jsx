@@ -4,7 +4,7 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import AreaAutocomplete from './AreaAutocomplete';
 import { supabase } from './supabaseClient';
 
-const propertyTypes = [{ id:'rent', label:'賃貸' }, { id:'sale', label:'売買' }, { id:'investment', label:'投資' }];
+const propertyTypes = [{ id:'rent', label:'賃貸' }, { id:'sale', label:'売買' }, { id:'investment', label:'投資' }, { id:'tenant', label:'テナント' }, { id:'land', label:'土地' }, { id:'other', label:'その他' }];
 const layouts = ['1R','1K','1DK','1LDK','2DK','2LDK','3LDK','4LDK+'];
 const priorityTags = ['在宅ワーク','静か','眺望','駅近','ペット','デザイナーズ','新築','高級感','日当たり','セキュリティ'];
 
