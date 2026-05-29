@@ -2349,7 +2349,7 @@ export default function App() {
           {[
             { label: 'ホーム', id: 'home' },
             { label: '物件', id: 'properties' },
-            { label: '体験談', id: 'community' },
+            { label: '体験談', id: 'experiences' },
             { label: '相談室', id: 'community_room' },
             { label: '専門家相談', id: 'expert' },
             { label: 'マイページ', id: 'member' },
@@ -2358,6 +2358,8 @@ export default function App() {
             const handleClick = () => {
               if (id === 'community_room') {
                 window.location.href = '/community';
+              } else if (id === 'experiences') {
+                window.location.href = '/experiences';
               } else if ((id === 'expert' || id === 'member') && !user) {
                 window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
               } else if (id === 'expert') {
