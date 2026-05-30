@@ -52,7 +52,11 @@ export default function ExperienceFeed() {
       .catch(() => setLoading(false));
   }, []);
 
-  const filtered = posts.filter(p => p.type === activeTab).sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  const filtered = posts.filter(p => p.type === activeTab).sort((a, b) => {
+    const likeDiff = (b.likes || 0) - (a.likes || 0);
+    if (likeDiff !== 0) return likeDiff;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
   const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => ((a.likes || 0) > (b.likes || 0) ? a : b)).id : null;
 
   const handleAdviceSubmit = () => {
