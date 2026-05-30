@@ -33,7 +33,7 @@ export default function ExperienceResult() {
       });
       if (error) throw error;
       setSubmitted(true);
-      window.location.href = '/experiences/feed';
+      navigate('/experiences/complete');
     } catch (e) {
       alert('投稿に失敗しました。もう一度お試しください。');
     } finally {
