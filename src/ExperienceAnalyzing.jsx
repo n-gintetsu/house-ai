@@ -54,13 +54,15 @@ export default function ExperienceAnalyzing() {
       }, (index + 1) * 600);
     });
 
+    const wantsAdvice = /はい/.test(answers[3] || '');
+
     generateExperience(answers)
       .then((result) => {
-        navigate('/experiences/result', { state: { result } });
+        navigate('/experiences/result', { state: { result, wantsAdvice } });
       })
       .catch(() => {
         const fallback = { title: '体験談', summary: answers[0] || '', tags: [], learnings: [] };
-        navigate('/experiences/result', { state: { result: fallback } });
+        navigate('/experiences/result', { state: { result: fallback, wantsAdvice } });
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
