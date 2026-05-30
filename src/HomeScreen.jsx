@@ -613,12 +613,12 @@ const storyItems = [
   { initial: 'S', user: '50代女性', category: '売却', badge: 'AI活用', badgeType: 'blue', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。', aiComment: 'AI相談は初心者の方に特に効果的です。疑問点の整理と優先順位付けができます。' },
 ];
 
-const MAC_W = 436;
+const MAC_W = 440;
 const MAC_GAP = 5;
 const getMacCard = (dist) => {
-  if (dist === 0) return { w: 190, h: 238, r: 18, o: 1 };
-  if (dist === 1) return { w: 120, h: 155, r: 14, o: 0.65 };
-  return { w: 82, h: 108, r: 10, o: 0.3 };
+  if (dist === 0) return { w: 200, h: 248, r: 18, o: 1 };
+  if (dist === 1) return { w: 128, h: 165, r: 14, o: 0.65 };
+  return { w: 90, h: 118, r: 10, o: 0.3 };
 };
 const getMacCenterX = (idx, cur) => {
   let x = 0;
@@ -634,24 +634,28 @@ function MacBookCarousel({ properties, onNavigate }) {
   }, [properties.length]);
   const trackX = MAC_W / 2 - getMacCenterX(cur, cur);
   return (
-    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#0B1F33', display: 'flex', alignItems: 'center' }}>
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#0A1628', display: 'flex', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', transform: `translateX(${trackX}px)`, transition: 'transform 0.45s cubic-bezier(.25,.46,.45,.94)', willChange: 'transform' }}>
         {properties.map((item, i) => {
           const dist = Math.abs(i - cur);
           const { w, h, r, o } = getMacCard(dist);
           return (
-            <div key={i} style={{ width: w, height: h, margin: `0 ${MAC_GAP}px`, borderRadius: r, opacity: o, overflow: 'hidden', flexShrink: 0, transition: 'all 0.45s cubic-bezier(.25,.46,.45,.94)', position: 'relative', cursor: 'pointer', background: '#111' }} onClick={() => onNavigate('properties')}>
+            <div
+              key={i}
+              style={{ width: w, height: h, margin: `0 ${MAC_GAP}px`, borderRadius: r, opacity: o, overflow: 'hidden', flexShrink: 0, transition: 'all 0.45s cubic-bezier(.25,.46,.45,.94)', position: 'relative', cursor: 'pointer', background: '#111' }}
+              onClick={() => onNavigate('properties')}
+            >
               <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)' }} />
               {dist === 0 && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 12px', color: '#fff' }}>
-                  <span style={{ fontSize: 8, background: 'rgba(212,175,55,0.95)', color: '#0B1F33', borderRadius: 4, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.04em' }}>{item.aiBadge}</span>
-                  <p style={{ fontSize: 11, fontWeight: 700, margin: '4px 0 2px', lineHeight: 1.3 }}>{item.title}</p>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.75)', margin: 0 }}>{item.price}</p>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 13px', color: '#fff' }}>
+                  <span style={{ fontSize: 9, background: 'rgba(212,175,55,0.96)', color: '#0B1F33', borderRadius: 4, padding: '2px 7px', fontWeight: 700, letterSpacing: '0.04em' }}>{item.aiBadge}</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: '5px 0 2px', lineHeight: 1.3 }}>{item.title}</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: 0 }}>{item.price}</p>
                 </div>
               )}
               {dist === 1 && (
-                <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{item.area}</div>
+                <div style={{ position: 'absolute', bottom: 7, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{item.area}</div>
               )}
             </div>
           );
@@ -1130,12 +1134,32 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           {/* 左：縦型フィード */}
           {/* 左：MacBookモックアップ */}
           <div className="macbook-wrap">
-            <div className="macbook-screen-lid">
-              <div className="macbook-camera" />
-              <div className="macbook-screen-inner">
-                <MacBookCarousel properties={verticalProperties} onNavigate={navigate} />
+            {/* ふた（スクリーン部） */}
+            <div className="macbook-lid">
+              <div className="macbook-lid-camera" />
+              <div className="macbook-screen-frame">
+                {/* ブラウザバー */}
+                <div className="macbook-browser-bar">
+                  <div className="macbook-traffic-lights">
+                    <span className="mac-dot mac-dot-red" />
+                    <span className="mac-dot mac-dot-yellow" />
+                    <span className="mac-dot mac-dot-green" />
+                  </div>
+                  <div className="macbook-url-bar">
+                    <div className="macbook-url-bar-inner">
+                      <span className="macbook-url-text">house-ai.co.jp</span>
+                    </div>
+                  </div>
+                </div>
+                {/* 画面コンテンツ（16:10） */}
+                <div className="macbook-screen-inner">
+                  <MacBookCarousel properties={verticalProperties} onNavigate={navigate} />
+                </div>
               </div>
             </div>
+            {/* ヒンジ */}
+            <div className="macbook-hinge" />
+            {/* キーボードベース */}
             <div className="macbook-base">
               <div className="macbook-trackpad" />
             </div>

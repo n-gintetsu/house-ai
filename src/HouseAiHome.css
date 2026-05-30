@@ -1405,59 +1405,150 @@
   align-items: center;
 }
 
-/* MacBook mockup */
+/* ── MacBook mockup ── */
 .macbook-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  max-width: 510px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.macbook-screen-lid {
-  width: 460px;
-  background: #cacaca;
-  border: 2px solid #a0a0a0;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  padding: 12px 12px 8px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.1);
+/* 本体ふた：上ハイライト→シルバー→下シャドウを linear-gradient で単色重ね */
+.macbook-lid {
+  width: 480px;
+  background: linear-gradient(
+    to bottom,
+    #E0E2E0 0px, #E0E2E0 3px,
+    #C8CAC8 3px, #C8CAC8 calc(100% - 3px),
+    #A8AAA8 calc(100% - 3px), #A8AAA8 100%
+  );
+  border-radius: 14px 14px 0 0;
+  padding: 13px 20px 10px;
+  box-shadow: 0 22px 56px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.10);
 }
 
-.macbook-camera {
-  width: 6px;
-  height: 6px;
+/* カメラドット */
+.macbook-lid-camera {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #666;
-  margin: 0 auto 8px;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+  background: #4A4A4A;
+  margin: 0 auto 10px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(0,0,0,0.2);
 }
 
-.macbook-screen-inner {
-  border-radius: 4px;
+/* 画面フレーム */
+.macbook-screen-frame {
+  background: #2A2A2A;
+  border-radius: 8px;
   overflow: hidden;
-  height: 268px;
-  background: #0B1F33;
 }
 
-.macbook-base {
-  width: 488px;
-  height: 20px;
-  background: linear-gradient(to bottom, #c0c0c0 0%, #dcdcdc 100%);
-  border-radius: 0 0 10px 10px;
-  border: 2px solid #a0a0a0;
-  border-top: 1px solid #b4b4b4;
+/* ブラウザバー */
+.macbook-browser-bar {
+  background: #1E1E1E;
+  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+  padding: 0 12px;
+  border-bottom: 1px solid #111;
 }
 
-.macbook-trackpad {
-  width: 78px;
-  height: 10px;
+/* 信号ボタン */
+.macbook-traffic-lights {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mac-dot {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.mac-dot-red    { background: #FF5F56; }
+.mac-dot-yellow { background: #FFBD2E; }
+.mac-dot-green  { background: #27C93F; }
+
+/* URLバー */
+.macbook-url-bar {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding-right: 35px; /* 信号ボタン幅分の視覚センタリング補正 */
+}
+
+.macbook-url-bar-inner {
+  background: #2E2E2E;
   border-radius: 5px;
-  border: 1px solid #999;
-  background: linear-gradient(to bottom, #d0d0d0, #e2e2e2);
+  padding: 3px 14px;
+  max-width: 210px;
+  width: 100%;
+  text-align: center;
+}
+
+.macbook-url-text {
+  display: block;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 画面コンテンツ：16:10 */
+.macbook-screen-inner {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #0A1628;
+}
+
+/* ヒンジ */
+.macbook-hinge {
+  width: 500px;
+  height: 5px;
+  background: #909290;
+}
+
+/* キーボードベース */
+.macbook-base {
+  width: 510px;
+  height: 136px;
+  background: #B8BAB8;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 21px,
+      rgba(0,0,0,0.09) 21px, rgba(0,0,0,0.09) 22px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 16px,
+      rgba(0,0,0,0.09) 16px, rgba(0,0,0,0.09) 17px
+    );
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 18px;
+}
+
+/* トラックパッド */
+.macbook-trackpad {
+  width: 120px;
+  height: 76px;
+  background: #C0C2C0;
+  border-radius: 6px;
+  border: 1px solid #A8AAA8;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.55), 0 1px 3px rgba(0,0,0,0.12);
 }
 
 .feed-card {
@@ -1701,9 +1792,9 @@
     gap: 40px;
   }
   .macbook-wrap {
-    transform: scale(0.68);
+    transform: scale(0.66);
     transform-origin: top center;
-    margin-bottom: -92px;
+    margin-bottom: -96px;
   }
 }
 
