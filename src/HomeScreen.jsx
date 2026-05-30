@@ -640,37 +640,37 @@ function MacBook8Carousel({ onNavigate }) {
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
 
       {/* 3Dカルーセルコンテナ */}
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, height: 500, perspective: '1500px', transformStyle: 'preserve-3d' }}>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, height: 350, perspective: '1500px', transformStyle: 'preserve-3d' }}>
         {MAC8_PROPS.map((item, i) => {
           const angle = (360 / MAC8_PROPS.length) * i + rotation;
           return (
             <div
               key={item.id}
-              style={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(450px)`, transformStyle: 'preserve-3d', width: 300, height: 450, borderRadius: 24, overflow: 'hidden', border: '4px solid white', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer' }}
+              style={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(160px)`, transformStyle: 'preserve-3d', width: 200, height: 300, borderRadius: 16, overflow: 'hidden', border: '3px solid white', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer' }}
               onClick={() => onNavigate('properties')}
             >
               <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)' }} />
               {/* バッジ */}
-              <div style={{ position: 'absolute', top: 16, right: 16, background: item.badgeGradient, color: 'white', padding: '6px 16px', borderRadius: 9999, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>AI推奨物件</div>
+              <div style={{ position: 'absolute', top: 10, right: 10, background: item.badgeGradient, color: 'white', padding: '4px 10px', borderRadius: 9999, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap' }}>AI推奨物件</div>
               {/* アクションボタン */}
-              <div style={{ position: 'absolute', bottom: 80, left: 16, right: 16, display: 'flex', gap: 8 }}>
+              <div style={{ position: 'absolute', bottom: 50, left: 10, right: 10, display: 'flex', gap: 5 }}>
                 {[Heart, Bookmark, ThumbsUp, Share2].map((Icon, j) => (
                   <motion.button
                     key={j}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={e => e.stopPropagation()}
-                    style={{ flex: 1, background: 'rgba(255,255,255,0.15)', color: 'white', padding: '12px', borderRadius: 9999, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ flex: 1, background: 'rgba(255,255,255,0.15)', color: 'white', padding: '8px', borderRadius: 9999, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <Icon size={14} color="white" />
+                    <Icon size={11} color="white" />
                   </motion.button>
                 ))}
               </div>
               {/* タイトル */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, color: 'white', fontSize: 22, fontWeight: 700 }}>{item.title}</div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 14, color: 'white', fontSize: 14, fontWeight: 700 }}>{item.title}</div>
               {/* レインボーバー */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 8, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)' }} />
             </div>
           );
         })}
