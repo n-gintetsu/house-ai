@@ -22,6 +22,7 @@ import ExperienceInterview from './ExperienceInterview'
 import ExperienceAnalyzing from './ExperienceAnalyzing'
 import ExperienceResult from './ExperienceResult'
 import ExperienceComplete from './ExperienceComplete'
+import ExperienceFeed from './ExperienceFeed'
 
 function ExperienceApp() {
   return (
@@ -32,6 +33,7 @@ function ExperienceApp() {
         <Route path="/experiences/analyzing" element={<ExperienceAnalyzing />} />
         <Route path="/experiences/result" element={<ExperienceResult />} />
         <Route path="/experiences/complete" element={<ExperienceComplete />} />
+        <Route path="/experiences/feed" element={<ExperienceFeed />} />
         <Route path="*" element={<Navigate to="/experiences" replace />} />
       </Routes>
     </BrowserRouter>

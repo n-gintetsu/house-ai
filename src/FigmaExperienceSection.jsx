@@ -131,7 +131,7 @@ export function FigmaExperienceSection({ onTabChange }) {
             <h2 style={{ fontSize: 'clamp(22px,2.5vw,30px)', fontWeight: 900, color: '#0a1628', margin: '0 0 6px' }}>みんなの不動産体験談</h2>
             <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>失敗談・成功談をAIと一緒に整理します</p>
           </div>
-          <button onClick={() => onTabChange('community')} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 700, color: '#0a1628', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <button onClick={() => { window.location.href = '/experiences/feed'; }} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 700, color: '#0a1628', background: 'none', border: 'none', cursor: 'pointer' }}>
             すべて見る <ArrowRight size={16} />
           </button>
         </div>
