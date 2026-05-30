@@ -4,10 +4,10 @@ import { supabase } from './lib/supabase';
 
 const DUMMY_POSTS = [
   { id: 1, type: 'success', title: 'リフォーム成功の秘訣は綿密な打ち合わせ', summary: '業者との丁寧なコミュニケーションが成功のカギでした。', tags: ['リフォーム', '成功談'], likes: 248, comments: 32 },
-  { id: 2, type: 'failure', title: '住宅ローン審査で焦った話', summary: '複数の金融機関に相談することで解決できました。', tags: ['住宅ローン', '失敗談'], likes: 312, comments: 45 },
+  { id: 2, type: 'failure', title: '住宅ローン審査で焦った話', summary: '複数の金融機関に相談することで解決できました。', tags: ['住宅ローン', '失敗談'], likes: 312, comments: 45, created_at: '2024-01-02T00:00:00Z' },
   { id: 3, type: 'question', title: '注文住宅か建売か、選択に迷う段階', summary: '実際に物件を見始めることで具体的な検討が進みました。', tags: ['住宅購入', '注文住宅'], likes: 189, comments: 28 },
   { id: 4, type: 'success', title: '複数社査定で300万円UP', summary: '最初の業者の査定額で売ろうとしていましたが、複数社に依頼したら300万も高く売れました。', tags: ['売却', '査定'], likes: 423, comments: 56 },
-  { id: 5, type: 'failure', title: '利回りだけ見て失敗しました', summary: '高利回り物件に飛びついたら修繕費や空室リスクで実質利回りが大幅ダウン。', tags: ['投資', '失敗談'], likes: 312, comments: 45 },
+  { id: 5, type: 'failure', title: '利回りだけ見て失敗しました', summary: '高利回り物件に飛びついたら修繕費や空室リスクで実質利回りが大幅ダウン。', tags: ['投資', '失敗談'], likes: 312, comments: 45, created_at: '2024-01-01T00:00:00Z' },
   { id: 6, type: 'question', title: '空き家の相続、どうすれば？', summary: '専門家への早めの相談が重要だとわかりました。', tags: ['空き家', '相続'], likes: 156, comments: 19 },
 ];
 
