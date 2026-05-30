@@ -41,7 +41,7 @@ export default function ExperienceFeed() {
   useEffect(() => {
     supabase
       .from('experience_posts')
-      .select('id, type, title, summary, tags, likes, comments')
+      .select('id, type, title, summary, tags, likes, comments, created_at')
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
         if (!error && data && data.length > 0) {
