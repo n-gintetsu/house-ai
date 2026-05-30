@@ -129,7 +129,7 @@ export default function ExperiencePost() {
 
         {/* コメント一覧 */}
         <h2 style={{ color: '#ffffff', fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
-          コメント・アドバイス
+          {isQuestion ? 'みんなのアドバイス' : 'みんなのコメント'}
         </h2>
 
         {loadingComments ? (
