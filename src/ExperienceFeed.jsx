@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle, Users } from 'lucide-react';
 
 const DUMMY_POSTS = [
   { id: 1, type: 'success', title: 'リフォーム成功の秘訣は綿密な打ち合わせ', summary: '業者との丁寧なコミュニケーションが成功のカギでした。', tags: ['リフォーム', '成功談'], likes: 248, comments: 32 },
@@ -31,8 +31,25 @@ const ACTION_BTNS = [
 
 export default function ExperienceFeed() {
   const [activeTab, setActiveTab] = useState('success');
+  const [adviceModal, setAdviceModal] = useState(null);
+  const [adviceText, setAdviceText] = useState('');
 
   const filtered = DUMMY_POSTS.filter(p => p.type === activeTab);
+
+  const handleAdviceSubmit = () => {
+    const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
+    if (hasViolation) {
+      alert('URL・電話番号・メールアドレスは含められません');
+      return;
+    }
+    if (adviceText.length > 200) {
+      alert('200文字以内で入力してください');
+      return;
+    }
+    alert('アドバイスを送信しました！');
+    setAdviceModal(null);
+    setAdviceText('');
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A1628', paddingBottom: 80 }}>
@@ -92,6 +109,15 @@ export default function ExperienceFeed() {
                 ))}
               </div>
 
+              {activeTab === 'question' ? (
+                <button
+                  onClick={() => setAdviceModal(post.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.4)', borderRadius: 20, padding: '6px 12px', color: '#D4AF37', fontSize: 12, cursor: 'pointer', marginBottom: 8, fontFamily: 'inherit' }}
+                >
+                  <Users size={13} /> アドバイスする
+                </button>
+              ) : null}
+
               <button
                 onClick={() => { window.location.href = '/'; }}
                 style={{ width: '100%', background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', borderRadius: 12, padding: '10px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
@@ -102,6 +128,36 @@ export default function ExperienceFeed() {
           );
         })}
       </div>
+
+      {adviceModal !== null ? (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#0d1f3c', borderRadius: 16, padding: 24, width: '90%', maxWidth: 480 }}>
+            <h3 style={{ color: '#ffffff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 8 }}>アドバイスを送る</h3>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 0, marginBottom: 12 }}>※URL・電話番号・メールアドレス・長文（200文字超）を含む投稿は送信できません</p>
+            <textarea
+              rows={4}
+              placeholder="同じ悩みの方へのアドバイスをどうぞ（200文字以内）"
+              value={adviceText}
+              onChange={e => setAdviceText(e.target.value)}
+              style={{ fontSize: 16, width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: '#fff', padding: 12, boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button
+                onClick={() => { setAdviceModal(null); setAdviceText(''); }}
+                style={{ flex: 1, background: 'transparent', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAdviceSubmit}
+                style={{ flex: 1, background: '#D4AF37', color: '#0A1628', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}
+              >
+                送信する
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
