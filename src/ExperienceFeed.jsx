@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle, Users } from 'lucide-react';
+import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle, Users, MessageSquare } from 'lucide-react';
 
 const DUMMY_POSTS = [
   { id: 1, type: 'success', title: 'リフォーム成功の秘訣は綿密な打ち合わせ', summary: '業者との丁寧なコミュニケーションが成功のカギでした。', tags: ['リフォーム', '成功談'], likes: 248, comments: 32 },
@@ -33,6 +33,7 @@ export default function ExperienceFeed() {
   const [activeTab, setActiveTab] = useState('success');
   const [adviceModal, setAdviceModal] = useState(null);
   const [adviceText, setAdviceText] = useState('');
+  const [likedPosts, setLikedPosts] = useState(new Set());
 
   const filtered = DUMMY_POSTS.filter(p => p.type === activeTab);
 
@@ -98,15 +99,19 @@ export default function ExperienceFeed() {
 
               {/* CTAボタン群 */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                {ACTION_BTNS.map(({ Icon, label, href }) => (
-                  <button
-                    key={label}
-                    onClick={href ? () => { window.location.href = href; } : undefined}
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '6px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
-                  >
-                    <Icon size={13} />{label}
-                  </button>
-                ))}
+                {ACTION_BTNS.map(({ Icon, label, href }) => {
+                  const isLike = label === '私も同じでした';
+                  const liked = isLike ? likedPosts.has(post.id) : false;
+                  return (
+                    <button
+                      key={label}
+                      onClick={isLike ? () => { if (!likedPosts.has(post.id)) { setLikedPosts(prev => new Set([...prev, post.id])); } } : href ? () => { window.location.href = href; } : undefined}
+                      style={{ background: liked ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)', border: liked ? '1px solid rgba(212,175,55,0.6)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '6px 12px', color: liked ? '#D4AF37' : 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <Icon size={13} />{label}
+                    </button>
+                  );
+                })}
               </div>
 
               {activeTab === 'question' ? (
@@ -116,7 +121,14 @@ export default function ExperienceFeed() {
                 >
                   <Users size={13} /> アドバイスする
                 </button>
-              ) : null}
+              ) : (
+                <button
+                  onClick={() => setAdviceModal(post.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 20, padding: '6px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', marginBottom: 8, fontFamily: 'inherit' }}
+                >
+                  <MessageSquare size={13} /> コメントする
+                </button>
+              )}
 
               <button
                 onClick={() => { window.location.href = '/'; }}
@@ -132,11 +144,11 @@ export default function ExperienceFeed() {
       {adviceModal !== null ? (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#0d1f3c', borderRadius: 16, padding: 24, width: '90%', maxWidth: 480 }}>
-            <h3 style={{ color: '#ffffff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 8 }}>アドバイスを送る</h3>
+            <h3 style={{ color: '#ffffff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 8 }}>{activeTab === 'question' ? 'アドバイスを送る' : 'コメントを送る'}</h3>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 0, marginBottom: 12 }}>※URL・電話番号・メールアドレス・長文（200文字超）を含む投稿は送信できません</p>
             <textarea
               rows={4}
-              placeholder="同じ悩みの方へのアドバイスをどうぞ（200文字以内）"
+              placeholder={activeTab === 'question' ? '同じ悩みの方へのアドバイスをどうぞ（200文字以内）' : 'この体験談へのコメントをどうぞ（200文字以内）'}
               value={adviceText}
               onChange={e => setAdviceText(e.target.value)}
               style={{ fontSize: 16, width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: '#fff', padding: 12, boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
