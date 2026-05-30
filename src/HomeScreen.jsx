@@ -630,59 +630,52 @@ function MacBook8Carousel({ onNavigate }) {
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setRotation(r => r + 0.2), 50);
+    const id = setInterval(() => setRotation(r => r + 0.3), 50);
     return () => clearInterval(id);
   }, []);
 
-  const activeIdx = ((Math.round(-rotation / 45) % 8) + 8) % 8;
-
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-
-      {/* 3Dカルーセルコンテナ */}
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, height: 350, perspective: '1500px', transformStyle: 'preserve-3d' }}>
-        {MAC8_PROPS.map((item, i) => {
-          const angle = (360 / MAC8_PROPS.length) * i + rotation;
-          return (
-            <div
-              key={item.id}
-              style={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(160px)`, transformStyle: 'preserve-3d', width: 200, height: 300, borderRadius: 16, overflow: 'hidden', border: '3px solid white', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer' }}
-              onClick={() => onNavigate('properties')}
-            >
-              <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)' }} />
-              {/* バッジ */}
-              <div style={{ position: 'absolute', top: 10, right: 10, background: item.badgeGradient, color: 'white', padding: '4px 10px', borderRadius: 9999, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap' }}>AI推奨物件</div>
-              {/* アクションボタン */}
-              <div style={{ position: 'absolute', bottom: 50, left: 10, right: 10, display: 'flex', gap: 5 }}>
-                {[Heart, Bookmark, ThumbsUp, Share2].map((Icon, j) => (
-                  <motion.button
-                    key={j}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={e => e.stopPropagation()}
-                    style={{ flex: 1, background: 'rgba(255,255,255,0.15)', color: 'white', padding: '8px', borderRadius: 9999, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Icon size={11} color="white" />
-                  </motion.button>
-                ))}
+    // MacBook画面内コンテンツ部分
+    <div style={{ background: '#0A1628', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {/* カルーセルwrapper（perspective を overflow:hidden の内側に独立配置） */}
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '800px' }}>
+        {/* カルーセルステージ（ステージ自体が回転） */}
+        <div style={{ position: 'relative', width: '180px', height: '280px', transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg)` }}>
+          {MAC8_PROPS.map((item, i) => {
+            const angle = (360 / MAC8_PROPS.length) * i;
+            return (
+              <div
+                key={item.id}
+                style={{ position: 'absolute', top: 0, left: 0, width: '180px', height: '280px', transform: `rotateY(${angle}deg) translateZ(320px)`, borderRadius: '16px', overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => onNavigate('properties')}
+              >
+                <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.1), transparent)' }} />
+                {/* バッジ */}
+                <div style={{ position: 'absolute', top: 8, right: 8, background: item.badgeGradient, color: 'white', padding: '3px 8px', borderRadius: 9999, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap' }}>AI推奨物件</div>
+                {/* アクションボタン */}
+                <div style={{ position: 'absolute', bottom: 28, left: 8, right: 8, display: 'flex', gap: 4 }}>
+                  {[Heart, Bookmark, ThumbsUp, Share2].map((Icon, j) => (
+                    <motion.button
+                      key={j}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={e => e.stopPropagation()}
+                      style={{ flex: 1, background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px', borderRadius: 9999, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Icon size={10} color="white" />
+                    </motion.button>
+                  ))}
+                </div>
+                {/* タイトル */}
+                <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, color: 'white', fontSize: 12, fontWeight: 500, lineHeight: 1.3 }}>{item.title}</div>
+                {/* レインボーバー */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#9400d3)' }} />
               </div>
-              {/* タイトル */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 14, color: 'white', fontSize: 14, fontWeight: 700 }}>{item.title}</div>
-              {/* レインボーバー */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)' }} />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-
-      {/* ナビドット */}
-      <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, background: 'rgba(255,255,255,0.8)', padding: '8px 16px', borderRadius: 9999 }}>
-        {MAC8_PROPS.map((_, i) => (
-          <div key={i} style={{ width: i === activeIdx ? 20 : 8, height: 8, borderRadius: 9999, background: i === activeIdx ? '#6366f1' : 'rgba(0,0,0,0.3)', transition: 'all 0.3s ease' }} />
-        ))}
-      </div>
-
     </div>
   );
 }
@@ -1168,7 +1161,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
                   {/* カメラノッチ */}
                   <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', width: 64, height: 6, background: '#1e293b', borderRadius: 9999 }} />
                   {/* 画面内 16:10 */}
-                  <div style={{ aspectRatio: '16/10', background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ aspectRatio: '16/10', background: '#0A1628', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                     <MacBook8Carousel onNavigate={navigate} />
                   </div>
                 </div>
