@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
@@ -56,6 +57,22 @@ const SHOW_PATHS = ['/experiences/feed', '/experiences/complete'];
 
 export default function BottomNav() {
   const location = useLocation();
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > lastScrollY.current) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isPost = location.pathname.startsWith('/experiences/post/');
   if (!SHOW_PATHS.includes(location.pathname) && !isPost) return null;
@@ -85,6 +102,8 @@ export default function BottomNav() {
       display: 'flex',
       zIndex: 8000,
       paddingBottom: 'env(safe-area-inset-bottom)',
+      transform: visible ? 'translateY(0)' : 'translateY(100%)',
+      transition: 'transform 0.3s ease',
     }}>
       {TABS.map(({ label, id }) => {
         const isActive = id === 'experiences' ? location.pathname.startsWith('/experiences') : false;
