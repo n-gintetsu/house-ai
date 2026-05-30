@@ -52,7 +52,7 @@ export default function ExperienceFeed() {
       .catch(() => setLoading(false));
   }, []);
 
-  const filtered = posts.filter(p => p.type === activeTab);
+  const filtered = posts.filter(p => p.type === activeTab).sort((a, b) => (b.likes || 0) - (a.likes || 0));
   const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => ((a.likes || 0) > (b.likes || 0) ? a : b)).id : null;
 
   const handleAdviceSubmit = () => {
