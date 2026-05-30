@@ -52,8 +52,12 @@ const TABS = [
   { label: 'マイページ', id: 'member' },
 ];
 
+const SHOW_PATHS = ['/experiences/feed', '/experiences/complete'];
+
 export default function BottomNav() {
   const location = useLocation();
+
+  if (!SHOW_PATHS.includes(location.pathname)) return null;
 
   const handleClick = (id) => {
     if (id === 'home') {
