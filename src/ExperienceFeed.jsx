@@ -53,7 +53,7 @@ export default function ExperienceFeed() {
   }, []);
 
   const filtered = posts.filter(p => p.type === activeTab);
-  const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => (a.likes > b.likes ? a : b)).id : null;
+  const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => ((a.likes || 0) > (b.likes || 0) ? a : b)).id : null;
 
   const handleAdviceSubmit = () => {
     const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
