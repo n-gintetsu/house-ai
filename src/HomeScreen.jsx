@@ -613,6 +613,54 @@ const storyItems = [
   { initial: 'S', user: '50代女性', category: '売却', badge: 'AI活用', badgeType: 'blue', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。', aiComment: 'AI相談は初心者の方に特に効果的です。疑問点の整理と優先順位付けができます。' },
 ];
 
+const MAC_W = 436;
+const MAC_GAP = 5;
+const getMacCard = (dist) => {
+  if (dist === 0) return { w: 190, h: 238, r: 18, o: 1 };
+  if (dist === 1) return { w: 120, h: 155, r: 14, o: 0.65 };
+  return { w: 82, h: 108, r: 10, o: 0.3 };
+};
+const getMacCenterX = (idx, cur) => {
+  let x = 0;
+  for (let j = 0; j < idx; j++) x += getMacCard(Math.abs(j - cur)).w + MAC_GAP * 2;
+  x += getMacCard(Math.abs(idx - cur)).w / 2;
+  return x;
+};
+function MacBookCarousel({ properties, onNavigate }) {
+  const [cur, setCur] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setCur(p => (p + 1) % properties.length), 2800);
+    return () => clearInterval(id);
+  }, [properties.length]);
+  const trackX = MAC_W / 2 - getMacCenterX(cur, cur);
+  return (
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#0B1F33', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', transform: `translateX(${trackX}px)`, transition: 'transform 0.45s cubic-bezier(.25,.46,.45,.94)', willChange: 'transform' }}>
+        {properties.map((item, i) => {
+          const dist = Math.abs(i - cur);
+          const { w, h, r, o } = getMacCard(dist);
+          return (
+            <div key={i} style={{ width: w, height: h, margin: `0 ${MAC_GAP}px`, borderRadius: r, opacity: o, overflow: 'hidden', flexShrink: 0, transition: 'all 0.45s cubic-bezier(.25,.46,.45,.94)', position: 'relative', cursor: 'pointer', background: '#111' }} onClick={() => onNavigate('properties')}>
+              <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)' }} />
+              {dist === 0 && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 12px', color: '#fff' }}>
+                  <span style={{ fontSize: 8, background: 'rgba(212,175,55,0.95)', color: '#0B1F33', borderRadius: 4, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.04em' }}>{item.aiBadge}</span>
+                  <p style={{ fontSize: 11, fontWeight: 700, margin: '4px 0 2px', lineHeight: 1.3 }}>{item.title}</p>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.75)', margin: 0 }}>{item.price}</p>
+                </div>
+              )}
+              {dist === 1 && (
+                <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{item.area}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const verticalProperties = [
   {
     type: '賃貸',
@@ -1080,60 +1128,16 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         <div className="vertical-feed-inner">
 
           {/* 左：縦型フィード */}
-          <div className="feed-phone-wrap">
-            <div className="feed-phone-frame">
-              <div className="feed-phone-header">
-                <span className="feed-phone-label">HOUSE-AI FEED</span>
-                <span className="feed-phone-title">人気物件プレビュー</span>
-                <span className="feed-phone-count">1/5</span>
+          {/* 左：MacBookモックアップ */}
+          <div className="macbook-wrap">
+            <div className="macbook-screen-lid">
+              <div className="macbook-camera" />
+              <div className="macbook-screen-inner">
+                <MacBookCarousel properties={verticalProperties} onNavigate={navigate} />
               </div>
-              <div className="feed-phone-screen">
-                <div className="feed-track">
-                  {[...verticalProperties, ...verticalProperties].map((item, i) => (
-                    <div key={i} className="feed-card" onClick={() => navigate('properties')}>
-                      <img src={item.image} alt={item.title} className="feed-card-img" />
-                      <div className="feed-card-overlay" />
-                      <div className="feed-side-icons">
-                        <button className="feed-icon-btn">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        </button>
-                        <button className="feed-icon-btn">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </button>
-                        <button className="feed-icon-btn">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                        </button>
-                        <button className="feed-icon-btn feed-icon-ai" onClick={(e) => { e.stopPropagation(); handleAIConsult(); }}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F33" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-                        </button>
-                        <button className="feed-icon-btn" onClick={(e) => { e.stopPropagation(); setShowStorySheet(true); }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                          </svg>
-                        </button>
-                      </div>
-                      <span className="feed-type-badge">{item.type}</span>
-                      <span className="feed-match-badge">{item.aiBadge}　マッチ率 {item.matchRate}</span>
-                      <div className="feed-card-bottom">
-                        <div className="feed-area">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                          {item.area}
-                        </div>
-                        <h3 className="feed-card-title">{item.title}</h3>
-                        <p className="feed-card-price">{item.price}</p>
-                        <div className="feed-ai-comment">
-                          <p>AI分析：{item.aiComments[aiCommentIndex % item.aiComments.length]}</p>
-                          <p className="feed-ai-reason">{item.aiReason}</p>
-                        </div>
-                        <div className="feed-detail-btn">詳細を見る</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            </div>
+            <div className="macbook-base">
+              <div className="macbook-trackpad" />
             </div>
           </div>
 
