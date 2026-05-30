@@ -110,6 +110,36 @@ export default function ExperienceComplete() {
 
         <div style={{ marginTop: 32, textAlign: 'center' }}>
           <button
+            onClick={() => window.location.href = '/experiences/feed'}
+            style={{
+              background: 'transparent',
+              color: '#00BFFF',
+              border: '2px solid rgba(0,191,255,0.5)',
+              borderRadius: 50,
+              padding: '14px 48px',
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.05em',
+              boxShadow: '0 4px 20px rgba(0,191,255,0.2)',
+              transition: 'all 0.2s ease',
+              display: 'block',
+              width: '100%',
+              maxWidth: 240,
+              margin: '0 auto'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(0,191,255,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(0,191,255,0.8)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'rgba(0,191,255,0.5)'
+            }}
+          >
+            投稿一覧を見る
+          </button>
+          <button
             onClick={() => window.location.href = '/'}
             style={{
               background: 'linear-gradient(135deg, #D4AF37, #FFD700, #D4AF37)',
@@ -122,7 +152,11 @@ export default function ExperienceComplete() {
               cursor: 'pointer',
               letterSpacing: '0.05em',
               boxShadow: '0 4px 20px rgba(212,175,55,0.5), 0 2px 8px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              display: 'block',
+              width: '100%',
+              maxWidth: 240,
+              margin: '8px auto 0'
             }}
             onMouseEnter={e => {
               e.currentTarget.style.boxShadow = '0 6px 28px rgba(212,175,55,0.7), 0 2px 8px rgba(0,0,0,0.3)'
