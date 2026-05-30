@@ -45,6 +45,7 @@ export default function ExperienceAnalyzing() {
   const navigate = useNavigate();
   const location = useLocation();
   const answers = (location.state || {}).answers || [];
+  const type = (location.state || {}).type || 'success';
   const [completedSteps, setCompletedSteps] = useState([]);
 
   useEffect(() => {
@@ -58,11 +59,11 @@ export default function ExperienceAnalyzing() {
 
     generateExperience(answers)
       .then((result) => {
-        navigate('/experiences/result', { state: { result, wantsAdvice } });
+        navigate('/experiences/result', { state: { result, wantsAdvice, type } });
       })
       .catch(() => {
         const fallback = { title: '体験談', summary: answers[0] || '', tags: [], learnings: [] };
-        navigate('/experiences/result', { state: { result: fallback, wantsAdvice } });
+        navigate('/experiences/result', { state: { result: fallback, wantsAdvice, type } });
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
