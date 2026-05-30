@@ -109,10 +109,10 @@ export default function ExperienceFeed() {
           const badge = TYPE_BADGE[post.type] || TYPE_BADGE.question;
           const isTop = topPostId === post.id;
           return (
-            <div key={post.id} style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: isTop ? 20 : 0 }}>
+            <div key={post.id} style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: isTop ? 24 : 0 }}>
 
               {isTop ? (
-                <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD700, #D4AF37, #FFA500)', borderRadius: 20, padding: '4px 14px', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 12px rgba(212,175,55,0.6)', zIndex: 10, whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD700, #D4AF37, #FFA500)', borderRadius: 20, padding: '4px 14px', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 12px rgba(212,175,55,0.6)', zIndex: 10, whiteSpace: 'nowrap' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#7B3F00">
                     <path d="M2 19h20v2H2v-2zm2-3l3-9 5 4 5-4 3 9H4zm8-5.5L9 12l3-8 3 8-3-1.5z"/>
                   </svg>
@@ -127,9 +127,17 @@ export default function ExperienceFeed() {
               <p style={{ color: '#ffffff', fontSize: 16, fontWeight: 700, marginTop: 8, marginBottom: 6 }}>{post.title}</p>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{post.summary}</p>
 
-              <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, marginBottom: 12 }}>
+              <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, marginBottom: 0 }}>
                 {post.tags.map(t => `#${t}`).join(' ')}
               </p>
+              <div style={{ display: 'flex', gap: 16, marginTop: 8, marginBottom: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+                  <ThumbsUp size={12} /> {post.likes || 0}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+                  <MessageCircle size={12} /> {post.comments || 0}
+                </span>
+              </div>
 
               {/* CTAボタン群 */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
