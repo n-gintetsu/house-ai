@@ -13,6 +13,7 @@ const QUESTIONS_QUESTION = [
   'どんなことで迷っていますか？',
   '今の状況を教えてください（まだ動いていない・物件を見始めた・契約直前・その他）',
   '誰かに相談できていますか？',
+  '同じ悩みを持つ方からアドバイスをもらいたいですか？（はい／いいえ）',
 ];
 
 export default function ExperienceInterview() {
@@ -38,7 +39,7 @@ export default function ExperienceInterview() {
         setChatHistory((prev) => [...prev, { type: 'ai', text: questions[currentQuestion + 1] }]);
         setCurrentQuestion(currentQuestion + 1);
       } else {
-        navigate('/experiences/analyzing', { state: { answers: newAnswers } });
+        navigate('/experiences/analyzing', { state: { answers: newAnswers, type } });
       }
     }, 500);
   };
