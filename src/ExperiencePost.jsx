@@ -79,6 +79,9 @@ export default function ExperiencePost() {
   };
 
   const badge = post ? (TYPE_BADGE[post.type] || TYPE_BADGE.question) : null;
+  const isQuestion = post?.type === 'question';
+  const formHeading = isQuestion ? 'アドバイスする' : 'あなたの体験談もみんなと共有しませんか？';
+  const formPlaceholder = isQuestion ? 'アドバイスや経験をシェアしてください' : 'あなたの体験や想いを書いてください';
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A1628', paddingBottom: 96 }}>
@@ -152,11 +155,12 @@ export default function ExperiencePost() {
         )}
 
         {/* コメント投稿フォーム */}
+        <h3 style={{ color: '#ffffff', fontSize: 15, fontWeight: 500, marginBottom: 12 }}>{formHeading}</h3>
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 16 }}>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: '0 0 8px' }}>※URL・電話番号・メールアドレスを含む投稿は送信できません（200文字以内）</p>
           <textarea
             rows={4}
-            placeholder="コメントを入力してください"
+            placeholder={formPlaceholder}
             value={commentText}
             onChange={e => setCommentText(e.target.value)}
             style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#fff', padding: 12, fontSize: 14, fontFamily: 'inherit', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
