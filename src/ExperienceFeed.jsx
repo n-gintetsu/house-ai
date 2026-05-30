@@ -26,9 +26,30 @@ export default function ExperienceFeed() {
   const [activeTab, setActiveTab] = useState('success');
   const [adviceModal, setAdviceModal] = useState(null);
   const [adviceText, setAdviceText] = useState('');
-  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [likedPosts, setLikedPosts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('liked_experience_posts');
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch {
+      return new Set();
+    }
+  });
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleLike = async (postId) => {
+    if (likedPosts.has(postId)) return;
+    const next = new Set([...likedPosts, postId]);
+    setLikedPosts(next);
+    try {
+      localStorage.setItem('liked_experience_posts', JSON.stringify([...next]));
+    } catch { /* ignore */ }
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: (p.likes || 0) + 1 } : p));
+    await supabase
+      .from('experience_posts')
+      .update({ likes: posts.find(p => p.id === postId) ? (posts.find(p => p.id === postId).likes || 0) + 1 : 1 })
+      .eq('id', postId);
+  };
 
   useEffect(() => {
     supabase
@@ -143,7 +164,7 @@ export default function ExperienceFeed() {
                   return (
                     <button
                       key={label}
-                      onClick={isLike ? () => { if (!likedPosts.has(post.id)) { setLikedPosts(prev => new Set([...prev, post.id])); } } : href ? () => { window.location.href = href; } : undefined}
+                      onClick={isLike ? () => handleLike(post.id) : href ? () => { window.location.href = href; } : undefined}
                       style={{ background: liked ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)', border: liked ? '1px solid rgba(212,175,55,0.6)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '6px 12px', color: liked ? '#D4AF37' : 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
                     >
                       <Icon size={13} />{label}
