@@ -72,7 +72,7 @@ export default function ExperienceFeed() {
   });
   const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => ((a.likes || 0) > (b.likes || 0) ? a : b)).id : null;
 
-  const handleAdviceSubmit = () => {
+  const handleAdviceSubmit = async () => {
     const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
     if (hasViolation) {
       alert('URL・電話番号・メールアドレスは含められません');
@@ -82,7 +82,23 @@ export default function ExperienceFeed() {
       alert('200文字以内で入力してください');
       return;
     }
-    alert('アドバイスを送信しました！');
+    const commentType = activeTab === 'question' ? 'advice' : 'comment';
+    const { error } = await supabase
+      .from('experience_comments')
+      .insert({ post_id: adviceModal, type: commentType, content: adviceText });
+    if (error) {
+      alert('送信に失敗しました。もう一度お試しください。');
+      return;
+    }
+    const target = posts.find(p => p.id === adviceModal);
+    if (target) {
+      await supabase
+        .from('experience_posts')
+        .update({ comments: (target.comments || 0) + 1 })
+        .eq('id', adviceModal);
+      setPosts(prev => prev.map(p => p.id === adviceModal ? { ...p, comments: (p.comments || 0) + 1 } : p));
+    }
+    alert(activeTab === 'question' ? 'アドバイスを送信しました！ありがとうございます' : 'コメントを送信しました！ありがとうございます');
     setAdviceModal(null);
     setAdviceText('');
   };
