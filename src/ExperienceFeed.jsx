@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle, Users, MessageSquare } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 const DUMMY_POSTS = [
   { id: 1, type: 'success', title: 'リフォーム成功の秘訣は綿密な打ち合わせ', summary: '業者との丁寧なコミュニケーションが成功のカギでした。', tags: ['リフォーム', '成功談'], likes: 248, comments: 32 },
@@ -34,8 +35,24 @@ export default function ExperienceFeed() {
   const [adviceModal, setAdviceModal] = useState(null);
   const [adviceText, setAdviceText] = useState('');
   const [likedPosts, setLikedPosts] = useState(new Set());
+  const [posts, setPosts] = useState(DUMMY_POSTS);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = DUMMY_POSTS.filter(p => p.type === activeTab);
+  useEffect(() => {
+    supabase
+      .from('experience_posts')
+      .select('id, type, title, summary, tags, likes, comments')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setPosts(data);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const filtered = posts.filter(p => p.type === activeTab);
 
   const handleAdviceSubmit = () => {
     const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
