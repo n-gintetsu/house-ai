@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Heart, Bookmark, ThumbsUp, Share2 } from 'lucide-react';
 import { AffiliateCard } from './AffiliateCard';
 import SEOHead from './SEOHead';
 import { supabase } from "./lib/supabase";
@@ -613,50 +614,48 @@ const storyItems = [
   { initial: 'S', user: '50代女性', category: '売却', badge: 'AI活用', badgeType: 'blue', title: 'AIに相談して納得いく選択ができた', body: 'AIに相談したら複数の視点で整理してくれて、納得いく選択ができました。', aiComment: 'AI相談は初心者の方に特に効果的です。疑問点の整理と優先順位付けができます。' },
 ];
 
-const MAC_W = 440;
-const MAC_GAP = 5;
-const getMacCard = (dist) => {
-  if (dist === 0) return { w: 200, h: 248, r: 18, o: 1 };
-  if (dist === 1) return { w: 128, h: 165, r: 14, o: 0.65 };
-  return { w: 90, h: 118, r: 10, o: 0.3 };
-};
-const getMacCenterX = (idx, cur) => {
-  let x = 0;
-  for (let j = 0; j < idx; j++) x += getMacCard(Math.abs(j - cur)).w + MAC_GAP * 2;
-  x += getMacCard(Math.abs(idx - cur)).w / 2;
-  return x;
-};
-function MacBookCarousel({ properties, onNavigate }) {
-  const [cur, setCur] = useState(0);
+const MAC8_PROPS = [
+  { image: 'https://images.unsplash.com/photo-1680416124510-5eae1beca412?w=800', title: 'リノベーション済み物件',    badge: 'linear-gradient(135deg,#7c3aed,#db2777)' },
+  { image: 'https://images.unsplash.com/photo-1682184805271-11671b7ecf4c?w=800', title: 'タワーマンション最上階',    badge: 'linear-gradient(135deg,#7c3aed,#db2777)' },
+  { image: 'https://images.unsplash.com/photo-1663811397207-418a92396ad5?w=800', title: 'デザイナーズマンション',    badge: 'linear-gradient(135deg,#7c3aed,#db2777)' },
+  { image: 'https://images.unsplash.com/photo-1667584523543-d1d9cc828a15?w=800', title: 'モダンラグジュアリー空間',  badge: 'linear-gradient(135deg,#2563eb,#06b6d4)' },
+  { image: 'https://images.unsplash.com/photo-1653972233597-05822baa3c4e?w=800', title: 'シャンデリア付き高級物件',  badge: 'linear-gradient(135deg,#d97706,#ea580c)' },
+  { image: 'https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?w=800', title: 'スタイリッシュベッドルーム', badge: 'linear-gradient(135deg,#16a34a,#059669)' },
+  { image: 'https://images.unsplash.com/photo-1638454795595-0a0abf68614d?w=800', title: '大型テレビ付きリビング',    badge: 'linear-gradient(135deg,#e11d48,#db2777)' },
+  { image: 'https://images.unsplash.com/photo-1715985160053-d339e8b6eb94?w=800', title: 'プレミアムキッチン付き',    badge: 'linear-gradient(135deg,#4338ca,#7c3aed)' },
+];
+
+const MAC8_ICON_BTNS = [Heart, Bookmark, ThumbsUp, Share2];
+
+function MacBook8Carousel({ onNavigate }) {
+  const [rotation, setRotation] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setCur(p => (p + 1) % properties.length), 2800);
+    const id = setInterval(() => setRotation(r => r + 0.2), 50);
     return () => clearInterval(id);
-  }, [properties.length]);
-  const trackX = MAC_W / 2 - getMacCenterX(cur, cur);
+  }, []);
   return (
-    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#0A1628', display: 'flex', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', transform: `translateX(${trackX}px)`, transition: 'transform 0.45s cubic-bezier(.25,.46,.45,.94)', willChange: 'transform' }}>
-        {properties.map((item, i) => {
-          const dist = Math.abs(i - cur);
-          const { w, h, r, o } = getMacCard(dist);
+    <div style={{ width: '100%', height: '100%', background: '#0A1628', display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1500px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: 0, height: 0, transformStyle: 'preserve-3d' }}>
+        {MAC8_PROPS.map((item, i) => {
+          const angle = (360 / MAC8_PROPS.length) * i + rotation;
           return (
             <div
               key={i}
-              style={{ width: w, height: h, margin: `0 ${MAC_GAP}px`, borderRadius: r, opacity: o, overflow: 'hidden', flexShrink: 0, transition: 'all 0.45s cubic-bezier(.25,.46,.45,.94)', position: 'relative', cursor: 'pointer', background: '#111' }}
+              style={{ position: 'absolute', top: -120, left: -80, width: 160, height: 240, borderRadius: 16, overflow: 'hidden', transform: `rotateY(${angle}deg) translateZ(280px)`, backfaceVisibility: 'hidden', cursor: 'pointer' }}
               onClick={() => onNavigate('properties')}
             >
-              <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)' }} />
-              {dist === 0 && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 13px', color: '#fff' }}>
-                  <span style={{ fontSize: 9, background: 'rgba(212,175,55,0.96)', color: '#0B1F33', borderRadius: 4, padding: '2px 7px', fontWeight: 700, letterSpacing: '0.04em' }}>{item.aiBadge}</span>
-                  <p style={{ fontSize: 12, fontWeight: 700, margin: '5px 0 2px', lineHeight: 1.3 }}>{item.title}</p>
-                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: 0 }}>{item.price}</p>
-                </div>
-              )}
-              {dist === 1 && (
-                <div style={{ position: 'absolute', bottom: 7, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{item.area}</div>
-              )}
+              <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
+              <div style={{ position: 'absolute', top: 8, right: 8, background: item.badge, borderRadius: 6, padding: '3px 7px', fontSize: 8, color: '#fff', fontWeight: 700, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>AI推奨物件</div>
+              <div style={{ position: 'absolute', bottom: 36, left: 8, right: 8, color: '#fff', fontSize: 11, fontWeight: 600, lineHeight: 1.35 }}>{item.title}</div>
+              <div style={{ position: 'absolute', bottom: 6, left: 6, right: 6, display: 'flex', gap: 3 }}>
+                {MAC8_ICON_BTNS.map((Icon, j) => (
+                  <button key={j} onClick={e => e.stopPropagation()} style={{ flex: 1, background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 5, padding: '4px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={10} color="#fff" />
+                  </button>
+                ))}
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#9400d3)' }} />
             </div>
           );
         })}
@@ -1134,34 +1133,41 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           {/* 左：縦型フィード */}
           {/* 左：MacBookモックアップ */}
           <div className="macbook-wrap">
-            {/* ふた（スクリーン部） */}
-            <div className="macbook-lid">
-              <div className="macbook-lid-camera" />
-              <div className="macbook-screen-frame">
-                {/* ブラウザバー */}
-                <div className="macbook-browser-bar">
-                  <div className="macbook-traffic-lights">
-                    <span className="mac-dot mac-dot-red" />
-                    <span className="mac-dot mac-dot-yellow" />
-                    <span className="mac-dot mac-dot-green" />
+            <div style={{ perspective: '1200px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+              {/* スクリーンリッド */}
+              <div style={{ transform: 'rotateX(-2deg)', transformOrigin: 'bottom center', background: '#1C1C1E', borderRadius: '12px 12px 0 0', padding: '10px 12px 0', boxShadow: '0 30px 80px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.18)', width: 680 }}>
+                {/* カメラノッチ */}
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3A3A3C', margin: '0 auto 8px', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.8)' }} />
+                {/* スクリーン（16:10） */}
+                <div style={{ background: '#000', borderRadius: '8px 8px 0 0', overflow: 'hidden' }}>
+                  <div style={{ aspectRatio: '16 / 10', background: '#0A1628', overflow: 'hidden', position: 'relative' }}>
+                    <MacBook8Carousel onNavigate={navigate} />
                   </div>
-                  <div className="macbook-url-bar">
-                    <div className="macbook-url-bar-inner">
-                      <span className="macbook-url-text">house-ai.co.jp</span>
-                    </div>
-                  </div>
-                </div>
-                {/* 画面コンテンツ（16:10） */}
-                <div className="macbook-screen-inner">
-                  <MacBookCarousel properties={verticalProperties} onNavigate={navigate} />
                 </div>
               </div>
-            </div>
-            {/* ヒンジ */}
-            <div className="macbook-hinge" />
-            {/* キーボードベース */}
-            <div className="macbook-base">
-              <div className="macbook-trackpad" />
+
+              {/* ヒンジ */}
+              <div style={{ width: 700, height: 4, background: '#909290' }} />
+
+              {/* キーボードベース */}
+              <div style={{
+                transform: 'perspective(600px) rotateX(65deg)',
+                transformOrigin: 'top center',
+                background: '#C8CAC8',
+                backgroundImage: 'repeating-linear-gradient(90deg, transparent 0px, transparent 21px, rgba(0,0,0,0.07) 21px, rgba(0,0,0,0.07) 22px), repeating-linear-gradient(0deg, transparent 0px, transparent 16px, rgba(0,0,0,0.07) 16px, rgba(0,0,0,0.07) 17px)',
+                width: 700,
+                height: 120,
+                borderRadius: '0 0 12px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+              }}>
+                {/* トラックパッド */}
+                <div style={{ width: 130, height: 80, background: '#C0C2C0', borderRadius: 6, border: '1px solid #A8AAA8', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.5)', marginTop: 16 }} />
+              </div>
+
             </div>
           </div>
 
