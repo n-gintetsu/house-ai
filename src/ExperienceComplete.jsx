@@ -65,7 +65,7 @@ export default function ExperienceComplete() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A1628', position: 'relative', overflow: 'hidden' }}>
+    <div id="scroll-container" style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', background: '#0A1628', position: 'relative' }}>
 
       {LEFT_BUILDINGS.map((b, i) => (
         <BuildingCol key={`l${i}`} pos={b} />

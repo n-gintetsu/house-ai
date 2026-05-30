@@ -106,7 +106,7 @@ export default function ExperienceFeed() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A1628', paddingBottom: 80 }}>
+    <div id="scroll-container" style={{ height: '100vh', overflowY: 'auto', background: '#0A1628', paddingBottom: 80 }}>
 
       {/* ヘッダー */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#0A1628', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
