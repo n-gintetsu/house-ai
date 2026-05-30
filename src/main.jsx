@@ -23,6 +23,7 @@ import ExperienceAnalyzing from './ExperienceAnalyzing'
 import ExperienceResult from './ExperienceResult'
 import ExperienceComplete from './ExperienceComplete'
 import ExperienceFeed from './ExperienceFeed'
+import BottomNav from './BottomNav'
 
 function ExperienceApp() {
   return (
@@ -36,6 +37,7 @@ function ExperienceApp() {
         <Route path="/experiences/feed" element={<ExperienceFeed />} />
         <Route path="*" element={<Navigate to="/experiences" replace />} />
       </Routes>
+      <BottomNav />
     </BrowserRouter>
   )
 }
