@@ -98,7 +98,13 @@ export default function ExperienceFeed() {
 
       {/* カード一覧 */}
       <div style={{ padding: '16px 16px 0' }}>
-        {filtered.map(post => {
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px 0' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#00BFFF', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        ) : null}
+        {loading ? null : filtered.map(post => {
           const badge = TYPE_BADGE[post.type] || TYPE_BADGE.question;
           return (
             <div key={post.id} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 12 }}>
@@ -156,7 +162,7 @@ export default function ExperienceFeed() {
             </div>
           );
         })}
-      </div>
+        </div>
 
       {adviceModal !== null ? (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
