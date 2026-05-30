@@ -9,6 +9,7 @@ import AIToolsSection from './AIToolsSection';
 import AIPartnerSection from './AIPartnerSection';
 import FleaMarketSection from './FleaMarketSection';
 import ExperiencePreviewSection from './ExperiencePreviewSection';
+import { FigmaExperienceSection } from './FigmaExperienceSection';
 import './HouseAiHome.css';
 
 // ============================================================
@@ -1239,6 +1240,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       </section>
 
       {/* 7. 体験談プレビュー */}
+      <FigmaExperienceSection onTabChange={navigate} />
       <ExperiencePreviewSection onNavigate={navigate} />
       <SectionTransition />
       <SectionTransition />
