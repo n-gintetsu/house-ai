@@ -53,6 +53,7 @@ export default function ExperienceFeed() {
   }, []);
 
   const filtered = posts.filter(p => p.type === activeTab);
+  const topPostId = filtered.length > 0 ? filtered.reduce((a, b) => (a.likes > b.likes ? a : b)).id : null;
 
   const handleAdviceSubmit = () => {
     const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
@@ -106,8 +107,18 @@ export default function ExperienceFeed() {
         ) : null}
         {loading ? null : filtered.map(post => {
           const badge = TYPE_BADGE[post.type] || TYPE_BADGE.question;
+          const isTop = topPostId === post.id;
           return (
-            <div key={post.id} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 12 }}>
+            <div key={post.id} style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: isTop ? 20 : 0 }}>
+
+              {isTop ? (
+                <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD700, #D4AF37, #FFA500)', borderRadius: 20, padding: '4px 14px', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 12px rgba(212,175,55,0.6)', zIndex: 10, whiteSpace: 'nowrap' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#7B3F00">
+                    <path d="M2 19h20v2H2v-2zm2-3l3-9 5 4 5-4 3 9H4zm8-5.5L9 12l3-8 3 8-3-1.5z"/>
+                  </svg>
+                  <span style={{ color: '#7B3F00', fontSize: 11, fontWeight: 800, letterSpacing: '0.05em' }}>共感ランキング 1位</span>
+                </div>
+              ) : null}
 
               <span style={{ fontSize: 11, fontWeight: 600, borderRadius: 20, padding: '3px 10px', background: badge.background, color: badge.color }}>
                 {badge.label}
