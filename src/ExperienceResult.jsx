@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Edit, Send } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export default function ExperienceResult() {
   const navigate = useNavigate();
@@ -11,6 +16,30 @@ export default function ExperienceResult() {
 
   const [showAdviceModal, setShowAdviceModal] = useState(false);
   const [adviceText, setAdviceText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('experience_posts').insert({
+        type: (location.state || {}).type || 'success',
+        title: result.title || '体験談',
+        summary: result.summary || '',
+        tags: result.tags || [],
+        learnings: result.learnings || [],
+        wants_advice: (location.state || {}).wantsAdvice || false,
+      });
+      if (error) throw error;
+      setSubmitted(true);
+      window.location.href = '/experiences/feed';
+    } catch (e) {
+      alert('投稿に失敗しました。もう一度お試しください。');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleAdviceSubmit = () => {
     const hasViolation = /https?:\/\/|tel:|0\d{1,4}-\d{1,4}-\d{4}|[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(adviceText);
@@ -89,8 +118,8 @@ export default function ExperienceResult() {
           <button onClick={() => navigate('/experiences/interview')} style={{ flex: 1, padding: '16px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '1rem' }}>
             <Edit size={20} />編集
           </button>
-          <button onClick={() => navigate('/experiences/complete')} style={{ flex: 1, padding: '16px 24px', borderRadius: 12, background: 'linear-gradient(to right, #00D4FF, #0099CC)', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '1rem', fontWeight: 500 }}>
-            <Send size={20} />投稿
+          <button onClick={handleSubmit} disabled={submitting} style={{ flex: 1, padding: '16px 24px', borderRadius: 12, background: 'linear-gradient(to right, #00D4FF, #0099CC)', color: '#fff', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '1rem', fontWeight: 500, opacity: submitting ? 0.7 : 1 }}>
+            <Send size={20} />{submitting ? '投稿中...' : '投稿'}
           </button>
         </motion.div>
       </div>
