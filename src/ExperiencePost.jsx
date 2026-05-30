@@ -84,7 +84,7 @@ export default function ExperiencePost() {
   const formPlaceholder = isQuestion ? 'アドバイスや経験をシェアしてください' : 'あなたの体験や想いを書いてください';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A1628', paddingBottom: 96 }}>
+    <div id="scroll-container" style={{ height: '100vh', overflowY: 'auto', background: '#0A1628', paddingBottom: 96 }}>
 
       {/* ヘッダー */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#0A1628', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>

@@ -61,6 +61,8 @@ export default function BottomNav() {
   const lastScrollY = useRef(0);
 
   useEffect(() => {
+    lastScrollY.current = 0;
+    setVisible(true);
     const scrollEl = document.getElementById('scroll-container') || window;
     const getY = () => scrollEl === window ? window.scrollY : scrollEl.scrollTop;
 
@@ -75,7 +77,7 @@ export default function BottomNav() {
     };
     scrollEl.addEventListener('scroll', handleScroll, { passive: true });
     return () => scrollEl.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const isPost = location.pathname.startsWith('/experiences/post/');
   if (!SHOW_PATHS.includes(location.pathname) && !isPost) return null;
