@@ -1240,8 +1240,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       </section>
 
       {/* 7. 体験談プレビュー */}
-      <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
+      <FigmaExperienceSection onTabChange={navigate} />
       <SectionTransition />
       <FigmaNewsSection onTabChange={navigate} />
       <AIPartnerSection onTabChange={navigate} />
