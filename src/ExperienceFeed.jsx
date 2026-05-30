@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ThumbsUp, Lightbulb, Bot, Bookmark, MessageCircle } from 'lucide-react';
 
 const DUMMY_POSTS = [
   { id: 1, type: 'success', title: 'リフォーム成功の秘訣は綿密な打ち合わせ', summary: '業者との丁寧なコミュニケーションが成功のカギでした。', tags: ['リフォーム', '成功談'], likes: 248, comments: 32 },
@@ -23,10 +23,10 @@ const TABS = [
 ];
 
 const ACTION_BTNS = [
-  { label: '👍 私も同じでした' },
-  { label: '💡 参考になった' },
-  { label: '🤖 AI相談して解決', href: '/' },
-  { label: '🔖 保存しました' },
+  { Icon: ThumbsUp,  label: '私も同じでした' },
+  { Icon: Lightbulb, label: '参考になった' },
+  { Icon: Bot,       label: 'AI相談して解決', href: '/' },
+  { Icon: Bookmark,  label: '保存しました' },
 ];
 
 export default function ExperienceFeed() {
@@ -81,22 +81,22 @@ export default function ExperienceFeed() {
 
               {/* CTAボタン群 */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                {ACTION_BTNS.map(btn => (
+                {ACTION_BTNS.map(({ Icon, label, href }) => (
                   <button
-                    key={btn.label}
-                    onClick={btn.href ? () => { window.location.href = btn.href; } : undefined}
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '6px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                    key={label}
+                    onClick={href ? () => { window.location.href = href; } : undefined}
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '6px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
                   >
-                    {btn.label}
+                    <Icon size={13} />{label}
                   </button>
                 ))}
               </div>
 
               <button
                 onClick={() => { window.location.href = '/'; }}
-                style={{ width: '100%', background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', borderRadius: 12, padding: '10px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ width: '100%', background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', borderRadius: 12, padding: '10px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
               >
-                似た悩みをAIに相談
+                <MessageCircle size={14} />似た悩みをAIに相談
               </button>
             </div>
           );
