@@ -1115,7 +1115,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
             {CAROUSEL_PROPS.map((item, index) => (
               <div
                 key={index}
-                style={{ position: 'absolute', left: 0, top: 0, width: 300, height: 450, transform: `rotateY(${(360 / 8) * index}deg) translateZ(450px)`, transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', borderRadius: 24, overflow: 'hidden', cursor: 'pointer' }}
+                style={{ position: 'absolute', left: 0, top: 0, width: 300, height: 450, transform: `rotateY(${(360 / 8) * index}deg) translateZ(450px)`, transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', borderRadius: 24, overflow: 'hidden', cursor: 'pointer', border: '3px solid rgba(255,255,255,0.85)', boxShadow: '0 0 0 1px rgba(255,255,255,0.3), 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)' }}
                 onClick={() => navigate('properties')}
               >
                 <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
