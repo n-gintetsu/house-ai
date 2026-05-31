@@ -64,10 +64,12 @@ export default function MacBookCarousel({ onNavigate }) {
                     const normalized = ((currentAngle % 360) + 360) % 360;
                     const absAngle = normalized > 180 ? 360 - normalized : normalized;
                     const opacity = 1 - (absAngle / 180) * 0.9;
+                    const distFromFront = Math.min(normalized, 360 - normalized);
+                    const cardScale = 1 - (distFromFront / 180) * 0.4;
                     return (
                       <div
                         key={item.id}
-                        style={{ position: 'absolute', top: 0, left: 0, width: 220, height: 400, transform: `rotateY(${angle}deg) translateZ(380px)`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', opacity }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: 220, height: 400, transform: `rotateY(${angle}deg) translateZ(450px) scale(${cardScale})`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', opacity, background: '#1a1a2e', backfaceVisibility: 'hidden' }}
                         onClick={() => onNavigate('properties')}
                       >
                         <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
