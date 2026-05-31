@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
@@ -408,17 +408,42 @@ function TaxTypesContent() {
 function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   const [selectedStage, setSelectedStage] = useState(null)
   const [isPC, setIsPC] = useState(window.innerWidth > 768)
+  const [rightStyle, setRightStyle] = useState({ position: 'relative' })
+
+  const sectionRef = useRef(null)
+  const leftRef   = useRef(null)
+  const rightRef  = useRef(null)
 
   useEffect(() => {
-    const handler = () => setIsPC(window.innerWidth > 768)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    const onResize = () => setIsPC(window.innerWidth > 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (!isPC || !sectionRef.current || !rightRef.current) return
+      const sectionTop    = sectionRef.current.getBoundingClientRect().top
+      const sectionBottom = sectionRef.current.getBoundingClientRect().bottom
+      const rightHeight   = rightRef.current.offsetHeight
+      const rightWidth    = rightRef.current.offsetWidth
+
+      if (sectionTop <= 24 && sectionBottom >= rightHeight + 24) {
+        setRightStyle({ position: 'fixed', top: 24, width: rightWidth })
+      } else if (sectionBottom < rightHeight + 24) {
+        setRightStyle({ position: 'absolute', bottom: 0 })
+      } else {
+        setRightStyle({ position: 'relative' })
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isPC])
 
   const selected = LIFECYCLE_STAGES.find(s => s.id === selectedStage) || null
 
   return (
-    <div style={{ background: '#071B36', padding: '48px 20px' }}>
+    <div ref={sectionRef} style={{ background: '#071B36', padding: '48px 20px', position: 'relative' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#ffffff', marginBottom: '8px' }}>
@@ -432,7 +457,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           : { display: 'flex', flexDirection: 'column', gap: '24px' }
         }>
           {/* 左カラム：ステージカード縦並び */}
-          <div>
+          <div ref={leftRef}>
             {LIFECYCLE_STAGES.map((stage, idx) => {
               const StageIcon = stage.Icon
               const isSel = selectedStage === stage.id
@@ -474,7 +499,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           </div>
 
           {/* 右カラム：詳細パネル */}
-          <div style={isPC ? { position: 'sticky', top: 24, alignSelf: 'flex-start' } : {}}>
+          <div ref={rightRef} style={isPC ? rightStyle : {}}>
             {selected ? (
               <div style={{
                 background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
