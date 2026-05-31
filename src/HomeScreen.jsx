@@ -1075,61 +1075,35 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
 
       {/* 4. 人気物件プレビュー（縦型フィード） */}
       <section className="vertical-feed-section">
-        <div className="vf-notice-bar">
+        {/* キャッチコピー */}
+        <div style={{ textAlign: 'center' }}>
+          <div className="feed-desc-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.8l-5 3.4 1.9-5.8L4 8.8h6.1z"/></svg>
+            物件探しもAIでかんたんに
+          </div>
+          <h2 className="feed-desc-title">物件を見るだけでなく、<br/>AIに相談しながら探せます。</h2>
+          <p className="feed-desc-body">気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
+        </div>
+
+        {/* AIログバー */}
+        <div className="vf-notice-bar" style={{ margin: 0 }}>
           <span className="vf-notice-dot" />
           <span>今こんな相談が増えています：</span>
           <span className="vf-notice-text">{liveNotices[noticeIndex]}</span>
         </div>
-        <div className="vertical-feed-inner">
 
-          {/* 左：MacBookモックアップ */}
+        {/* MacBook中央配置 */}
+        <div style={{ maxWidth: 700, width: '100%', display: 'flex', justifyContent: 'center' }}>
           <MacBookCarousel onNavigate={navigate} />
+        </div>
 
-          {/* 右：説明・CTA */}
-          <div className="feed-desc-wrap">
-            <div className="feed-desc-badge">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.8l-5 3.4 1.9-5.8L4 8.8h6.1z"/></svg>
-              物件探しもAIでかんたんに
-            </div>
-            <h2 className="feed-desc-title">物件を見るだけでなく、<br/>AIに相談しながら探せます。</h2>
-            <p className="feed-desc-body">気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
-            <div className="feed-steps">
-              <div className="feed-step">
-                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
-                <div>
-                  <strong>物件を縦にスワイプ</strong>
-                  <span>気になる物件を直感的に見つけられます。</span>
-                </div>
-              </div>
-              <div className="feed-step">
-                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
-                <div>
-                  <strong>気になったらAIに質問</strong>
-                  <span>ローン・価格・リスク・周辺環境をその場で確認できます。</span>
-                </div>
-              </div>
-              <div className="feed-step">
-                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
-                <div>
-                  <strong>似た条件の体験談も確認</strong>
-                  <span>後悔しないための注意点をAIが整理します。</span>
-                </div>
-              </div>
-              <div className="feed-step">
-                <img src="/favicon-src.png" alt="" className="feed-step-logo" />
-                <div>
-                  <strong>必要なら専門家へ相談</strong>
-                  <span>相談内容に合わせて最適な専門家へつなげます。</span>
-                </div>
-              </div>
-            </div>
-            <div className="feed-cta-row">
-              <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
-              <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
-            </div>
-            <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
+        {/* ボタン + テキスト */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div className="feed-cta-row" style={{ margin: 0, justifyContent: 'center' }}>
+            <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
+            <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
           </div>
-
+          <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
         </div>
 
         {showStorySheet ? (
