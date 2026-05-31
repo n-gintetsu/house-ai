@@ -425,10 +425,13 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           <p style={{ color: '#94a3b8', fontSize: '14px' }}>あなたの状況を選択してください</p>
         </div>
 
-        <div style={isPC
-          ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
-          : { display: 'flex', flexDirection: 'column', gap: '24px' }
-        }>
+        <div style={{
+          display: isPC ? 'grid' : 'flex',
+          gridTemplateColumns: isPC ? '2fr 3fr' : undefined,
+          flexDirection: isPC ? undefined : 'column',
+          gap: 32,
+          alignItems: 'flex-start',
+        }}>
           {/* 左カラム：ステージカード縦並び */}
           <div>
             {LIFECYCLE_STAGES.map((stage, idx) => {
@@ -472,7 +475,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           </div>
 
           {/* 右カラム */}
-          <div>
+          <div style={{ position: 'relative' }}>
             {selected ? (
               <div style={{
                 background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
