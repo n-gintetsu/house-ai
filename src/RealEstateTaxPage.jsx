@@ -7,7 +7,7 @@ import {
   Search, ChevronDown, ChevronUp, ChevronRight, Home, FileText, Calculator,
   TrendingUp, Users, Receipt, Building2, MapPin, BarChart2,
   Check, AlertTriangle, Info, ArrowRight, Star, Clock,
-  Map, BookOpen, CheckCircle, ShoppingCart, Gift,
+  Map, BookOpen, CheckCircle, ShoppingCart, Gift, MessageSquare,
 } from 'lucide-react'
 
 // ─── Data ────────────────────────────────────────────────────────────────
@@ -890,6 +890,284 @@ function CheckpointsContent({ onNavigateToExpert }) {
   )
 }
 
+// ─── ExpertSection ───────────────────────────────────────────────────────
+
+const EXPERT_DATA = [
+  {
+    id: 1,
+    name: '山田 太郎',
+    qualification: '税理士',
+    office: '山田税理士事務所',
+    photo: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&h=120&fit=crop&crop=face',
+    rating: 4.9,
+    reviews: 1200,
+    availability: ['本日', '明日'],
+    areas: ['全国', '関東'],
+    specialties: [
+      { label: '相続', color: '#8B5CF6' },
+      { label: '売却', color: '#EF4444' },
+      { label: '住宅ローン', color: '#3B82F6' },
+    ],
+    online: true, visit: true, responseTime: '24時間以内',
+  },
+  {
+    id: 2,
+    name: '佐藤 花子',
+    qualification: '司法書士',
+    office: 'さとう司法書士法人',
+    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop&crop=face',
+    rating: 4.8,
+    reviews: 850,
+    availability: ['明日', '3日以内'],
+    areas: ['関西', '中部'],
+    specialties: [
+      { label: '登記', color: '#10B981' },
+      { label: '相続', color: '#8B5CF6' },
+      { label: '投資', color: '#F59E0B' },
+    ],
+    online: true, visit: false, responseTime: '12時間以内',
+  },
+  {
+    id: 3,
+    name: '鈴木 一郎',
+    qualification: '税理士',
+    office: '鈴木会計事務所',
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face',
+    rating: 4.7,
+    reviews: 620,
+    availability: ['3日以内', '1週間以内'],
+    areas: ['中部', '関東'],
+    specialties: [
+      { label: '住宅ローン', color: '#3B82F6' },
+      { label: '法人', color: '#EF4444' },
+      { label: '投資', color: '#F59E0B' },
+    ],
+    online: true, visit: true, responseTime: '48時間以内',
+  },
+  {
+    id: 4,
+    name: '田中 美咲',
+    qualification: '不動産コンサルタント',
+    office: '田中不動産コンサルティング',
+    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop&crop=face',
+    rating: 4.6,
+    reviews: 380,
+    availability: ['本日', '明日'],
+    areas: ['九州', '中国'],
+    specialties: [
+      { label: '投資', color: '#F59E0B' },
+      { label: '農地', color: '#22C55E' },
+      { label: '法人', color: '#EF4444' },
+    ],
+    online: false, visit: true, responseTime: '24時間以内',
+  },
+]
+
+function ExpertSection({ onNavigate }) {
+  const [isPC, setIsPC] = useState(window.innerWidth > 768)
+
+  useEffect(() => {
+    const handler = () => setIsPC(window.innerWidth > 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  return (
+    <div style={{ background: '#ffffff', padding: '60px 20px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          style={{ textAlign: 'center', marginBottom: '40px' }}
+        >
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
+            登録専門家
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
+            税金・登記・不動産の専門家があなたをサポートします
+          </p>
+        </motion.div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isPC ? 'repeat(2, 1fr)' : '1fr',
+          gap: '20px',
+        }}>
+          {EXPERT_DATA.map((expert, idx) => (
+            <motion.div
+              key={expert.id}
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: idx * 0.08 }}
+              style={{
+                background: '#1a3a5c', border: '2px solid #c9a84c',
+                borderRadius: '16px', padding: '24px',
+                display: 'flex', flexDirection: 'column', gap: '16px',
+              }}
+            >
+              {/* 顔写真 + 名前 + 資格 + 事務所 + 評価 */}
+              <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                <img
+                  src={expert.photo}
+                  alt={expert.name}
+                  style={{
+                    width: '64px', height: '64px', borderRadius: '50%',
+                    objectFit: 'cover', border: '2px solid #c9a84c', flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '17px', fontWeight: 500, color: '#ffffff', marginBottom: '2px' }}>
+                    {expert.name}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#c9a84c', fontWeight: 400, marginBottom: '3px' }}>
+                    {expert.qualification}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', fontWeight: 400, marginBottom: '6px' }}>
+                    {expert.office}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <Star
+                          key={i} size={13} color="#c9a84c"
+                          fill={i <= Math.round(expert.rating) ? '#c9a84c' : 'none'}
+                        />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#c9a84c' }}>{expert.rating}</span>
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                      ({expert.reviews}件)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 最短相談 */}
+              <div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 400, marginBottom: '6px' }}>
+                  最短相談
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {expert.availability.map(av => (
+                    <span key={av} style={{
+                      fontSize: '12px', fontWeight: 500,
+                      background: '#22C55E', color: '#ffffff',
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                      {av}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 対応エリア */}
+              <div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 400, marginBottom: '6px' }}>
+                  対応エリア
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {expert.areas.map(area => (
+                    <span key={area} style={{
+                      fontSize: '12px', fontWeight: 400,
+                      background: 'transparent', color: '#c9a84c',
+                      border: '1px solid #c9a84c',
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 得意分野 */}
+              <div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 400, marginBottom: '6px' }}>
+                  得意分野
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {expert.specialties.map(sp => (
+                    <span key={sp.label} style={{
+                      fontSize: '12px', fontWeight: 400,
+                      background: `${sp.color}28`, color: sp.color,
+                      border: `1px solid ${sp.color}60`,
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                      {sp.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* バッジ + 対応速度 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '7px' }}>
+                  {expert.online ? (
+                    <span style={{
+                      fontSize: '11px', fontWeight: 500,
+                      background: 'rgba(59,130,246,0.2)', color: '#60a5fa',
+                      border: '1px solid rgba(59,130,246,0.4)',
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                      オンライン可
+                    </span>
+                  ) : null}
+                  {expert.visit ? (
+                    <span style={{
+                      fontSize: '11px', fontWeight: 500,
+                      background: 'rgba(16,185,129,0.2)', color: '#34d399',
+                      border: '1px solid rgba(16,185,129,0.4)',
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                      訪問対応
+                    </span>
+                  ) : null}
+                </div>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                  返信：{expert.responseTime}
+                </span>
+              </div>
+
+              {/* ボタン行 */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => onNavigate('expert-matching')}
+                  style={{
+                    flex: 1, padding: '12px', border: 'none', borderRadius: '10px',
+                    background: '#c9a84c', color: '#1a3a5c',
+                    cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+                  }}
+                >
+                  相談する
+                </button>
+                <button
+                  onClick={() => onNavigate('expert-matching')}
+                  style={{
+                    width: '44px', height: '44px', flexShrink: 0,
+                    background: 'transparent', border: '1.5px solid #c9a84c',
+                    borderRadius: '10px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <MessageSquare size={18} color="#c9a84c" />
+                </button>
+                <button
+                  onClick={() => onNavigate('expert-matching')}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: '10px',
+                    background: 'transparent', border: '1.5px solid rgba(255,255,255,0.25)',
+                    color: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
+                  }}
+                >
+                  公式サイト
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── SimilarCases (常時表示) ──────────────────────────────────────────────
 
 function SimilarCases({ onNavigateToExpert }) {
@@ -1101,6 +1379,9 @@ export default function RealEstateTaxPage({ onNavigate }) {
 
       {/* 4. 類似事例（常時表示） */}
       <SimilarCases onNavigateToExpert={() => navigate('expert-matching')} />
+
+      {/* 4.5 登録専門家（常時表示） */}
+      <ExpertSection onNavigate={navigate} />
 
       {/* 5. 最終CTA（常時表示） */}
       <FinalCTA onNavigate={navigate} />
