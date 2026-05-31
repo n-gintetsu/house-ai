@@ -428,7 +428,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
         </div>
 
         <div style={isPC
-          ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px', alignItems: 'start' }
+          ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
           : { display: 'flex', flexDirection: 'column', gap: '24px' }
         }>
           {/* 左カラム：ステージカード縦並び */}
@@ -474,7 +474,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           </div>
 
           {/* 右カラム：詳細パネル */}
-          <div style={isPC ? { position: 'sticky', top: '24px' } : {}}>
+          <div style={isPC ? { position: 'sticky', top: 24, alignSelf: 'flex-start' } : {}}>
             {selected ? (
               <div style={{
                 background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
