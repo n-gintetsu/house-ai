@@ -1212,9 +1212,9 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
 
         {/* ボタン + テキスト */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button onClick={() => navigate('properties')} style={{ background: '#1a3a5c', color: 'white', border: 'none', borderRadius: 50, padding: '14px 32px', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>物件情報を見る</button>
-            <button onClick={handleAIConsult} style={{ background: '#C9A84C', color: 'white', border: 'none', borderRadius: 50, padding: '14px 32px', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>AIに相談して探す</button>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginTop: 40 }}>
+            <button onClick={() => navigate('properties')} style={{ background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50px', padding: '16px 40px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', boxShadow: '0 8px 32px rgba(26,58,92,0.4), inset 0 1px 0 rgba(255,255,255,0.15)', letterSpacing: '0.02em' }}>物件情報を見る</button>
+            <button onClick={handleAIConsult} style={{ background: 'linear-gradient(135deg, #C9A84C, #E8C86A)', color: '#1a1a1a', border: 'none', borderRadius: '50px', padding: '16px 40px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', boxShadow: '0 8px 32px rgba(201,168,76,0.5), inset 0 1px 0 rgba(255,255,255,0.3)', letterSpacing: '0.02em' }}>AIに相談して探す</button>
           </div>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: 0 }}>掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
         </div>
