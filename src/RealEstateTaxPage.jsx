@@ -158,12 +158,12 @@ const CTA_ITEMS = [
 // ─── Shortcut button config ───────────────────────────────────────────────
 
 const SHORTCUTS = [
-  { id: 'tax-types',    label: '9種類の税金',       Icon: Building2   },
-  { id: 'lifecycle',    label: 'ライフサイクルマップ', Icon: Map         },
-  { id: 'radar',        label: 'AI分析レーダー',     Icon: TrendingUp  },
-  { id: 'guide',        label: '税金ガイドQ&A',      Icon: BookOpen    },
-  { id: 'calculator',   label: '物件税金整理',        Icon: Calculator  },
-  { id: 'checkpoints',  label: 'AI確認ポイント',     Icon: CheckCircle },
+  { id: 'tax-types',   label: '9種類の税金',         Icon: Building2,   color: '#3B82F6', delay: '0s',    duration: '2.5s' },
+  { id: 'lifecycle',   label: 'ライフサイクルマップ', Icon: Map,         color: '#22C55E', delay: '0.2s',  duration: '3.0s' },
+  { id: 'radar',       label: 'AI分析レーダー',       Icon: TrendingUp,  color: '#F59E0B', delay: '0.4s',  duration: '2.8s' },
+  { id: 'guide',       label: '税金ガイドQ&A',        Icon: BookOpen,    color: '#8B5CF6', delay: '0.6s',  duration: '3.2s' },
+  { id: 'calculator',  label: '物件税金整理',          Icon: Calculator,  color: '#EF4444', delay: '0.8s',  duration: '2.6s' },
+  { id: 'checkpoints', label: 'AI確認ポイント',       Icon: CheckCircle, color: '#14B8A6', delay: '1.0s',  duration: '3.4s' },
 ]
 
 // ─── HeroSection ─────────────────────────────────────────────────────────
@@ -274,32 +274,50 @@ function HeroSection({ onSearch }) {
 // ─── ShortcutBar ─────────────────────────────────────────────────────────
 
 function ShortcutBar({ openSection, onToggle }) {
+  const styleTag = SHORTCUTS.map(({ id, color }) => `
+    @keyframes glow-${id} {
+      0%, 100% { box-shadow: 0 0 4px ${color}80, 0 0 8px ${color}40; }
+      50%       { box-shadow: 0 0 14px ${color}, 0 0 28px ${color}80; }
+    }
+  `).join('')
+
   return (
-    <div style={{ background: 'white', padding: '16px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 100 }}>
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', maxWidth: '960px', margin: '0 auto' }}>
-        {SHORTCUTS.map(({ id, label, Icon: ShIcon }) => {
-          const active = openSection === id
-          return (
-            <button
-              key={id}
-              onClick={() => onToggle(id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                borderRadius: '24px', padding: '8px 16px', fontSize: '14px',
-                fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
-                background: active ? '#1a3a5c' : 'white',
-                color: active ? '#c9a84c' : '#64748b',
-                border: active ? '1px solid #1a3a5c' : '1px solid #e2e8f0',
-                transition: 'background 0.2s, color 0.2s, border-color 0.2s',
-              }}
-            >
-              <ShIcon size={15} color={active ? '#c9a84c' : '#94a3b8'} />
-              {label}
-            </button>
-          )
-        })}
+    <>
+      <style>{styleTag}</style>
+      <div style={{
+        background: 'white', padding: '14px 16px',
+        borderBottom: '1px solid #e2e8f0',
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', maxWidth: '960px', margin: '0 auto' }}>
+          {SHORTCUTS.map(({ id, label, Icon: ShIcon, color, delay, duration }) => {
+            const active = openSection === id
+            return (
+              <button
+                key={id}
+                onClick={() => onToggle(id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                  borderRadius: '24px', padding: '8px 16px', fontSize: '14px',
+                  fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
+                  background: active ? color : 'white',
+                  color: active ? 'white' : '#4b5563',
+                  border: `2px solid ${color}`,
+                  boxShadow: active
+                    ? `0 0 16px ${color}, 0 0 32px ${color}80`
+                    : undefined,
+                  animation: active ? 'none' : `glow-${id} ${duration} ease-in-out ${delay} infinite`,
+                  transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+                }}
+              >
+                <ShIcon size={15} color={active ? 'white' : color} />
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
