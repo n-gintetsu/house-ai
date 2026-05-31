@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
@@ -7,7 +7,7 @@ import {
   Search, ChevronDown, ChevronUp, ChevronRight, Home, FileText, Calculator,
   TrendingUp, Users, Receipt, Building2, MapPin, BarChart2,
   Check, AlertTriangle, Info, ArrowRight, Star, Clock,
-  Map, BookOpen, CheckCircle, ShoppingCart, Gift, MessageSquare,
+  BookOpen, CheckCircle, ShoppingCart, Gift, MessageSquare,
 } from 'lucide-react'
 
 // ─── Data ────────────────────────────────────────────────────────────────
@@ -159,12 +159,10 @@ const CTA_ITEMS = [
 // ─── Shortcut button config ───────────────────────────────────────────────
 
 const SHORTCUTS = [
-  { id: 'tax-types',   label: '9種類の税金',         Icon: Building2,   color: '#3B82F6', delay: '0s',    duration: '2.5s' },
-  { id: 'lifecycle',   label: 'ライフサイクルマップ', Icon: Map,         color: '#22C55E', delay: '0.2s',  duration: '3.0s' },
-  { id: 'radar',       label: 'AI分析レーダー',       Icon: TrendingUp,  color: '#F59E0B', delay: '0.4s',  duration: '2.8s' },
-  { id: 'guide',       label: '税金ガイドQ&A',        Icon: BookOpen,    color: '#8B5CF6', delay: '0.6s',  duration: '3.2s' },
-  { id: 'calculator',  label: '物件税金整理',          Icon: Calculator,  color: '#EF4444', delay: '0.8s',  duration: '2.6s' },
-  { id: 'checkpoints', label: 'AI確認ポイント',       Icon: CheckCircle, color: '#14B8A6', delay: '1.0s',  duration: '3.4s' },
+  { id: 'tax-types',        label: '9種類の税金',       Icon: Building2,   color: '#3B82F6', delay: '0s',   duration: '2.5s' },
+  { id: 'radar-calculator', label: '税金シミュレーター', Icon: Calculator,  color: '#F59E0B', delay: '0.2s', duration: '2.8s' },
+  { id: 'guide',            label: '税金ガイドQ&A',      Icon: BookOpen,    color: '#8B5CF6', delay: '0.4s', duration: '3.2s' },
+  { id: 'checkpoints',      label: 'AI確認ポイント',     Icon: CheckCircle, color: '#14B8A6', delay: '0.6s', duration: '3.4s' },
 ]
 
 // ─── HeroSection ─────────────────────────────────────────────────────────
@@ -408,10 +406,6 @@ function TaxTypesContent() {
 function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   const [selectedStage, setSelectedStage] = useState(null)
   const [isPC, setIsPC] = useState(window.innerWidth > 768)
-  const [rightStyle, setRightStyle] = useState({ position: 'relative', width: '100%' })
-
-  const containerRef = useRef(null)
-  const rightRef     = useRef(null)
 
   useEffect(() => {
     const onResize = () => setIsPC(window.innerWidth > 768)
@@ -419,35 +413,10 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current || !rightRef.current) return
-      const container = containerRef.current.getBoundingClientRect()
-      const rightH = rightRef.current.offsetHeight
-      const leftColWidth = container.width * (2 / 5)
-      const rightWidth   = container.width * (3 / 5) - 16
-
-      if (container.top <= 24 && container.bottom >= rightH + 24) {
-        setRightStyle({
-          position: 'fixed',
-          top: 24,
-          left: container.left + leftColWidth + 16,
-          width: rightWidth,
-        })
-      } else if (container.bottom < rightH + 24) {
-        setRightStyle({ position: 'absolute', bottom: 0, right: 0, width: '60%' })
-      } else {
-        setRightStyle({ position: 'relative', width: '100%' })
-      }
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [isPC])
-
   const selected = LIFECYCLE_STAGES.find(s => s.id === selectedStage) || null
 
   return (
-    <div style={{ background: '#071B36', padding: '48px 20px', position: 'relative' }}>
+    <div style={{ background: '#071B36', padding: '48px 20px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#ffffff', marginBottom: '8px' }}>
@@ -456,13 +425,10 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           <p style={{ color: '#94a3b8', fontSize: '14px' }}>あなたの状況を選択してください</p>
         </div>
 
-        <div
-          ref={containerRef}
-          style={isPC
-            ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
-            : { display: 'flex', flexDirection: 'column', gap: '24px' }
-          }
-        >
+        <div style={isPC
+          ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
+          : { display: 'flex', flexDirection: 'column', gap: '24px' }
+        }>
           {/* 左カラム：ステージカード縦並び */}
           <div>
             {LIFECYCLE_STAGES.map((stage, idx) => {
@@ -505,69 +471,63 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
             })}
           </div>
 
-          {/* 右カラム outer wrapper（スペース確保用プレースホルダー） */}
-          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-            {/* 右カラム本体 */}
-            <div ref={rightRef} style={isPC ? rightStyle : {}}>
-              {selected ? (
-                <div style={{
-                  background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
-                  border: `1px solid ${selected.color}50`,
-                }}>
-                  <h3 style={{ fontSize: '22px', fontWeight: 500, color: '#D4AF37', marginBottom: '20px' }}>
-                    {selected.name}時の税金
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                    {selected.taxes.map(tax => (
-                      <div key={tax} style={{
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        background: 'rgba(255,255,255,0.06)', borderRadius: '10px',
-                        padding: '13px 16px', border: '1px solid rgba(255,255,255,0.1)',
-                      }}>
-                        <div style={{
-                          width: '7px', height: '7px', borderRadius: '50%',
-                          background: selected.color, flexShrink: 0,
-                        }} />
-                        <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: 400 }}>{tax}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button
-                      onClick={onNavigateToChat}
-                      style={{
-                        width: '100%', padding: '14px', border: 'none', borderRadius: '12px',
-                        background: selected.color, color: 'white',
-                        cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-                      }}
-                    >
-                      詳細を確認
-                    </button>
-                    <button
-                      onClick={onNavigateToExpert}
-                      style={{
-                        width: '100%', padding: '14px', borderRadius: '12px',
-                        background: 'transparent', border: '1px solid #D4AF37',
-                        color: '#D4AF37', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
-                      }}
-                    >
-                      専門家に相談
-                    </button>
-                  </div>
+          {/* 右カラム */}
+          <div>
+            {selected ? (
+              <div style={{
+                background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
+                border: `1px solid ${selected.color}50`,
+              }}>
+                <h3 style={{ fontSize: '22px', fontWeight: 500, color: '#D4AF37', marginBottom: '20px' }}>
+                  {selected.name}時の税金
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                  {selected.taxes.map(tax => (
+                    <div key={tax} style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      background: 'rgba(255,255,255,0.06)', borderRadius: '10px',
+                      padding: '13px 16px', border: '1px solid rgba(255,255,255,0.1)',
+                    }}>
+                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: selected.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: 400 }}>{tax}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  minHeight: '220px', textAlign: 'center',
-                  color: 'rgba(255,255,255,0.35)', fontSize: '14px', lineHeight: 1.9,
-                  background: 'rgba(255,255,255,0.03)', borderRadius: '20px',
-                  border: '1px solid rgba(212,175,55,0.2)', padding: '40px 24px',
-                }}>
-                  左のライフサイクルから、あなたの状況を選択してください。<br />
-                  関連する税金情報をAIが整理します。
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button
+                    onClick={onNavigateToChat}
+                    style={{
+                      width: '100%', padding: '14px', border: 'none', borderRadius: '12px',
+                      background: selected.color, color: 'white',
+                      cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+                    }}
+                  >
+                    詳細を確認
+                  </button>
+                  <button
+                    onClick={onNavigateToExpert}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: '12px',
+                      background: 'transparent', border: '1px solid #D4AF37',
+                      color: '#D4AF37', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
+                    }}
+                  >
+                    専門家に相談
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                minHeight: '220px', textAlign: 'center',
+                color: 'rgba(255,255,255,0.35)', fontSize: '14px', lineHeight: 1.9,
+                background: 'rgba(255,255,255,0.03)', borderRadius: '20px',
+                border: '1px solid rgba(212,175,55,0.2)', padding: '40px 24px',
+              }}>
+                左のライフサイクルから、あなたの状況を選択してください。<br />
+                関連する税金情報をAIが整理します。
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -575,46 +535,273 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   )
 }
 
-// ─── Section: Radar ──────────────────────────────────────────────────────
+// ─── Section: RadarCalculator (統合・白背景) ─────────────────────────────
 
-function RadarContent() {
+const RADAR_BY_PURPOSE = {
+  resident: [
+    { subject: '節税余地', value: 85, fullMark: 100 },
+    { subject: '金額影響', value: 68, fullMark: 100 },
+    { subject: '複雑度',   value: 62, fullMark: 100 },
+    { subject: '時間制約', value: 58, fullMark: 100 },
+    { subject: '専門知識', value: 72, fullMark: 100 },
+  ],
+  investment: [
+    { subject: '節税余地', value: 92, fullMark: 100 },
+    { subject: '金額影響', value: 88, fullMark: 100 },
+    { subject: '複雑度',   value: 85, fullMark: 100 },
+    { subject: '時間制約', value: 70, fullMark: 100 },
+    { subject: '専門知識', value: 95, fullMark: 100 },
+  ],
+  inheritance: [
+    { subject: '節税余地', value: 78, fullMark: 100 },
+    { subject: '金額影響', value: 96, fullMark: 100 },
+    { subject: '複雑度',   value: 93, fullMark: 100 },
+    { subject: '時間制約', value: 92, fullMark: 100 },
+    { subject: '専門知識', value: 98, fullMark: 100 },
+  ],
+  sell: [
+    { subject: '節税余地', value: 88, fullMark: 100 },
+    { subject: '金額影響', value: 80, fullMark: 100 },
+    { subject: '複雑度',   value: 74, fullMark: 100 },
+    { subject: '時間制約', value: 76, fullMark: 100 },
+    { subject: '専門知識', value: 82, fullMark: 100 },
+  ],
+}
+
+const PURPOSE_BTNS = [
+  { id: 'resident',    label: '居住用購入', color: '#3B82F6' },
+  { id: 'investment',  label: '投資用購入', color: '#F59E0B' },
+  { id: 'inheritance', label: '相続・贈与', color: '#8B5CF6' },
+  { id: 'sell',        label: '売却・譲渡', color: '#EF4444' },
+]
+
+function RadarCalculatorContent({ onNavigateToChat }) {
+  const [purpose, setPurpose] = useState('resident')
+  const [priceM, setPriceM] = useState(4000)
+  const [form, setForm] = useState({ propertyType: '', price: '', isNew: '', purposeForm: '' })
+  const [result, setResult] = useState(null)
+
+  const radarData = RADAR_BY_PURPOSE[purpose]
+  const activeBtn = PURPOSE_BTNS.find(p => p.id === purpose)
+
+  const handleChange = (key, value) => setForm(f => ({ ...f, [key]: value }))
+
+  const handleCalculate = () => {
+    if (!form.price || !form.propertyType) return
+    const price = parseInt(form.price, 10) * 10000
+    const buildingRatio = form.propertyType === '土地' ? 0 : 0.6
+    const buildingPrice = price * buildingRatio
+    const consumptionTax = form.isNew === 'new' ? buildingPrice * 0.1 : 0
+    const regTax = price * 0.002
+    const acquisitionTax = form.isNew === 'new' ? 0 : Math.max(0, price * 0.015 - 1200000)
+    const stampTax = price >= 500000000 ? 60000 : price >= 100000000 ? 30000 : price >= 50000000 ? 20000 : price >= 10000000 ? 5000 : 1000
+    const annualPropertyTax = price * 0.014 / 6
+    setResult({ consumptionTax, regTax, acquisitionTax, stampTax, annualPropertyTax })
+  }
+
+  const fmt = v => v >= 10000 ? `約${Math.round(v / 10000)}万円` : `約${Math.round(v).toLocaleString()}円`
+  const canCalc = form.price && form.propertyType
+
   return (
-    <div style={{ background: '#0f172a', padding: '48px 20px' }}>
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#ffffff', marginBottom: '8px' }}>
+    <div style={{ background: '#ffffff', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+
+        {/* ─── レーダーチャート ─── */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#1a3a5c', marginBottom: '8px' }}>
             不動産税金 AI分析レーダー
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '14px' }}>5軸で不動産税金の特性を可視化</p>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>目的を選んで税金の特性を可視化</p>
         </div>
 
-        <div style={{
-          background: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '28px',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={RADAR_DATA}>
-              <PolarGrid stroke="rgba(255,255,255,0.15)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+        {/* 目的ボタン */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
+          {PURPOSE_BTNS.map(btn => {
+            const isAct = purpose === btn.id
+            return (
+              <button
+                key={btn.id}
+                onClick={() => setPurpose(btn.id)}
+                style={{
+                  padding: '8px 20px', borderRadius: '999px', cursor: 'pointer',
+                  fontSize: '14px', fontWeight: isAct ? 500 : 400,
+                  background: isAct ? btn.color : '#f8fafc',
+                  color: isAct ? '#ffffff' : '#475569',
+                  border: isAct ? `2px solid ${btn.color}` : '1px solid #e2e8f0',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {btn.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* 物件価格スライダー */}
+        <div style={{ background: '#f8fafc', borderRadius: '14px', padding: '16px 20px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a3a5c' }}>物件価格の目安</span>
+            <span style={{ fontSize: '18px', fontWeight: 500, color: activeBtn.color }}>
+              {priceM >= 10000 ? `${(priceM / 10000).toFixed(1)}億円` : `${priceM.toLocaleString()}万円`}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={500}
+            max={50000}
+            step={500}
+            value={priceM}
+            onChange={e => setPriceM(Number(e.target.value))}
+            style={{ width: '100%', accentColor: activeBtn.color }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>500万円</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>5億円</span>
+          </div>
+        </div>
+
+        {/* チャート + スコアカード */}
+        <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '24px', border: '1px solid #e2e8f0', marginBottom: '36px' }}>
+          <ResponsiveContainer width="100%" height={280}>
+            <RadarChart data={radarData}>
+              <PolarGrid stroke="#e2e8f0" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: '#1a3a5c', fontSize: 12 }} />
               <Radar
-                name="不動産税金" dataKey="value"
-                stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2}
+                name={activeBtn.label} dataKey="value"
+                stroke={activeBtn.color} fill={activeBtn.color} fillOpacity={0.18} strokeWidth={2}
               />
             </RadarChart>
           </ResponsiveContainer>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', marginTop: '20px' }}>
-            {RADAR_DATA.map(item => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px', marginTop: '16px' }}>
+            {radarData.map(item => (
               <div key={item.subject} style={{
-                background: 'rgba(255,255,255,0.06)', borderRadius: '12px', padding: '11px 14px',
+                background: 'white', borderRadius: '10px', padding: '10px 14px', border: '1px solid #e2e8f0',
               }}>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '3px' }}>{item.subject}</div>
-                <div style={{ fontSize: '20px', fontWeight: 500, color: '#3b82f6' }}>
-                  {item.value}<span style={{ fontSize: '12px', color: '#64748b' }}>/100</span>
+                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '3px' }}>{item.subject}</div>
+                <div style={{ fontSize: '18px', fontWeight: 500, color: activeBtn.color }}>
+                  {item.value}<span style={{ fontSize: '11px', color: '#94a3b8' }}>/100</span>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* セパレーター */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+          <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 400, whiteSpace: 'nowrap' }}>物件税金を概算する</span>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+        </div>
+
+        {/* ─── 物件税金整理フォーム ─── */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 28px)', fontWeight: 500, color: '#1a3a5c', marginBottom: '6px' }}>
+            AI購入予定物件 税金整理
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>物件情報を入力して税金の概算を整理します</p>
+        </div>
+
+        <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '28px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+            {[
+              { key: 'propertyType', label: '物件種別', opts: ['マンション', '一戸建て', '土地'] },
+              { key: 'isNew',        label: '新築・中古', opts: [{ v: 'new', l: '新築' }, { v: 'used', l: '中古' }] },
+              { key: 'purposeForm',  label: '購入目的',  opts: [{ v: 'resident', l: '居住用' }, { v: 'investment', l: '投資用' }] },
+            ].map(({ key, label, opts }) => (
+              <div key={key}>
+                <label style={{ fontSize: '13px', fontWeight: 500, color: '#1a3a5c', display: 'block', marginBottom: '7px' }}>
+                  {label}
+                </label>
+                <select
+                  value={form[key]}
+                  onChange={e => handleChange(key, e.target.value)}
+                  style={{
+                    width: '100%', padding: '11px 14px', borderRadius: '10px',
+                    border: '1px solid #e2e8f0', background: 'white',
+                    fontSize: '16px', color: '#1a3a5c', outline: 'none',
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {opts.map(o => typeof o === 'string' ? (
+                    <option key={o} value={o}>{o}</option>
+                  ) : (
+                    <option key={o.v} value={o.v}>{o.l}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 500, color: '#1a3a5c', display: 'block', marginBottom: '7px' }}>
+                物件価格（万円）
+              </label>
+              <input
+                type="number"
+                placeholder="例：4500"
+                value={form.price}
+                onChange={e => handleChange('price', e.target.value)}
+                style={{
+                  width: '100%', padding: '11px 14px', borderRadius: '10px',
+                  border: '1px solid #e2e8f0', background: 'white',
+                  fontSize: '16px', color: '#1a3a5c', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleCalculate}
+            disabled={!canCalc}
+            style={{
+              width: '100%', padding: '14px', border: 'none', borderRadius: '11px',
+              cursor: canCalc ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: 500,
+              background: canCalc ? '#1a3a5c' : '#e2e8f0',
+              color: canCalc ? 'white' : '#94a3b8', transition: 'all 0.2s',
+            }}
+          >
+            概算を整理する
+          </button>
+
+          {result ? (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <Check size={15} color="#10b981" />
+                <span style={{ fontSize: '14px', fontWeight: 500, color: '#1a3a5c' }}>税金概算結果</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>（目安・実際は異なります）</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+                {[
+                  { label: '消費税',        value: result.consumptionTax,    note: '建物部分' },
+                  { label: '不動産取得税',  value: result.acquisitionTax,    note: '軽減後概算' },
+                  { label: '登録免許税',    value: result.regTax,            note: '所有権移転' },
+                  { label: '印紙税',        value: result.stampTax,          note: '売買契約書' },
+                  { label: '固定資産税/年', value: result.annualPropertyTax, note: '概算' },
+                ].map(item => (
+                  <div key={item.label} style={{
+                    background: 'white', borderRadius: '11px', padding: '14px', border: '1px solid #e2e8f0',
+                  }}>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '3px' }}>{item.label}</div>
+                    <div style={{ fontSize: '17px', fontWeight: 500, color: '#1a3a5c' }}>{fmt(item.value)}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{item.note}</div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={onNavigateToChat}
+                style={{
+                  width: '100%', marginTop: '14px', padding: '13px',
+                  background: 'linear-gradient(135deg, #1a3a5c, #2563eb)',
+                  color: 'white', border: 'none', borderRadius: '11px',
+                  cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                }}
+              >
+                <Star size={15} />
+                AIで詳しく整理する
+              </button>
+            </motion.div>
+          ) : null}
         </div>
       </div>
     </div>
@@ -1357,25 +1544,20 @@ export default function RealEstateTaxPage({ onNavigate }) {
         <TaxTypesContent />
       </AccordionSection>
 
-      <AccordionSection id="lifecycle" openSection={openSection}>
-        <LifecycleContent onNavigateToChat={() => navigate('chat')} onNavigateToExpert={() => navigate('expert-matching')} />
-      </AccordionSection>
-
-      <AccordionSection id="radar" openSection={openSection}>
-        <RadarContent />
+      <AccordionSection id="radar-calculator" openSection={openSection}>
+        <RadarCalculatorContent onNavigateToChat={() => navigate('chat')} />
       </AccordionSection>
 
       <AccordionSection id="guide" openSection={openSection}>
         <GuideContent />
       </AccordionSection>
 
-      <AccordionSection id="calculator" openSection={openSection}>
-        <CalculatorContent onNavigateToChat={() => navigate('chat')} />
-      </AccordionSection>
-
       <AccordionSection id="checkpoints" openSection={openSection}>
         <CheckpointsContent onNavigateToExpert={() => navigate('expert-matching')} />
       </AccordionSection>
+
+      {/* ライフサイクルマップ（常時表示） */}
+      <LifecycleContent onNavigateToChat={() => navigate('chat')} onNavigateToExpert={() => navigate('expert-matching')} />
 
       {/* 4. 類似事例（常時表示） */}
       <SimilarCases onNavigateToExpert={() => navigate('expert-matching')} />
