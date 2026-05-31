@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Circle, ChevronRight, TrendingUp, Home, Calculator, ArrowRight, MessageSquare, Building2, Star, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from './lib/supabase';
 
 const NAVY = '#1a3a5c';
 const GOLD = '#c9a84c';
@@ -19,7 +20,9 @@ const CONSULT_CARDS = [
   { name: '銀行窓口相談', specialty: '自社ローン・優遇金利', area: '近隣店舗', fee: '無料', rating: 3 },
 ];
 
-function calcResults(form) {
+// 修正1: 年収×7×雇用係数、上限8000万
+// 修正2: avgRate（Supabase取得）でPMT計算、借入可能額ベース
+function calcResults(form, avgRate) {
   const age = parseInt(form.age) || 35;
   const income = parseInt(form.income) || 400;
   const downPayment = parseInt(form.downPayment) || 0;
@@ -28,22 +31,22 @@ function calcResults(form) {
   const hasOtherLoan = form.otherLoan === 'あり';
   const employment = form.employment || '会社員';
 
-  let multiplier = 5.5;
-  if (employment === '公務員') multiplier = 6.5;
-  else if (employment === '自営業') multiplier = 4.0;
-  else if (employment === 'パート') multiplier = 3.5;
+  let empCoef = 1.0;
+  if (employment === '公務員') empCoef = 1.05;
+  else if (employment === '自営業') empCoef = 0.85;
+  else if (employment === 'パート') empCoef = 0.7;
 
-  if (years < 1) multiplier = multiplier * 0.7;
-  else if (years < 3) multiplier = multiplier * 0.85;
-  else if (years >= 10) multiplier = multiplier * 1.1;
-  if (hasOtherLoan) multiplier = multiplier * 0.8;
+  let maxLoan = income * 7 * empCoef;
+  if (hasOtherLoan) maxLoan = maxLoan * 0.85;
+  maxLoan = Math.min(8000, Math.round(maxLoan / 100) * 100);
 
-  const maxLoan = Math.floor(income * multiplier / 100) * 100;
-  const r = 0.005 / 12;
-  const n = 35 * 12;
-  const actualLoan = Math.min(desiredLoan, maxLoan);
-  const rawMonthly = actualLoan * 10000 * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+  const usedRate = avgRate || 0.5;
+  const r = usedRate / 100;
+  const monthlyRate = r / 12;
+  const rawMonthly = maxLoan * 10000 * monthlyRate / (1 - Math.pow(1 + monthlyRate, -420));
   const monthlyPayment = Math.round(rawMonthly / 1000) * 1000;
+
+  const actualLoan = Math.min(desiredLoan, maxLoan);
 
   let score = 60;
   if (income >= 500) score = score + 8;
@@ -73,26 +76,10 @@ function calcResults(form) {
 
   const borrowingRatio = maxLoan > 0 ? desiredLoan / maxLoan : 1;
   const riskItems = [
-    {
-      label: '教育費リスク',
-      level: age < 35 ? 4 : age < 45 ? 3 : 2,
-      comment: age < 40 ? '教育費のピークが返済期間と重なる可能性があります' : '教育費の負担が比較的落ち着く時期です',
-    },
-    {
-      label: '金利上昇リスク',
-      level: isVariable ? 4 : 2,
-      comment: isVariable ? '変動金利は金利上昇時に返済額が増加します' : '固定金利で金利上昇リスクをカバーできています',
-    },
-    {
-      label: '借入余力',
-      level: borrowingRatio <= 0.7 ? 1 : borrowingRatio <= 0.85 ? 2 : borrowingRatio <= 1.0 ? 3 : 5,
-      comment: borrowingRatio <= 0.7 ? '希望借入額は十分余裕のある範囲です' : '希望額が上限に近く余力は限られます',
-    },
-    {
-      label: '老後資金余力',
-      level: income >= 700 ? 2 : income >= 500 ? 3 : 4,
-      comment: income >= 600 ? '返済しながら老後資金の積立も可能な水準です' : '老後資金の準備計画を合わせて立てることを推奨します',
-    },
+    { label: '教育費リスク', level: age < 35 ? 4 : age < 45 ? 3 : 2, comment: age < 40 ? '教育費のピークが返済期間と重なる可能性があります' : '教育費の負担が比較的落ち着く時期です' },
+    { label: '金利上昇リスク', level: isVariable ? 4 : 2, comment: isVariable ? '変動金利は金利上昇時に返済額が増加します' : '固定金利で金利上昇リスクをカバーできています' },
+    { label: '借入余力', level: borrowingRatio <= 0.7 ? 1 : borrowingRatio <= 0.85 ? 2 : borrowingRatio <= 1.0 ? 3 : 5, comment: borrowingRatio <= 0.7 ? '希望借入額は十分余裕のある範囲です' : '希望額が上限に近く余力は限られます' },
+    { label: '老後資金余力', level: income >= 700 ? 2 : income >= 500 ? 3 : 4, comment: income >= 600 ? '返済しながら老後資金の積立も可能な水準です' : '老後資金の準備計画を合わせて立てることを推奨します' },
   ];
 
   const savingsAmount = Math.max(20, Math.round(actualLoan * 0.034 / 10) * 10);
@@ -112,7 +99,7 @@ function calcResults(form) {
     { age: Math.max(25, age - 2), income: Math.max(300, income - 20), loan: Math.max(500, actualLoan - 200), outcome: '条件交渉成功', comment: '頭金を増やして審査を通過。金利優遇も受けられました。' },
   ];
 
-  return { maxLoan, monthlyPayment, score, actualLoan, comment, scoreLabel, passRate, loanType, loanTypeRatio, loanTypeReasons, riskItems, savingsAmount, cases };
+  return { maxLoan, monthlyPayment, usedRate, score, actualLoan, comment, scoreLabel, passRate, loanType, loanTypeRatio, loanTypeReasons, riskItems, savingsAmount, cases };
 }
 
 const baseInput = {
@@ -120,7 +107,6 @@ const baseInput = {
   borderRadius: 12, padding: '12px 14px', fontSize: 16, fontFamily: 'inherit',
   color: NAVY, background: '#f8fafd', outline: 'none',
 };
-
 const labelStyle = { display: 'block', fontSize: 13, color: '#4a5568', marginBottom: 6, fontWeight: 500 };
 
 export default function MortgageAiDiagnosis({ onNavigate }) {
@@ -128,11 +114,36 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
   const [form, setForm] = useState({ age: '', income: '', downPayment: '', years: '', employment: '会社員', desiredLoan: '', otherLoan: 'なし', concerns: '' });
   const [checkIndex, setCheckIndex] = useState(-1);
   const [results, setResults] = useState(null);
+  const [avgRate, setAvgRate] = useState(0.5);
+  const [isPC, setIsPC] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
+  // Supabaseから平均変動金利を取得（修正2）
+  useEffect(() => {
+    supabase
+      .from('mortgage_rates')
+      .select('variable_rate')
+      .eq('is_active', true)
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          const rates = data.map(d => d.variable_rate).filter(v => v !== null && v !== undefined && !isNaN(v));
+          if (rates.length > 0) {
+            setAvgRate(rates.reduce((sum, v) => sum + v, 0) / rates.length);
+          }
+        }
+      });
+  }, []);
+
+  // PC/モバイル判定（修正3）
+  useEffect(() => {
+    const onResize = () => setIsPC(window.innerWidth >= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const handleSubmit = () => {
-    const r = calcResults(form);
+    const r = calcResults(form, avgRate);
     setResults(r);
     setCheckIndex(-1);
     setStep('analyzing');
@@ -150,21 +161,19 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
   const passRateColor = results ? (results.passRate >= 75 ? '#22c55e' : results.passRate >= 55 ? '#f59e0b' : '#ef4444') : '#22c55e';
 
   const ctaBtn = (label, tab, iconEl, isPrimary) => (
-    <button
-      onClick={() => onNavigate(tab)}
-      style={{ width: '100%', padding: '14px 20px', borderRadius: 16, border: isPrimary ? 'none' : '1.5px solid #e2e8f0', background: isPrimary ? NAVY : '#f8fafd', color: isPrimary ? '#ffffff' : NAVY, fontSize: 15, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'inherit', boxSizing: 'border-box' }}
-    >
-      <span>{label}</span>
-      {iconEl}
+    <button onClick={() => onNavigate(tab)} style={{ width: '100%', padding: '14px 20px', borderRadius: 16, border: isPrimary ? 'none' : '1.5px solid #e2e8f0', background: isPrimary ? NAVY : '#f8fafd', color: isPrimary ? '#ffffff' : NAVY, fontSize: 15, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'inherit', boxSizing: 'border-box' }}>
+      <span>{label}</span>{iconEl}
     </button>
   );
 
+  const innerMaxWidth = step === 'result' && isPC ? 1100 : 520;
+
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '24px 16px 0' }}>
+      <div style={{ maxWidth: innerMaxWidth, margin: '0 auto', padding: '24px 16px 0' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+        <div style={{ maxWidth: 520, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: NAVY, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Calculator size={20} color={GOLD} />
           </div>
@@ -176,7 +185,7 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
 
         {/* FORM */}
         {step === 'form' ? (
-          <div style={{ background: '#ffffff', borderRadius: 32, border: '1.5px solid #e2e8f0', padding: '28px 24px', boxShadow: '0 4px 24px rgba(26,58,92,0.06)', marginBottom: 80 }}>
+          <div style={{ maxWidth: 520, background: '#ffffff', borderRadius: 32, border: '1.5px solid #e2e8f0', padding: '28px 24px', boxShadow: '0 4px 24px rgba(26,58,92,0.06)', marginBottom: 80 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div><label style={labelStyle}>年齢</label><input type="number" placeholder="35" value={form.age} onChange={set('age')} style={baseInput} /></div>
@@ -213,7 +222,7 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
 
         {/* ANALYZING */}
         {step === 'analyzing' ? (
-          <div style={{ background: '#08162b', borderRadius: 32, padding: '48px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+          <div style={{ maxWidth: 520, background: '#08162b', borderRadius: 32, padding: '48px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
             <div style={{ textAlign: 'center' }}>
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(201,168,76,0.25)', borderTopColor: GOLD, margin: '0 auto 20px' }} />
               <div style={{ color: '#ffffff', fontSize: 16, fontWeight: 500, marginBottom: 6 }}>AI診断中</div>
@@ -239,189 +248,230 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
           </div>
         ) : null}
 
-        {/* RESULT */}
+        {/* RESULT（修正3: PC2カラム対応をIIFEで構成） */}
         {step === 'result' ? (
           results ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 110 }}>
+            (() => {
+              const res = results;
 
-              {/* 1. Score card */}
-              <div style={{ background: NAVY, borderRadius: 16, padding: '28px 24px' }}>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>AI診断スコア</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginBottom: 12 }}>
-                  <span style={{ fontSize: 52, fontWeight: 500, color: GOLD, lineHeight: 1 }}>{results.score}</span>
-                  <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', paddingBottom: 6 }}>/ 100</span>
+              // セクション1: スコアカード（左）
+              const sec1 = (
+                <div style={{ background: NAVY, borderRadius: 16, padding: '28px 24px' }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>AI診断スコア</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginBottom: 12 }}>
+                    <span style={{ fontSize: 52, fontWeight: 500, color: GOLD, lineHeight: 1 }}>{res.score}</span>
+                    <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', paddingBottom: 6 }}>/ 100</span>
+                  </div>
+                  <div style={{ display: 'inline-block', background: 'rgba(201,168,76,0.18)', border: '1px solid ' + GOLD, borderRadius: 20, padding: '4px 14px', fontSize: 12, color: GOLD }}>{res.scoreLabel}</div>
                 </div>
-                <div style={{ display: 'inline-block', background: 'rgba(201,168,76,0.18)', border: '1px solid ' + GOLD, borderRadius: 20, padding: '4px 14px', fontSize: 12, color: GOLD }}>{results.scoreLabel}</div>
-              </div>
+              );
 
-              {/* 2. Loan amounts */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ background: '#f0f6ff', borderRadius: 16, padding: '18px 14px', border: '1px solid #dbeafe' }}>
-                  <div style={{ fontSize: 11, color: '#6b8ab5', marginBottom: 6 }}>推定借入可能額</div>
-                  <div style={{ fontSize: 22, fontWeight: 500, color: NAVY, lineHeight: 1.2 }}>{results.maxLoan.toLocaleString()}</div>
-                  <div style={{ fontSize: 11, color: '#6b8ab5', marginTop: 2 }}>万円</div>
+              // セクション2: 借入可能額・月々返済（右）
+              const sec2 = (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ background: '#f0f6ff', borderRadius: 16, padding: '18px 14px', border: '1px solid #dbeafe' }}>
+                    <div style={{ fontSize: 11, color: '#6b8ab5', marginBottom: 6 }}>推定借入可能額</div>
+                    <div style={{ fontSize: 22, fontWeight: 500, color: NAVY, lineHeight: 1.2 }}>{res.maxLoan.toLocaleString()}</div>
+                    <div style={{ fontSize: 11, color: '#6b8ab5', marginTop: 2 }}>万円</div>
+                  </div>
+                  <div style={{ background: '#fffbeb', borderRadius: 16, padding: '18px 14px', border: '1px solid #fde68a' }}>
+                    <div style={{ fontSize: 11, color: '#92693a', marginBottom: 6 }}>月々返済目安</div>
+                    <div style={{ fontSize: 22, fontWeight: 500, color: '#92400e', lineHeight: 1.2 }}>{(res.monthlyPayment / 10000).toFixed(1)}</div>
+                    <div style={{ fontSize: 11, color: '#92693a', marginTop: 2 }}>万円 / 月</div>
+                    <div style={{ fontSize: 10, color: '#b07a42', marginTop: 4 }}>変動{res.usedRate.toFixed(3)}% ・ 35年</div>
+                  </div>
                 </div>
-                <div style={{ background: '#fffbeb', borderRadius: 16, padding: '18px 14px', border: '1px solid #fde68a' }}>
-                  <div style={{ fontSize: 11, color: '#92693a', marginBottom: 6 }}>月々返済目安</div>
-                  <div style={{ fontSize: 22, fontWeight: 500, color: '#92400e', lineHeight: 1.2 }}>{(results.monthlyPayment / 10000).toFixed(1)}</div>
-                  <div style={{ fontSize: 11, color: '#92693a', marginTop: 2 }}>万円 / 月</div>
-                  <div style={{ fontSize: 10, color: '#b07a42', marginTop: 4 }}>変動0.5% ・ 35年</div>
-                </div>
-              </div>
+              );
 
-              {/* 3. Pass rate */}
-              <div style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>住宅ローン審査予測</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontSize: 32, fontWeight: 500, color: passRateColor, lineHeight: 1 }}>
-                    {results.passRate}<span style={{ fontSize: 16, marginLeft: 2 }}>%</span>
-                  </span>
-                  <span style={{ fontSize: 12, color: '#94a3b8' }}>審査通過可能性</span>
+              // セクション3: 審査予測（左）
+              const sec3 = (
+                <div style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '20px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>住宅ローン審査予測</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontSize: 32, fontWeight: 500, color: passRateColor, lineHeight: 1 }}>
+                      {res.passRate}<span style={{ fontSize: 16, marginLeft: 2 }}>%</span>
+                    </span>
+                    <span style={{ fontSize: 12, color: '#94a3b8' }}>審査通過可能性</span>
+                  </div>
+                  <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', marginBottom: 10 }}>
+                    <motion.div initial={{ width: '0%' }} animate={{ width: res.passRate + '%' }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ height: '100%', background: passRateColor, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Info size={12} color="#94a3b8" />
+                    <span style={{ fontSize: 11, color: '#94a3b8' }}>実際の審査結果を保証するものではありません</span>
+                  </div>
                 </div>
-                <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', marginBottom: 10 }}>
-                  <motion.div initial={{ width: '0%' }} animate={{ width: results.passRate + '%' }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ height: '100%', background: passRateColor, borderRadius: 4 }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Info size={12} color="#94a3b8" />
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>実際の審査結果を保証するものではありません</span>
-                </div>
-              </div>
+              );
 
-              {/* 4. Loan type */}
-              <div style={{ background: '#f0f6ff', borderRadius: 16, border: '1px solid #dbeafe', padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>AIおすすめローンタイプ</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <span style={{ fontSize: 20, fontWeight: 500, color: NAVY }}>{results.loanType}向き</span>
-                  <span style={{ fontSize: 13, color: GOLD, fontWeight: 500 }}>適性{Math.round(results.loanTypeRatio)}%</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {results.loanTypeReasons.map((reason, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <CheckCircle size={14} color="#22c55e" />
-                      <span style={{ fontSize: 13, color: '#4a5568' }}>{reason}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 5. Risk analysis */}
-              <div style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 16 }}>あなたの住宅ローンリスク分析</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {results.riskItems.map((item, i) => {
-                    const rc = item.level <= 2 ? '#22c55e' : item.level === 3 ? '#f59e0b' : '#ef4444';
-                    const rl = item.level <= 2 ? '低' : item.level === 3 ? '中' : '高';
-                    return (
-                      <div key={i}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontSize: 13, color: NAVY, fontWeight: 500 }}>{item.label}</span>
-                          <span style={{ fontSize: 12, color: rc, fontWeight: 500 }}>リスク {rl}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-                          {[1,2,3,4,5].map(level => (
-                            <motion.div key={level} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: i * 0.12 + level * 0.07, duration: 0.3 }} style={{ flex: 1, height: 6, borderRadius: 3, background: level <= item.level ? rc : '#e2e8f0', transformOrigin: 'left' }} />
-                          ))}
-                        </div>
-                        <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.comment}</span>
+              // セクション4: ローンタイプ（左）
+              const sec4 = (
+                <div style={{ background: '#f0f6ff', borderRadius: 16, border: '1px solid #dbeafe', padding: '20px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>AIおすすめローンタイプ</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <span style={{ fontSize: 20, fontWeight: 500, color: NAVY }}>{res.loanType}向き</span>
+                    <span style={{ fontSize: 13, color: GOLD, fontWeight: 500 }}>適性{Math.round(res.loanTypeRatio)}%</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {res.loanTypeReasons.map((reason, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CheckCircle size={14} color="#22c55e" />
+                        <span style={{ fontSize: 13, color: '#4a5568' }}>{reason}</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              );
 
-              {/* 6. AI comment */}
-              <div style={{ background: '#f8fafd', borderRadius: 16, padding: '20px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <TrendingUp size={16} color={NAVY} />
-                  <span style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>AIコメント</span>
-                </div>
-                <p style={{ fontSize: 14, color: '#4a5568', lineHeight: 1.75, margin: 0 }}>{results.comment}</p>
-              </div>
-
-              {/* 7. Savings proposal */}
-              <motion.div animate={{ opacity: [1, 0.85, 1] }} transition={{ duration: 2.2, repeat: Infinity }} style={{ borderRadius: 16, background: 'linear-gradient(135deg, #c9a84c, #f0e68c)', padding: '20px', border: '2px solid rgba(201,168,76,0.4)' }}>
-                <div style={{ fontSize: 12, color: '#4a3000', marginBottom: 6, fontWeight: 500 }}>AI節約提案</div>
-                <p style={{ fontSize: 15, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 16px' }}>
-                  複数金融機関を比較することで最大<span style={{ fontSize: 20, fontWeight: 500, margin: '0 2px' }}>{results.savingsAmount}</span>万円程度返済総額が下がる可能性があります
-                </p>
-                <button onClick={() => onNavigate('simulator')} style={{ background: NAVY, color: '#ffffff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', boxSizing: 'border-box' }}>
-                  金融機関を比較する
-                </button>
-              </motion.div>
-
-              {/* 8. Similar cases */}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>似た条件の方の購入事例</div>
-                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: 8 }}>
-                  {results.cases.map((c, i) => (
-                    <div key={i} style={{ flexShrink: 0, width: 240, scrollSnapAlign: 'start', background: '#f8fafd', borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px' }}>
-                      <div style={{ display: 'inline-block', fontSize: 11, color: '#22c55e', fontWeight: 500, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '2px 8px', marginBottom: 10 }}>{c.outcome}</div>
-                      <div style={{ fontSize: 13, color: NAVY, marginBottom: 3 }}>年齢：{c.age}歳 / 年収：{c.income}万円</div>
-                      <div style={{ fontSize: 13, color: NAVY, marginBottom: 10 }}>借入：{c.loan}万円</div>
-                      <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.65, margin: 0 }}>{c.comment}</p>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                  <Info size={12} color="#94a3b8" />
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>参考データとしてご利用ください</span>
-                </div>
-              </div>
-
-              {/* 9. Consultation cards */}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>住宅ローン相談先</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {CONSULT_CARDS.map((card, i) => (
-                    <div key={i} style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{card.name}</span>
-                        <div style={{ display: 'flex', gap: 2 }}>
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} size={12} color={s <= card.rating ? GOLD : '#e2e8f0'} fill={s <= card.rating ? GOLD : 'none'} />
-                          ))}
+              // セクション5: リスク分析（右）
+              const sec5 = (
+                <div style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '20px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 16 }}>あなたの住宅ローンリスク分析</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {res.riskItems.map((item, i) => {
+                      const rc = item.level <= 2 ? '#22c55e' : item.level === 3 ? '#f59e0b' : '#ef4444';
+                      const rl = item.level <= 2 ? '低' : item.level === 3 ? '中' : '高';
+                      return (
+                        <div key={i}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ fontSize: 13, color: NAVY, fontWeight: 500 }}>{item.label}</span>
+                            <span style={{ fontSize: 12, color: rc, fontWeight: 500 }}>リスク {rl}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                            {[1,2,3,4,5].map(level => (
+                              <motion.div key={level} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: i * 0.12 + level * 0.07, duration: 0.3 }} style={{ flex: 1, height: 6, borderRadius: 3, background: level <= item.level ? rc : '#e2e8f0', transformOrigin: 'left' }} />
+                            ))}
+                          </div>
+                          <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.comment}</span>
                         </div>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>得意：{card.specialty}</div>
-                      <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                        <span style={{ fontSize: 12, color: '#94a3b8' }}>{card.area}</span>
-                        <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>相談料：{card.fee}</span>
-                      </div>
-                      <button onClick={() => onNavigate('expert')} style={{ background: '#f0f6ff', color: NAVY, border: '1px solid #dbeafe', borderRadius: 10, padding: '10px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}>
-                        相談する
-                      </button>
-                    </div>
-                  ))}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              );
 
-              {/* 10. CTAs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {ctaBtn('AIチャットでローン相談', 'chat', <MessageSquare size={18} color={primaryTab === 'chat' ? '#ffffff' : NAVY} />, primaryTab === 'chat')}
-                {ctaBtn('住宅ローン専門家に相談', 'expert', <Building2 size={18} color={primaryTab === 'expert' ? '#ffffff' : NAVY} />, primaryTab === 'expert')}
-                {ctaBtn('物件情報を見る', 'properties', <Home size={18} color={primaryTab === 'properties' ? '#ffffff' : NAVY} />, primaryTab === 'properties')}
-                {ctaBtn('売却査定・資産相談', 'sell', <ChevronRight size={18} color={NAVY} />, false)}
-              </div>
+              // セクション6: AIコメント（左）
+              const sec6 = (
+                <div style={{ background: '#f8fafd', borderRadius: 16, padding: '20px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <TrendingUp size={16} color={NAVY} />
+                    <span style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>AIコメント</span>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#4a5568', lineHeight: 1.75, margin: 0 }}>{res.comment}</p>
+                </div>
+              );
 
-              {/* Score < 50: re-diagnose */}
-              {results.score < 50 ? (
-                <button onClick={() => { setStep('form'); setCheckIndex(-1); setResults(null); }} style={{ background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)', color: '#ffffff', border: 'none', borderRadius: 16, padding: '16px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}>
-                  条件を変えて再診断する
-                </button>
-              ) : null}
+              // セクション7: AI節約提案（右）　修正4確認: onNavigate('simulator') 済み
+              const sec7 = (
+                <motion.div animate={{ opacity: [1, 0.85, 1] }} transition={{ duration: 2.2, repeat: Infinity }} style={{ borderRadius: 16, background: 'linear-gradient(135deg, #c9a84c, #f0e68c)', padding: '20px', border: '2px solid rgba(201,168,76,0.4)' }}>
+                  <div style={{ fontSize: 12, color: '#4a3000', marginBottom: 6, fontWeight: 500 }}>AI節約提案</div>
+                  <p style={{ fontSize: 15, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 16px' }}>
+                    複数金融機関を比較することで最大<span style={{ fontSize: 20, fontWeight: 500, margin: '0 2px' }}>{res.savingsAmount}</span>万円程度返済総額が下がる可能性があります
+                  </p>
+                  <button onClick={() => onNavigate('simulator')} style={{ background: NAVY, color: '#ffffff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', boxSizing: 'border-box' }}>
+                    金融機関を比較する
+                  </button>
+                </motion.div>
+              );
 
-              {/* 11. Restart */}
-              <button onClick={() => { setStep('form'); setCheckIndex(-1); setResults(null); }} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit', padding: '8px', width: '100%' }}>
-                最初からやり直す
-              </button>
+              // セクション8: 似た条件の事例（全幅）
+              const sec8 = (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>似た条件の方の購入事例</div>
+                  <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: 8 }}>
+                    {res.cases.map((c, i) => (
+                      <div key={i} style={{ flexShrink: 0, width: 240, scrollSnapAlign: 'start', background: '#f8fafd', borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px' }}>
+                        <div style={{ display: 'inline-block', fontSize: 11, color: '#22c55e', fontWeight: 500, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '2px 8px', marginBottom: 10 }}>{c.outcome}</div>
+                        <div style={{ fontSize: 13, color: NAVY, marginBottom: 3 }}>年齢：{c.age}歳 / 年収：{c.income}万円</div>
+                        <div style={{ fontSize: 13, color: NAVY, marginBottom: 10 }}>借入：{c.loan}万円</div>
+                        <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.65, margin: 0 }}>{c.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                    <Info size={12} color="#94a3b8" />
+                    <span style={{ fontSize: 11, color: '#94a3b8' }}>参考データとしてご利用ください</span>
+                  </div>
+                </div>
+              );
 
-            </div>
+              // セクション9: 相談先（全幅）
+              const sec9 = (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 12 }}>住宅ローン相談先</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {CONSULT_CARDS.map((card, i) => (
+                      <div key={i} style={{ background: '#ffffff', borderRadius: 16, border: '1.5px solid #e2e8f0', padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{card.name}</span>
+                          <div style={{ display: 'flex', gap: 2 }}>
+                            {[1,2,3,4,5].map(s => (
+                              <Star key={s} size={12} color={s <= card.rating ? GOLD : '#e2e8f0'} fill={s <= card.rating ? GOLD : 'none'} />
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>得意：{card.specialty}</div>
+                        <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+                          <span style={{ fontSize: 12, color: '#94a3b8' }}>{card.area}</span>
+                          <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>相談料：{card.fee}</span>
+                        </div>
+                        <button onClick={() => onNavigate('expert')} style={{ background: '#f0f6ff', color: NAVY, border: '1px solid #dbeafe', borderRadius: 10, padding: '10px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}>相談する</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+
+              // セクション10: CTA4つ（全幅）
+              const secCtas = (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                  {ctaBtn('AIチャットでローン相談', 'chat', <MessageSquare size={18} color={primaryTab === 'chat' ? '#ffffff' : NAVY} />, primaryTab === 'chat')}
+                  {ctaBtn('住宅ローン専門家に相談', 'expert', <Building2 size={18} color={primaryTab === 'expert' ? '#ffffff' : NAVY} />, primaryTab === 'expert')}
+                  {ctaBtn('物件情報を見る', 'properties', <Home size={18} color={primaryTab === 'properties' ? '#ffffff' : NAVY} />, primaryTab === 'properties')}
+                  {ctaBtn('売却査定・資産相談', 'sell', <ChevronRight size={18} color={NAVY} />, false)}
+                </div>
+              );
+
+              return (
+                <div style={{ paddingBottom: 110 }}>
+                  {/* 修正3: PC2カラム / スマホ1カラム */}
+                  {isPC ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        {sec1}{sec3}{sec4}{sec6}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        {sec2}{sec5}{sec7}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      {sec1}{sec2}{sec3}{sec4}{sec5}{sec6}{sec7}
+                    </div>
+                  )}
+
+                  {/* 全幅セクション */}
+                  {sec8}
+                  {sec9}
+                  {secCtas}
+
+                  {res.score < 50 ? (
+                    <button onClick={() => { setStep('form'); setCheckIndex(-1); setResults(null); }} style={{ background: 'linear-gradient(135deg, #1a3a5c, #2a5a8c)', color: '#ffffff', border: 'none', borderRadius: 16, padding: '16px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', marginTop: 16 }}>
+                      条件を変えて再診断する
+                    </button>
+                  ) : null}
+
+                  <button onClick={() => { setStep('form'); setCheckIndex(-1); setResults(null); }} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit', padding: '8px', width: '100%', marginTop: 8 }}>
+                    最初からやり直す
+                  </button>
+                </div>
+              );
+            })()
           ) : null
         ) : null}
 
       </div>
 
-      {/* Fixed CTA - result only */}
+      {/* 固定CTA（result画面のみ） */}
       {step === 'result' ? (
         <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.4 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: NAVY, zIndex: 1000, padding: '14px 20px', boxShadow: '0 -4px 20px rgba(0,0,0,0.2)' }}>
           <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
