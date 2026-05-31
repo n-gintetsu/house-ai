@@ -1190,8 +1190,8 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         ) : null}
       </section>
 
-      {/* 説明カード4枚 + ボタン（カルーセルセクションの外・下） */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '60px 20px', background: '#F4F7FB' }}>
+      {/* 説明カード4枚 + ボタン（カルーセルと同じ暗い背景） */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '60px 20px', background: 'linear-gradient(135deg, #0f0a1e 0%, #1a0a2e 50%, #0a0f1e 100%)' }}>
         {/* 4アイテム横一列 */}
         <div style={{ display: 'flex', flexDirection: 'row', gap: 12, width: '100%', maxWidth: 900 }}>
           {[
@@ -1200,23 +1200,23 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
             { title: '体験談を確認',         desc: '後悔しないための注意点をAIが整理します。' },
             { title: '専門家へ相談',         desc: '相談内容に合わせて最適な専門家へつなげます。' },
           ].map((item, i) => (
-            <div key={i} style={{ flex: 1, background: 'white', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EAF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2, flexShrink: 0 }}>
-                <Home size={14} color="#2563EB" />
+            <div key={i} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 4, border: '0.5px solid rgba(255,255,255,0.12)' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(201,168,76,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2, flexShrink: 0 }}>
+                <Home size={14} color="#C9A84C" />
               </div>
-              <strong style={{ fontSize: 13, fontWeight: 700, color: '#0B1F33', lineHeight: 1.3 }}>{item.title}</strong>
-              <span style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>{item.desc}</span>
+              <strong style={{ fontSize: 14, fontWeight: 500, color: '#ffffff', lineHeight: 1.3 }}>{item.title}</strong>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{item.desc}</span>
             </div>
           ))}
         </div>
 
         {/* ボタン + テキスト */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div className="feed-cta-row" style={{ margin: 0, justifyContent: 'center' }}>
-            <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
-            <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button onClick={() => navigate('properties')} style={{ background: '#1a3a5c', color: 'white', border: 'none', borderRadius: 50, padding: '14px 32px', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>物件情報を見る</button>
+            <button onClick={handleAIConsult} style={{ background: '#C9A84C', color: 'white', border: 'none', borderRadius: 50, padding: '14px 32px', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>AIに相談して探す</button>
           </div>
-          <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: 0 }}>掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
         </div>
       </div>
 
