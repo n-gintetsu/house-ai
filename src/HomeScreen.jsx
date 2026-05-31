@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from 'framer-motion';
-import { Home } from 'lucide-react';
-import MacBookCarousel from './MacBookCarousel';
+import { Home, Heart, Bookmark, ThumbsUp, Share2 } from 'lucide-react';
 import { AffiliateCard } from './AffiliateCard';
 import SEOHead from './SEOHead';
 import { supabase } from "./lib/supabase";
@@ -653,6 +652,17 @@ const verticalProperties = [
   },
 ];
 
+const CAROUSEL_PROPS = [
+  { image: 'https://images.unsplash.com/photo-1680416124510-5eae1beca412?w=1080', title: 'リノベーション済み物件',    gradient: 'linear-gradient(to right, #a855f7, #ec4899)' },
+  { image: 'https://images.unsplash.com/photo-1682184805271-11671b7ecf4c?w=1080', title: 'タワーマンション最上階',    gradient: 'linear-gradient(to right, #a855f7, #ec4899)' },
+  { image: 'https://images.unsplash.com/photo-1663811397207-418a92396ad5?w=1080', title: 'デザイナーズマンション',    gradient: 'linear-gradient(to right, #a855f7, #ec4899)' },
+  { image: 'https://images.unsplash.com/photo-1667584523543-d1d9cc828a15?w=1080', title: 'モダンラグジュアリー空間',  gradient: 'linear-gradient(to right, #3b82f6, #06b6d4)' },
+  { image: 'https://images.unsplash.com/photo-1653972233597-05822baa3c4e?w=1080', title: 'シャンデリア付き高級物件',  gradient: 'linear-gradient(to right, #f59e0b, #f97316)' },
+  { image: 'https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?w=1080', title: 'スタイリッシュベッドルーム', gradient: 'linear-gradient(to right, #22c55e, #10b981)' },
+  { image: 'https://images.unsplash.com/photo-1638454795595-0a0abf68614d?w=1080', title: '大型テレビ付きリビング',    gradient: 'linear-gradient(to right, #f43f5e, #ec4899)' },
+  { image: 'https://images.unsplash.com/photo-1715985160053-d339e8b6eb94?w=1080', title: 'プレミアムキッチン付き',    gradient: 'linear-gradient(to right, #6366f1, #a855f7)' },
+];
+
 export default function HomeScreen({ onTabChange, onNavigate }) {
   const navigate = onTabChange || onNavigate || (() => {});
   const [showChat, setShowChat] = useState(false);
@@ -668,6 +678,7 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
   const [aiStep, setAiStep] = useState(0);
   const [noticeIndex, setNoticeIndex] = useState(0);
   const [heroStats, setHeroStats] = useState(null);
+  const [carouselRotation, setCarouselRotation] = useState(0);
   const chatRef = useRef(null);
 
   const STATUS_TEXTS = ['AI分析中...', '条件を整理しています', '類似相談を検索しています'];
@@ -778,6 +789,11 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       setNoticeIndex(prev => (prev + 1) % liveNotices.length);
     }, 12000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setCarouselRotation(r => r + 0.2), 50);
+    return () => clearInterval(id);
   }, []);
 
   const handleAIConsult = () => {
@@ -1077,13 +1093,13 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
       {/* 4. 人気物件プレビュー（縦型フィード） */}
       <section className="vertical-feed-section">
         {/* キャッチコピー */}
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '0 20px' }}>
           <div className="feed-desc-badge">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D6AE3B" strokeWidth="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.8l-5 3.4 1.9-5.8L4 8.8h6.1z"/></svg>
             物件探しもAIでかんたんに
           </div>
-          <h2 className="feed-desc-title">物件を見るだけでなく、<br/>AIに相談しながら探せます。</h2>
-          <p className="feed-desc-body">気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
+          <h2 className="feed-desc-title" style={{ color: 'white' }}>物件を見るだけでなく、<br/>AIに相談しながら探せます。</h2>
+          <p className="feed-desc-body" style={{ color: 'rgba(255,255,255,0.7)' }}>気になる物件をSNSを見るように眺めながら、価格・利回り・ローン・周辺環境までAIに相談できます。探す、比べる、相談するをひとつの画面で完結できます。</p>
         </div>
 
         {/* AIログバー */}
@@ -1093,9 +1109,30 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           <span className="vf-notice-text">{liveNotices[noticeIndex]}</span>
         </div>
 
-        {/* MacBook中央配置 */}
-        <div style={{ maxWidth: 900, width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <MacBookCarousel onNavigate={navigate} />
+        {/* 3Dカルーセル */}
+        <div style={{ width: '100%', height: '520px', display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1500px' }}>
+          <div style={{ position: 'relative', width: 300, height: 450, transformStyle: 'preserve-3d', transform: `rotateY(${carouselRotation}deg)` }}>
+            {CAROUSEL_PROPS.map((item, index) => (
+              <div
+                key={index}
+                style={{ position: 'absolute', left: 0, top: 0, width: 300, height: 450, transform: `rotateY(${(360 / 8) * index}deg) translateZ(450px)`, transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', borderRadius: 24, overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => navigate('properties')}
+              >
+                <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.1), transparent)' }} />
+                <div style={{ position: 'absolute', top: 16, right: 16, background: item.gradient, color: 'white', fontSize: 11, padding: '4px 12px', borderRadius: 9999 }}>AI推奨物件</div>
+                <div style={{ position: 'absolute', bottom: 80, left: 16, right: 16, color: 'white', fontSize: 20, fontWeight: 500 }}>{item.title}</div>
+                <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 12 }}>
+                  {[Heart, Bookmark, ThumbsUp, Share2].map((Icon, j) => (
+                    <button key={j} onClick={e => e.stopPropagation()} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon size={16} color="white" />
+                    </button>
+                  ))}
+                </div>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)' }} />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 4アイテム横一列 */}
