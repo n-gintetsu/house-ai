@@ -13,8 +13,8 @@ const MAC8_PROPS = [
   { id: 8, image: 'https://images.unsplash.com/photo-1715985160053-d339e8b6eb94?w=800', title: 'プレミアムキッチン付き',    badgeGradient: 'linear-gradient(to right,#6366f1,#a855f7)' },
 ];
 
-// MacBook外寸: width=700, border=12px (box-sizing:border-box)
-// 画面内寸: width=676, height=676*10/16≈422.5px
+// MacBook外寸: width=900, border=12px (box-sizing:border-box)
+// 画面内寸: width=876, height=876*10/16≈547.5px
 // カルーセルoverlay座標: top/left/right/bottom=12 (borderと同値で画面に一致)
 const FRAME_BORDER = 12;
 
@@ -36,7 +36,7 @@ export default function MacBookCarousel({ onNavigate }) {
         <div style={{ perspective: '1200px', transform: 'rotateX(-2deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
           {/* MacBook本体 + カルーセルの重ね合わせwrapper */}
-          <div style={{ position: 'relative', width: 700 }}>
+          <div style={{ position: 'relative', width: 900 }}>
 
             {/* ① カルーセルoverlay（先にDOMに出現 → 後のMacBookフレームの下）
                 overflow:hidden はここ1層のみ。
@@ -57,13 +57,13 @@ export default function MacBookCarousel({ onNavigate }) {
               {/* perspectiveはoverflow:hiddenの直接の子 */}
               <div style={{ perspective: '800px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* カルーセルステージ: preserve-3d */}
-                <div style={{ position: 'relative', width: 180, height: 280, transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg)` }}>
+                <div style={{ position: 'relative', width: 230, height: 360, transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg)` }}>
                   {MAC8_PROPS.map((item, i) => {
                     const angle = (360 / MAC8_PROPS.length) * i;
                     return (
                       <div
                         key={item.id}
-                        style={{ position: 'absolute', top: 0, left: 0, width: 180, height: 280, transform: `rotateY(${angle}deg) translateZ(320px)`, borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: 230, height: 360, transform: `rotateY(${angle}deg) translateZ(420px)`, borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
                         onClick={() => onNavigate('properties')}
                       >
                         <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -100,7 +100,7 @@ export default function MacBookCarousel({ onNavigate }) {
               border: `${FRAME_BORDER}px solid #000`,
               background: 'transparent',
               borderRadius: 16,
-              width: 700,
+              width: 900,
               boxSizing: 'border-box',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
               zIndex: 1,
@@ -114,7 +114,7 @@ export default function MacBookCarousel({ onNavigate }) {
           </div>
 
           {/* ベース */}
-          <div style={{ position: 'relative', background: 'linear-gradient(to bottom, #cbd5e1, #94a3b8)', borderRadius: '0 0 12px 12px', height: 20, width: 700, transform: 'perspective(1200px) rotateX(65deg)', transformOrigin: 'top', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+          <div style={{ position: 'relative', background: 'linear-gradient(to bottom, #cbd5e1, #94a3b8)', borderRadius: '0 0 12px 12px', height: 20, width: 900, transform: 'perspective(1200px) rotateX(65deg)', transformOrigin: 'top', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 128, height: 8, background: 'rgba(100,116,139,0.3)', borderRadius: 4 }} />
           </div>
 

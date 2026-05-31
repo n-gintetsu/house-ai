@@ -1094,12 +1094,12 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         </div>
 
         {/* MacBook中央配置 */}
-        <div style={{ maxWidth: 700, width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ maxWidth: 900, width: '100%', display: 'flex', justifyContent: 'center' }}>
           <MacBookCarousel onNavigate={navigate} />
         </div>
 
         {/* 4アイテム横一列 */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, width: '100%', maxWidth: 700 }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, width: '100%', maxWidth: 900 }}>
           {[
             { title: '物件を縦にスワイプ',      desc: '気になる物件を直感的に見つけられます。' },
             { title: 'AIに質問',               desc: 'ローン・価格・リスク・周辺環境をその場で確認できます。' },
