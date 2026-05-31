@@ -408,8 +408,7 @@ function TaxTypesContent() {
 function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   const [selectedStage, setSelectedStage] = useState(null)
   const [isPC, setIsPC] = useState(window.innerWidth > 768)
-  const [rightFixed, setRightFixed] = useState(false)
-  const [rightBottom, setRightBottom] = useState(false)
+  const [rightStyle, setRightStyle] = useState({ position: 'relative', width: '100%' })
 
   const containerRef = useRef(null)
   const rightRef     = useRef(null)
@@ -425,16 +424,20 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
       if (!containerRef.current || !rightRef.current) return
       const container = containerRef.current.getBoundingClientRect()
       const rightH = rightRef.current.offsetHeight
+      const leftColWidth = container.width * (2 / 5)
+      const rightWidth   = container.width * (3 / 5) - 16
 
       if (container.top <= 24 && container.bottom >= rightH + 24) {
-        setRightFixed(true)
-        setRightBottom(false)
+        setRightStyle({
+          position: 'fixed',
+          top: 24,
+          left: container.left + leftColWidth + 16,
+          width: rightWidth,
+        })
       } else if (container.bottom < rightH + 24) {
-        setRightFixed(false)
-        setRightBottom(true)
+        setRightStyle({ position: 'absolute', bottom: 0, right: 0, width: '60%' })
       } else {
-        setRightFixed(false)
-        setRightBottom(false)
+        setRightStyle({ position: 'relative', width: '100%' })
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -442,17 +445,6 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   }, [isPC])
 
   const selected = LIFECYCLE_STAGES.find(s => s.id === selectedStage) || null
-
-  const rightColStyle = rightFixed
-    ? {
-        position: 'fixed', top: 24, right: 0,
-        width: containerRef.current
-          ? containerRef.current.offsetWidth * 0.6 - 16 + 'px'
-          : '55%',
-      }
-    : rightBottom
-      ? { position: 'absolute', bottom: 0, right: 0, width: '100%' }
-      : { position: 'relative', width: '100%' }
 
   return (
     <div style={{ background: '#071B36', padding: '48px 20px', position: 'relative' }}>
@@ -516,7 +508,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           {/* 右カラム outer wrapper（スペース確保用プレースホルダー） */}
           <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
             {/* 右カラム本体 */}
-            <div ref={rightRef} style={isPC ? rightColStyle : {}}>
+            <div ref={rightRef} style={isPC ? rightStyle : {}}>
               {selected ? (
                 <div style={{
                   background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
