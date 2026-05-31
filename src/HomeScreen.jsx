@@ -1135,33 +1135,6 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           </div>
         </div>
 
-        {/* 4アイテム横一列 */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, width: '100%', maxWidth: 900 }}>
-          {[
-            { title: '物件を縦にスワイプ',      desc: '気になる物件を直感的に見つけられます。' },
-            { title: 'AIに質問',               desc: 'ローン・価格・リスク・周辺環境をその場で確認できます。' },
-            { title: '体験談を確認',            desc: '後悔しないための注意点をAIが整理します。' },
-            { title: '専門家へ相談',            desc: '相談内容に合わせて最適な専門家へつなげます。' },
-          ].map((item, i) => (
-            <div key={i} style={{ flex: 1, background: 'white', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EAF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2, flexShrink: 0 }}>
-                <Home size={14} color="#2563EB" />
-              </div>
-              <strong style={{ fontSize: 13, fontWeight: 700, color: '#0B1F33', lineHeight: 1.3 }}>{item.title}</strong>
-              <span style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>{item.desc}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ボタン + テキスト */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div className="feed-cta-row" style={{ margin: 0, justifyContent: 'center' }}>
-            <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
-            <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
-          </div>
-          <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
-        </div>
-
         {showStorySheet ? (
           <div className="story-sheet-overlay" onClick={() => setShowStorySheet(false)}>
             <div className="story-sheet" onClick={(e) => e.stopPropagation()}>
@@ -1216,6 +1189,36 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
           </div>
         ) : null}
       </section>
+
+      {/* 説明カード4枚 + ボタン（カルーセルセクションの外・下） */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '60px 20px', background: '#F4F7FB' }}>
+        {/* 4アイテム横一列 */}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, width: '100%', maxWidth: 900 }}>
+          {[
+            { title: '物件を縦にスワイプ',  desc: '気になる物件を直感的に見つけられます。' },
+            { title: 'AIに質問',            desc: 'ローン・価格・リスク・周辺環境をその場で確認できます。' },
+            { title: '体験談を確認',         desc: '後悔しないための注意点をAIが整理します。' },
+            { title: '専門家へ相談',         desc: '相談内容に合わせて最適な専門家へつなげます。' },
+          ].map((item, i) => (
+            <div key={i} style={{ flex: 1, background: 'white', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EAF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2, flexShrink: 0 }}>
+                <Home size={14} color="#2563EB" />
+              </div>
+              <strong style={{ fontSize: 13, fontWeight: 700, color: '#0B1F33', lineHeight: 1.3 }}>{item.title}</strong>
+              <span style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>{item.desc}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* ボタン + テキスト */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div className="feed-cta-row" style={{ margin: 0, justifyContent: 'center' }}>
+            <button className="feed-cta-navy" onClick={() => navigate('properties')}>物件情報を見る</button>
+            <button className="feed-cta-gold" onClick={handleAIConsult}>AIに相談して探す</button>
+          </div>
+          <p className="feed-note">掲載物件はAIおすすめ順に表示されます。条件はいつでも変更できます。</p>
+        </div>
+      </div>
 
       {/* 7. 体験談プレビュー */}
       <SectionTransition />
