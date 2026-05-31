@@ -12,9 +12,9 @@ const aiTools = [
   { id:'area', icon:<Sparkles size={32}/>, category:'初心者向け', categoryColor:'from-indigo-400 to-blue-400', title:'AIエリア分析', description:'住みやすさ・将来性・生活環境をAIが評価。', ctaText:'エリアを見る', gradientFrom:'rgba(99,102,241,0.1)', gradientTo:'rgba(59,130,246,0.1)' },
 ];
 
-function CompactToolCard({ tool }) {
+function CompactToolCard({ tool, onTabChange }) {
   return (
-    <motion.div initial={{ opacity:0.7, filter:'blur(1px) saturate(0.8)' }} whileHover={{ scale:1.02, y:-4, opacity:1, filter:'blur(0px) saturate(1)' }} transition={{ duration:0.3 }} className="group relative rounded-xl overflow-hidden p-5 cursor-pointer" style={{ background:`linear-gradient(135deg, ${tool.gradientFrom} 0%, ${tool.gradientTo} 100%)` }}>
+    <motion.div initial={{ opacity:0.7, filter:'blur(1px) saturate(0.8)' }} whileHover={{ scale:1.02, y:-4, opacity:1, filter:'blur(0px) saturate(1)' }} transition={{ duration:0.3 }} className="group relative rounded-xl overflow-hidden p-5 cursor-pointer" style={{ background:`linear-gradient(135deg, ${tool.gradientFrom} 0%, ${tool.gradientTo} 100%)` }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); }}>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-slate-800/90" style={{ backgroundImage:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize:'16px 16px' }} />
       <div className={`absolute -inset-0.5 bg-gradient-to-r ${tool.categoryColor} rounded-xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
       <div className="relative flex items-start gap-4">
@@ -34,7 +34,7 @@ function CompactToolCard({ tool }) {
   );
 }
 
-function ToolCard({ tool, index, isInView }) {
+function ToolCard({ tool, index, isInView, onTabChange }) {
   return (
     <motion.div initial={{ opacity:0, y:40, filter:'blur(10px)' }} animate={isInView?{opacity:1,y:0,filter:'blur(0px)'}:{opacity:0,y:40,filter:'blur(10px)'}} transition={{ duration:0.6, delay:index*0.1 }} className="group relative w-[80vw] sm:w-[340px] rounded-2xl overflow-hidden flex-shrink-0" style={{ height:'480px', background:`linear-gradient(135deg, ${tool.gradientFrom} 0%, ${tool.gradientTo} 100%)` }}>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-sm" style={{ backgroundImage:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize:'24px 24px' }} />
@@ -49,7 +49,7 @@ function ToolCard({ tool, index, isInView }) {
         <div className="mb-6 relative h-1 bg-slate-700/50 rounded-full overflow-hidden">
           <motion.div className={`absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r ${tool.categoryColor} rounded-full`} animate={{ x:['-100%','300%'] }} transition={{ duration:2, repeat:Infinity }} />
         </div>
-        <motion.button whileHover={{ scale:1.02, y:-2 }} whileTap={{ scale:0.98 }} className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${tool.categoryColor} text-white font-medium flex items-center justify-center gap-2`}>
+        <motion.button whileHover={{ scale:1.02, y:-2 }} whileTap={{ scale:0.98 }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); }} className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${tool.categoryColor} text-white font-medium flex items-center justify-center gap-2`}>
           {tool.ctaText} <ChevronRight size={16} />
         </motion.button>
       </div>
@@ -85,7 +85,7 @@ export default function AIToolsSection({ onTabChange }) {
             <div className="flex gap-4 px-4">
               {aiTools.map((tool, index) => (
                 <div key={tool.id} className="snap-start">
-                  <ToolCard tool={tool} index={index} isInView={isInView} />
+                  <ToolCard tool={tool} index={index} isInView={isInView} onTabChange={onTabChange} />
                 </div>
               ))}
             </div>
@@ -97,7 +97,7 @@ export default function AIToolsSection({ onTabChange }) {
             <div className="flex flex-col gap-6 justify-center">
               {aiTools.slice(0,3).map((tool,index) => (
                 <motion.div key={tool.id} initial={{ opacity:0, x:-40, filter:'blur(10px)' }} animate={isInView?{opacity:1,x:0,filter:'blur(0px)'}:{}} transition={{ duration:0.6, delay:index*0.15 }}>
-                  <CompactToolCard tool={tool} />
+                  <CompactToolCard tool={tool} onTabChange={onTabChange} />
                 </motion.div>
               ))}
             </div>
@@ -107,7 +107,7 @@ export default function AIToolsSection({ onTabChange }) {
             <div className="flex flex-col gap-6 justify-center">
               {aiTools.slice(3,6).map((tool,index) => (
                 <motion.div key={tool.id} initial={{ opacity:0, x:40, filter:'blur(10px)' }} animate={isInView?{opacity:1,x:0,filter:'blur(0px)'}:{}} transition={{ duration:0.6, delay:index*0.15 }}>
-                  <CompactToolCard tool={tool} />
+                  <CompactToolCard tool={tool} onTabChange={onTabChange} />
                 </motion.div>
               ))}
             </div>
