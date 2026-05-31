@@ -43,6 +43,8 @@ export default function AIPartnerSection({ onTabChange }) {
     } else if (toolId === 'satei') {
       setSelectedTool('satei');
       setCurrentView('tool-detail');
+    } else if (toolId === 'tax') {
+      onTabChange('tax');
     } else {
       onTabChange('chat');
     }

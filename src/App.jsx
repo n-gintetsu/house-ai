@@ -25,6 +25,7 @@ import HouseAiRankingPage from './HouseAiRankingPage'
 import MortgageAiDiagnosis from './MortgageAiDiagnosis'
 import MortgageSimulatorPage from './MortgageSimulatorPage'
 import ExpertMatchingPage from './ExpertMatchingPage'
+import RealEstateTaxPage from './RealEstateTaxPage'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -274,10 +275,13 @@ export default function App() {
     window.addEventListener('navigate', handleNav)
     const handleShowAuth = () => setShowAuthSheet(true)
     window.addEventListener('show-auth-sheet', handleShowAuth)
+    const handleNavigateTab = (e) => setTab(e.detail)
+    window.addEventListener('navigate-tab', handleNavigateTab)
     return () => {
       listener.subscription.unsubscribe()
       window.removeEventListener('navigate', handleNav)
       window.removeEventListener('show-auth-sheet', handleShowAuth)
+      window.removeEventListener('navigate-tab', handleNavigateTab)
     }
   }, [])
   const model = useMemo(
@@ -2327,6 +2331,12 @@ export default function App() {
           {tab === 'community' && (
             <div className="ha-panel" style={{ paddingLeft: 16, paddingRight: 16 }}>
               <Community user={user} />
+            </div>
+          )}
+
+          {tab === 'tax' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <RealEstateTaxPage onNavigate={(view) => setTab(view)} />
             </div>
           )}
         {showAuthSheet && ReactDOM.createPortal(
