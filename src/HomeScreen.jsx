@@ -1103,14 +1103,14 @@ export default function HomeScreen({ onTabChange, onNavigate }) {
         </div>
 
         {/* AIログバー */}
-        <div className="vf-notice-bar" style={{ margin: 0 }}>
+        <div className="vf-notice-bar" style={{ margin: 0, position: 'relative', zIndex: 2 }}>
           <span className="vf-notice-dot" />
           <span>今こんな相談が増えています：</span>
           <span className="vf-notice-text">{liveNotices[noticeIndex]}</span>
         </div>
 
         {/* 3Dカルーセル */}
-        <div style={{ width: '100%', height: '520px', display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1500px' }}>
+        <div style={{ width: '100%', height: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1500px' }}>
           <div style={{ position: 'relative', width: 300, height: 450, transformStyle: 'preserve-3d', transform: `rotateY(${carouselRotation}deg)` }}>
             {CAROUSEL_PROPS.map((item, index) => (
               <div
