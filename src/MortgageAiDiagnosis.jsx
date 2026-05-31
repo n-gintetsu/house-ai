@@ -36,9 +36,9 @@ function calcResults(form, avgRate) {
   else if (employment === '自営業') empCoef = 0.85;
   else if (employment === 'パート') empCoef = 0.7;
 
-  let maxLoan = income * 7 * empCoef;
-  if (hasOtherLoan) maxLoan = maxLoan * 0.85;
-  maxLoan = Math.min(8000, Math.round(maxLoan / 100) * 100);
+  const loanAmount = parseInt(form.loanAmount) || 0;
+  let maxLoan = income * 7 * empCoef - loanAmount;
+  maxLoan = Math.min(8000, Math.max(0, Math.round(maxLoan / 100) * 100));
 
   const usedRate = avgRate || 0.5;
   const r = usedRate / 100;
@@ -86,7 +86,7 @@ function calcResults(form, avgRate) {
 
   let comment = '年収' + income + '万円・勤続' + years + '年の条件で審査シミュレーションを実施しました。';
   if (score >= 85) {
-    comment = comment + '審査通過の可能性が高い状況です。変動金利0.3%台を中心に複数の金融機関へ同時申込みを検討してください。';
+    comment = comment + '審査通過の可能性が高い状況です。変動金利' + avgRate.toFixed(2) + '%台を中心に複数の金融機関へ同時申込みを検討してください。';
   } else if (score >= 70) {
     comment = comment + '標準的な審査評価です。頭金を物件価格の10〜20%確保するか、借入期間の見直しでさらに有利な条件が得られます。';
   } else {
@@ -111,7 +111,7 @@ const labelStyle = { display: 'block', fontSize: 13, color: '#4a5568', marginBot
 
 export default function MortgageAiDiagnosis({ onNavigate }) {
   const [step, setStep] = useState('form');
-  const [form, setForm] = useState({ age: '', income: '', downPayment: '', years: '', employment: '会社員', desiredLoan: '', otherLoan: 'なし', concerns: '' });
+  const [form, setForm] = useState({ age: '', income: '', downPayment: '', years: '', employment: '会社員', desiredLoan: '', otherLoan: 'なし', loanType: '', loanAmount: 0, concerns: '' });
   const [checkIndex, setCheckIndex] = useState(-1);
   const [results, setResults] = useState(null);
   const [avgRate, setAvgRate] = useState(0.5);
@@ -209,6 +209,25 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                   <option value="なし">なし</option><option value="あり">あり</option><option value="わからない">わからない</option>
                 </select>
               </div>
+              {form.otherLoan !== 'なし' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, background: '#f8fafd', borderRadius: 12, padding: '14px', border: '1px solid #e2e8f0' }}>
+                  <div>
+                    <label style={labelStyle}>ローン種別</label>
+                    <select value={form.loanType} onChange={set('loanType')} style={baseInput}>
+                      <option value="">選択してください</option>
+                      <option value="住宅ローン">住宅ローン</option>
+                      <option value="アパートローン">アパートローン</option>
+                      <option value="不動産担保ローン">不動産担保ローン</option>
+                      <option value="マイカーローン">マイカーローン</option>
+                      <option value="カードローン">カードローン</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>借入残高（万円）</label>
+                    <input type="number" placeholder="500" value={form.loanAmount} onChange={set('loanAmount')} style={baseInput} />
+                  </div>
+                </div>
+              ) : null}
               <div>
                 <label style={labelStyle}>気になること・不安（任意）</label>
                 <textarea placeholder="例：変動金利が心配、将来の教育費も考慮したい..." value={form.concerns} onChange={set('concerns')} style={{ ...baseInput, minHeight: 90, resize: 'vertical' }} />
@@ -367,7 +386,7 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                   <p style={{ fontSize: 15, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 16px' }}>
                     複数金融機関を比較することで最大<span style={{ fontSize: 20, fontWeight: 500, margin: '0 2px' }}>{res.savingsAmount}</span>万円程度返済総額が下がる可能性があります
                   </p>
-                  <button onClick={() => onNavigate('simulator')} style={{ background: NAVY, color: '#ffffff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', boxSizing: 'border-box' }}>
+                  <button onClick={() => onNavigate('mortgage-simulator')} style={{ background: NAVY, color: '#ffffff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 15, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', boxSizing: 'border-box' }}>
                     金融機関を比較する
                   </button>
                 </motion.div>

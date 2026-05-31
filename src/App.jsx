@@ -23,6 +23,7 @@ import ExpertRegister from './ExpertRegister'
 import AIConcierge from './AIConcierge'
 import HouseAiRankingPage from './HouseAiRankingPage'
 import MortgageAiDiagnosis from './MortgageAiDiagnosis'
+import MortgageSimulatorPage from './MortgageSimulatorPage'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -2287,6 +2288,12 @@ export default function App() {
           {tab === 'mortgage-ai' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <MortgageAiDiagnosis onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
+
+          {tab === 'mortgage-simulator' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <MortgageSimulatorPage onNavigate={(view) => setTab(view)} />
             </div>
           )}
 
