@@ -2386,10 +2386,10 @@ export default function App() {
                 window.location.href = '/community';
               } else if (id === 'experiences') {
                 window.location.href = '/experiences';
-              } else if ((id === 'expert' || id === 'member') && !user) {
+              } else if (id === 'member' && !user) {
                 window.dispatchEvent(new CustomEvent('show-auth-sheet', {}));
               } else if (id === 'expert') {
-                setTab('expertregister');
+                setTab('expert-matching');
               } else {
                 setTab(id);
               }
