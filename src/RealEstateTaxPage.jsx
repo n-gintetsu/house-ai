@@ -408,11 +408,11 @@ function TaxTypesContent() {
 function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   const [selectedStage, setSelectedStage] = useState(null)
   const [isPC, setIsPC] = useState(window.innerWidth > 768)
-  const [rightStyle, setRightStyle] = useState({ position: 'relative' })
+  const [rightFixed, setRightFixed] = useState(false)
+  const [rightBottom, setRightBottom] = useState(false)
 
-  const sectionRef = useRef(null)
-  const leftRef   = useRef(null)
-  const rightRef  = useRef(null)
+  const containerRef = useRef(null)
+  const rightRef     = useRef(null)
 
   useEffect(() => {
     const onResize = () => setIsPC(window.innerWidth > 768)
@@ -421,29 +421,41 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => {
-      if (!isPC || !sectionRef.current || !rightRef.current) return
-      const sectionTop    = sectionRef.current.getBoundingClientRect().top
-      const sectionBottom = sectionRef.current.getBoundingClientRect().bottom
-      const rightHeight   = rightRef.current.offsetHeight
-      const rightWidth    = rightRef.current.offsetWidth
+    const handleScroll = () => {
+      if (!containerRef.current || !rightRef.current) return
+      const container = containerRef.current.getBoundingClientRect()
+      const rightH = rightRef.current.offsetHeight
 
-      if (sectionTop <= 24 && sectionBottom >= rightHeight + 24) {
-        setRightStyle({ position: 'fixed', top: 24, width: rightWidth })
-      } else if (sectionBottom < rightHeight + 24) {
-        setRightStyle({ position: 'absolute', bottom: 0 })
+      if (container.top <= 24 && container.bottom >= rightH + 24) {
+        setRightFixed(true)
+        setRightBottom(false)
+      } else if (container.bottom < rightH + 24) {
+        setRightFixed(false)
+        setRightBottom(true)
       } else {
-        setRightStyle({ position: 'relative' })
+        setRightFixed(false)
+        setRightBottom(false)
       }
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [isPC])
 
   const selected = LIFECYCLE_STAGES.find(s => s.id === selectedStage) || null
 
+  const rightColStyle = rightFixed
+    ? {
+        position: 'fixed', top: 24, right: 0,
+        width: containerRef.current
+          ? containerRef.current.offsetWidth * 0.6 - 16 + 'px'
+          : '55%',
+      }
+    : rightBottom
+      ? { position: 'absolute', bottom: 0, right: 0, width: '100%' }
+      : { position: 'relative', width: '100%' }
+
   return (
-    <div ref={sectionRef} style={{ background: '#071B36', padding: '48px 20px', position: 'relative' }}>
+    <div style={{ background: '#071B36', padding: '48px 20px', position: 'relative' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#ffffff', marginBottom: '8px' }}>
@@ -452,12 +464,15 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           <p style={{ color: '#94a3b8', fontSize: '14px' }}>あなたの状況を選択してください</p>
         </div>
 
-        <div style={isPC
-          ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
-          : { display: 'flex', flexDirection: 'column', gap: '24px' }
-        }>
+        <div
+          ref={containerRef}
+          style={isPC
+            ? { display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '32px' }
+            : { display: 'flex', flexDirection: 'column', gap: '24px' }
+          }
+        >
           {/* 左カラム：ステージカード縦並び */}
-          <div ref={leftRef}>
+          <div>
             {LIFECYCLE_STAGES.map((stage, idx) => {
               const StageIcon = stage.Icon
               const isSel = selectedStage === stage.id
@@ -498,66 +513,69 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
             })}
           </div>
 
-          {/* 右カラム：詳細パネル */}
-          <div ref={rightRef} style={isPC ? rightStyle : {}}>
-            {selected ? (
-              <div style={{
-                background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
-                border: `1px solid ${selected.color}50`,
-              }}>
-                <h3 style={{ fontSize: '22px', fontWeight: 500, color: '#D4AF37', marginBottom: '20px' }}>
-                  {selected.name}時の税金
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                  {selected.taxes.map(tax => (
-                    <div key={tax} style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      background: 'rgba(255,255,255,0.06)', borderRadius: '10px',
-                      padding: '13px 16px', border: '1px solid rgba(255,255,255,0.1)',
-                    }}>
-                      <div style={{
-                        width: '7px', height: '7px', borderRadius: '50%',
-                        background: selected.color, flexShrink: 0,
-                      }} />
-                      <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: 400 }}>{tax}</span>
-                    </div>
-                  ))}
+          {/* 右カラム outer wrapper（スペース確保用プレースホルダー） */}
+          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+            {/* 右カラム本体 */}
+            <div ref={rightRef} style={isPC ? rightColStyle : {}}>
+              {selected ? (
+                <div style={{
+                  background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
+                  border: `1px solid ${selected.color}50`,
+                }}>
+                  <h3 style={{ fontSize: '22px', fontWeight: 500, color: '#D4AF37', marginBottom: '20px' }}>
+                    {selected.name}時の税金
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                    {selected.taxes.map(tax => (
+                      <div key={tax} style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        background: 'rgba(255,255,255,0.06)', borderRadius: '10px',
+                        padding: '13px 16px', border: '1px solid rgba(255,255,255,0.1)',
+                      }}>
+                        <div style={{
+                          width: '7px', height: '7px', borderRadius: '50%',
+                          background: selected.color, flexShrink: 0,
+                        }} />
+                        <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: 400 }}>{tax}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                      onClick={onNavigateToChat}
+                      style={{
+                        width: '100%', padding: '14px', border: 'none', borderRadius: '12px',
+                        background: selected.color, color: 'white',
+                        cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+                      }}
+                    >
+                      詳細を確認
+                    </button>
+                    <button
+                      onClick={onNavigateToExpert}
+                      style={{
+                        width: '100%', padding: '14px', borderRadius: '12px',
+                        background: 'transparent', border: '1px solid #D4AF37',
+                        color: '#D4AF37', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
+                      }}
+                    >
+                      専門家に相談
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button
-                    onClick={onNavigateToChat}
-                    style={{
-                      width: '100%', padding: '14px', border: 'none', borderRadius: '12px',
-                      background: selected.color, color: 'white',
-                      cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-                    }}
-                  >
-                    詳細を確認
-                  </button>
-                  <button
-                    onClick={onNavigateToExpert}
-                    style={{
-                      width: '100%', padding: '14px', borderRadius: '12px',
-                      background: 'transparent', border: '1px solid #D4AF37',
-                      color: '#D4AF37', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
-                    }}
-                  >
-                    専門家に相談
-                  </button>
+              ) : (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  minHeight: '220px', textAlign: 'center',
+                  color: 'rgba(255,255,255,0.35)', fontSize: '14px', lineHeight: 1.9,
+                  background: 'rgba(255,255,255,0.03)', borderRadius: '20px',
+                  border: '1px solid rgba(212,175,55,0.2)', padding: '40px 24px',
+                }}>
+                  左のライフサイクルから、あなたの状況を選択してください。<br />
+                  関連する税金情報をAIが整理します。
                 </div>
-              </div>
-            ) : (
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: '220px', textAlign: 'center',
-                color: 'rgba(255,255,255,0.35)', fontSize: '14px', lineHeight: 1.9,
-                background: 'rgba(255,255,255,0.03)', borderRadius: '20px',
-                border: '1px solid rgba(212,175,55,0.2)', padding: '40px 24px',
-              }}>
-                左のライフサイクルから、あなたの状況を選択してください。<br />
-                関連する税金情報をAIが整理します。
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
