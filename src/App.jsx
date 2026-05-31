@@ -24,6 +24,7 @@ import AIConcierge from './AIConcierge'
 import HouseAiRankingPage from './HouseAiRankingPage'
 import MortgageAiDiagnosis from './MortgageAiDiagnosis'
 import MortgageSimulatorPage from './MortgageSimulatorPage'
+import ExpertMatchingPage from './ExpertMatchingPage'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -2294,6 +2295,12 @@ export default function App() {
           {tab === 'mortgage-simulator' && (
             <div className="ha-panel" style={{ padding: 0 }}>
               <MortgageSimulatorPage onNavigate={(view) => setTab(view)} />
+            </div>
+          )}
+
+          {tab === 'expert-matching' && (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <ExpertMatchingPage onNavigate={(view) => setTab(view)} />
             </div>
           )}
 
