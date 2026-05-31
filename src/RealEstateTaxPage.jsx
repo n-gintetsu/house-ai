@@ -7,6 +7,7 @@ import {
   Search, ChevronDown, ChevronUp, Home, FileText, Calculator,
   TrendingUp, Users, Receipt, Building2, MapPin, BarChart2,
   Check, AlertTriangle, Info, ArrowRight, Star, Clock,
+  Map, BookOpen, CheckCircle,
 } from 'lucide-react'
 
 // ─── Data ────────────────────────────────────────────────────────────────
@@ -60,17 +61,17 @@ const TAX_ITEMS = [
 ]
 
 const LIFECYCLE_STAGES = [
-  { id: 'prepare', name: '購入準備', taxes: ['印紙税', '登録免許税'], color: '#3b82f6' },
-  { id: 'purchase', name: '購入・取得', taxes: ['不動産取得税', '消費税', '登録免許税'], color: '#8b5cf6' },
-  { id: 'hold', name: '保有期間', taxes: ['固定資産税', '都市計画税', '賃貸所得税'], color: '#10b981' },
-  { id: 'sell', name: '売却・譲渡', taxes: ['譲渡所得税', '印紙税'], color: '#f97316' },
-  { id: 'inherit', name: '相続・贈与', taxes: ['相続税', '贈与税', '登録免許税'], color: '#ec4899' },
+  { id: 'prepare',  name: '購入準備',  taxes: ['印紙税', '登録免許税'],                   color: '#3b82f6' },
+  { id: 'purchase', name: '購入・取得', taxes: ['不動産取得税', '消費税', '登録免許税'],   color: '#8b5cf6' },
+  { id: 'hold',     name: '保有期間',  taxes: ['固定資産税', '都市計画税', '賃貸所得税'], color: '#10b981' },
+  { id: 'sell',     name: '売却・譲渡', taxes: ['譲渡所得税', '印紙税'],                   color: '#f97316' },
+  { id: 'inherit',  name: '相続・贈与', taxes: ['相続税', '贈与税', '登録免許税'],         color: '#ec4899' },
 ]
 
 const RADAR_DATA = [
   { subject: '節税余地', value: 85, fullMark: 100 },
   { subject: '金額影響', value: 72, fullMark: 100 },
-  { subject: '複雑度', value: 78, fullMark: 100 },
+  { subject: '複雑度',   value: 78, fullMark: 100 },
   { subject: '時間制約', value: 65, fullMark: 100 },
   { subject: '専門知識', value: 90, fullMark: 100 },
 ]
@@ -103,10 +104,10 @@ const SIMILAR_CASES = [
     title: '新築マンション購入（5,000万円）',
     summary: '建物3,500万円 + 土地1,500万円の新築マンション購入時の税金整理',
     taxes: [
-      { name: '消費税', amount: '350万円', note: '建物部分に課税' },
-      { name: '不動産取得税', amount: '約0円', note: '軽減措置適用後' },
-      { name: '登録免許税', amount: '約15万円', note: '軽減税率適用' },
-      { name: '住宅ローン控除', amount: '△最大455万円', note: '13年間の総額' },
+      { name: '消費税',       amount: '350万円',      note: '建物部分に課税' },
+      { name: '不動産取得税', amount: '約0円',         note: '軽減措置適用後' },
+      { name: '登録免許税',   amount: '約15万円',     note: '軽減税率適用' },
+      { name: '住宅ローン控除',amount: '△最大455万円', note: '13年間の総額' },
     ],
     tag: '購入', tagColor: '#3b82f6',
   },
@@ -114,9 +115,9 @@ const SIMILAR_CASES = [
     title: '築15年一戸建て売却（4,500万円）',
     summary: '5,000万円で購入した一戸建てを15年後に売却する場合の税金整理',
     taxes: [
-      { name: '譲渡所得', amount: 'マイナス（損失）', note: '取得費・譲渡費用考慮後' },
-      { name: '譲渡所得税', amount: '約0円', note: '特別控除適用で非課税' },
-      { name: '印紙税', amount: '1万円', note: '売買契約書に貼付' },
+      { name: '譲渡所得',   amount: 'マイナス（損失）', note: '取得費・譲渡費用考慮後' },
+      { name: '譲渡所得税', amount: '約0円',             note: '特別控除適用で非課税' },
+      { name: '印紙税',     amount: '1万円',             note: '売買契約書に貼付' },
     ],
     tag: '売却', tagColor: '#f97316',
   },
@@ -124,15 +125,48 @@ const SIMILAR_CASES = [
     title: '相続アパート活用（評価額3,000万円）',
     summary: '1棟アパートを相続し、そのまま賃貸経営を継続する場合の税金整理',
     taxes: [
-      { name: '相続税', amount: '要計算', note: '他の相続財産と合算' },
-      { name: '固定資産税', amount: '約24万円/年', note: '評価額3,000万円の場合' },
-      { name: '賃貸所得税', amount: '実効税率次第', note: '青色申告特別控除可' },
+      { name: '相続税',     amount: '要計算',         note: '他の相続財産と合算' },
+      { name: '固定資産税', amount: '約24万円/年',    note: '評価額3,000万円の場合' },
+      { name: '賃貸所得税', amount: '実効税率次第',   note: '青色申告特別控除可' },
     ],
     tag: '相続', tagColor: '#ec4899',
   },
 ]
 
-// ─── 1. HeroSection ──────────────────────────────────────────────────────
+const CHECKPOINTS = [
+  { status: 'ok',   label: '住宅ローン控除の適用要件',      detail: '所得2,000万円以下・床面積50㎡以上・自己居住用' },
+  { status: 'warn', label: '居住用財産の3,000万円特別控除', detail: '売却前に専門家への相談を推奨します' },
+  { status: 'info', label: '不動産取得税の申請手続き',      detail: '取得後60日以内に都道府県税事務所へ申請が必要' },
+  { status: 'ok',   label: '固定資産税の住宅用地特例',      detail: '住宅が建っていれば自動的に適用されます' },
+  { status: 'warn', label: '相続税・贈与税の申告期限',      detail: '相続開始から10ヶ月以内・専門家確認を推奨' },
+  { status: 'info', label: '確定申告の要否確認',            detail: '給与所得者でも不動産所得がある場合は申告必須' },
+]
+
+const STATUS_CONFIG = {
+  ok:   { color: '#10b981', bg: '#ecfdf5', Icon: Check,         label: '確認済み' },
+  warn: { color: '#f59e0b', bg: '#fffbeb', Icon: AlertTriangle, label: '要確認' },
+  info: { color: '#3b82f6', bg: '#eff6ff', Icon: Info,          label: '情報' },
+}
+
+const CTA_ITEMS = [
+  { label: 'AI整理する',       desc: '複雑な税金をAIが無料で整理',   bg: 'linear-gradient(135deg, #1e3a5f, #2563eb)', action: 'chat' },
+  { label: '税理士を探す',     desc: '確定申告・節税対策のプロ',       bg: 'linear-gradient(135deg, #4c1d95, #7c3aed)', action: 'expert-matching' },
+  { label: '司法書士を探す',   desc: '登記・不動産の法律実務のプロ',   bg: 'linear-gradient(135deg, #134e4a, #0d9488)', action: 'expert-matching' },
+  { label: '不動産会社を探す', desc: '地元エリアの取引のプロ',         bg: 'linear-gradient(135deg, #78350f, #d97706)', action: 'expert-matching' },
+]
+
+// ─── Shortcut button config ───────────────────────────────────────────────
+
+const SHORTCUTS = [
+  { id: 'tax-types',    label: '9種類の税金',       Icon: Building2   },
+  { id: 'lifecycle',    label: 'ライフサイクルマップ', Icon: Map         },
+  { id: 'radar',        label: 'AI分析レーダー',     Icon: TrendingUp  },
+  { id: 'guide',        label: '税金ガイドQ&A',      Icon: BookOpen    },
+  { id: 'calculator',   label: '物件税金整理',        Icon: Calculator  },
+  { id: 'checkpoints',  label: 'AI確認ポイント',     Icon: CheckCircle },
+]
+
+// ─── HeroSection ─────────────────────────────────────────────────────────
 
 function HeroSection({ onSearch }) {
   const [query, setQuery] = useState('')
@@ -144,7 +178,7 @@ function HeroSection({ onSearch }) {
   return (
     <div style={{
       background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%)',
-      padding: '60px 20px 80px',
+      padding: '40px 20px 48px',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -166,27 +200,26 @@ function HeroSection({ onSearch }) {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             background: 'rgba(59,130,246,0.2)', border: '1px solid rgba(59,130,246,0.4)',
-            borderRadius: '999px', padding: '6px 16px', marginBottom: '24px',
+            borderRadius: '999px', padding: '6px 16px', marginBottom: '20px',
           }}>
             <Star size={14} color="#60a5fa" />
             <span style={{ color: '#60a5fa', fontSize: '13px', fontWeight: 500 }}>AI対応・登録不要</span>
           </div>
 
           <h1 style={{
-            fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 500,
-            color: '#ffffff', lineHeight: 1.2, marginBottom: '16px',
+            fontSize: 'clamp(24px, 5vw, 44px)', fontWeight: 500,
+            color: '#ffffff', lineHeight: 1.2, marginBottom: '12px',
           }}>
             不動産税金を<br />AIが整理します
           </h1>
           <p style={{
-            color: '#94a3b8', fontSize: 'clamp(14px, 2vw, 18px)',
-            marginBottom: '40px', lineHeight: 1.7,
+            color: '#94a3b8', fontSize: 'clamp(13px, 2vw, 16px)',
+            marginBottom: '28px', lineHeight: 1.7,
           }}>
-            購入・保有・売却・相続まで、複雑な税金を<br />
-            わかりやすく整理してアドバイスします
+            購入・保有・売却・相続まで、複雑な税金をわかりやすく整理します
           </p>
 
-          <div style={{ display: 'flex', gap: '12px', maxWidth: '560px', margin: '0 auto 32px' }}>
+          <div style={{ display: 'flex', gap: '10px', maxWidth: '560px', margin: '0 auto 20px' }}>
             <input
               type="text"
               placeholder="例：マンション購入時の税金を知りたい"
@@ -194,7 +227,7 @@ function HeroSection({ onSearch }) {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' ? onSearch(query) : null}
               style={{
-                flex: 1, padding: '14px 20px', borderRadius: '12px',
+                flex: 1, padding: '13px 18px', borderRadius: '12px',
                 border: '1px solid rgba(255,255,255,0.2)',
                 background: 'rgba(255,255,255,0.1)', color: '#ffffff',
                 fontSize: '16px', outline: 'none',
@@ -203,24 +236,25 @@ function HeroSection({ onSearch }) {
             <button
               onClick={() => onSearch(query)}
               style={{
-                padding: '14px 24px', background: '#2563eb', color: '#fff',
+                padding: '13px 22px', background: '#2563eb', color: '#fff',
                 border: 'none', borderRadius: '12px', cursor: 'pointer',
-                fontSize: '15px', fontWeight: 500,
-                display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap',
+                fontSize: '14px', fontWeight: 500,
+                display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
               }}
             >
-              <Search size={18} />
+              <Search size={16} />
               整理する
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+          {/* 税金タグ 横スクロール */}
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', justifyContent: 'center', flexWrap: 'nowrap', paddingBottom: '4px' }}>
             {quickLabels.map(label => (
               <button
                 key={label}
                 onClick={() => onSearch(label)}
                 style={{
-                  padding: '6px 16px',
+                  padding: '6px 14px', flexShrink: 0,
                   background: 'rgba(255,255,255,0.1)', color: '#cbd5e1',
                   border: '1px solid rgba(255,255,255,0.2)',
                   borderRadius: '999px', cursor: 'pointer',
@@ -237,39 +271,78 @@ function HeroSection({ onSearch }) {
   )
 }
 
-// ─── 2. TaxPanels ────────────────────────────────────────────────────────
+// ─── ShortcutBar ─────────────────────────────────────────────────────────
 
-function TaxPanels() {
+function ShortcutBar({ openSection, onToggle }) {
+  return (
+    <div style={{ background: 'white', padding: '16px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 100 }}>
+      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', maxWidth: '960px', margin: '0 auto' }}>
+        {SHORTCUTS.map(({ id, label, Icon: ShIcon }) => {
+          const active = openSection === id
+          return (
+            <button
+              key={id}
+              onClick={() => onToggle(id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                borderRadius: '24px', padding: '8px 16px', fontSize: '14px',
+                fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
+                background: active ? '#1a3a5c' : 'white',
+                color: active ? '#c9a84c' : '#64748b',
+                border: active ? '1px solid #1a3a5c' : '1px solid #e2e8f0',
+                transition: 'background 0.2s, color 0.2s, border-color 0.2s',
+              }}
+            >
+              <ShIcon size={15} color={active ? '#c9a84c' : '#94a3b8'} />
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Accordion wrapper ────────────────────────────────────────────────────
+
+function AccordionSection({ id, openSection, children }) {
+  const isOpen = openSection === id
+  return (
+    <div style={{
+      maxHeight: isOpen ? '4000px' : '0',
+      overflow: 'hidden',
+      transition: 'max-height 0.4s ease',
+    }}>
+      {children}
+    </div>
+  )
+}
+
+// ─── Section: TaxTypes ───────────────────────────────────────────────────
+
+function TaxTypesContent() {
   const [selected, setSelected] = useState(null)
 
   return (
-    <div style={{ background: '#f8fafc', padding: '60px 20px' }}>
+    <div style={{ background: '#f8fafc', padding: '48px 20px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             9種類の不動産税金
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>タップして詳細を確認できます</p>
-        </motion.div>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>タップして詳細を確認できます</p>
+        </div>
 
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px',
-        }}>
-          {TAX_ITEMS.map((tax, idx) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+          {TAX_ITEMS.map(tax => {
             const TaxIcon = tax.Icon
             const isOpen = selected === tax.id
             return (
-              <motion.div
+              <div
                 key={tax.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: idx * 0.05 }}
                 onClick={() => setSelected(isOpen ? null : tax.id)}
                 style={{
-                  background: 'white', borderRadius: '16px', padding: '20px',
+                  background: 'white', borderRadius: '16px', padding: '18px',
                   border: isOpen ? `2px solid ${tax.color}` : '1px solid #e2e8f0',
                   cursor: 'pointer', transition: 'all 0.2s',
                   boxShadow: isOpen ? `0 4px 20px ${tax.color}30` : '0 1px 4px rgba(0,0,0,0.04)',
@@ -277,32 +350,32 @@ function TaxPanels() {
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                   <div style={{
-                    width: '44px', height: '44px', borderRadius: '12px',
+                    width: '42px', height: '42px', borderRadius: '11px',
                     background: `${tax.color}18`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <TaxIcon size={22} color={tax.color} />
+                    <TaxIcon size={21} color={tax.color} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '15px', fontWeight: 500, color: '#0f172a', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 500, color: '#0f172a', marginBottom: '3px' }}>
                       {tax.name}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Clock size={12} color="#94a3b8" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Clock size={11} color="#94a3b8" />
                       <span style={{ fontSize: '12px', color: '#94a3b8' }}>{tax.timing}</span>
                     </div>
                   </div>
                 </div>
-                <div style={{ marginTop: '12px', padding: '8px 12px', background: `${tax.color}12`, borderRadius: '8px' }}>
+                <div style={{ marginTop: '10px', padding: '7px 11px', background: `${tax.color}12`, borderRadius: '8px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 500, color: tax.color }}>{tax.rate}</span>
-                  <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '8px' }}>{tax.note}</span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '8px' }}>{tax.note}</span>
                 </div>
                 {isOpen ? (
-                  <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.7, marginTop: '12px', marginBottom: 0 }}>
+                  <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.7, marginTop: '10px', marginBottom: 0 }}>
                     {tax.desc}
                   </p>
                 ) : null}
-              </motion.div>
+              </div>
             )
           })}
         </div>
@@ -311,40 +384,33 @@ function TaxPanels() {
   )
 }
 
-// ─── 3. LifecycleMap ─────────────────────────────────────────────────────
+// ─── Section: Lifecycle ──────────────────────────────────────────────────
 
-function LifecycleMap() {
+function LifecycleContent() {
   const [activeStage, setActiveStage] = useState(null)
-
   const active = LIFECYCLE_STAGES.find(s => s.id === activeStage) || null
 
   return (
-    <div style={{ background: 'white', padding: '60px 20px' }}>
+    <div style={{ background: 'white', padding: '48px 20px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             ライフサイクル別 税金マップ
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>どの段階でどの税金が発生するかを整理</p>
-        </motion.div>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>どの段階でどの税金が発生するかを整理</p>
+        </div>
 
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
           {LIFECYCLE_STAGES.map((stage, idx) => {
             const isActive = activeStage === stage.id
             return (
               <div key={stage.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
+                <button
                   onClick={() => setActiveStage(isActive ? null : stage.id)}
                   style={{
-                    minWidth: '140px', background: isActive ? stage.color : 'white',
+                    minWidth: '136px', background: isActive ? stage.color : 'white',
                     border: `2px solid ${stage.color}`, borderRadius: '16px',
-                    padding: '20px 16px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    padding: '18px 14px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
                   }}
                 >
                   <div style={{ fontSize: '14px', fontWeight: 500, color: isActive ? 'white' : stage.color, marginBottom: '8px' }}>
@@ -353,7 +419,7 @@ function LifecycleMap() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {stage.taxes.map(tax => (
                       <span key={tax} style={{
-                        fontSize: '11px', borderRadius: '999px', padding: '2px 8px',
+                        fontSize: '11px', borderRadius: '999px', padding: '2px 7px',
                         color: isActive ? 'rgba(255,255,255,0.85)' : '#64748b',
                         background: isActive ? 'rgba(255,255,255,0.15)' : '#f1f5f9',
                       }}>
@@ -361,9 +427,9 @@ function LifecycleMap() {
                       </span>
                     ))}
                   </div>
-                </motion.button>
+                </button>
                 {idx < LIFECYCLE_STAGES.length - 1 ? (
-                  <ArrowRight size={18} color="#94a3b8" />
+                  <ArrowRight size={16} color="#94a3b8" />
                 ) : null}
               </div>
             )
@@ -371,15 +437,12 @@ function LifecycleMap() {
         </div>
 
         {active ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{
-              marginTop: '24px', background: '#f8fafc', borderRadius: '16px',
-              padding: '20px', border: '1px solid #e2e8f0',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Info size={16} color="#2563eb" />
+          <div style={{
+            marginTop: '20px', background: '#f8fafc', borderRadius: '16px',
+            padding: '18px', border: '1px solid #e2e8f0',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <Info size={15} color="#2563eb" />
               <span style={{ fontWeight: 500, color: '#0f172a', fontSize: '14px' }}>
                 {active.name}の税金ポイント
               </span>
@@ -389,38 +452,34 @@ function LifecycleMap() {
               それぞれの税金の特例や軽減措置を活用することで、大幅な節税が可能です。
               詳細はAIに相談するか、専門家に相談することをお勧めします。
             </p>
-          </motion.div>
+          </div>
         ) : null}
       </div>
     </div>
   )
 }
 
-// ─── 4. AIRadar ──────────────────────────────────────────────────────────
+// ─── Section: Radar ──────────────────────────────────────────────────────
 
-function AIRadar() {
+function RadarContent() {
   return (
-    <div style={{ background: '#0f172a', padding: '60px 20px' }}>
+    <div style={{ background: '#0f172a', padding: '48px 20px' }}>
       <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#ffffff', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#ffffff', marginBottom: '8px' }}>
             不動産税金 AI分析レーダー
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '15px' }}>5軸で不動産税金の特性を可視化</p>
-        </motion.div>
+          <p style={{ color: '#94a3b8', fontSize: '14px' }}>5軸で不動産税金の特性を可視化</p>
+        </div>
 
         <div style={{
-          background: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '32px',
+          background: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '28px',
           border: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={RADAR_DATA}>
               <PolarGrid stroke="rgba(255,255,255,0.15)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 13 }} />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
               <Radar
                 name="不動産税金" dataKey="value"
                 stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2}
@@ -428,12 +487,12 @@ function AIRadar() {
             </RadarChart>
           </ResponsiveContainer>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px', marginTop: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', marginTop: '20px' }}>
             {RADAR_DATA.map(item => (
               <div key={item.subject} style={{
-                background: 'rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px 16px',
+                background: 'rgba(255,255,255,0.06)', borderRadius: '12px', padding: '11px 14px',
               }}>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>{item.subject}</div>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '3px' }}>{item.subject}</div>
                 <div style={{ fontSize: '20px', fontWeight: 500, color: '#3b82f6' }}>
                   {item.value}<span style={{ fontSize: '12px', color: '#64748b' }}>/100</span>
                 </div>
@@ -446,70 +505,61 @@ function AIRadar() {
   )
 }
 
-// ─── 5. SEOAccordion ─────────────────────────────────────────────────────
+// ─── Section: Guide (FAQ) ────────────────────────────────────────────────
 
-function SEOAccordion() {
-  const [openIndex, setOpenIndex] = useState(null)
+function GuideContent() {
+  const [openIdx, setOpenIdx] = useState(null)
 
   return (
-    <div style={{ background: '#f8fafc', padding: '60px 20px' }}>
+    <div style={{ background: '#f8fafc', padding: '48px 20px' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             税金ガイド よくある質問
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>不動産税金についてよくある疑問を整理します</p>
-        </motion.div>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>不動産税金についてよくある疑問を整理します</p>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {FAQ_ITEMS.map((item, idx) => {
-            const isOpen = openIndex === idx
+            const isOpen = openIdx === idx
             return (
-              <motion.div
+              <div
                 key={idx}
-                initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: idx * 0.05 }}
                 style={{
-                  background: 'white', borderRadius: '16px',
+                  background: 'white', borderRadius: '14px',
                   border: isOpen ? '1px solid #3b82f6' : '1px solid #e2e8f0',
                   overflow: 'hidden', transition: 'border-color 0.2s',
                 }}
               >
                 <button
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
+                  onClick={() => setOpenIdx(isOpen ? null : idx)}
                   style={{
-                    width: '100%', padding: '20px 24px', background: 'none',
+                    width: '100%', padding: '18px 22px', background: 'none',
                     border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px',
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: '15px', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a', lineHeight: 1.6 }}>
                     Q. {item.q}
                   </span>
                   {isOpen ? (
-                    <ChevronUp size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
+                    <ChevronUp size={17} color="#3b82f6" style={{ flexShrink: 0 }} />
                   ) : (
-                    <ChevronDown size={18} color="#94a3b8" style={{ flexShrink: 0 }} />
+                    <ChevronDown size={17} color="#94a3b8" style={{ flexShrink: 0 }} />
                   )}
                 </button>
                 {isOpen ? (
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    style={{ padding: '0 24px 20px' }}
-                  >
-                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+                  <div style={{ padding: '0 22px 18px' }}>
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '14px' }}>
                       <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.8, margin: 0 }}>
                         {item.a}
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 ) : null}
-              </motion.div>
+              </div>
             )
           })}
         </div>
@@ -518,9 +568,9 @@ function SEOAccordion() {
   )
 }
 
-// ─── 6. PropertyCalculator ───────────────────────────────────────────────
+// ─── Section: Calculator ─────────────────────────────────────────────────
 
-function PropertyCalculator({ onNavigateToChat }) {
+function CalculatorContent({ onNavigateToChat }) {
   const [form, setForm] = useState({ propertyType: '', price: '', isNew: '', purpose: '' })
   const [result, setResult] = useState(null)
 
@@ -540,39 +590,34 @@ function PropertyCalculator({ onNavigateToChat }) {
   }
 
   const fmt = v => v >= 10000 ? `約${Math.round(v / 10000)}万円` : `約${Math.round(v).toLocaleString()}円`
-
   const canCalc = form.price && form.propertyType
 
   return (
-    <div style={{ background: 'white', padding: '60px 20px' }}>
+    <div style={{ background: 'white', padding: '48px 20px' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             AI購入予定物件 税金整理
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>物件情報を入力して税金の概算を整理します</p>
-        </motion.div>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>物件情報を入力して税金の概算を整理します</p>
+        </div>
 
-        <div style={{ background: '#f8fafc', borderRadius: '24px', padding: '32px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '28px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '14px', marginBottom: '20px' }}>
             {[
               { key: 'propertyType', label: '物件種別', opts: ['マンション', '一戸建て', '土地'] },
               { key: 'isNew', label: '新築・中古', opts: [{ v: 'new', l: '新築' }, { v: 'used', l: '中古' }] },
               { key: 'purpose', label: '購入目的', opts: [{ v: 'resident', l: '居住用' }, { v: 'investment', l: '投資用' }] },
             ].map(({ key, label, opts }) => (
               <div key={key}>
-                <label style={{ fontSize: '13px', fontWeight: 500, color: '#475569', display: 'block', marginBottom: '8px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 500, color: '#475569', display: 'block', marginBottom: '7px' }}>
                   {label}
                 </label>
                 <select
                   value={form[key]}
                   onChange={e => handleChange(key, e.target.value)}
                   style={{
-                    width: '100%', padding: '12px 16px', borderRadius: '10px',
+                    width: '100%', padding: '11px 14px', borderRadius: '10px',
                     border: '1px solid #e2e8f0', background: 'white',
                     fontSize: '16px', color: '#0f172a', outline: 'none',
                   }}
@@ -588,7 +633,7 @@ function PropertyCalculator({ onNavigateToChat }) {
             ))}
 
             <div>
-              <label style={{ fontSize: '13px', fontWeight: 500, color: '#475569', display: 'block', marginBottom: '8px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 500, color: '#475569', display: 'block', marginBottom: '7px' }}>
                 物件価格（万円）
               </label>
               <input
@@ -597,7 +642,7 @@ function PropertyCalculator({ onNavigateToChat }) {
                 value={form.price}
                 onChange={e => handleChange('price', e.target.value)}
                 style={{
-                  width: '100%', padding: '12px 16px', borderRadius: '10px',
+                  width: '100%', padding: '11px 14px', borderRadius: '10px',
                   border: '1px solid #e2e8f0', background: 'white',
                   fontSize: '16px', color: '#0f172a', outline: 'none', boxSizing: 'border-box',
                 }}
@@ -609,8 +654,8 @@ function PropertyCalculator({ onNavigateToChat }) {
             onClick={handleCalculate}
             disabled={!canCalc}
             style={{
-              width: '100%', padding: '16px', border: 'none', borderRadius: '12px',
-              cursor: canCalc ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 500,
+              width: '100%', padding: '14px', border: 'none', borderRadius: '11px',
+              cursor: canCalc ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: 500,
               background: canCalc ? '#2563eb' : '#e2e8f0',
               color: canCalc ? 'white' : '#94a3b8', transition: 'all 0.2s',
             }}
@@ -619,25 +664,25 @@ function PropertyCalculator({ onNavigateToChat }) {
           </button>
 
           {result ? (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <Check size={16} color="#10b981" />
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <Check size={15} color="#10b981" />
                 <span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>税金概算結果</span>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>（目安・実際は異なります）</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
                 {[
-                  { label: '消費税', value: result.consumptionTax, note: '建物部分' },
-                  { label: '不動産取得税', value: result.acquisitionTax, note: '軽減後概算' },
-                  { label: '登録免許税', value: result.regTax, note: '所有権移転' },
-                  { label: '印紙税', value: result.stampTax, note: '売買契約書' },
+                  { label: '消費税',        value: result.consumptionTax,    note: '建物部分' },
+                  { label: '不動産取得税',  value: result.acquisitionTax,    note: '軽減後概算' },
+                  { label: '登録免許税',    value: result.regTax,            note: '所有権移転' },
+                  { label: '印紙税',        value: result.stampTax,          note: '売買契約書' },
                   { label: '固定資産税/年', value: result.annualPropertyTax, note: '概算' },
                 ].map(item => (
                   <div key={item.label} style={{
-                    background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid #e2e8f0',
+                    background: 'white', borderRadius: '11px', padding: '14px', border: '1px solid #e2e8f0',
                   }}>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>{item.label}</div>
-                    <div style={{ fontSize: '18px', fontWeight: 500, color: '#0f172a' }}>{fmt(item.value)}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '3px' }}>{item.label}</div>
+                    <div style={{ fontSize: '17px', fontWeight: 500, color: '#0f172a' }}>{fmt(item.value)}</div>
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{item.note}</div>
                   </div>
                 ))}
@@ -645,14 +690,14 @@ function PropertyCalculator({ onNavigateToChat }) {
               <button
                 onClick={onNavigateToChat}
                 style={{
-                  width: '100%', marginTop: '16px', padding: '14px',
+                  width: '100%', marginTop: '14px', padding: '13px',
                   background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
-                  color: 'white', border: 'none', borderRadius: '12px',
-                  cursor: 'pointer', fontSize: '15px', fontWeight: 500,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  color: 'white', border: 'none', borderRadius: '11px',
+                  cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
                 }}
               >
-                <Star size={16} />
+                <Star size={15} />
                 AIで詳しく整理する
               </button>
             </motion.div>
@@ -663,64 +708,43 @@ function PropertyCalculator({ onNavigateToChat }) {
   )
 }
 
-// ─── 7. CheckpointStatus ─────────────────────────────────────────────────
+// ─── Section: Checkpoints ────────────────────────────────────────────────
 
-const CHECKPOINTS = [
-  { status: 'ok', label: '住宅ローン控除の適用要件', detail: '所得2,000万円以下・床面積50㎡以上・自己居住用' },
-  { status: 'warn', label: '居住用財産の3,000万円特別控除', detail: '売却前に専門家への相談を推奨します' },
-  { status: 'info', label: '不動産取得税の申請手続き', detail: '取得後60日以内に都道府県税事務所へ申請が必要' },
-  { status: 'ok', label: '固定資産税の住宅用地特例', detail: '住宅が建っていれば自動的に適用されます' },
-  { status: 'warn', label: '相続税・贈与税の申告期限', detail: '相続開始から10ヶ月以内・専門家確認を推奨' },
-  { status: 'info', label: '確定申告の要否確認', detail: '給与所得者でも不動産所得がある場合は申告必須' },
-]
-
-const STATUS_CONFIG = {
-  ok:   { color: '#10b981', bg: '#ecfdf5', Icon: Check,         label: '確認済み' },
-  warn: { color: '#f59e0b', bg: '#fffbeb', Icon: AlertTriangle, label: '要確認' },
-  info: { color: '#3b82f6', bg: '#eff6ff', Icon: Info,          label: '情報' },
-}
-
-function CheckpointStatus({ onNavigateToExpert }) {
+function CheckpointsContent({ onNavigateToExpert }) {
   return (
-    <div style={{ background: '#f8fafc', padding: '60px 20px' }}>
+    <div style={{ background: '#f8fafc', padding: '48px 20px' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
-        >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             AI確認ポイント
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>見落としやすいポイントをAIが整理</p>
-        </motion.div>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>見落としやすいポイントをAIが整理</p>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
           {CHECKPOINTS.map((cp, idx) => {
             const cfg = STATUS_CONFIG[cp.status]
             const CpIcon = cfg.Icon
             return (
-              <motion.div
+              <div
                 key={idx}
-                initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }} transition={{ delay: idx * 0.05 }}
                 style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '16px',
-                  background: 'white', borderRadius: '14px', padding: '16px 20px',
+                  display: 'flex', alignItems: 'flex-start', gap: '14px',
+                  background: 'white', borderRadius: '13px', padding: '15px 18px',
                   border: `1px solid ${cfg.color}30`,
                 }}
               >
                 <div style={{
-                  width: '36px', height: '36px', borderRadius: '10px', background: cfg.bg,
+                  width: '34px', height: '34px', borderRadius: '9px', background: cfg.bg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
-                  <CpIcon size={18} color={cfg.color} />
+                  <CpIcon size={17} color={cfg.color} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '3px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{cp.label}</span>
                     <span style={{
-                      fontSize: '11px', padding: '2px 8px', borderRadius: '999px',
+                      fontSize: '11px', padding: '2px 7px', borderRadius: '999px',
                       background: cfg.bg, color: cfg.color, fontWeight: 500,
                     }}>
                       {cfg.label}
@@ -728,72 +752,70 @@ function CheckpointStatus({ onNavigateToExpert }) {
                   </div>
                   <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.6 }}>{cp.detail}</p>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
         </div>
 
-        <motion.button
-          initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <button
           onClick={onNavigateToExpert}
           style={{
-            width: '100%', marginTop: '24px', padding: '16px',
-            background: 'white', border: '1.5px solid #f59e0b', borderRadius: '14px',
-            cursor: 'pointer', fontSize: '15px', fontWeight: 500, color: '#92400e',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            width: '100%', marginTop: '20px', padding: '15px',
+            background: 'white', border: '1.5px solid #f59e0b', borderRadius: '13px',
+            cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#92400e',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
           }}
         >
-          <AlertTriangle size={18} color="#f59e0b" />
+          <AlertTriangle size={17} color="#f59e0b" />
           要確認ポイントを専門家に相談する
-        </motion.button>
+        </button>
       </div>
     </div>
   )
 }
 
-// ─── 8. SimilarCases ─────────────────────────────────────────────────────
+// ─── SimilarCases (常時表示) ──────────────────────────────────────────────
 
 function SimilarCases({ onNavigateToExpert }) {
   return (
-    <div style={{ background: 'white', padding: '60px 20px' }}>
+    <div style={{ background: 'white', padding: '48px 20px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '40px' }}
+          style={{ textAlign: 'center', marginBottom: '32px' }}
         >
-          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#0f172a', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 500, color: '#0f172a', marginBottom: '8px' }}>
             類似事例 3件
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px' }}>実際のケースから学ぶ税金整理の実例</p>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>実際のケースから学ぶ税金整理の実例</p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
           {SIMILAR_CASES.map((c, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
-              style={{ background: '#f8fafc', borderRadius: '20px', padding: '24px', border: '1px solid #e2e8f0' }}
+              style={{ background: '#f8fafc', borderRadius: '18px', padding: '22px', border: '1px solid #e2e8f0' }}
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
                 <h3 style={{ fontSize: '15px', fontWeight: 500, color: '#0f172a', lineHeight: 1.5, margin: 0 }}>
                   {c.title}
                 </h3>
                 <span style={{
                   fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0,
-                  background: `${c.tagColor}18`, color: c.tagColor, padding: '4px 10px', borderRadius: '999px',
+                  background: `${c.tagColor}18`, color: c.tagColor, padding: '3px 9px', borderRadius: '999px',
                 }}>
                   {c.tag}
                 </span>
               </div>
-              <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px', lineHeight: 1.6 }}>{c.summary}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '14px', lineHeight: 1.6 }}>{c.summary}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                 {c.taxes.map((tax, tIdx) => (
                   <div key={tIdx} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: 'white', borderRadius: '10px', padding: '10px 14px', border: '1px solid #f1f5f9',
+                    background: 'white', borderRadius: '9px', padding: '9px 12px', border: '1px solid #f1f5f9',
                   }}>
                     <span style={{ fontSize: '13px', color: '#475569' }}>{tax.name}</span>
                     <div style={{ textAlign: 'right' }}>
@@ -811,12 +833,12 @@ function SimilarCases({ onNavigateToExpert }) {
           initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           style={{
-            marginTop: '32px', padding: '20px 24px', background: '#eff6ff',
-            borderRadius: '16px', border: '1px solid #bfdbfe',
-            display: 'flex', alignItems: 'center', gap: '16px',
+            marginTop: '28px', padding: '18px 22px', background: '#eff6ff',
+            borderRadius: '14px', border: '1px solid #bfdbfe',
+            display: 'flex', alignItems: 'center', gap: '14px',
           }}
         >
-          <Info size={20} color="#2563eb" style={{ flexShrink: 0 }} />
+          <Info size={19} color="#2563eb" style={{ flexShrink: 0 }} />
           <p style={{ fontSize: '14px', color: '#1e40af', lineHeight: 1.7, margin: 0, flex: 1 }}>
             実際の税額は物件の詳細条件・適用される特例・その他の事情によって大きく異なります。
             正確な情報は税理士への相談をお勧めします。
@@ -824,9 +846,9 @@ function SimilarCases({ onNavigateToExpert }) {
           <button
             onClick={onNavigateToExpert}
             style={{
-              padding: '10px 20px', background: '#2563eb', color: 'white',
-              border: 'none', borderRadius: '10px', cursor: 'pointer',
-              fontSize: '14px', fontWeight: 500, whiteSpace: 'nowrap',
+              padding: '9px 18px', background: '#2563eb', color: 'white',
+              border: 'none', borderRadius: '9px', cursor: 'pointer',
+              fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap',
             }}
           >
             税理士を探す
@@ -837,31 +859,24 @@ function SimilarCases({ onNavigateToExpert }) {
   )
 }
 
-// ─── 9. FinalCTA ─────────────────────────────────────────────────────────
-
-const CTA_ITEMS = [
-  { label: 'AI整理する',      desc: '複雑な税金をAIが無料で整理',   bg: 'linear-gradient(135deg, #1e3a5f, #2563eb)', action: 'chat' },
-  { label: '税理士を探す',    desc: '確定申告・節税対策のプロ',       bg: 'linear-gradient(135deg, #4c1d95, #7c3aed)', action: 'expert-matching' },
-  { label: '司法書士を探す',  desc: '登記・不動産の法律実務のプロ',   bg: 'linear-gradient(135deg, #134e4a, #0d9488)', action: 'expert-matching' },
-  { label: '不動産会社を探す',desc: '地元エリアの取引のプロ',         bg: 'linear-gradient(135deg, #78350f, #d97706)', action: 'expert-matching' },
-]
+// ─── FinalCTA (常時表示) ──────────────────────────────────────────────────
 
 function FinalCTA({ onNavigate }) {
   return (
-    <div style={{ background: '#0f172a', padding: '60px 20px 100px' }}>
+    <div style={{ background: '#0f172a', padding: '48px 20px 100px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: '48px' }}
+          style={{ textAlign: 'center', marginBottom: '40px' }}
         >
-          <h2 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 500, color: '#ffffff', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: 'clamp(22px, 3vw, 36px)', fontWeight: 500, color: '#ffffff', marginBottom: '10px' }}>
             次の一歩を踏み出しましょう
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '16px' }}>AIまたは専門家があなたの税金を整理します</p>
+          <p style={{ color: '#94a3b8', fontSize: '15px' }}>AIまたは専門家があなたの税金を整理します</p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
           {CTA_ITEMS.map((cta, idx) => (
             <motion.button
               key={idx}
@@ -870,11 +885,11 @@ function FinalCTA({ onNavigate }) {
               onClick={() => onNavigate(cta.action)}
               whileHover={{ y: -4 }}
               style={{
-                background: cta.bg, border: 'none', borderRadius: '20px',
-                padding: '28px 20px', cursor: 'pointer', textAlign: 'center',
+                background: cta.bg, border: 'none', borderRadius: '18px',
+                padding: '26px 18px', cursor: 'pointer', textAlign: 'center',
               }}
             >
-              <div style={{ fontSize: '18px', fontWeight: 500, color: 'white', marginBottom: '8px' }}>{cta.label}</div>
+              <div style={{ fontSize: '17px', fontWeight: 500, color: 'white', marginBottom: '7px' }}>{cta.label}</div>
               <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{cta.desc}</div>
             </motion.button>
           ))}
@@ -885,15 +900,15 @@ function FinalCTA({ onNavigate }) {
           viewport={{ once: true }}
           onClick={() => onNavigate('expert-matching')}
           style={{
-            width: '100%', marginTop: '24px', padding: '18px',
+            width: '100%', marginTop: '20px', padding: '16px',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '16px', cursor: 'pointer',
-            fontSize: '16px', fontWeight: 500, color: 'white',
+            borderRadius: '14px', cursor: 'pointer',
+            fontSize: '15px', fontWeight: 500, color: 'white',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
           }}
         >
-          <Users size={20} />
+          <Users size={19} />
           専門家に相談する
         </motion.button>
       </div>
@@ -901,7 +916,7 @@ function FinalCTA({ onNavigate }) {
   )
 }
 
-// ─── 10. LegalNotice ─────────────────────────────────────────────────────
+// ─── LegalNotice (固定フッター) ───────────────────────────────────────────
 
 function LegalNotice() {
   return (
@@ -909,13 +924,12 @@ function LegalNotice() {
       position: 'fixed', bottom: 0, left: 0, right: 0,
       background: 'rgba(15,23,42,0.96)',
       borderTop: '1px solid rgba(255,255,255,0.1)',
-      padding: '8px 20px',
-      zIndex: 9000,
+      padding: '7px 20px', zIndex: 9000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <p style={{
         fontSize: '11px', color: 'rgba(255,255,255,0.45)',
-        margin: 0, textAlign: 'center', lineHeight: 1.6,
+        margin: 0, textAlign: 'center', lineHeight: 1.5,
       }}>
         本ページの情報は一般的な参考情報であり、法的・税務的アドバイスを提供するものではありません。
         実際の税務判断は必ず税理士等の専門家にご相談ください。
@@ -927,22 +941,55 @@ function LegalNotice() {
 // ─── Main Export ─────────────────────────────────────────────────────────
 
 export default function RealEstateTaxPage({ onNavigate }) {
+  const [openSection, setOpenSection] = useState(null)
+
   const navigate = view => {
     window.dispatchEvent(new CustomEvent('navigate-tab', { detail: view }))
     if (onNavigate) onNavigate(view)
   }
 
+  const toggleSection = id => setOpenSection(prev => prev === id ? null : id)
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '36px' }}>
+      {/* 1. ヒーロー */}
       <HeroSection onSearch={() => navigate('chat')} />
-      <TaxPanels />
-      <LifecycleMap />
-      <AIRadar />
-      <SEOAccordion />
-      <PropertyCalculator onNavigateToChat={() => navigate('chat')} />
-      <CheckpointStatus onNavigateToExpert={() => navigate('expert-matching')} />
+
+      {/* 2. ショートカットバー */}
+      <ShortcutBar openSection={openSection} onToggle={toggleSection} />
+
+      {/* 3. アコーディオンセクション */}
+      <AccordionSection id="tax-types" openSection={openSection}>
+        <TaxTypesContent />
+      </AccordionSection>
+
+      <AccordionSection id="lifecycle" openSection={openSection}>
+        <LifecycleContent />
+      </AccordionSection>
+
+      <AccordionSection id="radar" openSection={openSection}>
+        <RadarContent />
+      </AccordionSection>
+
+      <AccordionSection id="guide" openSection={openSection}>
+        <GuideContent />
+      </AccordionSection>
+
+      <AccordionSection id="calculator" openSection={openSection}>
+        <CalculatorContent onNavigateToChat={() => navigate('chat')} />
+      </AccordionSection>
+
+      <AccordionSection id="checkpoints" openSection={openSection}>
+        <CheckpointsContent onNavigateToExpert={() => navigate('expert-matching')} />
+      </AccordionSection>
+
+      {/* 4. 類似事例（常時表示） */}
       <SimilarCases onNavigateToExpert={() => navigate('expert-matching')} />
+
+      {/* 5. 最終CTA（常時表示） */}
       <FinalCTA onNavigate={navigate} />
+
+      {/* 6. 固定フッター免責事項 */}
       <LegalNotice />
     </div>
   )
