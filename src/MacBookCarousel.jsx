@@ -56,14 +56,18 @@ export default function MacBookCarousel({ onNavigate }) {
             }}>
               {/* perspectiveはoverflow:hiddenの直接の子 */}
               <div style={{ perspective: '800px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {/* カルーセルステージ: preserve-3d */}
-                <div style={{ position: 'relative', width: 230, height: 360, transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg)` }}>
+                {/* カルーセルステージ: preserve-3d、scale(0.85)でMacBook画面に収める */}
+                <div style={{ position: 'relative', width: 220, height: 400, transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg) scale(0.85)` }}>
                   {MAC8_PROPS.map((item, i) => {
                     const angle = (360 / MAC8_PROPS.length) * i;
+                    const currentAngle = angle - rotation;
+                    const normalized = ((currentAngle % 360) + 360) % 360;
+                    const absAngle = normalized > 180 ? 360 - normalized : normalized;
+                    const opacity = 1 - (absAngle / 180) * 0.9;
                     return (
                       <div
                         key={item.id}
-                        style={{ position: 'absolute', top: 0, left: 0, width: 230, height: 360, transform: `rotateY(${angle}deg) translateZ(420px)`, borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: 220, height: 400, transform: `rotateY(${angle}deg) translateZ(380px)`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', opacity }}
                         onClick={() => onNavigate('properties')}
                       >
                         <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
