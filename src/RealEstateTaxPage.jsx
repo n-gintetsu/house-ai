@@ -288,7 +288,7 @@ function ShortcutBar({ openSection, onToggle }) {
         borderBottom: '1px solid #e2e8f0',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', maxWidth: '960px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12, maxWidth: '960px', margin: '0 auto' }}>
           {SHORTCUTS.map(({ id, label, Icon: ShIcon, color, delay, duration }) => {
             const active = openSection === id
             return (
@@ -425,13 +425,7 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           <p style={{ color: '#94a3b8', fontSize: '14px' }}>あなたの状況を選択してください</p>
         </div>
 
-        <div style={{
-          display: isPC ? 'grid' : 'flex',
-          gridTemplateColumns: isPC ? '2fr 3fr' : undefined,
-          flexDirection: isPC ? undefined : 'column',
-          gap: 32,
-          alignItems: 'flex-start',
-        }}>
+        <div style={{ display: isPC ? 'grid' : 'flex', gridTemplateColumns: isPC ? '2fr 3fr' : undefined, flexDirection: isPC ? undefined : 'column', gap: 32 }}>
           {/* 左カラム：ステージカード縦並び */}
           <div>
             {LIFECYCLE_STAGES.map((stage, idx) => {
@@ -475,12 +469,9 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
           </div>
 
           {/* 右カラム */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: 16, padding: 32, minHeight: 300 }}>
             {selected ? (
-              <div style={{
-                background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px',
-                border: `1px solid ${selected.color}50`,
-              }}>
+              <div>
                 <h3 style={{ fontSize: '22px', fontWeight: 500, color: '#D4AF37', marginBottom: '20px' }}>
                   {selected.name}時の税金
                 </h3>
@@ -522,10 +513,8 @@ function LifecycleContent({ onNavigateToChat, onNavigateToExpert }) {
             ) : (
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: '220px', textAlign: 'center',
+                height: '100%', minHeight: '220px', textAlign: 'center',
                 color: 'rgba(255,255,255,0.35)', fontSize: '14px', lineHeight: 1.9,
-                background: 'rgba(255,255,255,0.03)', borderRadius: '20px',
-                border: '1px solid rgba(212,175,55,0.2)', padding: '40px 24px',
               }}>
                 左のライフサイクルから、あなたの状況を選択してください。<br />
                 関連する税金情報をAIが整理します。
