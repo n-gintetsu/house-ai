@@ -47,7 +47,7 @@ export default function MacBookCarousel({ onNavigate }) {
               left: FRAME_BORDER,
               right: FRAME_BORDER,
               bottom: FRAME_BORDER,
-              overflow: 'hidden',
+              clipPath: 'inset(0 round 6px)',
               borderRadius: 8,
               background: '#0A1628',
               display: 'flex',
@@ -111,8 +111,8 @@ export default function MacBookCarousel({ onNavigate }) {
             }}>
               {/* カメラノッチ（コンテンツ領域の最上部） */}
               <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 64, height: 6, background: '#1e293b', borderRadius: 9999 }} />
-              {/* 画面寸法確立用div（背景なし・overflow:hiddenなし） */}
-              <div style={{ aspectRatio: '16/10', borderRadius: 8 }} />
+              {/* 画面寸法確立用div（背景なし・clipPathでマスク） */}
+              <div style={{ aspectRatio: '16/10', borderRadius: 8, clipPath: 'inset(0 round 8px)' }} />
             </div>
 
           </div>
