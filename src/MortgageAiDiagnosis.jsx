@@ -60,7 +60,9 @@ function calcResults(form, avgRate) {
   if (downPayment >= 200) score = score + 5;
   score = Math.min(score, 97);
 
-  const scoreLabel = score >= 85 ? '通過見込み高' : score >= 70 ? '標準評価' : '条件整備を推奨';
+  const scoreLabel = score >= 80 ? '通過見込み高' : score >= 60 ? '一部改善で通過の可能性あり' : score >= 40 ? '条件の見直しが必要です' : '現状では厳しい状況です';
+
+  const isToughCase = maxLoan <= 0 || maxLoan < desiredLoan * 0.5;
 
   let passRate = Math.min(93, Math.max(18, score - 3));
   if (income >= 800) passRate = Math.min(93, passRate + 4);
@@ -84,13 +86,15 @@ function calcResults(form, avgRate) {
 
   const savingsAmount = Math.max(20, Math.round(actualLoan * 0.034 / 10) * 10);
 
-  let comment = '年収' + income + '万円・勤続' + years + '年の条件で審査シミュレーションを実施しました。';
-  if (score >= 85) {
-    comment = comment + '審査通過の可能性が高い状況です。変動金利' + avgRate.toFixed(2) + '%台を中心に複数の金融機関へ同時申込みを検討してください。';
+  let comment = '';
+  if (isToughCase) {
+    comment = '現在の借入状況を踏まえると、ご希望の借入額には今すぐ届かない可能性があります。ただ、同じような状況から専門家への相談で解決できた方も多くいらっしゃいます。諦めずに、まずは無料相談をお試しください。';
+  } else if (score >= 85) {
+    comment = '年収' + income + '万円・勤続' + years + '年の条件で審査シミュレーションを実施しました。審査通過の可能性が高い状況です。変動金利' + avgRate.toFixed(2) + '%台を中心に複数の金融機関へ同時申込みを検討してください。';
   } else if (score >= 70) {
-    comment = comment + '標準的な審査評価です。頭金を物件価格の10〜20%確保するか、借入期間の見直しでさらに有利な条件が得られます。';
+    comment = '年収' + income + '万円・勤続' + years + '年の条件で審査シミュレーションを実施しました。標準的な審査評価です。頭金を物件価格の10〜20%確保するか、借入期間の見直しでさらに有利な条件が得られます。';
   } else {
-    comment = comment + '現時点では審査条件を整える余地があります。他の借入の整理と勤続年数の積み上げが最も効果的です。';
+    comment = '年収' + income + '万円・勤続' + years + '年の条件で審査シミュレーションを実施しました。現時点では審査条件を整える余地があります。他の借入の整理と勤続年数の積み上げが最も効果的です。';
   }
 
   const cases = [
@@ -99,7 +103,7 @@ function calcResults(form, avgRate) {
     { age: Math.max(25, age - 2), income: Math.max(300, income - 20), loan: Math.max(500, actualLoan - 200), outcome: '条件交渉成功', comment: '頭金を増やして審査を通過。金利優遇も受けられました。' },
   ];
 
-  return { maxLoan, monthlyPayment, usedRate, score, actualLoan, comment, scoreLabel, passRate, loanType, loanTypeRatio, loanTypeReasons, riskItems, savingsAmount, cases };
+  return { maxLoan, monthlyPayment, usedRate, score, actualLoan, comment, scoreLabel, passRate, loanType, loanTypeRatio, loanTypeReasons, riskItems, savingsAmount, cases, isToughCase };
 }
 
 const baseInput = {
@@ -274,14 +278,16 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
               const res = results;
 
               // セクション1: スコアカード（左）
+              const scoreBadgeColor = res.score >= 80 ? GOLD : res.score >= 60 ? '#f59e0b' : res.score >= 40 ? '#f97316' : '#ef4444';
+              const scoreBadgeBg = res.score >= 80 ? 'rgba(201,168,76,0.18)' : res.score >= 60 ? 'rgba(245,158,11,0.18)' : res.score >= 40 ? 'rgba(249,115,22,0.18)' : 'rgba(239,68,68,0.18)';
               const sec1 = (
                 <div style={{ background: NAVY, borderRadius: 16, padding: '28px 24px' }}>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>AI診断スコア</div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginBottom: 12 }}>
-                    <span style={{ fontSize: 52, fontWeight: 500, color: GOLD, lineHeight: 1 }}>{res.score}</span>
+                    <span style={{ fontSize: 52, fontWeight: 500, color: scoreBadgeColor, lineHeight: 1 }}>{res.score}</span>
                     <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', paddingBottom: 6 }}>/ 100</span>
                   </div>
-                  <div style={{ display: 'inline-block', background: 'rgba(201,168,76,0.18)', border: '1px solid ' + GOLD, borderRadius: 20, padding: '4px 14px', fontSize: 12, color: GOLD }}>{res.scoreLabel}</div>
+                  <div style={{ display: 'inline-block', background: scoreBadgeBg, border: '1px solid ' + scoreBadgeColor, borderRadius: 20, padding: '4px 14px', fontSize: 12, color: scoreBadgeColor }}>{res.scoreLabel}</div>
                 </div>
               );
 
@@ -290,8 +296,14 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div style={{ background: '#f0f6ff', borderRadius: 16, padding: '18px 14px', border: '1px solid #dbeafe' }}>
                     <div style={{ fontSize: 11, color: '#6b8ab5', marginBottom: 6 }}>推定借入可能額</div>
-                    <div style={{ fontSize: 22, fontWeight: 500, color: NAVY, lineHeight: 1.2 }}>{res.maxLoan.toLocaleString()}</div>
-                    <div style={{ fontSize: 11, color: '#6b8ab5', marginTop: 2 }}>万円</div>
+                    {res.maxLoan <= 0 ? (
+                      <div style={{ fontSize: 13, color: NAVY, lineHeight: 1.6, marginTop: 4 }}>現在の借入状況では新規借入は難しい状況です</div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 500, color: NAVY, lineHeight: 1.2 }}>{res.maxLoan.toLocaleString()}</div>
+                        <div style={{ fontSize: 11, color: '#6b8ab5', marginTop: 2 }}>万円</div>
+                      </div>
+                    )}
                   </div>
                   <div style={{ background: '#fffbeb', borderRadius: 16, padding: '18px 14px', border: '1px solid #fde68a' }}>
                     <div style={{ fontSize: 11, color: '#92693a', marginBottom: 6 }}>月々返済目安</div>
@@ -379,7 +391,19 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                 </div>
               );
 
-              // セクション7: AI節約提案（右）　修正4確認: onNavigate('simulator') 済み
+              // 要相談ケース専用CTAブロック（sec6直下・isToughCaseのみ表示）
+              const secToughCta = res.isToughCase ? (
+                <div style={{ borderRadius: 16, background: 'linear-gradient(135deg, #1a3a5c, #12375d)', padding: '24px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: '#ffffff', marginBottom: 8 }}>同じ状況から住宅購入を実現した方がいます</div>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 20px' }}>専門家への無料相談で、借入条件の改善策や最適な金融機関をご提案します</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button onClick={() => onNavigate('expert')} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}>専門家に無料相談する</button>
+                    <button onClick={() => onNavigate('mortgage-simulator')} style={{ background: 'transparent', color: '#ffffff', border: '1.5px solid rgba(255,255,255,0.4)', borderRadius: 12, padding: '13px 20px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}>金融機関を比較する</button>
+                  </div>
+                </div>
+              ) : null;
+
+              // セクション7: AI節約提案（右）
               const sec7 = (
                 <motion.div animate={{ opacity: [1, 0.85, 1] }} transition={{ duration: 2.2, repeat: Infinity }} style={{ borderRadius: 16, background: 'linear-gradient(135deg, #c9a84c, #f0e68c)', padding: '20px', border: '2px solid rgba(201,168,76,0.4)' }}>
                   <div style={{ fontSize: 12, color: '#4a3000', marginBottom: 6, fontWeight: 500 }}>AI節約提案</div>
@@ -456,7 +480,7 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                   {isPC ? (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        {sec1}{sec3}{sec4}{sec6}
+                        {sec1}{sec3}{sec4}{sec6}{secToughCta}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {sec2}{sec5}{sec7}
@@ -464,7 +488,7 @@ export default function MortgageAiDiagnosis({ onNavigate }) {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      {sec1}{sec2}{sec3}{sec4}{sec5}{sec6}{sec7}
+                      {sec1}{sec2}{sec3}{sec4}{sec5}{sec6}{secToughCta}{sec7}
                     </div>
                   )}
 
