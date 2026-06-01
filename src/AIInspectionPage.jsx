@@ -107,34 +107,43 @@ export default function AIInspectionPage({ onNavigate }) {
   const [step, setStep] = useState('input')
   const [inputText, setInputText] = useState('')
   const [images, setImages] = useState([])
-  const [shownMessages, setShownMessages] = useState([])
-  const [isTyping, setIsTyping] = useState(false)
   const [expandedCard, setExpandedCard] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [bubbleOpacity, setBubbleOpacity] = useState(1)
+  const [dotOpacity, setDotOpacity] = useState(1)
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
 
   useEffect(() => {
     if (step !== 'analyzing') return
-    setShownMessages([])
-    setIsTyping(false)
-    const timeouts = []
-    let delay = 400
+    setCurrentIndex(0)
+    setBubbleOpacity(1)
+    setDotOpacity(1)
+    let idx = 0
 
-    ANALYZING_MESSAGES.forEach((msg) => {
-      const t1 = setTimeout(() => setIsTyping(true), delay)
-      timeouts.push(t1)
-      delay += 950
-      const t2 = setTimeout(() => {
-        setIsTyping(false)
-        setShownMessages(prev => [...prev, msg])
-      }, delay)
-      timeouts.push(t2)
-      delay += 280
-    })
+    const dotInterval = setInterval(() => {
+      setDotOpacity(prev => prev === 1 ? 0.2 : 1)
+    }, 600)
 
-    const t3 = setTimeout(() => setStep('report'), delay + 3000)
-    timeouts.push(t3)
-    return () => timeouts.forEach(t => clearTimeout(t))
+    const msgInterval = setInterval(() => {
+      idx += 1
+      if (idx >= ANALYZING_MESSAGES.length) {
+        clearInterval(msgInterval)
+        clearInterval(dotInterval)
+        setStep('report')
+        return
+      }
+      setBubbleOpacity(0)
+      setTimeout(() => {
+        setCurrentIndex(idx)
+        setBubbleOpacity(1)
+      }, 200)
+    }, 1000)
+
+    return () => {
+      clearInterval(msgInterval)
+      clearInterval(dotInterval)
+    }
   }, [step])
 
   const addImages = (rawFiles) => {
@@ -368,53 +377,62 @@ export default function AIInspectionPage({ onNavigate }) {
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#08162b',
-        display: 'flex', flexDirection: 'column',
+        background: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
         padding: '48px 20px',
       }}>
         <style>{GLOBAL_STYLE}</style>
-        <div style={{ maxWidth: 560, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 10, textTransform: 'uppercase' }}>
-              AI ANALYZING
-            </div>
-            <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 500, margin: 0 }}>
-              AIが分析中です
-            </h2>
+
+        <div style={{ color: '#999999', fontSize: 14, fontWeight: 400, marginBottom: 40 }}>
+          AIが内見をチェック中です...
+        </div>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 14,
+          opacity: bubbleOpacity,
+          transition: 'opacity 0.4s',
+        }}>
+          {/* Avatar */}
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: '#1a3a5c',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <span style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500 }}>H</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {shownMessages.map((msg, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, animation: 'aiMsgIn 0.4s ease' }}>
-                <AIAvatar size={36} />
-                <div style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '4px 16px 16px 16px',
-                  padding: '12px 16px',
-                  color: 'rgba(255,255,255,0.88)',
-                  fontSize: 14, fontWeight: 400, lineHeight: 1.5,
-                }}>
-                  {msg}
-                </div>
-              </div>
-            ))}
-
-            {isTyping ? (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <AIAvatar size={36} />
-                <div style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '4px 16px 16px 16px',
-                  padding: '14px 18px',
-                  display: 'flex', alignItems: 'center',
-                }}>
-                  <PulseDots />
-                </div>
-              </div>
-            ) : null}
+          {/* Bubble + dots */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{
+              background: '#f5f5f5',
+              borderRadius: '18px 18px 18px 4px',
+              padding: '12px 20px',
+              fontSize: 15, fontWeight: 500,
+              color: '#1a3a5c',
+              minWidth: 200, maxWidth: 320,
+            }}>
+              {ANALYZING_MESSAGES[currentIndex] || ANALYZING_MESSAGES[0]}
+            </div>
+            <div style={{
+              display: 'flex', gap: 5,
+              marginTop: 10, paddingLeft: 4,
+              opacity: dotOpacity,
+              transition: 'opacity 0.3s',
+            }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  display: 'inline-block',
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: '#1a3a5c', opacity: 0.45,
+                }} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
