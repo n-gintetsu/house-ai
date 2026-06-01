@@ -1193,6 +1193,7 @@ export default function App() {
         right: tab === 'inspection' ? 0 : undefined,
         bottom: tab === 'inspection' ? 0 : undefined,
         width: tab === 'inspection' ? '100%' : undefined,
+        zIndex: tab === 'inspection' ? 9999 : undefined,
       }}>
         {(tab !== 'properties' && tab !== 'inspection') ? (<header className="ha-header">
           <div className="ha-brand">
