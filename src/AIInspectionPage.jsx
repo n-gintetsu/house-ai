@@ -33,26 +33,25 @@ const RADAR_DATA = [
   { subject: '周辺環境', value: 85 },
 ]
 
-const CONCERN_CARDS = [
-  {
-    id: 'storage',
-    title: '収納不足',
-    summary: '写真から判断すると、収納スペースが限られています。',
-    detail: '間取り図を分析した結果、リビング・ダイニング周辺の収納が少なく、季節用品や日用品の収納場所が不足する可能性があります。内見時にはウォークインクローゼットの有無、廊下収納、洗面台下の収納スペースを実際に計測することをお勧めします。',
-  },
-  {
-    id: 'sunlight',
-    title: '日当たり',
-    summary: '南向きですが、近隣建物の影響が確認できません。',
-    detail: '物件は南向きですが、周辺の建物配置によっては日照時間が制限される可能性があります。内見は午前10時から午後2時の間に行い、実際の日差しの入り方を確認してください。また、冬至の時期のシミュレーションをGoogle Mapsなどで事前確認することをお勧めします。',
-  },
-  {
-    id: 'humidity',
-    title: '湿気',
-    summary: '築年数から湿気リスクを確認する必要があります。',
-    detail: '築15年以上の物件では、浴室・洗面所・キッチンなどの水回りに湿気やカビのリスクが高まります。内見時には壁紙の変色、窓枠のカビ、押し入れの湿気臭を確認してください。換気システムの状態も重要なチェックポイントです。',
-  },
+const DEFAULT_RISKS = [
+  { label: '収納',    level: '中リスク' },
+  { label: '湿気',    level: '低リスク' },
+  { label: '騒音',    level: '低リスク' },
+  { label: '日当たり', level: '要確認' },
 ]
+
+const DEFAULT_POINTS = [
+  { title: '収納不足', detail: '写真から判断すると、収納スペースが限られています。' },
+  { title: '日当たり', detail: '南向きですが、近隣建物の影響が確認できません。' },
+  { title: '湿気',    detail: '築年数から湿気リスクを確認する必要があります。' },
+]
+
+function riskStyle(level) {
+  if (level === '高リスク') return { color: '#f87171', bg: 'rgba(248,113,113,0.13)' }
+  if (level === '要確認')   return { color: '#f87171', bg: 'rgba(248,113,113,0.13)' }
+  if (level === '中リスク') return { color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' }
+  return { color: '#4ade80', bg: 'rgba(74,222,128,0.09)' }
+}
 
 function CircularScore({ score }) {
   const r = 54
@@ -120,16 +119,20 @@ export default function AIInspectionPage({ onNavigate }) {
   const [logoExpanded, setLogoExpanded] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
   const [msgOpacity, setMsgOpacity] = useState(1)
+  const [aiResult, setAiResult] = useState(null)
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
   const chatBottomRef = useRef(null)
   const rightContentPanelRef = useRef(null)
+  const aiResultRef = useRef(null)
   const [chatStep, setChatStep] = useState('ask_show')
   const [chatLog, setChatLog] = useState([{ role: 'ai', text: '気になる点が3件見つかりました。表示しますか？' }])
   const [rightContent, setRightContent] = useState('dashboard')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [patternMsg, setPatternMsg] = useState('')
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+
+  useEffect(() => { aiResultRef.current = aiResult }, [aiResult])
 
   useEffect(() => {
     if (step !== 'analyzing') return
@@ -170,8 +173,10 @@ export default function AIInspectionPage({ onNavigate }) {
 
   useEffect(() => {
     if (step === 'report') {
+      const pts = ((aiResultRef.current || {}).points) || DEFAULT_POINTS
+      const n = pts.length
       setChatStep('ask_show')
-      setChatLog([{ role: 'ai', text: '気になる点が3件見つかりました。表示しますか？' }])
+      setChatLog([{ role: 'ai', text: `気になる点が${n}件見つかりました。表示しますか？` }])
       setRightContent('dashboard')
       setIsTransitioning(false)
       setPatternMsg('')
@@ -188,14 +193,28 @@ export default function AIInspectionPage({ onNavigate }) {
     }
   }, [chatLog])
 
-  const addImages = (rawFiles) => {
+  const toBase64 = (file) => new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result.split(',')[1])
+    reader.readAsDataURL(file)
+  })
+
+  const addImages = async (rawFiles) => {
+    const toAdd = Array.from(rawFiles)
+      .filter(f => f.type.startsWith('image/'))
+    if (toAdd.length === 0) return
+    const newItems = await Promise.all(
+      toAdd.map(async (file) => ({
+        file,
+        url: URL.createObjectURL(file),
+        base64: await toBase64(file),
+        type: file.type,
+      }))
+    )
     setImages(prev => {
       const remaining = 10 - prev.length
       if (remaining <= 0) return prev
-      const toAdd = Array.from(rawFiles)
-        .filter(f => f.type.startsWith('image/'))
-        .slice(0, remaining)
-      return [...prev, ...toAdd.map(file => ({ file, url: URL.createObjectURL(file) }))]
+      return [...prev, ...newItems.slice(0, remaining)]
     })
   }
 
@@ -230,6 +249,90 @@ export default function AIInspectionPage({ onNavigate }) {
     if (!el) return
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+  }
+
+  const handleSubmit = async () => {
+    if (!inputText.trim() && images.length === 0) return
+    setAiResult(null)
+    setStep('analyzing')
+
+    try {
+      const content = []
+
+      for (const img of images) {
+        if (img.base64) {
+          content.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: img.type || 'image/jpeg',
+              data: img.base64,
+            },
+          })
+        }
+      }
+
+      content.push({
+        type: 'text',
+        text: `あなたは不動産内見チェックの専門AIです。
+ユーザーが内見予定または内見中の物件について気になる点を送ってきました。
+写真や気になる点を分析して、以下のJSON形式のみで回答してください。
+他のテキストは一切含めないこと。
+
+気になる点：${inputText || '（テキストなし）'}
+
+以下のJSON形式で回答：
+{
+  "score": 75,
+  "risks": [
+    {"label": "収納", "level": "中リスク"},
+    {"label": "湿気", "level": "低リスク"},
+    {"label": "騒音", "level": "低リスク"},
+    {"label": "日当たり", "level": "要確認"},
+    {"label": "周辺環境", "level": "低リスク"}
+  ],
+  "radar": {
+    "日当たり": 60,
+    "収納": 40,
+    "騒音": 75,
+    "防犯": 80,
+    "資産性": 65,
+    "周辺環境": 70
+  },
+  "points": [
+    {"title": "収納不足", "detail": "写真から判断すると、収納スペースが限られています。"},
+    {"title": "日当たり", "detail": "南向きですが、近隣建物の影響が確認できません。"},
+    {"title": "湿気", "detail": "築年数から湿気リスクを確認する必要があります。"}
+  ],
+  "aiComment": "総合的に見ると、この物件は立地条件は良好ですが、収納と日当たりに課題があります。内見時は収納スペースと各部屋の日照を重点的に確認することをおすすめします。"
+}
+
+scoreは0〜100の整数。
+risksのlevelは「低リスク」「中リスク」「高リスク」「要確認」のいずれか。
+radarの値は0〜100の整数。
+pointsは2〜4件。
+写真がある場合は画像を分析して具体的な内容を記述すること。`,
+      })
+
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLAUDE_MODEL) || 'claude-sonnet-4-5',
+          messages: [{ role: 'user', content }],
+          max_tokens: 1000,
+        }),
+      })
+
+      const data = await res.json()
+      const text = (typeof data.text === 'string' ? data.text : '') ||
+        ((data.content && data.content[0] && data.content[0].text) || '')
+      const clean = text.replace(/```json|```/g, '').trim()
+      const result = JSON.parse(clean)
+      setAiResult(result)
+    } catch (e) {
+      setAiResult(null)
+    }
   }
 
   const triggerDissolve = (nextContent) => {
@@ -286,10 +389,12 @@ export default function AIInspectionPage({ onNavigate }) {
 
   const handleAskShow = (answer) => {
     if (answer === 'yes') {
+      const pts = ((aiResult || {}).points) || DEFAULT_POINTS
+      const lines = pts.map(p => `【${p.title}】${p.detail}`).join('\n\n')
       setChatLog(prev => [
         ...prev,
         { role: 'user', text: 'Yes' },
-        { role: 'ai', text: '【収納不足】収納スペースが限られています。\n\n【日当たり】近隣建物の影響が確認できません。\n\n【湿気】築年数から湿気リスクを確認する必要があります。' },
+        { role: 'ai', text: lines },
         { role: 'ai', text: 'さらに深掘りしますか？' },
       ])
       triggerDissolve('points')
@@ -306,14 +411,16 @@ export default function AIInspectionPage({ onNavigate }) {
 
   const handleAskDeepen = (answer) => {
     if (answer === 'yes') {
-      const msg = Math.random() < 0.5
-        ? 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'
-        : '分析した結果、類似物件とはさほど差分は見つかりませんでした。実際に内見しながら細かくチェックすることをおすすめします。'
-      setPatternMsg(msg)
+      const aiComment = ((aiResult || {}).aiComment) || (
+        Math.random() < 0.5
+          ? 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'
+          : '分析した結果、類似物件とはさほど差分は見つかりませんでした。実際に内見しながら細かくチェックすることをおすすめします。'
+      )
+      setPatternMsg(aiComment)
       setChatLog(prev => [
         ...prev,
         { role: 'user', text: 'Yes' },
-        { role: 'ai', text: msg },
+        { role: 'ai', text: aiComment },
         { role: 'ai', text: 'このエリアに強い不動産業者を検索しますか？' },
       ])
       triggerDissolve('pattern')
@@ -407,14 +514,9 @@ export default function AIInspectionPage({ onNavigate }) {
           overflow: 'hidden',
         }}>
 
-          {/* Image thumbnails (shown only when images exist) */}
+          {/* Image thumbnails */}
           {images.length > 0 ? (
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-              padding: '12px 16px 0',
-            }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 16px 0' }}>
               {images.map((img, idx) => (
                 <div key={idx} style={{ position: 'relative', flexShrink: 0 }}>
                   <img
@@ -451,33 +553,22 @@ export default function AIInspectionPage({ onNavigate }) {
             onInput={autoResize}
             placeholder="気になる点を入力してください（例：湿気、騒音、日当たり）"
             style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              minHeight: 60,
-              maxHeight: 160,
+              width: '100%', boxSizing: 'border-box',
+              minHeight: 60, maxHeight: 160,
               padding: '14px 16px',
-              fontSize: 16,
-              fontWeight: 400,
+              fontSize: 16, fontWeight: 400,
               color: '#222222',
               background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontFamily: 'inherit',
-              lineHeight: 1.6,
-              overflowY: 'auto',
+              border: 'none', outline: 'none', resize: 'none',
+              fontFamily: 'inherit', lineHeight: 1.6, overflowY: 'auto',
             }}
           />
 
           {/* Toolbar */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 12px 10px',
-            borderTop: '1px solid #f0f0f0',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 12px 10px', borderTop: '1px solid #f0f0f0',
           }}>
-            {/* Left: clip button + count */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
                 ref={fileInputRef}
@@ -492,10 +583,8 @@ export default function AIInspectionPage({ onNavigate }) {
                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                 style={{
                   width: 34, height: 34, borderRadius: 8,
-                  background: 'transparent',
-                  border: '1px solid #e0e0e0',
-                  cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent', border: '1px solid #e0e0e0',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background 0.15s',
                 }}
               >
@@ -508,17 +597,14 @@ export default function AIInspectionPage({ onNavigate }) {
               </span>
             </div>
 
-            {/* Right: send button */}
             <button
-              onClick={() => canSend ? setStep('analyzing') : null}
+              onClick={() => canSend ? handleSubmit() : null}
               style={{
                 width: 36, height: 36, borderRadius: '50%',
-                background: '#1a3a5c',
-                border: 'none', cursor: canSend ? 'pointer' : 'default',
+                background: '#1a3a5c', border: 'none',
+                cursor: canSend ? 'pointer' : 'default',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: canSend ? 1 : 0.3,
-                transition: 'opacity 0.15s',
-                flexShrink: 0,
+                opacity: canSend ? 1 : 0.3, transition: 'opacity 0.15s', flexShrink: 0,
               }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -559,8 +645,7 @@ export default function AIInspectionPage({ onNavigate }) {
           src="/favicon.png"
           alt="House-AI"
           style={{
-            width: 72,
-            height: 72,
+            width: 72, height: 72,
             transform: 'scale(' + logoScale + ')',
             boxShadow: logoShadow,
             borderRadius: '50%',
@@ -569,12 +654,8 @@ export default function AIInspectionPage({ onNavigate }) {
         />
 
         <div style={{
-          marginTop: 32,
-          fontSize: 14,
-          fontWeight: 500,
-          color: '#1a3a5c',
-          opacity: msgOpacity,
-          transition: 'opacity 0.3s',
+          marginTop: 32, fontSize: 14, fontWeight: 500, color: '#1a3a5c',
+          opacity: msgOpacity, transition: 'opacity 0.3s',
         }}>
           {SCREEN_MESSAGES[msgIndex] || SCREEN_MESSAGES[0]}
         </div>
@@ -585,6 +666,14 @@ export default function AIInspectionPage({ onNavigate }) {
   /* ============================================================
    * SECTION 3 – FINAL: REPORT
    * ============================================================ */
+  const score = ((aiResult || {}).score) || 78
+  const risks = ((aiResult || {}).risks) || DEFAULT_RISKS
+  const radarData = (aiResult && aiResult.radar)
+    ? Object.entries(aiResult.radar).map(([subject, value]) => ({ subject, value }))
+    : RADAR_DATA
+  const points = ((aiResult || {}).points) || DEFAULT_POINTS
+  const aiComment = ((aiResult || {}).aiComment) || 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'
+
   const chatBtnStyle = {
     background: 'transparent',
     border: '1px solid #c9a84c',
@@ -606,15 +695,9 @@ export default function AIInspectionPage({ onNavigate }) {
         <button
           onClick={() => triggerDissolve('all')}
           style={{
-            background: 'transparent',
-            border: '1px solid #c9a84c',
-            color: '#c9a84c',
-            borderRadius: 20,
-            padding: '6px 14px',
-            fontSize: 12,
-            fontWeight: 400,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
+            background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c',
+            borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 400,
+            cursor: 'pointer', fontFamily: 'inherit',
           }}
         >
           全表示
@@ -622,18 +705,9 @@ export default function AIInspectionPage({ onNavigate }) {
         <button
           onClick={() => setStep('input')}
           style={{
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.3)',
-            color: '#fff',
-            borderRadius: '50%',
-            width: 32,
-            height: 32,
-            fontSize: 16,
-            fontWeight: 400,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: '#fff',
+            borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 400,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'inherit',
           }}
         >
@@ -665,22 +739,15 @@ export default function AIInspectionPage({ onNavigate }) {
         }}>
           <div style={{ paddingTop: 44 }}>
 
-            {/* Chat log */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {chatLog.map((msg, i) => (
                 msg.role === 'ai' ? (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                     <img src="/favicon.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }} />
                     <div style={{
-                      background: '#1a3a5c',
-                      borderRadius: '0 12px 12px 12px',
-                      padding: '10px 14px',
-                      color: '#fff',
-                      fontSize: 13,
-                      fontWeight: 400,
-                      lineHeight: 1.6,
-                      whiteSpace: 'pre-wrap',
-                      maxWidth: '85%',
+                      background: '#1a3a5c', borderRadius: '0 12px 12px 12px',
+                      padding: '10px 14px', color: '#fff', fontSize: 13, fontWeight: 400,
+                      lineHeight: 1.6, whiteSpace: 'pre-wrap', maxWidth: '85%',
                     }}>
                       {msg.text}
                     </div>
@@ -688,14 +755,9 @@ export default function AIInspectionPage({ onNavigate }) {
                 ) : (
                   <div key={i} style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <div style={{
-                      background: 'rgba(201,168,76,0.15)',
-                      border: '1px solid #c9a84c',
-                      color: '#c9a84c',
-                      borderRadius: '12px 0 12px 12px',
-                      padding: '8px 12px',
-                      fontSize: 13,
-                      fontWeight: 400,
-                      display: 'inline-block',
+                      background: 'rgba(201,168,76,0.15)', border: '1px solid #c9a84c',
+                      color: '#c9a84c', borderRadius: '12px 0 12px 12px',
+                      padding: '8px 12px', fontSize: 13, fontWeight: 400, display: 'inline-block',
                     }}>
                       {msg.text}
                     </div>
@@ -705,7 +767,6 @@ export default function AIInspectionPage({ onNavigate }) {
               <div ref={chatBottomRef} />
             </div>
 
-            {/* Step buttons */}
             {chatStep === 'ask_show' ? (
               <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => handleAskShow('yes')} style={chatBtnStyle}>Yes</button>
@@ -767,13 +828,13 @@ export default function AIInspectionPage({ onNavigate }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '24px 14px', textAlign: 'center' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 16 }}>AI総合スコア</div>
-                  <CircularScore score={78} />
+                  <CircularScore score={score} />
                   <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 12 }}>100点満点</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 10px' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textAlign: 'center' }}>総合評価レーダー</div>
                   <ResponsiveContainer width="100%" height={170}>
-                    <RadarChart data={RADAR_DATA} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
+                    <RadarChart data={radarData} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
                       <PolarGrid stroke="rgba(255,255,255,0.12)" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 400 }} />
                       <Radar dataKey="value" stroke="#c9a84c" fill="#c9a84c" fillOpacity={0.22} dot={false} />
@@ -782,23 +843,21 @@ export default function AIInspectionPage({ onNavigate }) {
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 14px' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 14, textAlign: 'center' }}>リスクヒートマップ</div>
-                  {[
-                    { label: '収納',    risk: '中リスク', color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' },
-                    { label: '湿気',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
-                    { label: '騒音',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
-                    { label: '日当たり', risk: '要確認',   color: '#f87171', bg: 'rgba(248,113,113,0.13)' },
-                  ].map(item => (
-                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: item.bg, marginBottom: 6 }}>
-                      <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
-                      <span style={{ color: item.color, fontSize: 12, fontWeight: 500 }}>{item.risk}</span>
-                    </div>
-                  ))}
+                  {risks.map(item => {
+                    const s = riskStyle(item.level)
+                    return (
+                      <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: s.bg, marginBottom: 6 }}>
+                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
+                        <span style={{ color: s.color, fontSize: 12, fontWeight: 500 }}>{item.level}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {[
-                  { num: '8枚',    label: '写真' },
+                  { num: images.length > 0 ? images.length + '枚' : '0枚', label: '写真' },
                   { num: '2,431件', label: '体験談' },
                   { num: '128件',  label: '類似物件' },
                   { num: '42件',   label: '周辺施設' },
@@ -816,14 +875,10 @@ export default function AIInspectionPage({ onNavigate }) {
           {rightContent === 'points' ? (
             <div>
               <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AIが見つけた気になる点</div>
-              {[
-                { title: '収納不足', body: '写真から判断すると、収納スペースが限られています。' },
-                { title: '日当たり', body: '南向きですが、近隣建物の影響が確認できません。' },
-                { title: '湿気',    body: '築年数から湿気リスクを確認する必要があります。' },
-              ].map((c, i) => (
+              {points.map((c, i) => (
                 <div key={i} style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
                   <div style={{ color: '#c9a84c', fontSize: 15, fontWeight: 500 }}>{c.title}</div>
-                  <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.body}</div>
+                  <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.detail}</div>
                 </div>
               ))}
             </div>
@@ -834,7 +889,7 @@ export default function AIInspectionPage({ onNavigate }) {
             <div>
               <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AI分析コメント</div>
               <div style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '20px 24px', color: '#fff', fontSize: 15, fontWeight: 400, lineHeight: '1.8' }}>
-                {patternMsg || 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'}
+                {patternMsg || aiComment}
               </div>
             </div>
           ) : null}
@@ -865,7 +920,6 @@ export default function AIInspectionPage({ onNavigate }) {
           {/* all */}
           {rightContent === 'all' ? (
             <div>
-              {/* Dashboard part */}
               <div style={{ marginBottom: 40 }}>
                 <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 10, textTransform: 'uppercase' }}>
                   AI INSPECTION REPORT
@@ -876,13 +930,13 @@ export default function AIInspectionPage({ onNavigate }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
                   <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '24px 14px', textAlign: 'center' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 16 }}>AI総合スコア</div>
-                    <CircularScore score={78} />
+                    <CircularScore score={score} />
                     <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 12 }}>100点満点</div>
                   </div>
                   <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 10px' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textAlign: 'center' }}>総合評価レーダー</div>
                     <ResponsiveContainer width="100%" height={170}>
-                      <RadarChart data={RADAR_DATA} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
+                      <RadarChart data={radarData} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
                         <PolarGrid stroke="rgba(255,255,255,0.12)" />
                         <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 400 }} />
                         <Radar dataKey="value" stroke="#c9a84c" fill="#c9a84c" fillOpacity={0.22} dot={false} />
@@ -891,22 +945,20 @@ export default function AIInspectionPage({ onNavigate }) {
                   </div>
                   <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 14px' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 14, textAlign: 'center' }}>リスクヒートマップ</div>
-                    {[
-                      { label: '収納',    risk: '中リスク', color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' },
-                      { label: '湿気',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
-                      { label: '騒音',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
-                      { label: '日当たり', risk: '要確認',   color: '#f87171', bg: 'rgba(248,113,113,0.13)' },
-                    ].map(item => (
-                      <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: item.bg, marginBottom: 6 }}>
-                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
-                        <span style={{ color: item.color, fontSize: 12, fontWeight: 500 }}>{item.risk}</span>
-                      </div>
-                    ))}
+                    {risks.map(item => {
+                      const s = riskStyle(item.level)
+                      return (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: s.bg, marginBottom: 6 }}>
+                          <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
+                          <span style={{ color: s.color, fontSize: 12, fontWeight: 500 }}>{item.level}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                   {[
-                    { num: '8枚',    label: '写真' },
+                    { num: images.length > 0 ? images.length + '枚' : '0枚', label: '写真' },
                     { num: '2,431件', label: '体験談' },
                     { num: '128件',  label: '類似物件' },
                     { num: '42件',   label: '周辺施設' },
@@ -919,17 +971,12 @@ export default function AIInspectionPage({ onNavigate }) {
                 </div>
               </div>
 
-              {/* Points part */}
               <div>
                 <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AIが見つけた気になる点</div>
-                {[
-                  { title: '収納不足', body: '写真から判断すると、収納スペースが限られています。' },
-                  { title: '日当たり', body: '南向きですが、近隣建物の影響が確認できません。' },
-                  { title: '湿気',    body: '築年数から湿気リスクを確認する必要があります。' },
-                ].map((c, i) => (
+                {points.map((c, i) => (
                   <div key={i} style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
                     <div style={{ color: '#c9a84c', fontSize: 15, fontWeight: 500 }}>{c.title}</div>
-                    <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.body}</div>
+                    <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.detail}</div>
                   </div>
                 ))}
               </div>
