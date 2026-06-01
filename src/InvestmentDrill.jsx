@@ -243,7 +243,7 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
   const typeColor = investType === '積極型' ? '#06C755' : investType === 'バランス型' ? C.gold : C.navy
 
   return (
-    <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 80 }}>
+    <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Noto Sans JP', sans-serif", paddingBottom: 120 }}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
 
       {/* ヘッダー */}
@@ -291,7 +291,7 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
         </div>
 
         {/* 行動誘導 */}
-        {rate >= 60 && (
+        {rate >= 60 ? (
           <div style={{ background: C.amberBg, border: `1px solid ${C.amberBorder}`, borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: C.amber, margin: '0 0 8px' }}>
               ここまで理解できていれば<br />実際の投資判断も可能です
@@ -302,7 +302,7 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
               👉 実際の投資物件を見る
             </button>
           </div>
-        )}
+        ) : null}
 
         {/* 無料登録誘導 */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center' }}>
@@ -332,7 +332,7 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
           style={{ width: '100%', background: C.bg, color: C.navy, border: `1.5px solid ${C.border}`, borderRadius: 20, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
           もう一度挑戦する
         </button>
-        <div style={{marginTop:'12px'}}>
+        <div style={{marginTop:'12px',marginBottom:'40px'}}>
           <button
             onClick={() => onNavigate('drill')}
             style={{
