@@ -1183,9 +1183,16 @@ export default function App() {
       `}</style>
 
       <div className="ha-app" style={{
-        paddingBottom: tab === 'inspection' ? 0 : (tab === 'properties' ? 0 : 64),
+        paddingBottom: tab === 'inspection' ? 0 : 64,
         overflow: tab === 'inspection' ? 'hidden' : undefined,
         height: tab === 'inspection' ? '100vh' : undefined,
+        maxHeight: tab === 'inspection' ? '100vh' : undefined,
+        position: tab === 'inspection' ? 'fixed' : undefined,
+        top: tab === 'inspection' ? 0 : undefined,
+        left: tab === 'inspection' ? 0 : undefined,
+        right: tab === 'inspection' ? 0 : undefined,
+        bottom: tab === 'inspection' ? 0 : undefined,
+        width: tab === 'inspection' ? '100%' : undefined,
       }}>
         {tab !== 'properties' && (<header className="ha-header">
           <div className="ha-brand">
@@ -2346,7 +2353,7 @@ export default function App() {
           )}
 
           {tab === 'inspection' ? (
-            <div className="ha-panel" style={{ padding: 0, overflow: 'hidden', height: '100%', minHeight: 0, flex: tab === 'inspection' ? 'none' : 1 }}>
+            <div className="ha-panel" style={{ padding: 0, overflow: 'hidden', height: '100vh', minHeight: 0, flex: 'none' }}>
               <AIInspectionPage onNavigate={(view) => setTab(view)} />
             </div>
           ) : null}
