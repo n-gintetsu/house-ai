@@ -26,6 +26,7 @@ import MortgageAiDiagnosis from './MortgageAiDiagnosis'
 import MortgageSimulatorPage from './MortgageSimulatorPage'
 import ExpertMatchingPage from './ExpertMatchingPage'
 import RealEstateTaxPage from './RealEstateTaxPage'
+import AIInspectionPage from './AIInspectionPage'
 
 const AI_CHAT_FREE_LIMIT = 5
 const AI_CHAT_COUNT_KEY = 'house-ai-chat-count'
@@ -2339,6 +2340,12 @@ export default function App() {
               <RealEstateTaxPage onNavigate={(view) => setTab(view)} />
             </div>
           )}
+
+          {tab === 'inspection' ? (
+            <div className="ha-panel" style={{ padding: 0 }}>
+              <AIInspectionPage onNavigate={(view) => setTab(view)} />
+            </div>
+          ) : null}
         {showAuthSheet && ReactDOM.createPortal(
           <>
             <div
