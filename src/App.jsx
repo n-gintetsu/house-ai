@@ -1419,7 +1419,7 @@ export default function App() {
             )}
           </div>
         </header>) : null}
-        {tab !== 'properties' && <TickerBanner />}
+        {(tab !== 'properties' && tab !== 'inspection') ? <TickerBanner /> : null}
 
 
 
@@ -2437,7 +2437,7 @@ export default function App() {
         </nav> : null}
 
         {/* フッター */}
-        {tab !== 'properties' && <footer style={{
+        {(tab !== 'properties' && tab !== 'inspection') ? <footer style={{
           background: '#1a3a5c',
           color: 'rgba(255,255,255,0.7)',
           padding: '24px 20px 32px',
@@ -2477,8 +2477,8 @@ export default function App() {
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
             © 2024 GINTETSU不動産株式会社　All rights reserved.
           </div>
-        </footer>}
-        <AIConcierge />
+        </footer> : null}
+        {tab !== 'inspection' ? <AIConcierge /> : null}
     </>
   )
 }
