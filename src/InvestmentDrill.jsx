@@ -332,6 +332,30 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
           style={{ width: '100%', background: C.bg, color: C.navy, border: `1.5px solid ${C.border}`, borderRadius: 20, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
           もう一度挑戦する
         </button>
+        <div style={{marginTop:'12px'}}>
+          <button
+            onClick={() => onNavigate('drill')}
+            style={{
+              width:'100%',
+              padding:'16px',
+              background:'linear-gradient(135deg, #1a3a5c, #0d1b2e)',
+              border:'1.5px solid #c9a84c',
+              borderRadius:'12px',
+              color:'#c9a84c',
+              fontSize:'15px',
+              fontWeight:'500',
+              cursor:'pointer',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              gap:'8px',
+              fontFamily:'inherit',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            投資家育成ドリルに挑戦する
+          </button>
+        </div>
       </div>
     </div>
   )
