@@ -105,13 +105,13 @@ function PulseDots() {
 
 export default function AIInspectionPage({ onNavigate }) {
   const [step, setStep] = useState('input')
-  const [searchText, setSearchText] = useState('')
-  const [uploadedFiles, setUploadedFiles] = useState([])
+  const [inputText, setInputText] = useState('')
+  const [images, setImages] = useState([])
   const [shownMessages, setShownMessages] = useState([])
   const [isTyping, setIsTyping] = useState(false)
   const [expandedCard, setExpandedCard] = useState(null)
-  const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     if (step !== 'analyzing') return
@@ -137,19 +137,48 @@ export default function AIInspectionPage({ onNavigate }) {
     return () => timeouts.forEach(t => clearTimeout(t))
   }, [step])
 
-  const handleTagClick = (tag) => {
-    setSearchText(prev => prev ? prev + ' ' + tag : tag)
+  const addImages = (rawFiles) => {
+    setImages(prev => {
+      const remaining = 10 - prev.length
+      if (remaining <= 0) return prev
+      const toAdd = Array.from(rawFiles)
+        .filter(f => f.type.startsWith('image/'))
+        .slice(0, remaining)
+      return [...prev, ...toAdd.map(file => ({ file, url: URL.createObjectURL(file) }))]
+    })
   }
 
   const handleFileChange = (e) => {
-    setUploadedFiles(Array.from(e.target.files || []))
+    addImages(e.target.files || [])
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/'))
-    setUploadedFiles(files)
+  const handleRemoveImage = (idx) => {
+    setImages(prev => {
+      const next = [...prev]
+      URL.revokeObjectURL(next[idx].url)
+      next.splice(idx, 1)
+      return next
+    })
+  }
+
+  const handlePaste = (e) => {
+    const items = Array.from((e.clipboardData || {}).items || [])
+    const imageFiles = items
+      .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+      .map(item => item.getAsFile())
+      .filter(Boolean)
+    if (imageFiles.length > 0) {
+      e.preventDefault()
+      addImages(imageFiles)
+    }
+  }
+
+  const autoResize = () => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }
 
   const GLOBAL_STYLE = `
@@ -161,145 +190,172 @@ export default function AIInspectionPage({ onNavigate }) {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .ai-tag:hover { background: rgba(201,168,76,0.2) !important; border-color: rgba(201,168,76,0.5) !important; color: #c9a84c !important; }
-    .ai-upload:hover { border-color: rgba(201,168,76,0.5) !important; }
     .ai-concern:hover { border-color: rgba(201,168,76,0.3) !important; }
+    .ai-clip-btn:hover { background: #f5f5f5 !important; }
+    .ai-remove-btn:hover { background: rgba(0,0,0,0.7) !important; }
   `
 
   /* ============================================================
    * SECTION 1: INPUT
    * ============================================================ */
   if (step === 'input') {
+    const canSend = inputText.trim().length > 0 || images.length > 0
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#08162b',
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-        padding: '52px 20px 100px',
-      }}>
+      <div
+        onPaste={handlePaste}
+        style={{
+          minHeight: '100vh',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '60px 20px 80px',
+        }}
+      >
         <style>{GLOBAL_STYLE}</style>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
-          {/* Heading */}
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 18, textTransform: 'uppercase' }}>
-              AI内見チェック
-            </div>
-            <h1 style={{ color: '#fff', fontSize: 34, fontWeight: 500, lineHeight: 1.35, margin: '0 0 18px' }}>
-              契約後の後悔は、<br />契約前には見えません
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.58)', fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: 0 }}>
-              写真と気になる点を送るだけ。AIが内見前に確認すべきポイントを整理します。
-            </p>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 40, fontWeight: 500, lineHeight: 1.15, marginBottom: 10 }}>
+            <span style={{ color: '#1a3a5c' }}>House</span>
+            <span style={{ color: '#c9a84c' }}>AI</span>
           </div>
-
-          {/* Search bar */}
-          <div style={{ marginBottom: 20 }}>
-            <input
-              type="text"
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              placeholder="気になることを入力してください"
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '18px 22px',
-                fontSize: 17, fontWeight: 400,
-                background: '#fff',
-                border: '2px solid rgba(201,168,76,0.25)',
-                borderRadius: 16, outline: 'none',
-                color: '#1a3a5c', fontFamily: 'inherit',
-              }}
-            />
+          <div style={{ color: '#666666', fontSize: 15, fontWeight: 400 }}>
+            不動産AI内見チェック
           </div>
+        </div>
 
-          {/* Tags */}
-          <div style={{ overflowX: 'auto', marginBottom: 28, paddingBottom: 6 }}>
-            <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
-              {TAGS.map(tag => (
-                <button
-                  key={tag}
-                  className="ai-tag"
-                  onClick={() => handleTagClick(tag)}
-                  style={{
-                    padding: '7px 16px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    borderRadius: 999,
-                    color: 'rgba(255,255,255,0.75)',
-                    fontSize: 13, fontWeight: 400,
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    fontFamily: 'inherit', transition: 'all 0.15s',
-                  }}
-                >
-                  {tag}
-                </button>
+        {/* Integrated input box */}
+        <div style={{
+          width: '100%',
+          maxWidth: 680,
+          border: '1.5px solid #e0e0e0',
+          borderRadius: 16,
+          background: '#ffffff',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+        }}>
+
+          {/* Image thumbnails (shown only when images exist) */}
+          {images.length > 0 ? (
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              padding: '12px 16px 0',
+            }}>
+              {images.map((img, idx) => (
+                <div key={idx} style={{ position: 'relative', flexShrink: 0 }}>
+                  <img
+                    src={img.url}
+                    alt=""
+                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block', border: '1px solid #e0e0e0' }}
+                  />
+                  <button
+                    className="ai-remove-btn"
+                    onClick={() => handleRemoveImage(idx)}
+                    style={{
+                      position: 'absolute', top: 3, right: 3,
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: 'rgba(0,0,0,0.55)',
+                      border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 0, transition: 'background 0.15s',
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 2L8 8M8 2L2 8" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
               ))}
             </div>
-          </div>
+          ) : null}
 
-          {/* Upload area */}
-          <div
-            className="ai-upload"
-            onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={inputText}
+            onChange={e => { setInputText(e.target.value); autoResize() }}
+            onInput={autoResize}
+            placeholder="気になる点を入力してください（例：湿気、騒音、日当たり）"
             style={{
-              border: `2px dashed ${isDragOver ? '#c9a84c' : 'rgba(255,255,255,0.18)'}`,
-              borderRadius: 16,
-              padding: '44px 24px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              marginBottom: 36,
-              background: isDragOver ? 'rgba(201,168,76,0.05)' : 'rgba(255,255,255,0.02)',
-              transition: 'all 0.2s',
+              width: '100%',
+              boxSizing: 'border-box',
+              minHeight: 60,
+              maxHeight: 160,
+              padding: '14px 16px',
+              fontSize: 16,
+              fontWeight: 400,
+              color: '#222222',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontFamily: 'inherit',
+              lineHeight: 1.6,
+              overflowY: 'auto',
             }}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ margin: '0 auto 14px', display: 'block' }}>
-              <rect x="4" y="9" width="36" height="26" rx="3.5" stroke="rgba(201,168,76,0.55)" strokeWidth="1.6" />
-              <circle cx="16" cy="19" r="3.5" stroke="rgba(201,168,76,0.55)" strokeWidth="1.4" />
-              <path d="M4 28L14 22L20 27L28 19L40 28" stroke="rgba(201,168,76,0.55)" strokeWidth="1.4" strokeLinejoin="round" />
-              <path d="M30 15V21M27 18H33" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            {uploadedFiles.length > 0 ? (
-              <p style={{ color: '#c9a84c', fontSize: 15, fontWeight: 500, margin: 0 }}>
-                {uploadedFiles.length}枚の写真が選択されました
-              </p>
-            ) : (
-              <div>
-                <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15, fontWeight: 500, margin: '0 0 6px' }}>
-                  写真をここにドロップ または クリックしてアップロード
-                </p>
-                <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 12, fontWeight: 400, margin: 0 }}>
-                  複数枚対応 / JPG・PNG・HEIC
-                </p>
-              </div>
-            )}
-          </div>
+          />
 
-          {/* CTA */}
-          <button
-            onClick={() => setStep('analyzing')}
-            style={{
-              width: '100%', padding: '18px 24px',
-              background: 'linear-gradient(to right, #12375d, #f0c94b)',
-              border: 'none', borderRadius: 32,
-              color: '#fff', fontSize: 17, fontWeight: 500,
-              cursor: 'pointer', fontFamily: 'inherit',
-              letterSpacing: '0.03em',
-            }}
-          >
-            AIに調査してもらう
-          </button>
+          {/* Toolbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 12px 10px',
+            borderTop: '1px solid #f0f0f0',
+          }}>
+            {/* Left: clip button + count */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <button
+                className="ai-clip-btn"
+                onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                style={{
+                  width: 34, height: 34, borderRadius: 8,
+                  background: 'transparent',
+                  border: '1px solid #e0e0e0',
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.15s',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M15.5 8.5L8.5 15.5C7.1 16.9 4.9 16.9 3.5 15.5C2.1 14.1 2.1 11.9 3.5 10.5L10.5 3.5C11.4 2.6 12.9 2.6 13.8 3.5C14.7 4.4 14.7 5.9 13.8 6.8L7.1 13.5C6.7 13.9 6 13.9 5.6 13.5C5.2 13.1 5.2 12.4 5.6 12L11.5 6" stroke="#666666" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <span style={{ color: '#aaaaaa', fontSize: 12, fontWeight: 400 }}>
+                {images.length}/10
+              </span>
+            </div>
+
+            {/* Right: send button */}
+            <button
+              onClick={() => canSend ? setStep('analyzing') : null}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: '#1a3a5c',
+                border: 'none', cursor: canSend ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: canSend ? 1 : 0.3,
+                transition: 'opacity 0.15s',
+                flexShrink: 0,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 13V3M8 3L4 7M8 3L12 7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     )
