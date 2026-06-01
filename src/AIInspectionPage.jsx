@@ -15,6 +15,15 @@ const ANALYZING_MESSAGES = [
   '分析が完了しました。',
 ]
 
+const SCREEN_MESSAGES = [
+  '写真を受信しました。',
+  '間取りを分析しています...',
+  '湿気・カビのリスクを確認中...',
+  '周辺施設を検索しています...',
+  '類似物件と比較しています...',
+  'リスク評価を作成しています...',
+]
+
 const RADAR_DATA = [
   { subject: '日当たり', value: 62 },
   { subject: '収納', value: 45 },
@@ -108,41 +117,40 @@ export default function AIInspectionPage({ onNavigate }) {
   const [inputText, setInputText] = useState('')
   const [images, setImages] = useState([])
   const [expandedCard, setExpandedCard] = useState(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [bubbleOpacity, setBubbleOpacity] = useState(1)
-  const [dotOpacity, setDotOpacity] = useState(1)
+  const [logoExpanded, setLogoExpanded] = useState(false)
+  const [msgIndex, setMsgIndex] = useState(0)
+  const [msgOpacity, setMsgOpacity] = useState(1)
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
 
   useEffect(() => {
     if (step !== 'analyzing') return
-    setCurrentIndex(0)
-    setBubbleOpacity(1)
-    setDotOpacity(1)
-    let idx = 0
+    setLogoExpanded(false)
+    setMsgIndex(0)
+    setMsgOpacity(1)
 
-    const dotInterval = setInterval(() => {
-      setDotOpacity(prev => prev === 1 ? 0.2 : 1)
-    }, 600)
+    const logoInterval = setInterval(() => {
+      setLogoExpanded(prev => !prev)
+    }, 500)
 
+    let mIdx = 0
     const msgInterval = setInterval(() => {
-      idx += 1
-      if (idx >= ANALYZING_MESSAGES.length) {
-        clearInterval(msgInterval)
-        clearInterval(dotInterval)
-        setStep('report')
-        return
-      }
-      setBubbleOpacity(0)
+      setMsgOpacity(0)
       setTimeout(() => {
-        setCurrentIndex(idx)
-        setBubbleOpacity(1)
+        mIdx = (mIdx + 1) % SCREEN_MESSAGES.length
+        setMsgIndex(mIdx)
+        setMsgOpacity(1)
       }, 200)
     }, 1000)
 
+    const reportTimeout = setTimeout(() => {
+      setStep('report')
+    }, 6000)
+
     return () => {
+      clearInterval(logoInterval)
       clearInterval(msgInterval)
-      clearInterval(dotInterval)
+      clearTimeout(reportTimeout)
     }
   }, [step])
 
@@ -374,6 +382,11 @@ export default function AIInspectionPage({ onNavigate }) {
    * SECTION 2: ANALYZING
    * ============================================================ */
   if (step === 'analyzing') {
+    const logoScale = logoExpanded ? 1.12 : 1.0
+    const logoShadow = logoExpanded
+      ? '0 0 32px rgba(201,168,76,0.6)'
+      : '0 0 0px rgba(201,168,76,0)'
+
     return (
       <div style={{
         minHeight: '100vh',
@@ -382,58 +395,35 @@ export default function AIInspectionPage({ onNavigate }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 20px',
       }}>
         <style>{GLOBAL_STYLE}</style>
 
-        <div style={{ color: '#999999', fontSize: 14, fontWeight: 400, marginBottom: 40 }}>
+        <div style={{ color: '#999999', fontSize: 14, fontWeight: 400, marginBottom: 48 }}>
           AIが内見をチェック中です...
         </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 14,
-          opacity: bubbleOpacity,
-          transition: 'opacity 0.4s',
-        }}>
-          {/* Avatar */}
-          <div style={{
-            width: 44, height: 44, borderRadius: '50%',
-            background: '#1a3a5c',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <span style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500 }}>H</span>
-          </div>
+        <img
+          src="/favicon.png"
+          alt="House-AI"
+          style={{
+            width: 72,
+            height: 72,
+            transform: 'scale(' + logoScale + ')',
+            boxShadow: logoShadow,
+            borderRadius: '50%',
+            transition: 'transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out',
+          }}
+        />
 
-          {/* Bubble + dots */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <div style={{
-              background: '#f5f5f5',
-              borderRadius: '18px 18px 18px 4px',
-              padding: '12px 20px',
-              fontSize: 15, fontWeight: 500,
-              color: '#1a3a5c',
-              minWidth: 200, maxWidth: 320,
-            }}>
-              {ANALYZING_MESSAGES[currentIndex] || ANALYZING_MESSAGES[0]}
-            </div>
-            <div style={{
-              display: 'flex', gap: 5,
-              marginTop: 10, paddingLeft: 4,
-              opacity: dotOpacity,
-              transition: 'opacity 0.3s',
-            }}>
-              {[0, 1, 2].map(i => (
-                <span key={i} style={{
-                  display: 'inline-block',
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: '#1a3a5c', opacity: 0.45,
-                }} />
-              ))}
-            </div>
-          </div>
+        <div style={{
+          marginTop: 32,
+          fontSize: 14,
+          fontWeight: 500,
+          color: '#1a3a5c',
+          opacity: msgOpacity,
+          transition: 'opacity 0.3s',
+        }}>
+          {SCREEN_MESSAGES[msgIndex] || SCREEN_MESSAGES[0]}
         </div>
       </div>
     )
