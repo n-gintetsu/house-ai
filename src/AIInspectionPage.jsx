@@ -598,7 +598,7 @@ export default function AIInspectionPage({ onNavigate }) {
   }
 
   return (
-    <div style={{ background: '#0d1b2e', minHeight: '100vh', position: 'relative' }}>
+    <div style={{ background: '#0d1b2e', height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <style>{GLOBAL_STYLE}</style>
 
       {/* Top-right buttons */}
@@ -646,7 +646,9 @@ export default function AIInspectionPage({ onNavigate }) {
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'flex-start',
-        minHeight: '100vh',
+        flex: 1,
+        overflow: 'hidden',
+        minHeight: 0,
       }}>
 
         {/* ---- LEFT: Chat panel ---- */}
@@ -657,10 +659,7 @@ export default function AIInspectionPage({ onNavigate }) {
           background: '#0a1628',
           padding: '16px',
           boxSizing: 'border-box',
-          position: isMobile ? 'relative' : 'sticky',
-          top: 0,
-          maxHeight: isMobile ? 'none' : '100vh',
-          height: isMobile ? 'auto' : undefined,
+          height: isMobile ? '40vh' : '100%',
           overflowY: 'auto',
           flexShrink: 0,
         }}>
@@ -747,7 +746,9 @@ export default function AIInspectionPage({ onNavigate }) {
             minWidth: 0,
             position: 'relative',
             overflow: 'hidden',
-            minHeight: isMobile ? '60vh' : '100vh',
+            height: '100%',
+            overflowY: 'auto',
+            minHeight: isMobile ? 0 : undefined,
             padding: '64px 24px 48px',
             boxSizing: 'border-box',
           }}
