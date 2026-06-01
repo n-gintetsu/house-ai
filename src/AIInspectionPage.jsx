@@ -154,14 +154,9 @@ export default function AIInspectionPage({ onNavigate }) {
       }, 200)
     }, 1000)
 
-    const reportTimeout = setTimeout(() => {
-      setStep('report')
-    }, 6000)
-
     return () => {
       clearInterval(logoInterval)
       clearInterval(msgInterval)
-      clearTimeout(reportTimeout)
     }
   }, [step])
 
@@ -314,25 +309,30 @@ pointsは2〜4件。
 写真がある場合は画像を分析して具体的な内容を記述すること。`,
       })
 
-      const res = await fetch('/api/claude', {
+      const apiPromise = fetch('/api/claude', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          model: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLAUDE_MODEL) || 'claude-sonnet-4-5',
+          model: 'claude-haiku-4-5-20251001',
           messages: [{ role: 'user', content }],
           max_tokens: 1000,
         }),
+      }).then(r => r.json()).then(data => {
+        const text = (typeof data.text === 'string' ? data.text : '') ||
+          ((data.content && data.content[0] && data.content[0].text) || '')
+        const clean = text.replace(/```json|```/g, '').trim()
+        return JSON.parse(clean)
       })
 
-      const data = await res.json()
-      const text = (typeof data.text === 'string' ? data.text : '') ||
-        ((data.content && data.content[0] && data.content[0].text) || '')
-      const clean = text.replace(/```json|```/g, '').trim()
-      const result = JSON.parse(clean)
+      const timerPromise = new Promise(resolve => setTimeout(resolve, 6000))
+
+      const [result] = await Promise.all([apiPromise, timerPromise])
       setAiResult(result)
     } catch (e) {
       setAiResult(null)
     }
+
+    setStep('report')
   }
 
   const triggerDissolve = (nextContent) => {
