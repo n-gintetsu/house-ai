@@ -123,8 +123,12 @@ export default function AIInspectionPage({ onNavigate }) {
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
   const chatBottomRef = useRef(null)
+  const rightContentPanelRef = useRef(null)
   const [chatStep, setChatStep] = useState('ask_show')
   const [chatLog, setChatLog] = useState([{ role: 'ai', text: '気になる点が3件見つかりました。表示しますか？' }])
+  const [rightContent, setRightContent] = useState('dashboard')
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [patternMsg, setPatternMsg] = useState('')
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
@@ -168,6 +172,13 @@ export default function AIInspectionPage({ onNavigate }) {
     if (step === 'report') {
       setChatStep('ask_show')
       setChatLog([{ role: 'ai', text: '気になる点が3件見つかりました。表示しますか？' }])
+      setRightContent('dashboard')
+      setIsTransitioning(false)
+      setPatternMsg('')
+      if (rightContentPanelRef.current) {
+        rightContentPanelRef.current.style.opacity = '1'
+        rightContentPanelRef.current.style.transition = ''
+      }
     }
   }, [step])
 
@@ -221,14 +232,67 @@ export default function AIInspectionPage({ onNavigate }) {
     el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }
 
+  const triggerDissolve = (nextContent) => {
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    const panel = rightContentPanelRef.current
+    const particles = []
+    if (panel) {
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div')
+        const x = Math.random() * (panel.offsetWidth || 300)
+        const y = Math.random() * (panel.offsetHeight || 400)
+        p.style.position = 'absolute'
+        p.style.width = '4px'
+        p.style.height = '4px'
+        p.style.borderRadius = '50%'
+        p.style.background = 'rgba(201,168,76,0.8)'
+        p.style.left = x + 'px'
+        p.style.top = y + 'px'
+        p.style.opacity = '1'
+        p.style.pointerEvents = 'none'
+        p.style.transition = 'opacity 0.5s, transform 0.5s'
+        p.style.zIndex = '10'
+        panel.appendChild(p)
+        particles.push(p)
+      }
+      requestAnimationFrame(() => {
+        particles.forEach(p => {
+          const dx = (Math.random() - 0.5) * 30
+          const dy = (Math.random() - 0.5) * 30
+          p.style.opacity = '0'
+          p.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)'
+        })
+        panel.style.transition = 'opacity 0.6s'
+        panel.style.opacity = '0'
+      })
+    }
+    setTimeout(() => {
+      setRightContent(nextContent)
+      if (panel) panel.style.opacity = '0'
+      setTimeout(() => {
+        if (panel) {
+          panel.style.transition = 'opacity 0.5s'
+          panel.style.opacity = '1'
+        }
+      }, 50)
+    }, 600)
+    setTimeout(() => {
+      particles.forEach(p => { if (p.parentNode) p.parentNode.removeChild(p) })
+      if (panel) panel.style.transition = ''
+      setIsTransitioning(false)
+    }, 1100)
+  }
+
   const handleAskShow = (answer) => {
     if (answer === 'yes') {
       setChatLog(prev => [
         ...prev,
         { role: 'user', text: 'Yes' },
-        { role: 'ai', text: '【収納不足】写真から判断すると、収納スペースが限られています。\n\n【日当たり】南向きですが、近隣建物の影響が確認できません。\n\n【湿気】築年数から湿気リスクを確認する必要があります。' },
+        { role: 'ai', text: '【収納不足】収納スペースが限られています。\n\n【日当たり】近隣建物の影響が確認できません。\n\n【湿気】築年数から湿気リスクを確認する必要があります。' },
         { role: 'ai', text: 'さらに深掘りしますか？' },
       ])
+      triggerDissolve('points')
       setChatStep('ask_deepen')
     } else {
       setChatLog(prev => [
@@ -245,12 +309,14 @@ export default function AIInspectionPage({ onNavigate }) {
       const msg = Math.random() < 0.5
         ? 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'
         : '分析した結果、類似物件とはさほど差分は見つかりませんでした。実際に内見しながら細かくチェックすることをおすすめします。'
+      setPatternMsg(msg)
       setChatLog(prev => [
         ...prev,
         { role: 'user', text: 'Yes' },
         { role: 'ai', text: msg },
         { role: 'ai', text: 'このエリアに強い不動産業者を検索しますか？' },
       ])
+      triggerDissolve('pattern')
       setChatStep('ask_agent_after_deepen')
     } else {
       setChatLog(prev => [
@@ -279,8 +345,9 @@ export default function AIInspectionPage({ onNavigate }) {
     setChatLog(prev => [
       ...prev,
       { role: 'user', text: 'Yes' },
-      { role: 'ai', text: 'このエリアに強い不動産業者を見つけました。' },
+      { role: 'ai', text: 'このエリアに強い不動産会社を見つけました。' },
     ])
+    triggerDissolve('agents')
     setChatStep('show_agents')
   }
 
@@ -518,15 +585,63 @@ export default function AIInspectionPage({ onNavigate }) {
   /* ============================================================
    * SECTION 3 – FINAL: REPORT
    * ============================================================ */
+  const chatBtnStyle = {
+    background: 'transparent',
+    border: '1px solid #c9a84c',
+    color: '#c9a84c',
+    borderRadius: 20,
+    padding: '7px 18px',
+    fontSize: 13,
+    fontWeight: 400,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{ background: '#08162b', minHeight: '100vh' }}
-    >
+    <div style={{ background: '#0d1b2e', minHeight: '100vh', position: 'relative' }}>
       <style>{GLOBAL_STYLE}</style>
 
+      {/* Top-right buttons */}
+      <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8, zIndex: 20 }}>
+        <button
+          onClick={() => triggerDissolve('all')}
+          style={{
+            background: 'transparent',
+            border: '1px solid #c9a84c',
+            color: '#c9a84c',
+            borderRadius: 20,
+            padding: '6px 14px',
+            fontSize: 12,
+            fontWeight: 400,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          全表示
+        </button>
+        <button
+          onClick={() => setStep('input')}
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.3)',
+            color: '#fff',
+            borderRadius: '50%',
+            width: 32,
+            height: 32,
+            fontSize: 16,
+            fontWeight: 400,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'inherit',
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Main layout */}
       <div style={{
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
@@ -536,173 +651,143 @@ export default function AIInspectionPage({ onNavigate }) {
 
         {/* ---- LEFT: Chat panel ---- */}
         <div style={{
-          width: isMobile ? '100%' : '30%',
-          minWidth: isMobile ? 'auto' : '280px',
           order: isMobile ? 2 : 1,
-          background: '#0d1b2e',
-          padding: '24px 16px',
+          width: isMobile ? '100%' : '30%',
+          minWidth: isMobile ? 'auto' : '260px',
+          background: '#0a1628',
+          padding: '16px',
           boxSizing: 'border-box',
           position: isMobile ? 'relative' : 'sticky',
           top: 0,
           maxHeight: isMobile ? 'none' : '100vh',
+          height: isMobile ? 'auto' : undefined,
           overflowY: 'auto',
           flexShrink: 0,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.14em', marginBottom: 20, textTransform: 'uppercase' }}>
-            AI CHAT
-          </div>
+          <div style={{ paddingTop: 44 }}>
 
-          {/* Chat log */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {chatLog.map((msg, i) => (
-              msg.role === 'ai' ? (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <img src="/favicon.png" alt="" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
-                  <div style={{
-                    background: '#1a3a5c',
-                    borderRadius: '0 12px 12px 12px',
-                    padding: '10px 14px',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 400,
-                    lineHeight: 1.6,
-                    whiteSpace: 'pre-wrap',
-                    maxWidth: '80%',
-                  }}>
-                    {msg.text}
+            {/* Chat log */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              {chatLog.map((msg, i) => (
+                msg.role === 'ai' ? (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <img src="/favicon.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }} />
+                    <div style={{
+                      background: '#1a3a5c',
+                      borderRadius: '0 12px 12px 12px',
+                      padding: '10px 14px',
+                      color: '#fff',
+                      fontSize: 13,
+                      fontWeight: 400,
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap',
+                      maxWidth: '85%',
+                    }}>
+                      {msg.text}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div key={i} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{
-                    background: 'rgba(201,168,76,0.12)',
-                    border: '1px solid #c9a84c',
-                    borderRadius: '12px 12px 0 12px',
-                    padding: '8px 14px',
-                    color: '#c9a84c',
-                    fontSize: 13,
-                    fontWeight: 400,
-                  }}>
-                    {msg.text}
+                ) : (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{
+                      background: 'rgba(201,168,76,0.15)',
+                      border: '1px solid #c9a84c',
+                      color: '#c9a84c',
+                      borderRadius: '12px 0 12px 12px',
+                      padding: '8px 12px',
+                      fontSize: 13,
+                      fontWeight: 400,
+                      display: 'inline-block',
+                    }}>
+                      {msg.text}
+                    </div>
                   </div>
-                </div>
-              )
-            ))}
+                )
+              ))}
+              <div ref={chatBottomRef} />
+            </div>
 
-            {/* Agent cards */}
-            {chatStep === 'show_agents' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {[
-                  { name: '株式会社センチュリー不動産', area: '世田谷区・目黒区専門' },
-                  { name: 'アーバンホーム株式会社', area: '港区・渋谷区専門' },
-                  { name: '東京ライフ不動産', area: '新宿区・中野区専門' },
-                ].map((co, i) => (
-                  <div key={i} style={{
-                    background: '#1a3a5c',
-                    border: '1px solid #c9a84c',
-                    borderRadius: 8,
-                    padding: 12,
-                    marginTop: 8,
-                  }}>
-                    <div style={{ color: '#c9a84c', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{co.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 400, marginBottom: 8 }}>{co.area}</div>
-                    <button style={{
-                      background: '#c9a84c', color: '#1a3a5c',
-                      border: 'none', borderRadius: 12,
-                      padding: '4px 12px', fontSize: 12, fontWeight: 500,
-                      cursor: 'pointer', fontFamily: 'inherit',
-                    }}>相談する</button>
-                  </div>
-                ))}
+            {/* Step buttons */}
+            {chatStep === 'ask_show' ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => handleAskShow('yes')} style={chatBtnStyle}>Yes</button>
+                <button onClick={() => handleAskShow('no')} style={chatBtnStyle}>No</button>
               </div>
             ) : null}
-
-            <div ref={chatBottomRef} />
+            {chatStep === 'ask_deepen' ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => handleAskDeepen('yes')} style={chatBtnStyle}>Yes</button>
+                <button onClick={() => handleAskDeepen('no')} style={chatBtnStyle}>No</button>
+              </div>
+            ) : null}
+            {chatStep === 'ask_back' ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => handleAskBack('yes')} style={chatBtnStyle}>Yes</button>
+                <button onClick={() => handleAskBack('no')} style={chatBtnStyle}>No</button>
+              </div>
+            ) : null}
+            {chatStep === 'ask_agent_after_deepen' ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={handleAskAgent} style={chatBtnStyle}>Yes</button>
+              </div>
+            ) : null}
+            {chatStep === 'ask_agent_from_no' ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={handleAskAgent} style={chatBtnStyle}>Yes</button>
+              </div>
+            ) : null}
           </div>
-
-          {/* Step buttons */}
-          {chatStep === 'ask_show' ? (
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-              <button onClick={() => handleAskShow('yes')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>Yes</button>
-              <button onClick={() => handleAskShow('no')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>No</button>
-            </div>
-          ) : null}
-          {chatStep === 'ask_deepen' ? (
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-              <button onClick={() => handleAskDeepen('yes')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>Yes</button>
-              <button onClick={() => handleAskDeepen('no')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>No</button>
-            </div>
-          ) : null}
-          {chatStep === 'ask_back' ? (
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-              <button onClick={() => handleAskBack('yes')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>Yes</button>
-              <button onClick={() => handleAskBack('no')} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>No</button>
-            </div>
-          ) : null}
-          {chatStep === 'ask_agent_after_deepen' ? (
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-              <button onClick={handleAskAgent} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>Yes</button>
-            </div>
-          ) : null}
-          {chatStep === 'ask_agent_from_no' ? (
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-              <button onClick={handleAskAgent} style={{ background: 'transparent', border: '1px solid #c9a84c', color: '#c9a84c', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>Yes</button>
-            </div>
-          ) : null}
         </div>
 
-        {/* ---- RIGHT: Report content ---- */}
-        <div style={{
-          order: isMobile ? 1 : 2,
-          flex: 1,
-          minWidth: 0,
-        }}>
+        {/* ---- RIGHT: Content panel ---- */}
+        <div
+          ref={rightContentPanelRef}
+          style={{
+            order: isMobile ? 1 : 2,
+            flex: 1,
+            minWidth: 0,
+            position: 'relative',
+            overflow: 'hidden',
+            minHeight: isMobile ? '60vh' : '100vh',
+            padding: '64px 24px 48px',
+            boxSizing: 'border-box',
+          }}
+        >
 
-          {/* SECTION 3: Report header */}
-          <div style={{ padding: '52px 20px 0' }}>
-            <div style={{ maxWidth: 860, margin: '0 auto' }}>
-              <div style={{ textAlign: 'center', marginBottom: 36 }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 12, textTransform: 'uppercase' }}>
-                  AI INSPECTION REPORT
-                </div>
-                <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 500, margin: 0 }}>
-                  あなた専用のAIレポート
-                </h2>
+          {/* dashboard */}
+          {rightContent === 'dashboard' ? (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 10, textTransform: 'uppercase' }}>
+                AI INSPECTION REPORT
               </div>
+              <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 500, margin: '0 0 24px' }}>
+                あなた専用のAIレポート
+              </h2>
 
-              {/* 3 columns – gold borders */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 16, padding: '28px 16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 20 }}>AI総合スコア</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '24px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 16 }}>AI総合スコア</div>
                   <CircularScore score={78} />
-                  <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 14 }}>100点満点</div>
+                  <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 12 }}>100点満点</div>
                 </div>
-
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 16, padding: '24px 12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 10px' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textAlign: 'center' }}>総合評価レーダー</div>
-                  <ResponsiveContainer width="100%" height={185}>
-                    <RadarChart data={RADAR_DATA} margin={{ top: 4, right: 22, bottom: 4, left: 22 }}>
+                  <ResponsiveContainer width="100%" height={170}>
+                    <RadarChart data={RADAR_DATA} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
                       <PolarGrid stroke="rgba(255,255,255,0.12)" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 400 }} />
                       <Radar dataKey="value" stroke="#c9a84c" fill="#c9a84c" fillOpacity={0.22} dot={false} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 16, padding: '24px 16px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 18, textAlign: 'center' }}>リスクヒートマップ</div>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 14px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 14, textAlign: 'center' }}>リスクヒートマップ</div>
                   {[
                     { label: '収納',    risk: '中リスク', color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' },
                     { label: '湿気',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
                     { label: '騒音',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
                     { label: '日当たり', risk: '要確認',   color: '#f87171', bg: 'rgba(248,113,113,0.13)' },
                   ].map(item => (
-                    <div key={item.label} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '9px 13px', borderRadius: 9,
-                      background: item.bg, marginBottom: 8,
-                    }}>
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: item.bg, marginBottom: 6 }}>
                       <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
                       <span style={{ color: item.color, fontSize: 12, fontWeight: 500 }}>{item.risk}</span>
                     </div>
@@ -710,311 +795,148 @@ export default function AIInspectionPage({ onNavigate }) {
                 </div>
               </div>
 
-              {/* Status 4 items – gold borders */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 52 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {[
                   { num: '8枚',    label: '写真' },
                   { num: '2,431件', label: '体験談' },
                   { num: '128件',  label: '類似物件' },
                   { num: '42件',   label: '周辺施設' },
                 ].map(item => (
-                  <div key={item.label} style={{
-                    background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c',
-                    borderRadius: 12, padding: '16px 6px', textAlign: 'center',
-                  }}>
-                    <div style={{ color: '#c9a84c', fontSize: 17, fontWeight: 500, marginBottom: 5 }}>{item.num}</div>
+                  <div key={item.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 12, padding: '14px 6px', textAlign: 'center' }}>
+                    <div style={{ color: '#c9a84c', fontSize: 16, fontWeight: 500, marginBottom: 4 }}>{item.num}</div>
                     <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 400 }}>{item.label}</div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          ) : null}
 
-          {/* ---- SECTION 4: Concern points ---- */}
-          <div style={{ background: 'rgba(255,255,255,0.025)', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '48px 20px' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 28 }}>
-                <AIAvatar size={42} />
-                <div style={{
-                  background: 'rgba(26,58,92,0.85)',
-                  border: '1px solid rgba(201,168,76,0.28)',
-                  borderRadius: '4px 16px 16px 16px',
-                  padding: '14px 20px',
-                  color: '#fff', fontSize: 15, fontWeight: 500,
-                }}>
-                  気になる点が3件見つかりました。
+          {/* points */}
+          {rightContent === 'points' ? (
+            <div>
+              <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AIが見つけた気になる点</div>
+              {[
+                { title: '収納不足', body: '写真から判断すると、収納スペースが限られています。' },
+                { title: '日当たり', body: '南向きですが、近隣建物の影響が確認できません。' },
+                { title: '湿気',    body: '築年数から湿気リスクを確認する必要があります。' },
+              ].map((c, i) => (
+                <div key={i} style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
+                  <div style={{ color: '#c9a84c', fontSize: 15, fontWeight: 500 }}>{c.title}</div>
+                  <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.body}</div>
                 </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* pattern */}
+          {rightContent === 'pattern' ? (
+            <div>
+              <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AI分析コメント</div>
+              <div style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '20px 24px', color: '#fff', fontSize: 15, fontWeight: 400, lineHeight: '1.8' }}>
+                {patternMsg || 'この写真だけでは詳しく分析するのは限界がございます。実際に内見しながら細かくチェックすることをおすすめします。'}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {CONCERN_CARDS.map(card => (
-                  <div
-                    key={card.id}
-                    className="ai-concern"
-                    onClick={() => setExpandedCard(expandedCard === card.id ? null : card.id)}
-                    style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.09)',
-                      borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
-                      transition: 'border-color 0.15s',
-                    }}
+            </div>
+          ) : null}
+
+          {/* agents */}
+          {rightContent === 'agents' ? (
+            <div>
+              <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>このエリアに強い不動産会社</div>
+              {[
+                { name: '株式会社センチュリー不動産', area: '世田谷区・目黒区専門' },
+                { name: 'アーバンホーム株式会社',     area: '港区・渋谷区専門' },
+                { name: '東京ライフ不動産',           area: '新宿区・中野区専門' },
+              ].map((co, i) => (
+                <div key={i} style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div style={{ color: '#c9a84c', fontSize: 14, fontWeight: 500 }}>{co.name}</div>
+                  <div style={{ color: '#aaaaaa', fontSize: 13, fontWeight: 400, marginTop: 4 }}>{co.area}</div>
+                  <button
+                    onClick={() => onNavigate('expert-matching')}
+                    style={{ background: '#c9a84c', color: '#0d1b2e', border: 'none', borderRadius: 12, padding: '6px 16px', fontSize: 12, fontWeight: 500, marginTop: 10, cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: '#c9a84c', fontSize: 13, fontWeight: 500, marginBottom: 5 }}>{card.title}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.68)', fontSize: 14, fontWeight: 400 }}>{card.summary}</div>
-                      </div>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{
-                        flexShrink: 0, marginLeft: 12,
-                        transform: expandedCard === card.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s',
-                      }}>
-                        <path d="M5 8L10 13L15 8" stroke="rgba(255,255,255,0.38)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                    {expandedCard === card.id ? (
-                      <div style={{
-                        marginTop: 16, paddingTop: 14,
-                        borderTop: '1px solid rgba(255,255,255,0.07)',
-                        color: 'rgba(255,255,255,0.72)',
-                        fontSize: 13, fontWeight: 400, lineHeight: 1.75,
-                      }}>
-                        {card.detail}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ---- SECTION 5: Deep dive proposals ---- */}
-          <div style={{ padding: '48px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.06em', marginBottom: 24 }}>
-                さらに深掘りしますか？
-              </div>
-              {[
-                { text: 'この物件の周辺環境について詳しく調べました。スーパー・病院・学校は徒歩圏内に揃っています。ただし、夜間の人通りが少ないエリアが一部あります。', btn: '詳しく調べる' },
-                { text: 'このエリアの騒音マップと交通量データを分析しました。幹線道路から100m以内のため、窓を閉めた状態での防音性を内見時に確認することをお勧めします。', btn: '周辺環境も分析する' },
-                { text: '類似物件128件と比較した結果、この物件の価格は相場より約3%高めです。交渉余地がある可能性があります。', btn: '相場と比較する' },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 22 }}>
-                  <AIAvatar size={36} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      background: 'rgba(26,58,92,0.55)',
-                      border: '1px solid rgba(201,168,76,0.18)',
-                      borderRadius: '4px 14px 14px 14px',
-                      padding: '12px 16px',
-                      color: 'rgba(255,255,255,0.78)',
-                      fontSize: 13, fontWeight: 400, lineHeight: 1.65, marginBottom: 10,
-                    }}>
-                      {item.text}
-                    </div>
-                    <button style={{
-                      padding: '8px 18px',
-                      background: 'rgba(201,168,76,0.1)',
-                      border: '1px solid rgba(201,168,76,0.32)',
-                      borderRadius: 20, color: '#c9a84c',
-                      fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                    }}>
-                      {item.btn}
-                    </button>
-                  </div>
+                    相談する
+                  </button>
                 </div>
               ))}
             </div>
-          </div>
+          ) : null}
 
-          {/* ---- SECTION 6: Similar stories ---- */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '48px 20px' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 500, margin: '0 0 24px' }}>
-                同じ悩みを抱えた人の体験談
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-                {[
-                  { title: '収納不足で後悔', body: '3LDKなのに収納が全然足りなかった。内見時に実際の棚のサイズを計るべきだった。', area: '東京都世田谷区', type: '購入' },
-                  { title: '日当たりの落とし穴', body: '南向きでも隣のマンションの影で冬は日が入らなかった。季節ごとに確認が必要だと学んだ。', area: '神奈川県横浜市', type: '賃貸' },
-                  { title: '駐車場の問題', body: '駐車場が抽選制で入れず、月極を別で借りることになった。事前に確認していればよかった。', area: '大阪府大阪市', type: '購入' },
-                ].map((story, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '18px 16px' }}>
-                    <div style={{ marginBottom: 10 }}>
-                      <span style={{ padding: '3px 10px', background: 'rgba(201,168,76,0.14)', border: '1px solid rgba(201,168,76,0.28)', borderRadius: 20, color: '#c9a84c', fontSize: 11, fontWeight: 500 }}>
-                        {story.type}
-                      </span>
-                    </div>
-                    <div style={{ color: '#fff', fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{story.title}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.58)', fontSize: 12, fontWeight: 400, lineHeight: 1.65, marginBottom: 10 }}>{story.body}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 400 }}>{story.area}</div>
+          {/* all */}
+          {rightContent === 'all' ? (
+            <div>
+              {/* Dashboard part */}
+              <div style={{ marginBottom: 40 }}>
+                <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.18em', marginBottom: 10, textTransform: 'uppercase' }}>
+                  AI INSPECTION REPORT
+                </div>
+                <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 500, margin: '0 0 24px' }}>
+                  あなた専用のAIレポート
+                </h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '24px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 16 }}>AI総合スコア</div>
+                    <CircularScore score={78} />
+                    <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 12 }}>100点満点</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ---- SECTION 7: Share ---- */}
-          <div style={{ background: '#0c1d36', borderTop: '1px solid rgba(255,255,255,0.07)', padding: '56px 20px', textAlign: 'center' }}>
-            <div style={{ maxWidth: 520, margin: '0 auto' }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.14em', marginBottom: 14, textTransform: 'uppercase' }}>COMMUNITY</div>
-              <h3 style={{ color: '#fff', fontSize: 20, fontWeight: 500, margin: '0 0 10px' }}>同じ悩みの方と共有しませんか？</h3>
-              <p style={{ color: 'rgba(255,255,255,0.48)', fontSize: 13, fontWeight: 400, margin: '0 0 28px' }}>現在43人が同じ悩みを共有しています</p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => onNavigate('experiences')}
-                  style={{ padding: '12px 28px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 28, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  体験談を見る
-                </button>
-                <button
-                  onClick={() => onNavigate('experiences')}
-                  style={{ padding: '12px 28px', background: 'linear-gradient(to right, #1a3a5c, #c9a84c)', border: 'none', borderRadius: 28, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  体験談を投稿する
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* ---- SECTION 8: AI proposals ---- */}
-          <div style={{ padding: '48px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.42)', marginBottom: 24 }}>House-AIからの提案</div>
-              {[
-                { text: 'この物件に詳しい登録専門家がいます。内見前に気になるポイントをプロに確認しておきませんか？', btn: '専門家を見る', action: () => onNavigate('expert-matching') },
-                { text: 'このエリアに強い不動産会社を3社見つけました。物件の詳細情報を直接確認することができます。', btn: '不動産会社を見る', action: () => {} },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 22 }}>
-                  <AIAvatar size={36} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      background: 'rgba(26,58,92,0.55)',
-                      border: '1px solid rgba(201,168,76,0.18)',
-                      borderRadius: '4px 14px 14px 14px',
-                      padding: '12px 16px',
-                      color: 'rgba(255,255,255,0.78)',
-                      fontSize: 13, fontWeight: 400, lineHeight: 1.65, marginBottom: 10,
-                    }}>
-                      {item.text}
-                    </div>
-                    <button
-                      onClick={item.action}
-                      style={{ padding: '8px 18px', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 20, color: '#c9a84c', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      {item.btn}
-                    </button>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 10px' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textAlign: 'center' }}>総合評価レーダー</div>
+                    <ResponsiveContainer width="100%" height={170}>
+                      <RadarChart data={RADAR_DATA} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
+                        <PolarGrid stroke="rgba(255,255,255,0.12)" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 400 }} />
+                        <Radar dataKey="value" stroke="#c9a84c" fill="#c9a84c" fillOpacity={0.22} dot={false} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 14, padding: '20px 14px' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 14, textAlign: 'center' }}>リスクヒートマップ</div>
+                    {[
+                      { label: '収納',    risk: '中リスク', color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' },
+                      { label: '湿気',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
+                      { label: '騒音',    risk: '低リスク', color: '#4ade80', bg: 'rgba(74,222,128,0.09)' },
+                      { label: '日当たり', risk: '要確認',   color: '#f87171', bg: 'rgba(248,113,113,0.13)' },
+                    ].map(item => (
+                      <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: item.bg, marginBottom: 6 }}>
+                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
+                        <span style={{ color: item.color, fontSize: 12, fontWeight: 500 }}>{item.risk}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                  {[
+                    { num: '8枚',    label: '写真' },
+                    { num: '2,431件', label: '体験談' },
+                    { num: '128件',  label: '類似物件' },
+                    { num: '42件',   label: '周辺施設' },
+                  ].map(item => (
+                    <div key={item.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid #c9a84c', borderRadius: 12, padding: '14px 6px', textAlign: 'center' }}>
+                      <div style={{ color: '#c9a84c', fontSize: 16, fontWeight: 500, marginBottom: 4 }}>{item.num}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 400 }}>{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          {/* ---- SECTION 9: Expert list ---- */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '48px 20px' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 500, margin: '0 0 24px' }}>登録専門家</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+              {/* Points part */}
+              <div>
+                <div style={{ color: '#c9a84c', fontSize: 18, fontWeight: 500, marginBottom: 20 }}>AIが見つけた気になる点</div>
                 {[
-                  { name: '田中 誠一',   cert: '宅地建物取引士 / ファイナンシャルプランナー' },
-                  { name: '山田 佐知子', cert: '一級建築士 / 住宅診断士' },
-                  { name: '鈴木 雄介',   cert: '宅地建物取引士 / 不動産鑑定士補' },
-                ].map((expert, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 16px' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(26,58,92,0.8)', border: '2px solid rgba(201,168,76,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="8" r="4" stroke="rgba(201,168,76,0.75)" strokeWidth="1.5" />
-                        <path d="M4 20C4 16.7 7.6 14 12 14C16.4 14 20 16.7 20 20" stroke="rgba(201,168,76,0.75)" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                    <div style={{ color: '#fff', fontSize: 15, fontWeight: 500, marginBottom: 6 }}>{expert.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.48)', fontSize: 11, fontWeight: 400, lineHeight: 1.55, marginBottom: 16 }}>{expert.cert}</div>
-                    <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                      <button
-                        onClick={() => onNavigate('expert-matching')}
-                        style={{ flex: 1, minWidth: 60, padding: '8px 10px', background: 'linear-gradient(to right, #1a3a5c, #c9a84c)', border: 'none', borderRadius: 20, color: '#fff', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                      >
-                        相談する
-                      </button>
-                      <button style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 20, color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        DM
-                      </button>
-                      <button style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 20, color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        会社HP
-                      </button>
-                    </div>
+                  { title: '収納不足', body: '写真から判断すると、収納スペースが限られています。' },
+                  { title: '日当たり', body: '南向きですが、近隣建物の影響が確認できません。' },
+                  { title: '湿気',    body: '築年数から湿気リスクを確認する必要があります。' },
+                ].map((c, i) => (
+                  <div key={i} style={{ background: '#1a3a5c', border: '1px solid #c9a84c', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
+                    <div style={{ color: '#c9a84c', fontSize: 15, fontWeight: 500 }}>{c.title}</div>
+                    <div style={{ color: '#cccccc', fontSize: 14, fontWeight: 400, marginTop: 8 }}>{c.body}</div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-
-          {/* ---- SECTION 10: Area companies ---- */}
-          <div style={{ padding: '48px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 500, margin: '0 0 24px' }}>エリアに強い不動産会社</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-                {[
-                  { name: '株式会社センチュリー不動産', area: '世田谷区・目黒区専門' },
-                  { name: 'アーバンホーム株式会社',     area: '港区・渋谷区専門' },
-                  { name: '東京ライフ不動産',           area: '新宿区・中野区専門' },
-                ].map((co, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 16px' }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(26,58,92,0.8)', border: '1px solid rgba(201,168,76,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                        <path d="M2 10L11 2L20 10V20H14V14H8V20H2V10Z" stroke="rgba(201,168,76,0.75)" strokeWidth="1.4" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                    <div style={{ color: '#fff', fontSize: 14, fontWeight: 500, marginBottom: 5 }}>{co.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 400, marginBottom: 16 }}>{co.area}</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button style={{ flex: 1, padding: '8px 10px', background: 'rgba(26,58,92,0.8)', border: '1px solid rgba(201,168,76,0.28)', borderRadius: 20, color: '#c9a84c', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        問い合わせ
-                      </button>
-                      <button style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 20, color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        会社HP
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ---- FINAL CTA ---- */}
-          <div style={{ background: '#0b1c35', borderTop: '1px solid rgba(255,255,255,0.07)', padding: '72px 20px', textAlign: 'center' }}>
-            <div style={{ maxWidth: 540, margin: '0 auto' }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: '#c9a84c', letterSpacing: '0.16em', marginBottom: 16, textTransform: 'uppercase' }}>FINAL CHECK</div>
-              <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 500, margin: '0 0 12px', lineHeight: 1.4 }}>
-                契約後では遅いかもしれません
-              </h2>
-              <p style={{ color: 'rgba(255,255,255,0.52)', fontSize: 14, fontWeight: 400, margin: '0 0 40px', lineHeight: 1.75 }}>
-                まずはAIで整理してから判断しましょう
-              </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setStep('input')}
-                  style={{ padding: '14px 28px', background: 'linear-gradient(to right, #12375d, #f0c94b)', border: 'none', borderRadius: 32, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  AI内見チェック
-                </button>
-                <button
-                  onClick={() => onNavigate('expert-matching')}
-                  style={{ padding: '14px 28px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 32, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  専門家に相談
-                </button>
-                <button
-                  onClick={() => onNavigate('experiences')}
-                  style={{ padding: '14px 28px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 32, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  体験談を見る
-                </button>
-              </div>
-            </div>
-          </div>
+          ) : null}
 
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
