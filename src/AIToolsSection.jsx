@@ -14,7 +14,7 @@ const aiTools = [
 
 function CompactToolCard({ tool, onTabChange }) {
   return (
-    <motion.div initial={{ opacity:0.7, filter:'blur(1px) saturate(0.8)' }} whileHover={{ scale:1.02, y:-4, opacity:1, filter:'blur(0px) saturate(1)' }} transition={{ duration:0.3 }} className="group relative rounded-xl overflow-hidden p-5 cursor-pointer" style={{ background:`linear-gradient(135deg, ${tool.gradientFrom} 0%, ${tool.gradientTo} 100%)` }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); if (tool.id === 'inspection') onTabChange('inspection'); }}>
+    <motion.div initial={{ opacity:0.7, filter:'blur(1px) saturate(0.8)' }} whileHover={{ scale:1.02, y:-4, opacity:1, filter:'blur(0px) saturate(1)' }} transition={{ duration:0.3 }} className="group relative rounded-xl overflow-hidden p-5 cursor-pointer" style={{ background:`linear-gradient(135deg, ${tool.gradientFrom} 0%, ${tool.gradientTo} 100%)` }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); if (tool.id === 'inspection') onTabChange('inspection'); if (tool.id === 'investment') onTabChange('simulator'); }}>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-slate-800/90" style={{ backgroundImage:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize:'16px 16px' }} />
       <div className={`absolute -inset-0.5 bg-gradient-to-r ${tool.categoryColor} rounded-xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
       <div className="relative flex items-start gap-4">
@@ -49,7 +49,7 @@ function ToolCard({ tool, index, isInView, onTabChange }) {
         <div className="mb-6 relative h-1 bg-slate-700/50 rounded-full overflow-hidden">
           <motion.div className={`absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r ${tool.categoryColor} rounded-full`} animate={{ x:['-100%','300%'] }} transition={{ duration:2, repeat:Infinity }} />
         </div>
-        <motion.button whileHover={{ scale:1.02, y:-2 }} whileTap={{ scale:0.98 }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); if (tool.id === 'inspection') onTabChange('inspection'); }} className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${tool.categoryColor} text-white font-medium flex items-center justify-center gap-2`}>
+        <motion.button whileHover={{ scale:1.02, y:-2 }} whileTap={{ scale:0.98 }} onClick={() => { if (tool.id === 'loan') onTabChange('mortgage-ai'); if (tool.id === 'inspection') onTabChange('inspection'); if (tool.id === 'investment') onTabChange('simulator'); }} className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${tool.categoryColor} text-white font-medium flex items-center justify-center gap-2`}>
           {tool.ctaText} <ChevronRight size={16} />
         </motion.button>
       </div>
