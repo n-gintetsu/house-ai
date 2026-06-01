@@ -1194,7 +1194,7 @@ export default function App() {
         bottom: tab === 'inspection' ? 0 : undefined,
         width: tab === 'inspection' ? '100%' : undefined,
       }}>
-        {tab !== 'properties' && (<header className="ha-header">
+        {(tab !== 'properties' && tab !== 'inspection') ? (<header className="ha-header">
           <div className="ha-brand">
             <div className="ha-logo">
               <div style={{position: 'relative', display: 'inline-flex'}}>
@@ -1417,7 +1417,7 @@ export default function App() {
               document.body
             )}
           </div>
-        </header>)}
+        </header>) : null}
         {tab !== 'properties' && <TickerBanner />}
 
 
@@ -2389,7 +2389,7 @@ export default function App() {
       </div>
 
         {/* ボトムナビゲーション */}
-        {tab !== 'properties' && <nav style={{
+        {(tab !== 'properties' && tab !== 'inspection') ? <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           height: 64,
           background: '#fff',
@@ -2433,7 +2433,7 @@ export default function App() {
               </button>
             );
           })}
-        </nav>}
+        </nav> : null}
 
         {/* フッター */}
         {tab !== 'properties' && <footer style={{
