@@ -172,10 +172,7 @@ NOI: ${fmtM(m.noi)}/年
           <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: '0 0 2px' }}>不動産投資指標シミュレーター</p>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: 0 }}>Proが使う全指標を3秒で算出</p>
         </div>
-        <button onClick={() => onNavigate && onNavigate('drill')}
-          style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>
-          ← ドリルへ
-        </button>
+        <div style={{ width: 8 }} />
       </div>
 
       <div style={{ padding: '16px', maxWidth: 720, margin: '0 auto' }}>
@@ -250,6 +247,19 @@ NOI: ${fmtM(m.noi)}/年
           <AffiliateCard type="investment" reason="投資知識をさらに深める" />
           </div>
         )}
+
+        {/* 投資家育成ドリル CTA */}
+        <div style={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', border: '2px solid #c9a84c', borderRadius: 16, padding: '20px', marginTop: 12, marginBottom: 12 }}>
+          <span style={{ background: '#c9a84c', color: '#0d1b2e', fontSize: 11, fontWeight: 500, padding: '2px 10px', borderRadius: 10, display: 'inline-block', marginBottom: 8 }}>投資向け</span>
+          <div style={{ fontSize: 20, fontWeight: 500, color: '#fff' }}>投資家育成ドリル</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>投資力を鍛えるAIドリル</div>
+          <button
+            onClick={() => onNavigate ? onNavigate('drill') : null}
+            style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #c9a84c, #f4d978)', color: '#0d1b2e', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 500, cursor: 'pointer', marginTop: 16 }}
+          >
+            投資家育成ドリルに挑戦する
+          </button>
+        </div>
       </div>
     </div>
   )

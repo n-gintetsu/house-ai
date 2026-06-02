@@ -70,7 +70,7 @@ function HeartIcon({ filled }) {
   );
 }
 
-export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking }) {
+export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking, onNavigate }) {
   const [phase, setPhase] = useState('select');
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -304,14 +304,22 @@ export default function InvestorDrillPage({ onBack, onOpenTool, onShowRanking })
   if (phase === 'select') {
     return (
       <div style={{ minHeight: '100vh', background: '#0F172A', padding: '24px', boxSizing: 'border-box' }}>
-        {onBack ? (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          {onBack ? (
+            <button
+              onClick={onBack}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', padding: '8px 16px', cursor: 'pointer' }}
+            >
+              戻る
+            </button>
+          ) : null}
           <button
-            onClick={onBack}
-            style={{ marginBottom: '24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', padding: '8px 16px', cursor: 'pointer' }}
+            onClick={() => onNavigate('home')}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '20px', padding: '6px 16px', fontSize: '13px', cursor: 'pointer' }}
           >
-            戻る
+            キャンセル
           </button>
-        ) : null}
+        </div>
         <div style={{ textAlign: 'center', marginBottom: '48px', paddingTop: '24px' }}>
           <div style={{ fontSize: '10px', color: 'rgba(212,175,55,0.6)', letterSpacing: '4px', marginBottom: '12px' }}>AI INVESTOR TRAINING</div>
           <div style={{ fontSize: '28px', fontWeight: '700', color: 'white' }}>投資家育成ドリル</div>
