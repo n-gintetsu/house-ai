@@ -454,7 +454,7 @@ JSON形式:
     return (
       <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 20px' }}>
-          <div style={{ fontSize: 12, color: '#D4AF37', letterSpacing: 3, marginBottom: 8 }}>House-AI Pro</div>
+          <img src="/logo.png" alt="HOUSE-AI" style={{ width: 80, marginBottom: 16 }} />
           <div style={{ fontSize: 28, fontWeight: 500, marginBottom: 4 }}>AI現地調査室</div>
           <div style={{ fontSize: 13, color: '#64748B', marginBottom: 40 }}>現地へ行く前に80%判断する</div>
 
@@ -486,50 +486,96 @@ JSON形式:
 
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>現地写真（最大10枚）</div>
-            <div
-              onClick={() => photoInputRef.current ? photoInputRef.current.click() : null}
-              style={{ border: '2px dashed #1E293B', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}
-            >
-              <input
-                ref={photoInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={e => setPhotos(Array.from(e.target.files || []))}
-              />
-              {photos.length > 0 ? (
-                <div style={{ fontSize: 14, color: '#D4AF37' }}>{photos.length}枚選択済み</div>
-              ) : (
+            <input
+              ref={photoInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const newFiles = Array.from(e.target.files || [])
+                const newPhotos = newFiles.map(file => ({ file, preview: URL.createObjectURL(file) }))
+                setPhotos(prev => [...prev, ...newPhotos].slice(0, 10))
+                e.target.value = ''
+              }}
+            />
+            {photos.length === 0 ? (
+              <div
+                onClick={() => photoInputRef.current ? photoInputRef.current.click() : null}
+                style={{ border: '2px dashed #1E293B', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}
+              >
                 <div style={{ fontSize: 14, color: '#475569' }}>写真をアップロード</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {photos.map((photo, i) => (
+                    <div key={i} style={{ position: 'relative', display: 'inline-block', width: 'calc(33% - 4px)' }}>
+                      <img src={photo.preview} alt="" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 4 }} />
+                      <button
+                        onClick={() => {
+                          URL.revokeObjectURL(photo.preview)
+                          setPhotos(prev => prev.filter((_, idx) => idx !== i))
+                        }}
+                        style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 11, cursor: 'pointer', lineHeight: '20px', textAlign: 'center', padding: 0 }}
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+                {photos.length < 10 ? (
+                  <button
+                    onClick={() => photoInputRef.current ? photoInputRef.current.click() : null}
+                    style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: 8, width: '100%', borderRadius: 6, cursor: 'pointer', fontSize: 13, marginTop: 8 }}
+                  >
+                    + 写真を追加（{photos.length}/10）
+                  </button>
+                ) : null}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>図面・資料PDF（最大3ファイル）</div>
-            <div
-              onClick={() => pdfInputRef.current ? pdfInputRef.current.click() : null}
-              style={{ border: '2px dashed #1E293B', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}
-            >
-              <input
-                ref={pdfInputRef}
-                type="file"
-                multiple
-                accept=".pdf"
-                style={{ display: 'none' }}
-                onChange={e => setPdfs(Array.from(e.target.files || []))}
-              />
-              {pdfs.length > 0 ? (
-                <div>
-                  {pdfs.map((f, i) => (
-                    <div key={i} style={{ fontSize: 13, color: '#D4AF37', marginBottom: 4 }}>{f.name}</div>
-                  ))}
-                </div>
-              ) : (
+            <input
+              ref={pdfInputRef}
+              type="file"
+              multiple
+              accept=".pdf"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const newFiles = Array.from(e.target.files || [])
+                setPdfs(prev => [...prev, ...newFiles].slice(0, 3))
+                e.target.value = ''
+              }}
+            />
+            {pdfs.length === 0 ? (
+              <div
+                onClick={() => pdfInputRef.current ? pdfInputRef.current.click() : null}
+                style={{ border: '2px dashed #1E293B', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}
+              >
                 <div style={{ fontSize: 14, color: '#475569' }}>PDFをアップロード</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                {pdfs.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#111827', borderRadius: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, color: '#E2E8F0' }}>{f.name}</span>
+                    <button
+                      onClick={() => setPdfs(prev => prev.filter((_, idx) => idx !== i))}
+                      style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                    >×</button>
+                  </div>
+                ))}
+                {pdfs.length < 3 ? (
+                  <button
+                    onClick={() => pdfInputRef.current ? pdfInputRef.current.click() : null}
+                    style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: 8, width: '100%', borderRadius: 6, cursor: 'pointer', fontSize: 13, marginTop: 8 }}
+                  >
+                    + PDFを追加（{pdfs.length}/3）
+                  </button>
+                ) : null}
+              </div>
+            )}
           </div>
 
           <button
