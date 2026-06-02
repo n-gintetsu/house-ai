@@ -454,9 +454,11 @@ JSON形式:
     return (
       <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 20px' }}>
-          <img src="/logo.png" alt="HOUSE-AI" style={{ width: 140, marginBottom: 16 }} />
-          <div style={{ fontSize: 28, fontWeight: 500, marginBottom: 4 }}>AI現地調査室</div>
-          <div style={{ fontSize: 13, color: '#64748B', marginBottom: 40 }}>現地へ行く前に80%判断する</div>
+          <div style={{ textAlign: 'center' }}>
+            <img src="/logo.png" alt="HOUSE-AI" style={{ width: 140, marginBottom: 16 }} />
+            <div style={{ fontSize: 28, fontWeight: 500, marginBottom: 4 }}>AI現地調査室</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 40 }}>現地へ行く前に80%判断する</div>
+          </div>
 
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>物件所在地</div>
