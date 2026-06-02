@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 
+function formatChatText(text) {
+  return text
+    .replace(/#{1,3}\s/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`(.*?)`/g, '$1')
+}
+
 const FALLBACK_REPORT = {
   meta: { confidence: 70, warnings: [], plan_limit_reached: false },
   summary: { overall_risk: '中', recommend_action: '現地調査推奨', ai_comment: '解析完了。詳細は各項目をご確認ください。' },
@@ -667,7 +675,7 @@ JSON形式:
               <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 8 }}>
                 {chatMessages.map((msg, i) => (
                   <div key={i} style={{ marginBottom: 6, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
-                    <span style={{ display: 'inline-block', fontSize: 11, color: msg.role === 'user' ? '#CBD5E1' : '#94A3B8', background: msg.role === 'user' ? '#1E3A5F' : '#111827', borderRadius: 8, padding: '6px 10px', maxWidth: '90%', wordBreak: 'break-word' }}>{msg.content}</span>
+                    <span style={{ display: 'inline-block', fontSize: 11, color: msg.role === 'user' ? '#CBD5E1' : '#94A3B8', background: msg.role === 'user' ? '#1E3A5F' : '#111827', borderRadius: 8, padding: '6px 10px', maxWidth: '90%', wordBreak: 'break-word' }}>{formatChatText(msg.content)}</span>
                   </div>
                 ))}
                 {chatLoading ? <div style={{ fontSize: 11, color: '#475569' }}>分析中...</div> : null}
