@@ -6,6 +6,8 @@ function formatChatText(text) {
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/`(.*?)`/g, '$1')
+    .replace(/^[-•]\s/gm, '')
+    .replace(/^\d+\.\s/gm, '')
 }
 
 const FALLBACK_REPORT = {
