@@ -1183,7 +1183,7 @@ export default function App() {
       `}</style>
 
       <div className="ha-app" style={{
-        paddingBottom: tab === 'inspection' ? 0 : 64,
+        paddingBottom: (tab === 'inspection' || tab === 'drill') ? 0 : 64,
         overflow: tab === 'inspection' ? 'hidden' : undefined,
         height: tab === 'inspection' ? '100vh' : undefined,
         maxHeight: tab === 'inspection' ? '100vh' : undefined,
