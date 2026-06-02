@@ -249,7 +249,7 @@ NOI: ${fmtM(m.noi)}/年
         )}
 
         {/* 投資家育成ドリル CTA */}
-        <div style={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', border: '2px solid #c9a84c', borderRadius: 16, padding: '20px', marginTop: 12, marginBottom: 12 }}>
+        <div style={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', border: '2px solid #c9a84c', borderRadius: 16, padding: '20px', marginTop: 12, marginBottom: 12, textAlign: 'center' }}>
           <span style={{ background: '#c9a84c', color: '#0d1b2e', fontSize: 11, fontWeight: 500, padding: '2px 10px', borderRadius: 10, display: 'inline-block', marginBottom: 8 }}>投資向け</span>
           <div style={{ fontSize: 20, fontWeight: 500, color: '#fff' }}>投資家育成ドリル</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>投資力を鍛えるAIドリル</div>
