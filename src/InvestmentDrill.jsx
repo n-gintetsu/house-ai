@@ -334,7 +334,10 @@ function ResultPage({ correct, total, investType, onNavigate, onRetry }) {
         </button>
         <div style={{marginTop:'12px',marginBottom:'40px'}}>
           <div
-            onClick={() => onNavigate('drill')}
+            onClick={() => {
+              onNavigate('home')
+              setTimeout(() => onNavigate('drill'), 50)
+            }}
             role="button"
             tabIndex={0}
             style={{
