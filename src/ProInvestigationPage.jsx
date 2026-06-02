@@ -454,7 +454,7 @@ JSON形式:
     return (
       <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 20px' }}>
-          <img src="/logo.png" alt="HOUSE-AI" style={{ width: 80, marginBottom: 16 }} />
+          <img src="/logo.png" alt="HOUSE-AI" style={{ width: 140, marginBottom: 16 }} />
           <div style={{ fontSize: 28, fontWeight: 500, marginBottom: 4 }}>AI現地調査室</div>
           <div style={{ fontSize: 13, color: '#64748B', marginBottom: 40 }}>現地へ行く前に80%判断する</div>
 
@@ -485,7 +485,7 @@ JSON形式:
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>現地写真（最大10枚）</div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>現地写真（最大20枚）</div>
             <input
               ref={photoInputRef}
               type="file"
@@ -495,7 +495,7 @@ JSON形式:
               onChange={e => {
                 const newFiles = Array.from(e.target.files || [])
                 const newPhotos = newFiles.map(file => ({ file, preview: URL.createObjectURL(file) }))
-                setPhotos(prev => [...prev, ...newPhotos].slice(0, 10))
+                setPhotos(prev => [...prev, ...newPhotos].slice(0, 20))
                 e.target.value = ''
               }}
             />
@@ -522,12 +522,12 @@ JSON形式:
                     </div>
                   ))}
                 </div>
-                {photos.length < 10 ? (
+                {photos.length < 20 ? (
                   <button
                     onClick={() => photoInputRef.current ? photoInputRef.current.click() : null}
                     style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: 8, width: '100%', borderRadius: 6, cursor: 'pointer', fontSize: 13, marginTop: 8 }}
                   >
-                    + 写真を追加（{photos.length}/10）
+                    + 写真を追加（{photos.length}/20）
                   </button>
                 ) : null}
               </div>
@@ -535,7 +535,7 @@ JSON形式:
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>図面・資料PDF（最大3ファイル）</div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>図面・資料PDF（最大10ファイル）</div>
             <input
               ref={pdfInputRef}
               type="file"
@@ -544,7 +544,7 @@ JSON形式:
               style={{ display: 'none' }}
               onChange={e => {
                 const newFiles = Array.from(e.target.files || [])
-                setPdfs(prev => [...prev, ...newFiles].slice(0, 3))
+                setPdfs(prev => [...prev, ...newFiles].slice(0, 10))
                 e.target.value = ''
               }}
             />
@@ -566,12 +566,12 @@ JSON形式:
                     >×</button>
                   </div>
                 ))}
-                {pdfs.length < 3 ? (
+                {pdfs.length < 10 ? (
                   <button
                     onClick={() => pdfInputRef.current ? pdfInputRef.current.click() : null}
                     style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: 8, width: '100%', borderRadius: 6, cursor: 'pointer', fontSize: 13, marginTop: 8 }}
                   >
-                    + PDFを追加（{pdfs.length}/3）
+                    + PDFを追加（{pdfs.length}/10）
                   </button>
                 ) : null}
               </div>
