@@ -25,6 +25,8 @@ import ExperienceComplete from './ExperienceComplete'
 import ExperienceFeed from './ExperienceFeed'
 import ExperiencePost from './ExperiencePost'
 import BottomNav from './BottomNav'
+import ProTopPage from './ProTopPage'
+import ProInvestigationPage from './ProInvestigationPage'
 
 function ExperienceApp() {
   return (
@@ -121,6 +123,10 @@ if (pathname === '/admin' || pathname === '/admin/') {
   )
 } else if (pathname.startsWith('/community') || pathname.startsWith('/consultation') || pathname.startsWith('/search')) {
   Component = CommunityApp
+} else if (pathname === '/pro' || pathname === '/pro/') {
+  Component = () => <ProTopPage onStart={() => { window.location.href = '/pro/investigation' }} onLogin={() => {}} />
+} else if (pathname === '/pro/investigation' || pathname === '/pro/investigation/') {
+  Component = ProInvestigationPage
 } else if (pathname.startsWith('/experiences')) {
   Component = ExperienceApp
 }
