@@ -10,7 +10,7 @@ import ColumnPage from './ColumnPage'
 import LegalPage from './LegalPage'
 import ExpertLP from './ExpertLP'
 import HomeScreen from './HomeScreen'
-import InvestmentDrill from './InvestmentDrill'
+import InvestorDrillPage from './InvestorDrillPage'
 import InvestmentSimulator from './InvestmentSimulator'
 import { AffiliateCard } from './AffiliateCard'
 import PropertiesPage from './PropertiesPage'
@@ -2293,7 +2293,7 @@ export default function App() {
 
           {tab === 'drill' && (
             <div className="ha-panel" style={{ padding: 0 }}>
-              <InvestmentDrill onNavigate={(view) => setTab(view)} />
+              <InvestorDrillPage onNavigate={(view) => setTab(view)} />
             </div>
           )}
 
