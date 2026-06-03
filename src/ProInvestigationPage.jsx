@@ -146,15 +146,6 @@ JSON形式:
     })
   }, [screen, logIndex])
 
-  useEffect(() => {
-    if (interviewStep === 3) {
-      apiCalledRef.current = false
-      setLogMessages([])
-      setLogIndex(0)
-      setScreen('analyzing')
-    }
-  }, [interviewStep])
-
   const handleAnswerSelect = (key, value) => {
     setInterviewAnswers(prev => ({ ...prev, [key]: value }))
     setInterviewStep(prev => prev + 1)
@@ -165,7 +156,14 @@ JSON形式:
     const q = QUESTIONS[interviewStep]
     setInterviewAnswers(prev => ({ ...prev, [q.key]: interviewInput }))
     setInterviewInput('')
-    setInterviewStep(prev => prev + 1)
+    if (interviewStep === QUESTIONS.length - 1) {
+      apiCalledRef.current = false
+      setLogMessages([])
+      setLogIndex(0)
+      setScreen('analyzing')
+    } else {
+      setInterviewStep(prev => prev + 1)
+    }
   }
 
   const getConfidence = (key) => {
@@ -609,8 +607,11 @@ JSON形式:
 
           {QUESTIONS.slice(0, interviewStep).map((q) => (
             <div key={q.key} style={{ marginBottom: 16 }}>
-              <div style={{ background: '#111827', borderRadius: 12, padding: 16, maxWidth: 480, marginBottom: 8 }}>
-                <div style={{ fontSize: 14, color: '#CBD5E1' }}>{q.text}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <img src="/favicon.png" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginTop: 4 }} />
+                <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
+                  {q.text}
+                </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <div style={{ background: '#1E3A5F', borderRadius: 12, padding: '12px 16px', fontSize: 14, color: '#E2E8F0', maxWidth: 320 }}>
@@ -622,8 +623,11 @@ JSON形式:
 
           {(interviewStep < QUESTIONS.length) ? (
             <div>
-              <div style={{ background: '#111827', borderRadius: 12, padding: 16, maxWidth: 480, marginBottom: 16 }}>
-                <div style={{ fontSize: 14, color: '#CBD5E1' }}>{currentQ.text}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <img src="/favicon.png" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginTop: 4 }} />
+                <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
+                  {currentQ.text}
+                </div>
               </div>
               {currentQ.options ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -672,7 +676,7 @@ JSON形式:
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
-        <img src="/favicon.png" alt="" width={64} style={{ marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }} />
+        <img src="/favicon.png" alt="" width={64} style={{ marginBottom: 32, animation: 'breathe 2s ease-in-out infinite', background: 'transparent' }} />
         <div style={{ maxWidth: 320, width: '100%' }}>
           {logMessages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
