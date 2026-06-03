@@ -27,6 +27,7 @@ import ExperiencePost from './ExperiencePost'
 import BottomNav from './BottomNav'
 import ProTopPage from './ProTopPage'
 import ProInvestigationPage from './ProInvestigationPage'
+import ProDocsPage from './ProDocsPage'
 
 function ExperienceApp() {
   return (
@@ -127,6 +128,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = () => <ProTopPage onStart={() => { window.location.href = '/pro/investigation' }} onLogin={() => {}} />
 } else if (pathname === '/pro/investigation' || pathname === '/pro/investigation/') {
   Component = ProInvestigationPage
+} else if (pathname === '/pro/docs' || pathname === '/pro/docs/') {
+  Component = ProDocsPage
 } else if (pathname.startsWith('/experiences')) {
   Component = ExperienceApp
 }

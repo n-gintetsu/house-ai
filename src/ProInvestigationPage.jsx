@@ -443,6 +443,15 @@ JSON形式:
               ))}
             </div>
           ) : null}
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #1E293B' }}>
+            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>重説ドラフト作成に進む</div>
+            <button
+              onClick={() => { window.location.href = '/pro/docs' }}
+              style={{ background: '#D4AF37', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 500, cursor: 'pointer', width: '100%' }}
+            >
+              AI重説ドラフトを作成する
+            </button>
+          </div>
         </div>
       )
     }
