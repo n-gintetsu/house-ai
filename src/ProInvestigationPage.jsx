@@ -154,7 +154,8 @@ JSON形式:
   const handleAnswerText = () => {
     if (!interviewInput.trim()) return
     const q = QUESTIONS[interviewStep]
-    setInterviewAnswers(prev => ({ ...prev, [q.key]: interviewInput }))
+    const answer = interviewInput.trim()
+    setInterviewAnswers(prev => ({ ...prev, [q.key]: answer }))
     setInterviewInput('')
     if (interviewStep === QUESTIONS.length - 1) {
       apiCalledRef.current = false
@@ -680,8 +681,8 @@ JSON形式:
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#111827', border: '2px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }}>
-          <span style={{ fontSize: 14, color: '#D4AF37', fontWeight: 500, letterSpacing: 1 }}>AI</span>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'transparent', border: '2px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }}>
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="8" y="8" width="24" height="24" rx="4" stroke="#D4AF37" strokeWidth="1.5"/><path d="M14 26L20 14L26 26" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 22H24" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"/></svg>
         </div>
         <div style={{ maxWidth: 320, width: '100%' }}>
           {logMessages.map((msg, i) => (
