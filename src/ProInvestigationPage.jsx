@@ -609,9 +609,7 @@ JSON形式:
           {QUESTIONS.slice(0, interviewStep).map((q) => (
             <div key={q.key} style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#1E293B', border: '1px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
-                  <span style={{ fontSize: 10, color: '#D4AF37', fontWeight: 500 }}>AI</span>
-                </div>
+                <img src="/favicon.svg" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {q.text}
                 </div>
@@ -627,9 +625,7 @@ JSON形式:
           {(interviewStep < QUESTIONS.length) ? (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#1E293B', border: '1px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
-                  <span style={{ fontSize: 10, color: '#D4AF37', fontWeight: 500 }}>AI</span>
-                </div>
+                <img src="/favicon.svg" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {currentQ.text}
                 </div>
@@ -681,9 +677,7 @@ JSON形式:
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'transparent', border: '2px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }}>
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="8" y="8" width="24" height="24" rx="4" stroke="#D4AF37" strokeWidth="1.5"/><path d="M14 26L20 14L26 26" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 22H24" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round"/></svg>
-        </div>
+        <img src="/favicon.svg" alt="" width={64} style={{ marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }} />
         <div style={{ maxWidth: 320, width: '100%' }}>
           {logMessages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
