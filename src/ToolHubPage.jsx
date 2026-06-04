@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft, MessageSquare } from 'lucide-react';
+import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft, MessageSquare, FileSearch, FileSignature } from 'lucide-react';
 
 const tools = [
+  { id: 'pro_investigation', icon: FileSearch, title: 'AI現地調査レポート', description: '現地調査をAIが整理', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro/investigation', variant: 'pro' },
+  { id: 'pro_docs', icon: FileSignature, title: 'AI重説ドラフト', description: '重説作成をAIが支援', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro/docs', variant: 'pro' },
   { id: 'mortgage', icon: Calculator, title: '住宅ローンシミュレーション', description: '返済・固定変動を整理', labels: ['登録不要', '人気'] },
   { id: 'investment', icon: TrendingUp, title: '投資ローンシミュレータ', description: '利回り・返済を整理', labels: ['登録不要', 'AI整理'] },
   { id: 'beginner', icon: GraduationCap, title: '投資初心者ドリル', description: '初心者向けにAIが整理', labels: ['登録不要'] },
@@ -18,6 +20,8 @@ const tools = [
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
 
 const labelStyle = (label) => {
+  if (label === '事業者様向け') return { background: 'rgba(201,168,76,0.18)', color: '#D4AF37' };
+  if (label === '一部課金あり') return { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' };
   if (label === '登録不要' || label === '要登録') return { background: '#F0FDF4', color: '#15803d' };
   if (label === '人気') return { background: '#FFF7ED', color: '#c2410c' };
   if (label === 'AI整理') return { background: '#EFF6FF', color: '#1d4ed8' };
@@ -80,11 +84,17 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                 onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => tool.href ? (window.location.href = tool.href) : handleToolClick(tool.id)}
                 style={{
-                  background: hoveredCard === tool.id ? 'linear-gradient(135deg, #EFF6FF, #F5F3FF)' : 'white',
+                  background: tool.variant === 'pro'
+                    ? (hoveredCard === tool.id ? 'linear-gradient(135deg, #0F172A, #1e293b)' : '#0F172A')
+                    : (hoveredCard === tool.id ? 'linear-gradient(135deg, #EFF6FF, #F5F3FF)' : 'white'),
                   borderRadius: '24px',
                   padding: '40px',
-                  border: hoveredCard === tool.id ? '1px solid rgba(99,102,241,0.5)' : '1px solid #E5E7EB',
-                  boxShadow: hoveredCard === tool.id ? '0 16px 40px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                  border: tool.variant === 'pro'
+                    ? (hoveredCard === tool.id ? '1px solid rgba(201,168,76,0.85)' : '1px solid rgba(201,168,76,0.4)')
+                    : (hoveredCard === tool.id ? '1px solid rgba(99,102,241,0.5)' : '1px solid #E5E7EB'),
+                  boxShadow: tool.variant === 'pro'
+                    ? (hoveredCard === tool.id ? '0 16px 40px rgba(201,168,76,0.25), 0 0 0 1px rgba(201,168,76,0.2)' : '0 2px 8px rgba(0,0,0,0.3)')
+                    : (hoveredCard === tool.id ? '0 16px 40px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.12)' : '0 2px 8px rgba(0,0,0,0.04)'),
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
@@ -102,8 +112,8 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                     <Icon size={32} color="white" />
                   )}
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px', margin: '0 0 8px 0' }}>{tool.title}</h3>
-                <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px', lineHeight: 1.6, margin: '0 0 16px 0' }}>{tool.description}</p>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: tool.variant === 'pro' ? '#F8FAFC' : '#111827', marginBottom: '8px', margin: '0 0 8px 0' }}>{tool.title}</h3>
+                <p style={{ fontSize: '14px', color: tool.variant === 'pro' ? 'rgba(255,255,255,0.6)' : '#6B7280', marginBottom: '16px', lineHeight: 1.6, margin: '0 0 16px 0' }}>{tool.description}</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {tool.labels.map(label => (
                     <span key={label} style={{ padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, ...labelStyle(label) }}>{label}</span>
