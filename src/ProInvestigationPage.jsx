@@ -155,10 +155,8 @@ JSON形式:
     if (!interviewInput.trim()) return
     const q = QUESTIONS[interviewStep]
     const answer = interviewInput.trim()
-      setInterviewInput('')
     setInterviewInput('')
     setInterviewAnswers(prev => ({ ...prev, [q.key]: answer }))
-    setInterviewInput('')
     if (interviewStep === QUESTIONS.length - 1) {
       apiCalledRef.current = false
       setLogMessages([])
@@ -647,6 +645,7 @@ JSON形式:
               ) : (
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
+                    key={currentQ.key}
                     type="text"
                     value={interviewInput}
                     onChange={e => setInterviewInput(e.target.value)}
@@ -671,7 +670,7 @@ JSON形式:
 
   if (screen === 'analyzing') {
     return (
-      <div style={{ minHeight: '100vh', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
         <style>{`
           @keyframes breathe {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(212,175,55,0.4)); }
@@ -688,13 +687,13 @@ JSON形式:
           {logMessages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              <span style={{ fontSize: 13, color: '#94A3B8' }}>{msg}</span>
+              <span style={{ fontSize: 13, color: '#cbd5e1' }}>{msg}</span>
             </div>
           ))}
           {logMessages.length < LOGS.length ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #D4AF37', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-              <span style={{ fontSize: 13, color: '#64748B' }}>{LOGS[logMessages.length]}</span>
+              <span style={{ fontSize: 13, color: '#cbd5e1' }}>{LOGS[logMessages.length]}</span>
             </div>
           ) : null}
         </div>
