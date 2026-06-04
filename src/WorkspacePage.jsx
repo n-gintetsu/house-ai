@@ -261,24 +261,30 @@ function DashboardView({ id }) {
   // 家カルテ昇格用
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
+  // ws_law_docs 可変カテゴリ用
+  const [lawDocs, setLawDocs] = useState([])
+  const [editingLawDocId, setEditingLawDocId] = useState(null)
+  const [lawDocEditVal, setLawDocEditVal] = useState('')
 
   useEffect(() => {
     async function fetchAll() {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
-      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }] = await Promise.all([
+      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }, { data: lawDocsData }] = await Promise.all([
         supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
         supabase.from('timeline_events').select('*').eq('workspace_id', id).order('event_date', { ascending: true }),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_schedule').select('*').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
+        supabase.from('ws_law_docs').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
       ])
       setSteps(stepsData || [])
       setMembers(membersData || [])
       setTimeline(timelineData || [])
       setNotices(noticesData || [])
       setSchedule(scheduleData || [])
+      setLawDocs(lawDocsData || [])
       setLoading(false)
     }
     fetchAll()
@@ -388,6 +394,33 @@ function DashboardView({ id }) {
   const handleDeleteNotice = async (noticeId) => {
     await supabase.from('ws_notices').delete().eq('id', noticeId)
     setNotices(prev => prev.filter(n => n.id !== noticeId))
+  }
+
+  // --- LAW DOCS ---
+  const handleAddLawDoc = async () => {
+    const maxOrder = lawDocs.length > 0 ? Math.max(...lawDocs.map(d => d.sort_order || 0)) : 0
+    try {
+      const { data, error } = await supabase.from('ws_law_docs').insert({
+        workspace_id: id, label: '司法書士', sort_order: maxOrder + 1
+      }).select().single()
+      if (error) throw error
+      setLawDocs(prev => [...prev, data])
+    } catch (e) { console.error('ws_law_docs insert error', e) }
+  }
+  const handleDeleteLawDoc = async (docId) => {
+    await supabase.from('ws_law_docs').delete().eq('id', docId)
+    setLawDocs(prev => prev.filter(d => d.id !== docId))
+    if (editingLawDocId === docId) setEditingLawDocId(null)
+  }
+  const handleSaveLawDocLabel = async (docId, newLabel) => {
+    const trimmed = (newLabel || '').trim()
+    if (!trimmed) { setEditingLawDocId(null); return }
+    try {
+      const { error } = await supabase.from('ws_law_docs').update({ label: trimmed }).eq('id', docId)
+      if (error) throw error
+      setLawDocs(prev => prev.map(d => d.id === docId ? { ...d, label: trimmed } : d))
+      setEditingLawDocId(null)
+    } catch (e) { console.error('ws_law_docs update error', e) }
   }
 
   // --- 家カルテ昇格 ---
@@ -500,6 +533,11 @@ function DashboardView({ id }) {
   const ws = workspace
   const lastDoneIdx = steps.reduce((acc, s, i) => s.state === '完了' ? i : acc, -1)
 
+  // ステータスに応じたアクセント色（チップ色分け用）
+  const statusAccent = ws.status === '完了' ? '#D4AF37' : ws.status === '進行中' ? '#38bdf8' : '#f87171'
+  const statusBorderRgba = ws.status === '完了' ? 'rgba(212,175,55,0.3)' : ws.status === '進行中' ? 'rgba(56,189,248,0.3)' : 'rgba(248,113,113,0.3)'
+  const statusShadowRgba = ws.status === '完了' ? 'rgba(212,175,55,0.25)' : ws.status === '進行中' ? 'rgba(56,189,248,0.25)' : 'rgba(248,113,113,0.25)'
+
   // インラインフォーム共通スタイル
   const fi = { fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
   const fiSel = { ...fi, appearance: 'none', WebkitAppearance: 'none' }
@@ -512,6 +550,7 @@ function DashboardView({ id }) {
       <style>{`
         .ws-grid { display: grid; grid-template-columns: 260px 1fr 280px; gap: 16px; }
         @media (max-width: 960px) { .ws-grid { grid-template-columns: 1fr !important; } }
+        @keyframes statusDotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
       `}</style>
 
       {/* ポップオーバー用バックドロップ */}
@@ -521,8 +560,8 @@ function DashboardView({ id }) {
 
       {/* ヘッダー - 本物ガラス */}
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px', boxSizing: 'border-box' }}>
-        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
+        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 42, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
         <button onClick={() => { window.location.href = '/workspace' }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 6px', flexShrink: 0 }}>
           <ChevronLeft size={14} color="#64748B" />
         </button>
@@ -530,11 +569,30 @@ function DashboardView({ id }) {
           <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ws.customer_name || ''}｜{ws.title || ''}</div>
           <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 400, letterSpacing: 1 }}>{ws.ws_code || ''}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {[{ label: '顧客', value: ws.customer_name }, { label: '担当', value: ws.agent_name }, { label: '契約種別', value: ws.contract_type }, { label: 'ステータス', value: ws.status }, { label: '最終更新', value: formatDate(ws.updated_at) }].map(chip => (
-            <div key={chip.label} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 6, padding: '3px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>{chip.label}</div>
-              <div style={{ fontSize: 11, color: '#E2E8F0', fontWeight: 500 }}>{chip.value || '-'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          {[
+            { label: '顧客',    value: ws.customer_name,        accent: '#2dd4bf', borderRgba: 'rgba(45,212,191,0.28)',  shadowRgba: 'rgba(45,212,191,0.22)',  hasDot: false },
+            { label: '担当',    value: ws.agent_name,           accent: '#8b5cf6', borderRgba: 'rgba(139,92,246,0.28)', shadowRgba: 'rgba(139,92,246,0.22)', hasDot: false },
+            { label: '契約種別', value: ws.contract_type,        accent: '#D4AF37', borderRgba: 'rgba(212,175,55,0.28)', shadowRgba: 'rgba(212,175,55,0.22)', hasDot: false },
+            { label: 'ステータス', value: ws.status,             accent: statusAccent, borderRgba: statusBorderRgba, shadowRgba: statusShadowRgba, hasDot: true },
+            { label: '最終更新', value: formatDate(ws.updated_at), accent: '#64748b', borderRgba: 'rgba(100,116,139,0.28)', shadowRgba: 'rgba(100,116,139,0.18)', hasDot: false },
+          ].map(chip => (
+            <div key={chip.label} style={{
+              background: 'rgba(15,23,42,0.7)',
+              border: `1px solid ${chip.borderRgba}`,
+              borderTop: `2px solid ${chip.accent}`,
+              borderRadius: 6,
+              padding: '3px 9px',
+              textAlign: 'center',
+              boxShadow: `0 0 12px ${chip.shadowRgba}`,
+            }}>
+              <div style={{ fontSize: 9, color: chip.accent, fontWeight: 400, marginBottom: 2 }}>{chip.label}</div>
+              <div style={{ fontSize: 11, color: '#ffffff', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                {chip.hasDot ? (
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: statusAccent, display: 'inline-block', flexShrink: 0, animation: ws.status === '進行中' ? 'statusDotBlink 1.8s ease-in-out infinite' : 'none' }} />
+                ) : null}
+                {chip.value || '-'}
+              </div>
             </div>
           ))}
         </div>
@@ -580,7 +638,7 @@ function DashboardView({ id }) {
       <main style={{ paddingTop: 80, paddingBottom: 140, paddingLeft: 20, paddingRight: 20, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
         <div className="ws-grid">
 
-          {/* 左カラム：ファイル（静的） */}
+          {/* 左カラム：ファイル */}
           <div style={{ ...glass, borderRadius: 14, padding: 20, height: 'fit-content' }}>
             <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>FILE</div>
             <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 16 }}>ファイル</div>
@@ -598,6 +656,48 @@ function DashboardView({ id }) {
                 </div>
               )
             })}
+
+            {/* ws_law_docs 可変カテゴリ群（司法書士など登記種別ごとに複数追加可） */}
+            {lawDocs.map(doc => (
+              <div key={doc.id} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, paddingBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  {editingLawDocId === doc.id ? (
+                    <input
+                      type="text"
+                      value={lawDocEditVal}
+                      onChange={e => setLawDocEditVal(e.target.value)}
+                      onBlur={() => handleSaveLawDocLabel(doc.id, lawDocEditVal)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleSaveLawDocLabel(doc.id, lawDocEditVal)
+                        if (e.key === 'Escape') setEditingLawDocId(null)
+                      }}
+                      autoFocus
+                      style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#E2E8F0', padding: '2px 8px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', flex: 1, minWidth: 0 }}
+                    />
+                  ) : (
+                    <span
+                      onClick={() => { setEditingLawDocId(doc.id); setLawDocEditVal(doc.label || '司法書士') }}
+                      style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500, cursor: 'pointer', flex: 1, minWidth: 0 }}
+                      title="クリックで編集"
+                    >{doc.label || '司法書士'}</span>
+                  )}
+                  <button onClick={() => handleDeleteLawDoc(doc.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
+                    <Trash2 size={11} color="#475569" />
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingBottom: 6 }}>
+                  {['見積もり', '請求書', '領収書'].map(tag => (
+                    <span key={tag} style={{ fontSize: 9, background: 'rgba(99,102,241,0.12)', color: '#818CF8', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 3, padding: '1px 5px', fontWeight: 400 }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* + 司法書士を追加 */}
+            <button onClick={handleAddLawDoc} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 12 }}>
+              <Plus size={12} />
+              司法書士を追加
+            </button>
           </div>
 
           {/* 中央カラム */}
