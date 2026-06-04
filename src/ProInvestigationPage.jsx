@@ -678,8 +678,8 @@ JSON形式:
             50% { transform: scale(1.08); filter: drop-shadow(0 0 20px rgba(212,175,55,0.8)); }
           }
           @keyframes aiStandby {
-            0%, 100% { box-shadow: 0 0 6px 1px rgba(201, 168, 76, 0.45); }
-            50% { box-shadow: 0 0 14px 4px rgba(201, 168, 76, 0.9); }
+            0%, 100% { box-shadow: 0 0 8px 2px rgba(201, 168, 76, 0.6); }
+            50% { box-shadow: 0 0 26px 9px rgba(201, 168, 76, 1); }
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
