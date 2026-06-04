@@ -61,6 +61,7 @@ export default function ProInvestigationPage() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [armed, setArmed] = useState(false)
 
   const photoInputRef = useRef(null)
   const pdfInputRef = useRef(null)
@@ -157,14 +158,20 @@ JSON形式:
     const answer = interviewInput.trim()
     setInterviewInput('')
     setInterviewAnswers(prev => ({ ...prev, [q.key]: answer }))
-    if (interviewStep === QUESTIONS.length - 1) {
-      apiCalledRef.current = false
-      setLogMessages([])
-      setLogIndex(0)
-      setScreen('analyzing')
-    } else {
-      setInterviewStep(prev => prev + 1)
-    }
+    setInterviewStep(prev => prev + 1)
+  }
+
+  const handleLastConfirm = () => {
+    if (!interviewInput.trim()) return
+    const q = QUESTIONS[interviewStep]
+    const answer = interviewInput.trim()
+    setInterviewInput('')
+    setArmed(false)
+    setInterviewAnswers(prev => ({ ...prev, [q.key]: answer }))
+    apiCalledRef.current = false
+    setLogMessages([])
+    setLogIndex(0)
+    setScreen('analyzing')
   }
 
   const getConfidence = (key) => {
@@ -603,6 +610,12 @@ JSON形式:
     const currentQ = QUESTIONS[interviewStep]
     return (
       <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", padding: '40px 20px' }}>
+        <style>{`
+          @keyframes aiStandby {
+            0%, 100% { box-shadow: 0 0 8px 2px rgba(201, 168, 76, 0.6); }
+            50% { box-shadow: 0 0 26px 9px rgba(201, 168, 76, 1); }
+          }
+        `}</style>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
           <div style={{ fontSize: 12, color: '#D4AF37', letterSpacing: 3, marginBottom: 24 }}>House-AI Pro</div>
 
@@ -649,13 +662,20 @@ JSON形式:
                     type="text"
                     value={interviewInput}
                     onChange={e => setInterviewInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' ? handleAnswerText() : null}
+                    onKeyDown={e => {
+                      if (e.key !== 'Enter') return
+                      if (interviewStep === QUESTIONS.length - 1) {
+                        if (interviewInput.trim()) setArmed(true)
+                      } else {
+                        handleAnswerText()
+                      }
+                    }}
                     placeholder={currentQ.placeholder || ''}
                     style={{ flex: 1, fontSize: 16, background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '12px 16px', borderRadius: 8, outline: 'none' }}
                   />
                   <button
-                    onClick={handleAnswerText}
-                    style={{ background: '#D4AF37', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '0 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                    onClick={interviewStep === QUESTIONS.length - 1 ? handleLastConfirm : handleAnswerText}
+                    style={{ background: '#D4AF37', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '0 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer', animation: armed ? 'aiStandby 2.4s ease-in-out infinite' : 'none' }}
                   >
                     送信
                   </button>
@@ -682,7 +702,7 @@ JSON形式:
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
-          <img src="/logo-icon.png" alt="" style={{ width: 64, height: 64, marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }} />
+          <img src="/logo.png" alt="" style={{ width: 64, height: 64, marginBottom: 32, animation: 'breathe 2s ease-in-out infinite', borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c' }} />
         <div style={{ maxWidth: 320, width: '100%' }}>
           {logMessages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
