@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bell, FileText, UserCheck, FileSignature, CreditCard, Map,
-  Check, Users, Calendar, Send, AlertCircle
+  Check, Users, Calendar, Send, AlertCircle, X, MessageSquare
 } from 'lucide-react'
 
 const CASE = {
@@ -73,6 +73,7 @@ const glass = {
 
 export default function WorkspacePage() {
   const [chatInput, setChatInput] = useState('')
+  const [secretaryOpen, setSecretaryOpen] = useState(true)
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -289,53 +290,78 @@ export default function WorkspacePage() {
         </div>
       </main>
 
-      {/* AI案件秘書 - 本物ガラス・固定右下 */}
-      <div style={{
-        position: 'fixed', bottom: 20, right: 20, zIndex: 200,
-        width: 340,
-        background: 'rgba(10,15,30,0.84)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        border: '1px solid rgba(201,168,76,0.32)',
-        borderRadius: 14,
-        boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)',
-      }}>
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* /logo.png を採用。コンシェルジュ/調査室と同じ円形アバター作りで統一 */}
-          <img src="/logo.png" alt="AI" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>AI案件秘書</span>
-          <div style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
-        </div>
-        <div style={{ padding: '14px 14px 12px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>
-              ローン本審査が進行中です。結果は6/12予定です。
-            </span>
+      {/* AI案件秘書 - 本物ガラス・固定右下 / secretaryOpen で開閉 */}
+      {secretaryOpen ? (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, zIndex: 200,
+          width: 340,
+          background: 'rgba(10,15,30,0.84)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(201,168,76,0.32)',
+          borderRadius: 14,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)',
+        }}>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* /logo.png を採用。コンシェルジュ/調査室と同じ円形アバター作りで統一 */}
+            <img src="/logo.png" alt="AI" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>AI案件秘書</span>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
+            <button
+              onClick={() => setSecretaryOpen(false)}
+              style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+            >
+              <X size={14} color="#64748B" />
+            </button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-            {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
-              <button key={chip} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', cursor: 'pointer', fontWeight: 400 }}>
-                {chip}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <textarea
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              placeholder="AIに質問する..."
-              rows={2}
-              style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Send size={12} />
-                送信
-              </button>
+          <div style={{ padding: '14px 14px 12px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10 }}>
+              <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>
+                ローン本審査が進行中です。結果は6/12予定です。
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
+                <button key={chip} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', cursor: 'pointer', fontWeight: 400 }}>
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder="AIに質問する..."
+                rows={2}
+                style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Send size={12} />
+                  送信
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* FAB: 秘書窓が閉じているときに表示する再表示トグル */
+        <button
+          onClick={() => setSecretaryOpen(true)}
+          style={{
+            position: 'fixed', bottom: 20, right: 20, zIndex: 200,
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'rgba(10,15,30,0.9)',
+            border: '1px solid rgba(201,168,76,0.6)',
+            boxShadow: '0 0 16px rgba(201,168,76,0.4)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          <MessageSquare size={22} color="#c9a84c" />
+        </button>
+      )}
 
     </div>
   )
