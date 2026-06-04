@@ -28,6 +28,7 @@ import BottomNav from './BottomNav'
 import ProTopPage from './ProTopPage'
 import ProInvestigationPage from './ProInvestigationPage'
 import ProDocsPage from './ProDocsPage'
+import WorkspacePage from './WorkspacePage'
 
 function ExperienceApp() {
   return (
@@ -130,6 +131,8 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = ProInvestigationPage
 } else if (pathname === '/pro/docs' || pathname === '/pro/docs/') {
   Component = ProDocsPage
+} else if (pathname === '/workspace' || pathname === '/workspace/') {
+  Component = WorkspacePage
 } else if (pathname.startsWith('/experiences')) {
   Component = ExperienceApp
 }
