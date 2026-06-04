@@ -256,6 +256,9 @@ function DashboardView({ id }) {
   const [timelineError, setTimelineError] = useState('')
   const [scheduleError, setScheduleError] = useState('')
   const [noticeError, setNoticeError] = useState('')
+  // 家カルテ昇格用
+  const [promoting, setPromoting] = useState(false)
+  const [promoteMessage, setPromoteMessage] = useState('')
 
   useEffect(() => {
     async function fetchAll() {
@@ -292,6 +295,17 @@ function DashboardView({ id }) {
     const wsUpdate = { progress: newProgress, updated_at: now, status: allDone ? '完了' : '進行中', completed_at: allDone ? now : null }
     await supabase.from('workspaces').update(wsUpdate).eq('id', id)
     setWorkspace(prev => ({ ...prev, ...wsUpdate }))
+    // 全工程完了で自動昇格（address_keyが作れる場合のみ）
+    if (allDone) {
+      const mergedWs = { ...workspace, ...wsUpdate }
+      const addrKey = (mergedWs.property_address || mergedWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+      if (addrKey) {
+        await promoteToHouseRecord({ currentWs: mergedWs, currentSteps: newSteps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+      } else {
+        setPromoteMessage('住所未入力のため家カルテ未保存')
+        setTimeout(() => setPromoteMessage(''), 5000)
+      }
+    }
   }
 
   // --- MEMBERS ---
@@ -374,6 +388,94 @@ function DashboardView({ id }) {
     setNotices(prev => prev.filter(n => n.id !== noticeId))
   }
 
+  // --- 家カルテ昇格 ---
+  // address_key: property_address || title を NFKC正規化して空白除去
+  // 二重カウント防止: house_record_id が null のとき初回昇格、あれば上書き保存のみ
+  const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
+    const rawAddr = (currentWs.property_address || currentWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+    if (!rawAddr) return { skipped: true }
+    setPromoting(true)
+    setPromoteMessage('')
+    try {
+      const now = new Date().toISOString()
+      const snapshot = {
+        property: { address_raw: currentWs.property_address, property_name: currentWs.title, contract_type: currentWs.contract_type },
+        meta: { ws_code: currentWs.ws_code, customer_name: currentWs.customer_name, agent_name: currentWs.agent_name, progress: currentWs.progress, completed_at: currentWs.completed_at },
+        roadmap: (currentSteps || []).map(s => ({ step_order: s.step_order, label: s.label, state: s.state })),
+        timeline: (currentTimeline || []).map(t => ({ event_date: t.event_date, label: t.label })),
+        members: (currentMembers || []).map(m => ({ name: m.name, role_label: m.role_label, permission: m.permission })),
+        notices: (currentNotices || []).map(n => ({ level: n.level, message: n.message, created_at: n.created_at })),
+        schedule: (currentSchedule || []).map(s => ({ scheduled_date: s.scheduled_date, label: s.label })),
+        outputs: []
+      }
+      const txRecord = {
+        workspace_id: currentWs.id, ws_code: currentWs.ws_code, contract_type: currentWs.contract_type,
+        customer_name: currentWs.customer_name, agent_name: currentWs.agent_name,
+        completed_at: currentWs.completed_at || now, promoted_at: now
+      }
+      let houseRecordId = currentWs.house_record_id || null
+      let clientRecordId = currentWs.client_record_id || null
+
+      if (!houseRecordId) {
+        // 初回昇格: address_key で既存を検索
+        const { data: existing } = await supabase.from('house_records').select('*').eq('address_key', rawAddr).maybeSingle()
+        if (existing) {
+          // 既存あり: snapshot更新 + transactions追記 + count+1
+          await supabase.from('house_records').update({
+            snapshot, latest_workspace_id: currentWs.id, last_completed_at: now,
+            transactions: [...(existing.transactions || []), txRecord],
+            transaction_count: (existing.transaction_count || 0) + 1, updated_at: now
+          }).eq('id', existing.id)
+          houseRecordId = existing.id
+        } else {
+          // 新規insert
+          const { data: inserted, error: insErr } = await supabase.from('house_records').insert({
+            address_key: rawAddr, property_name: currentWs.title, address_raw: currentWs.property_address,
+            contract_type: currentWs.contract_type, snapshot, latest_workspace_id: currentWs.id,
+            first_completed_at: now, last_completed_at: now, transaction_count: 1, transactions: [txRecord]
+          }).select().single()
+          if (insErr) throw insErr
+          houseRecordId = inserted.id
+        }
+        // 顧客カルテ（名寄せは次フェーズ）
+        const { data: clientIns } = await supabase.from('client_records').insert({
+          name: currentWs.customer_name, last_workspace_id: currentWs.id,
+          last_house_record_id: houseRecordId, deal_count: 1
+        }).select().single()
+        if (clientIns) clientRecordId = clientIns.id
+      } else {
+        // 上書き保存: snapshotのみ更新、transactions追記・count増加なし
+        await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        if (clientRecordId) {
+          await supabase.from('client_records').update({
+            last_workspace_id: currentWs.id, last_house_record_id: houseRecordId, updated_at: now
+          }).eq('id', clientRecordId)
+        }
+      }
+
+      // workspaceを完了・昇格済みとして更新
+      const wsFinish = {
+        house_record_id: houseRecordId, client_record_id: clientRecordId,
+        status: '完了', completed_at: currentWs.completed_at || now, promoted_at: now
+      }
+      await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      setWorkspace(prev => ({ ...prev, ...wsFinish }))
+      setPromoteMessage('家カルテに保存しました')
+      setTimeout(() => setPromoteMessage(''), 4000)
+      return { skipped: false, houseRecordId }
+    } catch (e) {
+      console.error('promoteToHouseRecord error', e)
+      setPromoteMessage('保存に失敗しました: ' + (e.message || ''))
+      return { skipped: false, error: e }
+    } finally {
+      setPromoting(false)
+    }
+  }
+
+  const handleManualPromote = async () => {
+    await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -440,6 +542,23 @@ function DashboardView({ id }) {
           </div>
           <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{ws.progress || 0}%</span>
         </div>
+        {/* 家カルテ保存ボタン */}
+        {ws.promoted_at ? (
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
+              {promoting ? <Loader size={11} /> : null}
+              家カルテに上書き保存
+            </button>
+            <button onClick={() => { window.location.href = `/house/${ws.house_record_id}` }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+              家カルテを開く
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+            {promoting ? <Loader size={11} /> : null}
+            家カルテに保存して完了
+          </button>
+        )}
         <div style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
           <Bell size={18} color="#94A3B8" />
           {notices.length > 0 ? (
@@ -449,6 +568,12 @@ function DashboardView({ id }) {
           ) : null}
         </div>
       </header>
+      {/* 家カルテ保存メッセージ（固定トースト） */}
+      {promoteMessage ? (
+        <div style={{ position: 'fixed', top: 72, right: 20, zIndex: 150, background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(201,168,76,0.45)', borderRadius: 8, padding: '8px 16px', fontSize: 12, color: '#c9a84c', fontWeight: 400, boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}>
+          {promoteMessage}
+        </div>
+      ) : null}
 
       <main style={{ paddingTop: 80, paddingBottom: 140, paddingLeft: 20, paddingRight: 20, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
         <div className="ws-grid">
