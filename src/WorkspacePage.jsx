@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bell, FileText, UserCheck, FileSignature, CreditCard, Map,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -20,6 +20,20 @@ const glass = {
   background: 'rgba(15,23,42,0.85)',
   border: '1px solid rgba(255,255,255,0.08)',
   boxShadow: '0 0 30px rgba(201,168,76,0.15)',
+}
+
+const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
+const FILE_CATEGORIES = ['申込書', '本人確認書類', '重要事項説明書(ドラフト)', 'ローン事前審査書類', '物件図面', '司法書士', 'その他']
+
+function sanitizeFileName(name) {
+  return name.replace(/[^\w.\-぀-ヿ㐀-龯]/g, '_')
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
 const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン']
@@ -265,19 +279,27 @@ function DashboardView({ id }) {
   const [lawDocs, setLawDocs] = useState([])
   const [editingLawDocId, setEditingLawDocId] = useState(null)
   const [lawDocEditVal, setLawDocEditVal] = useState('')
+  // ファイル共有用
+  const [wsFiles, setWsFiles] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadCategory, setUploadCategory] = useState('')
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     async function fetchAll() {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
-      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }, { data: lawDocsData }] = await Promise.all([
+      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }, { data: lawDocsData }, { data: wsFilesData }] = await Promise.all([
         supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
         supabase.from('timeline_events').select('*').eq('workspace_id', id).order('event_date', { ascending: true }),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_schedule').select('*').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
         supabase.from('ws_law_docs').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
+        supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
       ])
       setSteps(stepsData || [])
       setMembers(membersData || [])
@@ -285,6 +307,7 @@ function DashboardView({ id }) {
       setNotices(noticesData || [])
       setSchedule(scheduleData || [])
       setLawDocs(lawDocsData || [])
+      setWsFiles(wsFilesData || [])
       setLoading(false)
     }
     fetchAll()
@@ -421,6 +444,57 @@ function DashboardView({ id }) {
       setLawDocs(prev => prev.map(d => d.id === docId ? { ...d, label: trimmed } : d))
       setEditingLawDocId(null)
     } catch (e) { console.error('ws_law_docs update error', e) }
+  }
+
+  // --- ファイル共有 ---
+  const handleFileUpload = async (file) => {
+    if (!file) return
+    const ext = (file.name.split('.').pop() || '').toLowerCase()
+    if (!ALLOWED_EXTS.includes(ext)) {
+      setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
+      return
+    }
+    setUploadError('')
+    setUploading(true)
+    try {
+      const safeName = sanitizeFileName(file.name)
+      const path = `${id}/${Date.now()}_${safeName}`
+      const { error: storageErr } = await supabase.storage.from('workspace-files').upload(path, file)
+      if (storageErr) throw storageErr
+      const { data: dbRow, error: dbErr } = await supabase.from('ws_files').insert({
+        workspace_id: id,
+        category: uploadCategory || null,
+        file_name: file.name,
+        storage_path: path,
+        mime_type: file.type,
+        size_bytes: file.size,
+      }).select().single()
+      if (dbErr) throw dbErr
+      setWsFiles(prev => [dbRow, ...prev])
+    } catch (e) {
+      console.error('file upload error', e)
+      setUploadError('アップロードに失敗しました: ' + (e.message || ''))
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+  const handleDownloadWsFile = async (wf) => {
+    try {
+      const { data: blob, error } = await supabase.storage.from('workspace-files').download(wf.storage_path)
+      if (error) throw error
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = wf.file_name; a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) { console.error('download error', e) }
+  }
+  const handleDeleteWsFile = async (wf) => {
+    try {
+      await supabase.storage.from('workspace-files').remove([wf.storage_path])
+      await supabase.from('ws_files').delete().eq('id', wf.id)
+      setWsFiles(prev => prev.filter(f => f.id !== wf.id))
+    } catch (e) { console.error('file delete error', e) }
   }
 
   // --- 家カルテ昇格 ---
@@ -638,7 +712,8 @@ function DashboardView({ id }) {
       <main style={{ paddingTop: 80, paddingBottom: 140, paddingLeft: 20, paddingRight: 20, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
         <div className="ws-grid">
 
-          {/* 左カラム：ファイル */}
+          {/* 左カラム：ファイル + ファイル共有 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ ...glass, borderRadius: 14, padding: 20, height: 'fit-content' }}>
             <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>FILE</div>
             <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 16 }}>ファイル</div>
@@ -699,6 +774,105 @@ function DashboardView({ id }) {
               司法書士を追加
             </button>
           </div>
+
+          {/* ファイル共有パネル */}
+          <div style={{ ...glass, borderRadius: 14, padding: 20 }}>
+            <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>SHARED FILES</div>
+            <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>ファイル共有</div>
+
+            {/* 隠しファイルinput */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const f = e.target.files ? e.target.files[0] : null
+                if (f) handleFileUpload(f)
+              }}
+            />
+
+            {/* カテゴリ選択 + アップロードボタン */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              <select
+                value={uploadCategory}
+                onChange={e => setUploadCategory(e.target.value)}
+                style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', padding: '5px 8px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', flex: 1, appearance: 'none', WebkitAppearance: 'none' }}
+              >
+                <option value="" style={{ background: '#0F172A' }}>カテゴリなし</option>
+                {FILE_CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#0F172A' }}>{c}</option>)}
+              </select>
+              <button
+                onClick={() => fileInputRef.current ? fileInputRef.current.click() : null}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: uploading ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+              >
+                {uploading ? <Loader size={12} /> : <Plus size={12} />}
+                ファイルを追加
+              </button>
+            </div>
+
+            {/* ドラッグ&ドロップ枠 */}
+            <div
+              onDragOver={e => { e.preventDefault(); setIsDraggingOver(true) }}
+              onDragLeave={() => setIsDraggingOver(false)}
+              onDrop={e => {
+                e.preventDefault()
+                setIsDraggingOver(false)
+                const f = e.dataTransfer.files ? e.dataTransfer.files[0] : null
+                if (f) handleFileUpload(f)
+              }}
+              style={{ border: isDraggingOver ? '2px dashed #c9a84c' : '2px dashed rgba(201,168,76,0.3)', borderRadius: 8, padding: '12px 8px', textAlign: 'center', marginBottom: 12, background: isDraggingOver ? 'rgba(201,168,76,0.06)' : 'transparent', transition: 'all 0.15s' }}
+            >
+              <div style={{ fontSize: 11, color: '#475569', fontWeight: 400 }}>ここにドロップ</div>
+              <div style={{ fontSize: 10, color: '#334155', fontWeight: 400, marginTop: 2 }}>PDF / PNG / JPG / WEBP</div>
+            </div>
+
+            {/* エラー表示 */}
+            {uploadError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400, marginBottom: 8 }}>{uploadError}</div> : null}
+
+            {/* ファイル一覧 */}
+            {wsFiles.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>まだファイルがありません。</div>
+            ) : (
+              wsFiles.map((wf, idx) => {
+                const publicUrl = supabase.storage.from('workspace-files').getPublicUrl(wf.storage_path).data.publicUrl
+                const isImage = (wf.mime_type || '').startsWith('image/')
+                return (
+                  <div key={wf.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderBottom: idx < wsFiles.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    {/* サムネイル or アイコン */}
+                    <div style={{ width: 36, height: 36, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {isImage ? (
+                        <img src={publicUrl} alt="" style={{ width: 36, height: 36, objectFit: 'cover' }} />
+                      ) : (
+                        <FileText size={18} color="#c9a84c" />
+                      )}
+                    </div>
+                    {/* ファイル情報 */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{wf.file_name || ''}</div>
+                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>{formatFileSize(wf.size_bytes)} · {formatDate(wf.created_at)}</div>
+                      {wf.category ? (
+                        <span style={{ fontSize: 9, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 3, padding: '1px 5px', fontWeight: 400, display: 'inline-block', marginTop: 3 }}>{wf.category}</span>
+                      ) : null}
+                    </div>
+                    {/* アクション */}
+                    <div style={{ display: 'flex', gap: 3, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
+                      <button onClick={() => window.open(publicUrl, '_blank')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
+                        <Eye size={13} color="#64748B" />
+                      </button>
+                      <button onClick={() => handleDownloadWsFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
+                        <Download size={13} color="#64748B" />
+                      </button>
+                      <button onClick={() => handleDeleteWsFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
+                        <Trash2 size={13} color="#475569" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+          </div>{/* 左カラム wrapper 閉じ */}
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
