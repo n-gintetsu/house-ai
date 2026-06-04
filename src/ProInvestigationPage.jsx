@@ -611,7 +611,7 @@ JSON形式:
           {QUESTIONS.slice(0, interviewStep).map((q) => (
             <div key={q.key} style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/logo-icon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4, borderRadius: '50%' }} />
+                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {q.text}
                 </div>
@@ -627,7 +627,7 @@ JSON形式:
           {(interviewStep < QUESTIONS.length) ? (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/logo-icon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4, borderRadius: '50%' }} />
+                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {currentQ.text}
                 </div>
