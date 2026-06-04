@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { Calculator, TrendingUp, GraduationCap, FileText, Receipt, BookOpen, Shield, Home, Sparkles, ChevronLeft, MessageSquare, FileSearch, FileSignature } from 'lucide-react';
 
 const tools = [
-  { id: 'pro_investigation', icon: FileSearch, title: 'AI現地調査レポート', description: '現地調査をAIが整理', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro/investigation', variant: 'pro' },
-  { id: 'pro_docs', icon: FileSignature, title: 'AI重説ドラフト', description: '重説作成をAIが支援', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro/docs', variant: 'pro' },
   { id: 'mortgage', icon: Calculator, title: '住宅ローンシミュレーション', description: '返済・固定変動を整理', labels: ['登録不要', '人気'] },
   { id: 'investment', icon: TrendingUp, title: '投資ローンシミュレータ', description: '利回り・返済を整理', labels: ['登録不要', 'AI整理'] },
   { id: 'beginner', icon: GraduationCap, title: '投資初心者ドリル', description: '初心者向けにAIが整理', labels: ['登録不要'] },
@@ -15,6 +13,8 @@ const tools = [
   { id: 'moving', icon: Home, title: '引越し費用比較', description: '相場確認・条件比較', labels: ['登録不要'] },
   { id: 'satei', icon: null, title: 'AI不動産整理査定', description: '相場感をAIが整理', labels: ['登録不要', 'AI査定'] },
   { id: 'community_room', icon: MessageSquare, title: '住まい相談室', description: '希望条件投稿できます', labels: ['要登録', 'AI整理'], iconBg: 'linear-gradient(135deg, #c9a84c, #a07830)', href: '/consultation' },
+  { id: 'pro_investigation', icon: FileSearch, title: 'AI現地調査レポート', description: '現地調査をAIが整理', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro', variant: 'pro' },
+  { id: 'pro_docs', icon: FileSignature, title: 'AI重説ドラフト', description: '重説作成をAIが支援', labels: ['事業者様向け', '要登録', 'AI整理', '一部課金あり'], iconBg: 'linear-gradient(135deg, #c9a84c, #D4AF37)', href: '/pro/docs', variant: 'pro' },
 ];
 
 const loadingMessages = ['住宅ローン条件を整理中...', '固定・変動を確認...', 'AIが整理しました'];
@@ -90,10 +90,10 @@ export default function ToolHubPage({ onSelectTool, onBack }) {
                   borderRadius: '24px',
                   padding: '40px',
                   border: tool.variant === 'pro'
-                    ? (hoveredCard === tool.id ? '1px solid rgba(201,168,76,0.85)' : '1px solid rgba(201,168,76,0.4)')
+                    ? (hoveredCard === tool.id ? '1px solid rgba(201,168,76,1)' : '1px solid rgba(201,168,76,0.4)')
                     : (hoveredCard === tool.id ? '1px solid rgba(99,102,241,0.5)' : '1px solid #E5E7EB'),
                   boxShadow: tool.variant === 'pro'
-                    ? (hoveredCard === tool.id ? '0 16px 40px rgba(201,168,76,0.25), 0 0 0 1px rgba(201,168,76,0.2)' : '0 2px 8px rgba(0,0,0,0.3)')
+                    ? (hoveredCard === tool.id ? '0 0 24px 4px rgba(201,168,76,0.55), 0 16px 40px rgba(201,168,76,0.3)' : '0 2px 8px rgba(0,0,0,0.3)')
                     : (hoveredCard === tool.id ? '0 16px 40px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.12)' : '0 2px 8px rgba(0,0,0,0.04)'),
                   textAlign: 'left',
                   cursor: 'pointer',
