@@ -476,7 +476,6 @@ function DashboardView({ id }) {
       setUploadError('アップロードに失敗しました: ' + (e.message || ''))
     } finally {
       setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
   const handleDownloadWsFile = async (wf) => {
@@ -780,19 +779,24 @@ function DashboardView({ id }) {
             <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>SHARED FILES</div>
             <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>ファイル共有</div>
 
-            {/* 隠しファイルinput */}
+            {/* 隠しファイルinput
+                修正: display:none だと programmatic click がブラウザにブロックされる場合があるため
+                      position:absolute + opacity:0 + width/height:0 に変更。
+                      label の htmlFor で接続する方式に切替（ref.current.click() 不要）。
+                      value='' を onChange 内でリセット → 同じファイルの再選択も発火可能。 */}
             <input
-              ref={fileInputRef}
+              id={`ws-file-input-${id}`}
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
-              style={{ display: 'none' }}
+              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
               onChange={e => {
                 const f = e.target.files ? e.target.files[0] : null
+                e.target.value = ''
                 if (f) handleFileUpload(f)
               }}
             />
 
-            {/* カテゴリ選択 + アップロードボタン */}
+            {/* カテゴリ選択 + アップロードラベル（label htmlFor でfile dialog を確実に開く） */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
               <select
                 value={uploadCategory}
@@ -802,13 +806,14 @@ function DashboardView({ id }) {
                 <option value="" style={{ background: '#0F172A' }}>カテゴリなし</option>
                 {FILE_CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#0F172A' }}>{c}</option>)}
               </select>
-              <button
-                onClick={() => fileInputRef.current ? fileInputRef.current.click() : null}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: uploading ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+              <label
+                htmlFor={`ws-file-input-${id}`}
+                onClick={e => { if (uploading) e.preventDefault() }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: uploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
               >
                 {uploading ? <Loader size={12} /> : <Plus size={12} />}
                 ファイルを追加
-              </button>
+              </label>
             </div>
 
             {/* ドラッグ&ドロップ枠 */}
