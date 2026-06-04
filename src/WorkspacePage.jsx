@@ -25,8 +25,16 @@ const glass = {
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
 const FILE_CATEGORIES = ['申込書', '本人確認書類', '重要事項説明書(ドラフト)', 'ローン事前審査書類', '物件図面', '司法書士', 'その他']
 
-function sanitizeFileName(name) {
-  return name.replace(/[^\w.\-぀-ヿ㐀-龯]/g, '_')
+// storage_path 用: 元ファイル名は一切使わず、ASCII安全なランダムキーを生成する
+// 元ファイル名（日本語可）は ws_files.file_name にのみ保存して表示用に使う
+function makeSafeStoragePath(workspaceId, ext) {
+  const rand = crypto.randomUUID().replace(/-/g, '')
+  return `${workspaceId}/${Date.now()}_${rand}.${ext}`
+}
+
+function extFromMime(mime) {
+  const map = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }
+  return map[mime] || 'bin'
 }
 
 function formatFileSize(bytes) {
@@ -457,8 +465,9 @@ function DashboardView({ id }) {
     setUploadError('')
     setUploading(true)
     try {
-      const safeName = sanitizeFileName(file.name)
-      const path = `${id}/${Date.now()}_${safeName}`
+      // storage_path は ASCII ランダムキーのみ。日本語ファイル名はパスに含めない
+      const safeExt = ALLOWED_EXTS.includes(ext) ? ext : extFromMime(file.type)
+      const path = makeSafeStoragePath(id, safeExt)
       const { error: storageErr } = await supabase.storage.from('workspace-files').upload(path, file)
       if (storageErr) throw storageErr
       const { data: dbRow, error: dbErr } = await supabase.from('ws_files').insert({
