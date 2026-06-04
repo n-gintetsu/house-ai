@@ -155,6 +155,7 @@ JSON形式:
     if (!interviewInput.trim()) return
     const q = QUESTIONS[interviewStep]
     const answer = interviewInput.trim()
+      setInterviewInput('')
     setInterviewInput('')
     setInterviewAnswers(prev => ({ ...prev, [q.key]: answer }))
     setInterviewInput('')
@@ -610,7 +611,7 @@ JSON形式:
           {QUESTIONS.slice(0, interviewStep).map((q) => (
             <div key={q.key} style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/favicon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
+                  <img src="/logo-icon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {q.text}
                 </div>
@@ -626,7 +627,7 @@ JSON形式:
           {(interviewStep < QUESTIONS.length) ? (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/favicon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
+                  <img src="/logo-icon.png" style={{ width: 32, height: 32, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {currentQ.text}
                 </div>
@@ -678,7 +679,7 @@ JSON形式:
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
-          <img src="/favicon-src.png" alt="" style={{ width: 64, height: 64, marginBottom: 32, animation: 'breathe 2s ease-in-out infinite', mixBlendMode: 'screen' }} />
+          <img src="/logo-icon.png" alt="" style={{ width: 64, height: 64, marginBottom: 32, animation: 'breathe 2s ease-in-out infinite' }} />
         <div style={{ maxWidth: 320, width: '100%' }}>
           {logMessages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
