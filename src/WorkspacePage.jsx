@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bell, FileText, UserCheck, FileSignature, CreditCard, Map,
-  Check, Users, Calendar, MessageSquare, Send, AlertCircle
+  Check, Users, Calendar, Send, AlertCircle
 } from 'lucide-react'
 
 const CASE = {
@@ -92,7 +92,7 @@ export default function WorkspacePage() {
         display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px',
         boxSizing: 'border-box',
       }}>
-        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 26, objectFit: 'contain', flexShrink: 0 }} />
+        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -301,9 +301,8 @@ export default function WorkspacePage() {
         boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)',
       }}>
         <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, #c9a84c, #D4AF37)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <MessageSquare size={13} color="#0A0F1E" />
-          </div>
+          {/* /logo.png を採用。コンシェルジュ/調査室と同じ円形アバター作りで統一 */}
+          <img src="/logo.png" alt="AI" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>AI案件秘書</span>
           <div style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
         </div>
