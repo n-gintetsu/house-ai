@@ -251,6 +251,11 @@ function DashboardView({ id }) {
   const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
+  // insert失敗時にフォーム内に表示するエラー文言
+  const [memberError, setMemberError] = useState('')
+  const [timelineError, setTimelineError] = useState('')
+  const [scheduleError, setScheduleError] = useState('')
+  const [noticeError, setNoticeError] = useState('')
 
   useEffect(() => {
     async function fetchAll() {
@@ -290,10 +295,19 @@ function DashboardView({ id }) {
   }
 
   // --- MEMBERS ---
+  // 修正: roleカラム名 → role_label（実テーブルのカラム名）+ try/catch追加
   const handleAddMember = async () => {
-    if (!memberForm.name) return
-    const { data } = await supabase.from('ws_members').insert({ workspace_id: id, name: memberForm.name, role: memberForm.role_label, permission: memberForm.permission }).select().single()
-    if (data) { setMembers(prev => [...prev, data]); setMemberForm({ name: '', role_label: '顧客', permission: 'Member' }); setShowMemberForm(false) }
+    if (!memberForm.name) { setMemberError('氏名は必須です'); return }
+    setMemberError('')
+    try {
+      const { data, error } = await supabase.from('ws_members').insert({
+        workspace_id: id, name: memberForm.name, role_label: memberForm.role_label, permission: memberForm.permission
+      }).select().single()
+      if (error) throw error
+      setMembers(prev => [...prev, data])
+      setMemberForm({ name: '', role_label: '顧客', permission: 'Member' })
+      setShowMemberForm(false)
+    } catch (e) { console.error('ws_members insert error', e); setMemberError('追加に失敗しました: ' + (e.message || '')) }
   }
   const handleDeleteMember = async (memberId) => {
     await supabase.from('ws_members').delete().eq('id', memberId)
@@ -301,13 +315,19 @@ function DashboardView({ id }) {
   }
 
   // --- TIMELINE ---
+  // 修正: event_textカラム名 → label（実テーブルのカラム名）+ try/catch追加
   const handleAddTimeline = async () => {
-    if (!timelineForm.event_date || !timelineForm.label) return
-    const { data } = await supabase.from('timeline_events').insert({ workspace_id: id, event_date: timelineForm.event_date, event_text: timelineForm.label }).select().single()
-    if (data) {
+    if (!timelineForm.event_date || !timelineForm.label) { setTimelineError('日付と内容は必須です'); return }
+    setTimelineError('')
+    try {
+      const { data, error } = await supabase.from('timeline_events').insert({
+        workspace_id: id, event_date: timelineForm.event_date, label: timelineForm.label
+      }).select().single()
+      if (error) throw error
       setTimeline(prev => [...prev, data].sort((a, b) => a.event_date > b.event_date ? 1 : -1))
-      setTimelineForm({ event_date: '', label: '' }); setShowTimelineForm(false)
-    }
+      setTimelineForm({ event_date: '', label: '' })
+      setShowTimelineForm(false)
+    } catch (e) { console.error('timeline_events insert error', e); setTimelineError('追加に失敗しました: ' + (e.message || '')) }
   }
   const handleDeleteTimeline = async (itemId) => {
     await supabase.from('timeline_events').delete().eq('id', itemId)
@@ -315,13 +335,19 @@ function DashboardView({ id }) {
   }
 
   // --- SCHEDULE ---
+  // 修正: try/catch追加、失敗時はscheduleErrorで表示
   const handleAddSchedule = async () => {
-    if (!scheduleForm.scheduled_date || !scheduleForm.label) return
-    const { data } = await supabase.from('ws_schedule').insert({ workspace_id: id, scheduled_date: scheduleForm.scheduled_date, label: scheduleForm.label }).select().single()
-    if (data) {
+    if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
+    setScheduleError('')
+    try {
+      const { data, error } = await supabase.from('ws_schedule').insert({
+        workspace_id: id, scheduled_date: scheduleForm.scheduled_date, label: scheduleForm.label
+      }).select().single()
+      if (error) throw error
       setSchedule(prev => [...prev, data].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
-      setScheduleForm({ scheduled_date: '', label: '' }); setShowScheduleForm(false)
-    }
+      setScheduleForm({ scheduled_date: '', label: '' })
+      setShowScheduleForm(false)
+    } catch (e) { console.error('ws_schedule insert error', e); setScheduleError('追加に失敗しました: ' + (e.message || '')) }
   }
   const handleDeleteSchedule = async (itemId) => {
     await supabase.from('ws_schedule').delete().eq('id', itemId)
@@ -329,10 +355,19 @@ function DashboardView({ id }) {
   }
 
   // --- NOTICE ---
+  // 修正: textカラム名 → message（実テーブルのカラム名）+ try/catch追加
   const handleAddNotice = async () => {
-    if (!noticeForm.message) return
-    const { data } = await supabase.from('ws_notices').insert({ workspace_id: id, level: noticeForm.level, text: noticeForm.message }).select().single()
-    if (data) { setNotices(prev => [...prev, data]); setNoticeForm({ level: 'info', message: '' }); setShowNoticeForm(false) }
+    if (!noticeForm.message) { setNoticeError('通知内容は必須です'); return }
+    setNoticeError('')
+    try {
+      const { data, error } = await supabase.from('ws_notices').insert({
+        workspace_id: id, level: noticeForm.level, message: noticeForm.message
+      }).select().single()
+      if (error) throw error
+      setNotices(prev => [...prev, data])
+      setNoticeForm({ level: 'info', message: '' })
+      setShowNoticeForm(false)
+    } catch (e) { console.error('ws_notices insert error', e); setNoticeError('追加に失敗しました: ' + (e.message || '')) }
   }
   const handleDeleteNotice = async (noticeId) => {
     await supabase.from('ws_notices').delete().eq('id', noticeId)
@@ -522,7 +557,7 @@ function DashboardView({ id }) {
                     </div>
                     <div style={{ flex: 1, paddingBottom: idx < timeline.length - 1 ? 8 : 0 }}>
                       <span style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500, marginRight: 10 }}>{formatEventDate(item.event_date)}</span>
-                      <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400 }}>{item.event_text || ''}</span>
+                      <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400 }}>{item.label || ''}</span>
                     </div>
                     <button onClick={() => handleDeleteTimeline(item.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 1 }}>
                       <Trash2 size={12} color="#475569" />
@@ -534,11 +569,12 @@ function DashboardView({ id }) {
               {showTimelineForm ? (
                 <div style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="date" value={timelineForm.event_date} onChange={e => setTimelineForm(prev => ({ ...prev, event_date: e.target.value }))} style={{ ...fi, width: 140, flexShrink: 0 }} />
+                    <input type="date" value={timelineForm.event_date} onChange={e => setTimelineForm(prev => ({ ...prev, event_date: e.target.value }))} style={{ ...fi, minWidth: 160, flexShrink: 0 }} />
                     <input type="text" value={timelineForm.label} onChange={e => setTimelineForm(prev => ({ ...prev, label: e.target.value }))} placeholder="内容" style={{ ...fi, flex: 1 }} />
                   </div>
+                  {timelineError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{timelineError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowTimelineForm(false); setTimelineForm({ event_date: '', label: '' }) }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowTimelineForm(false); setTimelineForm({ event_date: '', label: '' }); setTimelineError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddTimeline} style={saveBtn}>追加</button>
                   </div>
                 </div>
@@ -564,7 +600,7 @@ function DashboardView({ id }) {
                   return (
                     <div key={n.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < notices.length - 1 ? 8 : 0 }}>
                       <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
-                      <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.text || ''}</span>
+                      <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.message || ''}</span>
                       <button onClick={() => handleDeleteNotice(n.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
                         <Trash2 size={11} color="#475569" />
                       </button>
@@ -579,9 +615,10 @@ function DashboardView({ id }) {
                     <option value="warning" style={{ background: '#0F172A' }}>warning（注意）</option>
                     <option value="danger" style={{ background: '#0F172A' }}>danger（重要）</option>
                   </select>
-                  <input type="text" value={noticeForm.message} onChange={e => setNoticeForm(prev => ({ ...prev, message: e.target.value }))} placeholder="通知内容" style={fi} />
+                  <input type="text" value={noticeForm.message} onChange={e => setNoticeForm(prev => ({ ...prev, message: e.target.value }))} placeholder="通知内容" style={{ ...fi, width: '100%' }} />
+                  {noticeError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{noticeError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowNoticeForm(false); setNoticeForm({ level: 'info', message: '' }) }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowNoticeForm(false); setNoticeForm({ level: 'info', message: '' }); setNoticeError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddNotice} style={saveBtn}>追加</button>
                   </div>
                 </div>
@@ -606,7 +643,7 @@ function DashboardView({ id }) {
                     <div key={m.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: idx < members.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                       <div>
                         <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 400 }}>{m.name || ''}</div>
-                        <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{m.role || ''}</div>
+                        <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{m.role_label || ''}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{m.permission || 'Member'}</span>
@@ -620,15 +657,16 @@ function DashboardView({ id }) {
               )}
               {showMemberForm ? (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <input type="text" value={memberForm.name} onChange={e => setMemberForm(prev => ({ ...prev, name: e.target.value }))} placeholder="氏名" style={fi} />
-                  <select value={memberForm.role_label} onChange={e => setMemberForm(prev => ({ ...prev, role_label: e.target.value }))} style={fiSel}>
+                  <input type="text" value={memberForm.name} onChange={e => setMemberForm(prev => ({ ...prev, name: e.target.value }))} placeholder="氏名" style={{ ...fi, width: '100%' }} />
+                  <select value={memberForm.role_label} onChange={e => setMemberForm(prev => ({ ...prev, role_label: e.target.value }))} style={{ ...fiSel, width: '100%' }}>
                     {ROLE_OPTIONS.map(r => <option key={r} value={r} style={{ background: '#0F172A' }}>{r}</option>)}
                   </select>
-                  <select value={memberForm.permission} onChange={e => setMemberForm(prev => ({ ...prev, permission: e.target.value }))} style={fiSel}>
+                  <select value={memberForm.permission} onChange={e => setMemberForm(prev => ({ ...prev, permission: e.target.value }))} style={{ ...fiSel, width: '100%' }}>
                     {PERMISSION_OPTIONS.map(p => <option key={p} value={p} style={{ background: '#0F172A' }}>{p}</option>)}
                   </select>
+                  {memberError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{memberError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: '顧客', permission: 'Member' }) }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: '顧客', permission: 'Member' }); setMemberError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddMember} style={saveBtn}>追加</button>
                   </div>
                 </div>
@@ -661,12 +699,11 @@ function DashboardView({ id }) {
               )}
               {showScheduleForm ? (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="date" value={scheduleForm.scheduled_date} onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))} style={{ ...fi, width: 140, flexShrink: 0 }} />
-                    <input type="text" value={scheduleForm.label} onChange={e => setScheduleForm(prev => ({ ...prev, label: e.target.value }))} placeholder="内容" style={{ ...fi, flex: 1 }} />
-                  </div>
+                  <input type="date" value={scheduleForm.scheduled_date} onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))} style={{ ...fi, width: '100%' }} />
+                  <input type="text" value={scheduleForm.label} onChange={e => setScheduleForm(prev => ({ ...prev, label: e.target.value }))} placeholder="内容" style={{ ...fi, width: '100%' }} />
+                  {scheduleError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{scheduleError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowScheduleForm(false); setScheduleForm({ scheduled_date: '', label: '' }) }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowScheduleForm(false); setScheduleForm({ scheduled_date: '', label: '' }); setScheduleError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddSchedule} style={saveBtn}>追加</button>
                   </div>
                 </div>
