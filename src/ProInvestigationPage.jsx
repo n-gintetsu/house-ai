@@ -611,7 +611,7 @@ JSON形式:
           {QUESTIONS.slice(0, interviewStep).map((q) => (
             <div key={q.key} style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', flexShrink: 0, marginTop: 4 }} />
+                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0, marginTop: 4, animation: 'aiStandby 2.4s ease-in-out infinite' }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {q.text}
                 </div>
@@ -627,7 +627,7 @@ JSON形式:
           {(interviewStep < QUESTIONS.length) ? (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', flexShrink: 0, marginTop: 4 }} />
+                  <img src="/logo.png" alt="HOUSE-AI" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0, marginTop: 4, animation: 'aiStandby 2.4s ease-in-out infinite' }} />
                 <div style={{ background: '#111827', borderRadius: 12, padding: '12px 16px', maxWidth: 480, fontSize: 14, color: '#E2E8F0', lineHeight: 1.7 }}>
                   {currentQ.text}
                 </div>
@@ -676,6 +676,10 @@ JSON形式:
           @keyframes breathe {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(212,175,55,0.4)); }
             50% { transform: scale(1.08); filter: drop-shadow(0 0 20px rgba(212,175,55,0.8)); }
+          }
+          @keyframes aiStandby {
+            0%, 100% { box-shadow: 0 0 6px 1px rgba(201, 168, 76, 0.45); }
+            50% { box-shadow: 0 0 14px 4px rgba(201, 168, 76, 0.9); }
           }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
