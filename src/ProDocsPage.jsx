@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
+function formatChatText(text) {
+  return text
+    .replace(/^#{1,3}\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/^[*-]\s/gm, '・')
+    .replace(/\n{3,}/g, '\n\n')
+}
+
 export default function ProDocsPage() {
   const [screen, setScreen] = useState('input')
   const [address, setAddress] = useState('')
@@ -289,7 +297,7 @@ JSON形式:
               type="text"
               value={address}
               onChange={e => setAddress(e.target.value)}
-              placeholder="例：横浜市神奈川区白幡南町34番"
+              placeholder="例：東京都中央区〇〇"
               style={{ fontSize: '16px', background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '12px 16px', borderRadius: '8px', width: '100%', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
@@ -545,7 +553,9 @@ JSON形式:
                     <div style={{ fontSize: '10px', color: msg.role === 'user' ? '#D4AF37' : '#64748B', marginBottom: '2px' }}>
                       {msg.role === 'user' ? 'あなた' : 'AI'}
                     </div>
-                    <div style={{ fontSize: '15px', lineHeight: '1.6', color: '#E2E8F0' }}>{msg.content}</div>
+                    <div style={{ fontSize: '15px', lineHeight: '1.6', color: '#E2E8F0', whiteSpace: 'pre-wrap' }}>
+                      {msg.role === 'assistant' ? formatChatText(msg.content) : msg.content}
+                    </div>
                   </div>
                 ))}
                 {chatLoading ? <div style={{ fontSize: '12px', color: '#64748B' }}>解析中...</div> : null}
