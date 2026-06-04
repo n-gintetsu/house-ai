@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 export default function ProDocsPage() {
   const [screen, setScreen] = useState('input')
@@ -12,6 +13,7 @@ export default function ProDocsPage() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [menuCollapsed, setMenuCollapsed] = useState(false)
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -464,7 +466,7 @@ JSON形式:
           ×
         </button>
 
-        <div style={{ width: '30%', minWidth: '260px', background: '#0D1117', borderRight: '1px solid #1E293B', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ width: '30%', minWidth: '260px', background: '#0D1117', borderRight: '1px solid #1E293B', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '16px', borderBottom: '1px solid #1E293B' }}>
             <div style={{ fontSize: '12px', color: '#D4AF37' }}>AI重説ドラフト</div>
             <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>{address}</div>
@@ -494,60 +496,79 @@ JSON形式:
             </span>
           </div>
 
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {menuItems.map((item, i) => {
-              const sectionData = draft ? draft[item.key] : null
-              const status = sectionData ? sectionData.status : 'requires_check'
-              return (
-                <div
-                  key={item.key}
-                  onClick={() => setActiveItem(i)}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #0F172A',
-                    background: activeItem === i ? '#1E293B' : 'transparent',
-                    borderLeft: activeItem === i ? '2px solid #D4AF37' : '2px solid transparent',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{item.label}</span>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(status), display: 'inline-block', flexShrink: 0 }} />
-                </div>
-              )
-            })}
+          <div
+            onClick={() => setMenuCollapsed(prev => !prev)}
+            style={{ padding: '8px 16px', borderBottom: '1px solid #1E293B', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}
+          >
+            <span style={{ fontSize: '11px', color: '#94A3B8' }}>書類カテゴリ</span>
+            {menuCollapsed ? <ChevronDown size={14} color="#D4AF37" /> : <ChevronUp size={14} color="#D4AF37" />}
           </div>
+
+          {menuCollapsed ? null : (
+            <div style={{ overflowY: 'auto' }}>
+              {menuItems.map((item, i) => {
+                const sectionData = draft ? draft[item.key] : null
+                const status = sectionData ? sectionData.status : 'requires_check'
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => setActiveItem(i)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #0F172A',
+                      background: activeItem === i ? '#1E293B' : 'transparent',
+                      borderLeft: activeItem === i ? '2px solid #D4AF37' : '2px solid transparent',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{item.label}</span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(status), display: 'inline-block', flexShrink: 0 }} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           <div style={{ padding: '12px 16px', borderTop: '1px solid #1E293B' }}>
             <div style={{ fontSize: '10px', color: '#475569' }}>※本ドラフトは参考資料です</div>
             <div style={{ fontSize: '10px', color: '#92400E', marginTop: '2px' }}>宅建士の最終確認が必要です</div>
           </div>
 
-          <div style={{ padding: '12px', borderTop: '1px solid #1E293B' }}>
+          <div style={{ padding: '12px', borderTop: '1px solid #1E293B', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {chatMessages.length > 0 ? (
-              <div style={{ maxHeight: '160px', overflowY: 'auto', marginBottom: '8px' }}>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', marginBottom: '8px' }}>
                 {chatMessages.map((msg, i) => (
                   <div key={i} style={{ marginBottom: '6px' }}>
                     <div style={{ fontSize: '10px', color: msg.role === 'user' ? '#D4AF37' : '#64748B', marginBottom: '2px' }}>
                       {msg.role === 'user' ? 'あなた' : 'AI'}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: '1.5' }}>{msg.content}</div>
+                    <div style={{ fontSize: '15px', lineHeight: '1.6', color: '#E2E8F0' }}>{msg.content}</div>
                   </div>
                 ))}
                 {chatLoading ? <div style={{ fontSize: '12px', color: '#64748B' }}>解析中...</div> : null}
                 <div ref={chatEndRef} />
               </div>
             ) : null}
-            <input
-              type="text"
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' ? handleChatSubmit() : null}
-              placeholder="書類の内容について質問する..."
-              style={{ fontSize: '16px', background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '8px 12px', borderRadius: '6px', width: '100%', boxSizing: 'border-box', outline: 'none' }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder="書類の内容について質問する..."
+                rows={3}
+                style={{ fontSize: '16px', fontWeight: 400, background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '8px 12px', borderRadius: '6px', width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleChatSubmit}
+                  style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: '6px', padding: '6px 18px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}
+                >
+                  送信
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
