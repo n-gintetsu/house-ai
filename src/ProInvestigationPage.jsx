@@ -860,14 +860,23 @@ JSON形式:
                 {chatLoading ? <div style={{ fontSize: 11, color: '#475569' }}>分析中...</div> : null}
               </div>
             ) : null}
-            <input
-              type="text"
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' ? handleChatSend() : null}
-              placeholder="追加で質問する..."
-              style={{ fontSize: 16, background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '8px 12px', borderRadius: 6, width: '100%', boxSizing: 'border-box', outline: 'none' }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder="追加で質問する..."
+                rows={3}
+                style={{ fontSize: 16, fontWeight: 400, background: '#111827', border: '1px solid #1E293B', color: '#E2E8F0', padding: '8px 12px', borderRadius: 6, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleChatSend}
+                  style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 18px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                >
+                  送信
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
