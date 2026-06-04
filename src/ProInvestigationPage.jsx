@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
 
 function formatChatText(text) {
   return text
@@ -44,6 +45,39 @@ const MENU_ITEMS = [
   { key: 'zoning', label: '用途地域' },
   { key: 'risks', label: 'リスクまとめ' },
 ]
+
+function riskStyle(level) {
+  if (level === '高リスク') return { color: '#f87171', bg: 'rgba(248,113,113,0.13)' }
+  if (level === '要確認')   return { color: '#f87171', bg: 'rgba(248,113,113,0.13)' }
+  if (level === '中リスク') return { color: '#c9a84c', bg: 'rgba(201,168,76,0.13)' }
+  return { color: '#4ade80', bg: 'rgba(74,222,128,0.09)' }
+}
+
+function CircularScore({ score }) {
+  const r = 54
+  const circ = 2 * Math.PI * r
+  const dash = (score / 100) * circ
+  return (
+    <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto' }}>
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10" />
+        <circle
+          cx="70" cy="70" r={r}
+          fill="none"
+          stroke="#c9a84c"
+          strokeWidth="10"
+          strokeDasharray={`${dash} ${circ}`}
+          strokeLinecap="round"
+          transform="rotate(-90 70 70)"
+        />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: '#c9a84c', fontSize: 32, fontWeight: 500, lineHeight: 1 }}>{score}</span>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 400 }}>%</span>
+      </div>
+    </div>
+  )
+}
 
 export default function ProInvestigationPage() {
   const [screen, setScreen] = useState('input')
@@ -223,6 +257,19 @@ JSON形式:
     if (key === 'summary') {
       const s = r.summary || {}
       const riskColor = s.overall_risk === '低' ? '#22C55E' : s.overall_risk === '高' ? '#EF4444' : '#F97316'
+      const conf = r.meta ? (r.meta.confidence || 0) : 0
+      const radarCategories = [
+        { subject: '残置物',         value: r.remnants ? (r.remnants.confidence || 0) : 0 },
+        { subject: 'リフォーム費用', value: r.reform   ? (r.reform.confidence   || 0) : 0 },
+        { subject: '建物状態',       value: r.building ? (r.building.confidence || 0) : 0 },
+        { subject: '土地・接道',     value: r.land     ? (r.land.confidence     || 0) : 0 },
+        { subject: 'ハザード',       value: r.hazard   ? (r.hazard.confidence   || 0) : 0 },
+        { subject: '用途地域',       value: r.zoning   ? (r.zoning.confidence   || 0) : 0 },
+      ]
+      const heatmapRisks = radarCategories.map(c => ({
+        label: c.subject,
+        level: c.value >= 70 ? '低リスク' : c.value >= 50 ? '中リスク' : '要確認',
+      }))
       return (
         <div>
           <div style={{ fontSize: 18, fontWeight: 500, color: '#E2E8F0', marginBottom: 20 }}>総合評価</div>
@@ -240,6 +287,49 @@ JSON形式:
               ))}
             </div>
           ) : null}
+          <div style={{ marginTop: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '24px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 16 }}>総合信頼度</div>
+                <CircularScore score={conf} />
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '20px 10px' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textAlign: 'center' }}>総合評価レーダー</div>
+                <ResponsiveContainer width="100%" height={170}>
+                  <RadarChart data={radarCategories} margin={{ top: 4, right: 20, bottom: 4, left: 20 }}>
+                    <PolarGrid stroke="rgba(255,255,255,0.12)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 400 }} />
+                    <Radar dataKey="value" stroke="#c9a84c" fill="#c9a84c" fillOpacity={0.22} dot={false} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '20px 14px' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginBottom: 14, textAlign: 'center' }}>リスクヒートマップ</div>
+                {heatmapRisks.map(item => {
+                  const st = riskStyle(item.level)
+                  return (
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: st.bg, marginBottom: 6 }}>
+                      <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 13, fontWeight: 400 }}>{item.label}</span>
+                      <span style={{ color: st.color, fontSize: 12, fontWeight: 500 }}>{item.level}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10 }}>
+              {[
+                { num: photos.length + '枚', label: '写真' },
+                { num: pdfs.length + '件',   label: 'PDF' },
+                { num: '8',                  label: '調査項目' },
+                { num: conf + '%',           label: '総合信頼度' },
+              ].map(item => (
+                <div key={item.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '14px 6px', textAlign: 'center' }}>
+                  <div style={{ color: '#c9a84c', fontSize: 16, fontWeight: 500, marginBottom: 4 }}>{item.num}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 400 }}>{item.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )
     }
