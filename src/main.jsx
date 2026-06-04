@@ -30,6 +30,8 @@ import ProInvestigationPage from './ProInvestigationPage'
 import ProDocsPage from './ProDocsPage'
 import WorkspacePage from './WorkspacePage'
 import HouseRecordPage from './HouseRecordPage'
+import HousesListPage from './HousesListPage'
+import ClientsListPage from './ClientsListPage'
 
 function ExperienceApp() {
   return (
@@ -134,6 +136,10 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = ProDocsPage
 } else if (pathname === '/workspace' || pathname === '/workspace/') {
   Component = WorkspacePage
+} else if (pathname === '/houses' || pathname === '/houses/') {
+  Component = HousesListPage
+} else if (pathname === '/clients' || pathname === '/clients/') {
+  Component = ClientsListPage
 } else if (pathname.startsWith('/house/')) {
   Component = HouseRecordPage
 } else if (pathname.startsWith('/experiences')) {

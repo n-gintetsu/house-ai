@@ -1,0 +1,108 @@
+import { useState, useEffect } from 'react'
+import { supabase } from './supabaseClient'
+import WorkspaceNav from './WorkspaceNav'
+
+const glass = {
+  background: 'rgba(15,23,42,0.85)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 0 30px rgba(201,168,76,0.15)',
+}
+
+function formatDate(iso) {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+}
+
+export default function ClientsListPage() {
+  const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    supabase.from('client_records').select('*').order('updated_at', { ascending: false })
+      .then(({ data }) => { setClients(data || []); setLoading(false) })
+  }, [])
+
+  // クライアント側フィルタ: name を NFKC正規化して部分一致
+  const filtered = query.trim() ? clients.filter(c => {
+    const q = query.normalize('NFKC').toLowerCase()
+    return (c.name || '').normalize('NFKC').toLowerCase().includes(q)
+  }) : clients
+
+  const handleCardClick = (c) => {
+    if (c.last_workspace_id) {
+      window.location.href = `/workspace?id=${c.last_workspace_id}`
+    } else if (c.last_house_record_id) {
+      window.location.href = `/house/${c.last_house_record_id}`
+    }
+    // 両方なければ遷移しない
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
+
+      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box' }}>
+        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
+        <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>顧客カルテ一覧</div>
+        <WorkspaceNav current="/clients" />
+      </header>
+
+      <main style={{ paddingTop: 80, paddingBottom: 40, paddingLeft: 24, paddingRight: 24, maxWidth: 1200, margin: '0 auto', boxSizing: 'border-box' }}>
+
+        {/* 検索 */}
+        <div style={{ paddingTop: 16, paddingBottom: 20 }}>
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="顧客名で検索..."
+            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', padding: '10px 16px', borderRadius: 10, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
+          />
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 60 }}>
+            <span style={{ color: '#64748B', fontSize: 14, fontWeight: 400 }}>読み込み中...</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', paddingTop: 60 }}>
+            <div style={{ fontSize: 14, color: '#64748B', fontWeight: 400 }}>
+              {query ? '検索結果がありません。' : '顧客カルテがありません。'}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {filtered.map(c => {
+              const canNav = !!(c.last_workspace_id || c.last_house_record_id)
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => handleCardClick(c)}
+                  style={{ ...glass, borderRadius: 14, padding: 20, cursor: canNav ? 'pointer' : 'default' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>{c.name || '-'}</div>
+                    <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 500, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>
+                      {c.deal_count || 0}件
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                    {c.last_workspace_id ? (
+                      <span style={{ fontSize: 10, background: 'rgba(99,102,241,0.12)', color: '#818CF8', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 4, padding: '2px 7px', fontWeight: 400 }}>案件あり</span>
+                    ) : null}
+                    {c.last_house_record_id ? (
+                      <span style={{ fontSize: 10, background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 4, padding: '2px 7px', fontWeight: 400 }}>家カルテあり</span>
+                    ) : null}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>最終更新: {formatDate(c.updated_at)}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

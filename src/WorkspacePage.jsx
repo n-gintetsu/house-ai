@@ -6,6 +6,7 @@ import {
   Plus, ChevronLeft, Loader, Trash2
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
+import WorkspaceNav from './WorkspaceNav'
 
 const FILES = [
   { id: 1, icon: FileText,      name: '申込書',                    shared: ['顧客', '担当'] },
@@ -109,6 +110,7 @@ function ListView() {
         <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
         <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>House-AI Workspace</div>
+        <WorkspaceNav current="/workspace" />
         <div style={{ marginLeft: 'auto' }}>
           <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
             <Plus size={15} />
