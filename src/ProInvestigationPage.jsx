@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 function formatChatText(text) {
   return text
@@ -96,6 +97,7 @@ export default function ProInvestigationPage() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [armed, setArmed] = useState(false)
+  const [menuCollapsed, setMenuCollapsed] = useState(false)
 
   const photoInputRef = useRef(null)
   const pdfInputRef = useRef(null)
@@ -834,27 +836,36 @@ JSON形式:
               <div style={{ background: '#D4AF37', height: 4, width: `${r.meta ? r.meta.confidence : 0}%`, borderRadius: 2 }} />
             </div>
           </div>
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {MENU_ITEMS.map((item, i) => {
-              const conf = getConfidence(item.key)
-              return (
-                <div
-                  key={item.key}
-                  onClick={() => setActiveItem(i)}
-                  style={{ padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #0F172A', borderLeft: activeItem === i ? '2px solid #D4AF37' : '2px solid transparent', background: activeItem === i ? '#1E293B' : 'transparent', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <span style={{ fontSize: 13, color: '#E2E8F0' }}>{item.label}</span>
-                  {conf !== null ? <span style={{ fontSize: 11, color: '#475569' }}>{conf}%</span> : null}
-                </div>
-              )
-            })}
+          <div
+            onClick={() => setMenuCollapsed(prev => !prev)}
+            style={{ padding: '8px 16px', borderBottom: '1px solid #1E293B', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}
+          >
+            <span style={{ fontSize: 11, color: '#94A3B8' }}>調査カテゴリ</span>
+            {menuCollapsed ? <ChevronDown size={14} color="#D4AF37" /> : <ChevronUp size={14} color="#D4AF37" />}
           </div>
-          <div style={{ padding: 12, borderTop: '1px solid #1E293B' }}>
+          {menuCollapsed ? null : (
+            <div style={{ overflowY: 'auto' }}>
+              {MENU_ITEMS.map((item, i) => {
+                const conf = getConfidence(item.key)
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => setActiveItem(i)}
+                    style={{ padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #0F172A', borderLeft: activeItem === i ? '2px solid #D4AF37' : '2px solid transparent', background: activeItem === i ? '#1E293B' : 'transparent', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <span style={{ fontSize: 13, color: '#E2E8F0' }}>{item.label}</span>
+                    {conf !== null ? <span style={{ fontSize: 11, color: '#475569' }}>{conf}%</span> : null}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <div style={{ padding: 12, borderTop: '1px solid #1E293B', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {chatMessages.length > 0 ? (
-              <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 8 }}>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', marginBottom: 8 }}>
                 {chatMessages.map((msg, i) => (
                   <div key={i} style={{ marginBottom: 6, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
-                    <span style={{ display: 'inline-block', fontSize: 11, color: msg.role === 'user' ? '#CBD5E1' : '#94A3B8', background: msg.role === 'user' ? '#1E3A5F' : '#111827', borderRadius: 8, padding: '6px 10px', maxWidth: '90%', wordBreak: 'break-word' }}>{formatChatText(msg.content)}</span>
+                    <span style={{ display: 'inline-block', fontSize: 15, lineHeight: 1.6, color: msg.role === 'user' ? '#CBD5E1' : '#94A3B8', background: msg.role === 'user' ? '#1E3A5F' : '#111827', borderRadius: 8, padding: '6px 10px', maxWidth: '90%', wordBreak: 'break-word' }}>{formatChatText(msg.content)}</span>
                   </div>
                 ))}
                 {chatLoading ? <div style={{ fontSize: 11, color: '#475569' }}>分析中...</div> : null}
