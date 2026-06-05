@@ -1,20 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Bell, FileText, UserCheck, FileSignature, CreditCard, Map,
+  Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
   Plus, ChevronLeft, Loader, Trash2, Eye, Download
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
-
-const FILES = [
-  { id: 1, icon: FileText,      name: '申込書',                    shared: ['顧客', '担当'] },
-  { id: 2, icon: UserCheck,     name: '本人確認書類',              shared: ['担当'] },
-  { id: 3, icon: FileSignature, name: '重要事項説明書（ドラフト）', shared: ['顧客', '担当', '宅建士'] },
-  { id: 4, icon: CreditCard,    name: 'ローン事前審査書類',        shared: ['担当', '銀行'] },
-  { id: 5, icon: Map,           name: '物件図面',                  shared: ['顧客', '担当'] },
-]
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
@@ -23,7 +15,7 @@ const glass = {
 }
 
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
-const FILE_CATEGORIES = ['申込書', '本人確認書類', '重要事項説明書(ドラフト)', 'ローン事前審査書類', '物件図面', '司法書士', 'その他']
+const DOC_TYPE_CANDIDATES = ['申込書', '本人確認書類', '重要事項説明書', '契約書', 'ローン事前審査', '見積書', '請求書', '領収書', '物件図面', '現場写真', 'その他']
 
 // storage_path 用: 元ファイル名は一切使わず、ASCII安全なランダムキーを生成する
 // 元ファイル名（日本語可）は ws_files.file_name にのみ保存して表示用に使う
@@ -215,6 +207,10 @@ function CreateModal({ onClose, onCreated }) {
       if (wsErr) throw wsErr
       const labels = getRoadmapLabels(form.contract_type)
       await supabase.from('roadmap_steps').insert(labels.map((label, i) => ({ workspace_id: wsData.id, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手' })))
+      await supabase.from('ws_file_folders').insert([
+        { workspace_id: wsData.id, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
+        { workspace_id: wsData.id, role_label: '顧客', is_fixed: true, sort_order: 1 },
+      ])
       onCreated(wsData.id)
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
@@ -283,39 +279,24 @@ function DashboardView({ id }) {
   // 家カルテ昇格用
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
-  // ws_law_docs 可変カテゴリ用
-  const [lawDocs, setLawDocs] = useState([])
-  const [editingLawDocId, setEditingLawDocId] = useState(null)
-  const [lawDocEditVal, setLawDocEditVal] = useState('')
-  // ファイル共有用
-  const [wsFiles, setWsFiles] = useState([])
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState('')
-  const [uploadCategory, setUploadCategory] = useState('')
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
-  const fileInputRef = useRef(null)
 
   useEffect(() => {
     async function fetchAll() {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
-      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }, { data: lawDocsData }, { data: wsFilesData }] = await Promise.all([
+      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }] = await Promise.all([
         supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
         supabase.from('timeline_events').select('*').eq('workspace_id', id).order('event_date', { ascending: true }),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_schedule').select('*').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
-        supabase.from('ws_law_docs').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
-        supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
       ])
       setSteps(stepsData || [])
       setMembers(membersData || [])
       setTimeline(timelineData || [])
       setNotices(noticesData || [])
       setSchedule(scheduleData || [])
-      setLawDocs(lawDocsData || [])
-      setWsFiles(wsFilesData || [])
       setLoading(false)
     }
     fetchAll()
@@ -425,84 +406,6 @@ function DashboardView({ id }) {
   const handleDeleteNotice = async (noticeId) => {
     await supabase.from('ws_notices').delete().eq('id', noticeId)
     setNotices(prev => prev.filter(n => n.id !== noticeId))
-  }
-
-  // --- LAW DOCS ---
-  const handleAddLawDoc = async () => {
-    const maxOrder = lawDocs.length > 0 ? Math.max(...lawDocs.map(d => d.sort_order || 0)) : 0
-    try {
-      const { data, error } = await supabase.from('ws_law_docs').insert({
-        workspace_id: id, label: '司法書士', sort_order: maxOrder + 1
-      }).select().single()
-      if (error) throw error
-      setLawDocs(prev => [...prev, data])
-    } catch (e) { console.error('ws_law_docs insert error', e) }
-  }
-  const handleDeleteLawDoc = async (docId) => {
-    await supabase.from('ws_law_docs').delete().eq('id', docId)
-    setLawDocs(prev => prev.filter(d => d.id !== docId))
-    if (editingLawDocId === docId) setEditingLawDocId(null)
-  }
-  const handleSaveLawDocLabel = async (docId, newLabel) => {
-    const trimmed = (newLabel || '').trim()
-    if (!trimmed) { setEditingLawDocId(null); return }
-    try {
-      const { error } = await supabase.from('ws_law_docs').update({ label: trimmed }).eq('id', docId)
-      if (error) throw error
-      setLawDocs(prev => prev.map(d => d.id === docId ? { ...d, label: trimmed } : d))
-      setEditingLawDocId(null)
-    } catch (e) { console.error('ws_law_docs update error', e) }
-  }
-
-  // --- ファイル共有 ---
-  const handleFileUpload = async (file) => {
-    if (!file) return
-    const ext = (file.name.split('.').pop() || '').toLowerCase()
-    if (!ALLOWED_EXTS.includes(ext)) {
-      setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
-      return
-    }
-    setUploadError('')
-    setUploading(true)
-    try {
-      // storage_path は ASCII ランダムキーのみ。日本語ファイル名はパスに含めない
-      const safeExt = ALLOWED_EXTS.includes(ext) ? ext : extFromMime(file.type)
-      const path = makeSafeStoragePath(id, safeExt)
-      const { error: storageErr } = await supabase.storage.from('workspace-files').upload(path, file)
-      if (storageErr) throw storageErr
-      const { data: dbRow, error: dbErr } = await supabase.from('ws_files').insert({
-        workspace_id: id,
-        category: uploadCategory || null,
-        file_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        size_bytes: file.size,
-      }).select().single()
-      if (dbErr) throw dbErr
-      setWsFiles(prev => [dbRow, ...prev])
-    } catch (e) {
-      console.error('file upload error', e)
-      setUploadError('アップロードに失敗しました: ' + (e.message || ''))
-    } finally {
-      setUploading(false)
-    }
-  }
-  const handleDownloadWsFile = async (wf) => {
-    try {
-      const { data: blob, error } = await supabase.storage.from('workspace-files').download(wf.storage_path)
-      if (error) throw error
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url; a.download = wf.file_name; a.click()
-      URL.revokeObjectURL(url)
-    } catch (e) { console.error('download error', e) }
-  }
-  const handleDeleteWsFile = async (wf) => {
-    try {
-      await supabase.storage.from('workspace-files').remove([wf.storage_path])
-      await supabase.from('ws_files').delete().eq('id', wf.id)
-      setWsFiles(prev => prev.filter(f => f.id !== wf.id))
-    } catch (e) { console.error('file delete error', e) }
   }
 
   // --- 家カルテ昇格 ---
@@ -720,173 +623,8 @@ function DashboardView({ id }) {
       <main style={{ paddingTop: 80, paddingBottom: 140, paddingLeft: 20, paddingRight: 20, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
         <div className="ws-grid">
 
-          {/* 左カラム：ファイル + ファイル共有 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ ...glass, borderRadius: 14, padding: 20, height: 'fit-content' }}>
-            <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>FILE</div>
-            <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 16 }}>ファイル</div>
-            {FILES.map(file => {
-              const Icon = file.icon
-              return (
-                <div key={file.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ flexShrink: 0, marginTop: 2 }}><Icon size={15} color="#c9a84c" /></div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400, marginBottom: 5, lineHeight: 1.4 }}>{file.name}</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {file.shared.map(tag => <span key={tag} style={{ fontSize: 9, background: 'rgba(99,102,241,0.12)', color: '#818CF8', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 3, padding: '1px 5px', fontWeight: 400 }}>{tag}</span>)}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* ws_law_docs 可変カテゴリ群（司法書士など登記種別ごとに複数追加可） */}
-            {lawDocs.map(doc => (
-              <div key={doc.id} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, paddingBottom: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  {editingLawDocId === doc.id ? (
-                    <input
-                      type="text"
-                      value={lawDocEditVal}
-                      onChange={e => setLawDocEditVal(e.target.value)}
-                      onBlur={() => handleSaveLawDocLabel(doc.id, lawDocEditVal)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleSaveLawDocLabel(doc.id, lawDocEditVal)
-                        if (e.key === 'Escape') setEditingLawDocId(null)
-                      }}
-                      autoFocus
-                      style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#E2E8F0', padding: '2px 8px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', flex: 1, minWidth: 0 }}
-                    />
-                  ) : (
-                    <span
-                      onClick={() => { setEditingLawDocId(doc.id); setLawDocEditVal(doc.label || '司法書士') }}
-                      style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500, cursor: 'pointer', flex: 1, minWidth: 0 }}
-                      title="クリックで編集"
-                    >{doc.label || '司法書士'}</span>
-                  )}
-                  <button onClick={() => handleDeleteLawDoc(doc.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
-                    <Trash2 size={11} color="#475569" />
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingBottom: 6 }}>
-                  {['見積もり', '請求書', '領収書'].map(tag => (
-                    <span key={tag} style={{ fontSize: 9, background: 'rgba(99,102,241,0.12)', color: '#818CF8', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 3, padding: '1px 5px', fontWeight: 400 }}>{tag}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* + 司法書士を追加 */}
-            <button onClick={handleAddLawDoc} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 12 }}>
-              <Plus size={12} />
-              司法書士を追加
-            </button>
-          </div>
-
-          {/* ファイル共有パネル */}
-          <div style={{ ...glass, borderRadius: 14, padding: 20 }}>
-            <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>SHARED FILES</div>
-            <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>ファイル共有</div>
-
-            {/* 隠しファイルinput
-                修正: display:none だと programmatic click がブラウザにブロックされる場合があるため
-                      position:absolute + opacity:0 + width/height:0 に変更。
-                      label の htmlFor で接続する方式に切替（ref.current.click() 不要）。
-                      value='' を onChange 内でリセット → 同じファイルの再選択も発火可能。 */}
-            <input
-              id={`ws-file-input-${id}`}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
-              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
-              onChange={e => {
-                const f = e.target.files ? e.target.files[0] : null
-                e.target.value = ''
-                if (f) handleFileUpload(f)
-              }}
-            />
-
-            {/* カテゴリ選択 + アップロードラベル（label htmlFor でfile dialog を確実に開く） */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-              <select
-                value={uploadCategory}
-                onChange={e => setUploadCategory(e.target.value)}
-                style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', padding: '5px 8px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', flex: 1, appearance: 'none', WebkitAppearance: 'none' }}
-              >
-                <option value="" style={{ background: '#0F172A' }}>カテゴリなし</option>
-                {FILE_CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#0F172A' }}>{c}</option>)}
-              </select>
-              <label
-                htmlFor={`ws-file-input-${id}`}
-                onClick={e => { if (uploading) e.preventDefault() }}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: uploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
-              >
-                {uploading ? <Loader size={12} /> : <Plus size={12} />}
-                ファイルを追加
-              </label>
-            </div>
-
-            {/* ドラッグ&ドロップ枠 */}
-            <div
-              onDragOver={e => { e.preventDefault(); setIsDraggingOver(true) }}
-              onDragLeave={() => setIsDraggingOver(false)}
-              onDrop={e => {
-                e.preventDefault()
-                setIsDraggingOver(false)
-                const f = e.dataTransfer.files ? e.dataTransfer.files[0] : null
-                if (f) handleFileUpload(f)
-              }}
-              style={{ border: isDraggingOver ? '2px dashed #c9a84c' : '2px dashed rgba(201,168,76,0.3)', borderRadius: 8, padding: '12px 8px', textAlign: 'center', marginBottom: 12, background: isDraggingOver ? 'rgba(201,168,76,0.06)' : 'transparent', transition: 'all 0.15s' }}
-            >
-              <div style={{ fontSize: 11, color: '#475569', fontWeight: 400 }}>ここにドロップ</div>
-              <div style={{ fontSize: 10, color: '#334155', fontWeight: 400, marginTop: 2 }}>PDF / PNG / JPG / WEBP</div>
-            </div>
-
-            {/* エラー表示 */}
-            {uploadError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400, marginBottom: 8 }}>{uploadError}</div> : null}
-
-            {/* ファイル一覧 */}
-            {wsFiles.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>まだファイルがありません。</div>
-            ) : (
-              wsFiles.map((wf, idx) => {
-                const publicUrl = supabase.storage.from('workspace-files').getPublicUrl(wf.storage_path).data.publicUrl
-                const isImage = (wf.mime_type || '').startsWith('image/')
-                return (
-                  <div key={wf.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderBottom: idx < wsFiles.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                    {/* サムネイル or アイコン */}
-                    <div style={{ width: 36, height: 36, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {isImage ? (
-                        <img src={publicUrl} alt="" style={{ width: 36, height: 36, objectFit: 'cover' }} />
-                      ) : (
-                        <FileText size={18} color="#c9a84c" />
-                      )}
-                    </div>
-                    {/* ファイル情報 */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{wf.file_name || ''}</div>
-                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>{formatFileSize(wf.size_bytes)} · {formatDate(wf.created_at)}</div>
-                      {wf.category ? (
-                        <span style={{ fontSize: 9, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 3, padding: '1px 5px', fontWeight: 400, display: 'inline-block', marginTop: 3 }}>{wf.category}</span>
-                      ) : null}
-                    </div>
-                    {/* アクション */}
-                    <div style={{ display: 'flex', gap: 3, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
-                      <button onClick={() => window.open(publicUrl, '_blank')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
-                        <Eye size={13} color="#64748B" />
-                      </button>
-                      <button onClick={() => handleDownloadWsFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
-                        <Download size={13} color="#64748B" />
-                      </button>
-                      <button onClick={() => handleDeleteWsFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
-                        <Trash2 size={13} color="#475569" />
-                      </button>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-          </div>{/* 左カラム wrapper 閉じ */}
+          {/* 左カラム：役割フォルダ */}
+          <FileFolderPanel workspaceId={id} />
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1167,6 +905,417 @@ function DashboardView({ id }) {
         </button>
       )}
 
+    </div>
+  )
+}
+
+// ===================== 役割フォルダパネル =====================
+
+function FileFolderPanel({ workspaceId }) {
+  const [folders, setFolders] = useState([])
+  const [files, setFiles] = useState([])
+  const [docTypeFilter, setDocTypeFilter] = useState('all')
+  const [loadingFolders, setLoadingFolders] = useState(true)
+  const [uploadingFolderId, setUploadingFolderId] = useState(null)
+  const [uploadError, setUploadError] = useState('')
+  const [editingFolderId, setEditingFolderId] = useState(null)
+  const [folderEditVal, setFolderEditVal] = useState('')
+  const [editingFileDocId, setEditingFileDocId] = useState(null)
+  const [fileDocTypeVal, setFileDocTypeVal] = useState('')
+  const [addingFolder, setAddingFolder] = useState(false)
+  const [newFolderLabel, setNewFolderLabel] = useState('')
+  const [dragOverFolderId, setDragOverFolderId] = useState(null)
+
+  useEffect(() => {
+    loadAll()
+  }, [workspaceId])
+
+  async function loadAll() {
+    setLoadingFolders(true)
+    try {
+      const { data: foldersData } = await supabase
+        .from('ws_file_folders')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+
+      let finalFolders = foldersData || []
+
+      if (finalFolders.length === 0) {
+        await supabase.from('ws_file_folders').insert([
+          { workspace_id: workspaceId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
+          { workspace_id: workspaceId, role_label: '顧客', is_fixed: true, sort_order: 1 },
+        ])
+        const { data: reloaded } = await supabase
+          .from('ws_file_folders')
+          .select('*')
+          .eq('workspace_id', workspaceId)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true })
+        finalFolders = reloaded || []
+      }
+
+      setFolders(finalFolders)
+
+      const { data: filesData } = await supabase
+        .from('ws_files')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false })
+      setFiles(filesData || [])
+    } catch (e) {
+      console.error('FileFolderPanel loadAll error', e)
+    } finally {
+      setLoadingFolders(false)
+    }
+  }
+
+  async function handleUpload(folderId, file) {
+    if (!file) return
+    const ext = (file.name.split('.').pop() || '').toLowerCase()
+    if (!ALLOWED_EXTS.includes(ext)) {
+      setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
+      return
+    }
+    setUploadError('')
+    setUploadingFolderId(folderId)
+    try {
+      const path = makeSafeStoragePath(workspaceId, ext)
+      const { error: storageErr } = await supabase.storage.from('workspace-files').upload(path, file)
+      if (storageErr) throw storageErr
+      const { data: dbRow, error: dbErr } = await supabase.from('ws_files').insert({
+        workspace_id: workspaceId,
+        folder_id: folderId,
+        file_name: file.name,
+        storage_path: path,
+        mime_type: file.type,
+        size_bytes: file.size,
+        doc_type: null,
+        uploaded_by: null,
+      }).select().single()
+      if (dbErr) throw dbErr
+      setFiles(prev => [dbRow, ...prev])
+    } catch (e) {
+      console.error('upload error', e)
+      setUploadError('アップロードに失敗しました: ' + (e.message || ''))
+    } finally {
+      setUploadingFolderId(null)
+    }
+  }
+
+  async function handleDeleteFile(file) {
+    try {
+      await supabase.storage.from('workspace-files').remove([file.storage_path])
+      await supabase.from('ws_files').delete().eq('id', file.id)
+      setFiles(prev => prev.filter(f => f.id !== file.id))
+    } catch (e) {
+      console.error('file delete error', e)
+    }
+  }
+
+  async function handleDownloadFile(file) {
+    try {
+      const { data: blob, error } = await supabase.storage.from('workspace-files').download(file.storage_path)
+      if (error) throw error
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = file.file_name; a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('download error', e)
+    }
+  }
+
+  async function handleUpdateDocType(fileId, newDocType) {
+    try {
+      const val = (newDocType || '').trim() || null
+      await supabase.from('ws_files').update({ doc_type: val }).eq('id', fileId)
+      setFiles(prev => prev.map(f => f.id === fileId ? { ...f, doc_type: val } : f))
+      setEditingFileDocId(null)
+    } catch (e) {
+      console.error('doc_type update error', e)
+    }
+  }
+
+  async function handleSaveFolderLabel(folderId, newLabel) {
+    const trimmed = (newLabel || '').trim()
+    if (!trimmed) { setEditingFolderId(null); return }
+    try {
+      await supabase.from('ws_file_folders').update({ role_label: trimmed }).eq('id', folderId)
+      setFolders(prev => prev.map(f => f.id === folderId ? { ...f, role_label: trimmed } : f))
+      setEditingFolderId(null)
+    } catch (e) {
+      console.error('folder label update error', e)
+    }
+  }
+
+  async function handleDeleteFolder(folder) {
+    try {
+      const folderFiles = files.filter(f => f.folder_id === folder.id)
+      if (folderFiles.length > 0) {
+        const paths = folderFiles.map(f => f.storage_path)
+        await supabase.storage.from('workspace-files').remove(paths)
+        await supabase.from('ws_files').delete().eq('folder_id', folder.id)
+        setFiles(prev => prev.filter(f => f.folder_id !== folder.id))
+      }
+      await supabase.from('ws_file_folders').delete().eq('id', folder.id)
+      setFolders(prev => prev.filter(f => f.id !== folder.id))
+    } catch (e) {
+      console.error('folder delete error', e)
+    }
+  }
+
+  async function handleAddFolder() {
+    const trimmed = (newFolderLabel || '').trim()
+    if (!trimmed) return
+    try {
+      const maxOrder = folders.length > 0 ? Math.max(...folders.map(f => f.sort_order || 0)) : 1
+      const { data, error } = await supabase.from('ws_file_folders').insert({
+        workspace_id: workspaceId,
+        role_label: trimmed,
+        is_fixed: false,
+        sort_order: maxOrder + 1,
+      }).select().single()
+      if (error) throw error
+      setFolders(prev => [...prev, data])
+      setNewFolderLabel('')
+      setAddingFolder(false)
+    } catch (e) {
+      console.error('folder add error', e)
+    }
+  }
+
+  const allDocTypes = [...new Set(files.filter(f => f.doc_type).map(f => f.doc_type))]
+
+  function getFolderFiles(folderId) {
+    const folderFiles = files.filter(f => f.folder_id === folderId)
+    if (docTypeFilter === 'all') return folderFiles
+    return folderFiles.filter(f => f.doc_type === docTypeFilter)
+  }
+
+  if (loadingFolders) {
+    return (
+      <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Loader size={16} color="#c9a84c" />
+        <span style={{ fontSize: 12, color: '#64748B', fontWeight: 400 }}>読み込み中...</span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* ヘッダー + 種別フィルタ */}
+      <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 14, padding: '14px 18px' }}>
+        <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 4 }}>FILES</div>
+        <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 12 }}>役割フォルダ</div>
+        <select
+          value={docTypeFilter}
+          onChange={e => setDocTypeFilter(e.target.value)}
+          style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', padding: '6px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', width: '100%', appearance: 'none', WebkitAppearance: 'none', boxSizing: 'border-box' }}
+        >
+          <option value="all" style={{ background: '#0F172A' }}>すべての種別</option>
+          {allDocTypes.map(dt => (
+            <option key={dt} value={dt} style={{ background: '#0F172A' }}>{dt}</option>
+          ))}
+        </select>
+        {uploadError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400, marginTop: 8 }}>{uploadError}</div> : null}
+      </div>
+
+      {/* フォルダ一覧 */}
+      {folders.map(folder => {
+        const folderFiles = getFolderFiles(folder.id)
+        const isUploading = uploadingFolderId === folder.id
+        const inputId = `ws-folder-input-${folder.id}`
+
+        return (
+          <div
+            key={folder.id}
+            style={{
+              background: dragOverFolderId === folder.id ? 'rgba(201,168,76,0.06)' : 'rgba(15,23,42,0.85)',
+              border: dragOverFolderId === folder.id ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 0 30px rgba(201,168,76,0.15)',
+              borderRadius: 12,
+              padding: 16,
+              transition: 'all 0.15s',
+            }}
+            onDragOver={e => { e.preventDefault(); setDragOverFolderId(folder.id) }}
+            onDragLeave={() => setDragOverFolderId(null)}
+            onDrop={e => {
+              e.preventDefault()
+              setDragOverFolderId(null)
+              const f = e.dataTransfer.files ? e.dataTransfer.files[0] : null
+              if (f) handleUpload(folder.id, f)
+            }}
+          >
+            {/* フォルダヘッダー */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: folderFiles.length > 0 ? 12 : 0 }}>
+              {!folder.is_fixed && editingFolderId === folder.id ? (
+                <input
+                  type="text"
+                  value={folderEditVal}
+                  onChange={e => setFolderEditVal(e.target.value)}
+                  onBlur={() => handleSaveFolderLabel(folder.id, folderEditVal)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSaveFolderLabel(folder.id, folderEditVal)
+                    if (e.key === 'Escape') setEditingFolderId(null)
+                  }}
+                  autoFocus
+                  style={{ fontSize: 16, fontWeight: 500, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#c9a84c', padding: '2px 8px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', flex: 1, minWidth: 0, boxSizing: 'border-box' }}
+                />
+              ) : (
+                <span
+                  onClick={() => {
+                    if (!folder.is_fixed) {
+                      setEditingFolderId(folder.id)
+                      setFolderEditVal(folder.role_label || '')
+                    }
+                  }}
+                  style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: folder.is_fixed ? 'default' : 'pointer' }}
+                  title={folder.is_fixed ? undefined : 'クリックで編集'}
+                >{folder.role_label || ''}</span>
+              )}
+              {!folder.is_fixed ? (
+                <button
+                  onClick={() => handleDeleteFolder(folder)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
+                  title="フォルダを削除"
+                >
+                  <Trash2 size={12} color="#475569" />
+                </button>
+              ) : null}
+              <input
+                id={inputId}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
+                onChange={e => {
+                  const f = e.target.files ? e.target.files[0] : null
+                  e.target.value = ''
+                  if (f) handleUpload(folder.id, f)
+                }}
+              />
+              <label
+                htmlFor={inputId}
+                onClick={e => { if (isUploading) e.preventDefault() }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
+              >
+                {isUploading ? <Loader size={11} /> : <Plus size={11} />}
+                アップロード
+              </label>
+            </div>
+
+            {/* ファイル0件 */}
+            {folderFiles.length === 0 ? (
+              <div style={{ fontSize: 11, color: '#334155', fontWeight: 400, textAlign: 'center', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 10 }}>
+                {docTypeFilter === 'all' ? 'ファイルがありません' : 'この種別のファイルなし'}
+              </div>
+            ) : (
+              folderFiles.map((wf, idx) => {
+                const publicUrl = supabase.storage.from('workspace-files').getPublicUrl(wf.storage_path).data.publicUrl
+                const isImage = (wf.mime_type || '').startsWith('image/')
+                const isEditingDocType = editingFileDocId === wf.id
+                const datalistId = `doc-type-list-${wf.id}`
+
+                return (
+                  <div key={wf.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: idx === folderFiles.length - 1 ? 'none' : 'none' }}>
+                    {/* サムネ or PDF アイコン */}
+                    <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {isImage ? (
+                        <img src={publicUrl} alt="" style={{ width: 34, height: 34, objectFit: 'cover' }} />
+                      ) : (
+                        <FileText size={16} color="#c9a84c" />
+                      )}
+                    </div>
+                    {/* ファイル情報 */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{wf.file_name || ''}</div>
+                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginBottom: 4 }}>{formatFileSize(wf.size_bytes)}</div>
+                      {/* 種別タグ */}
+                      {isEditingDocType ? (
+                        <div>
+                          <datalist id={datalistId}>
+                            {DOC_TYPE_CANDIDATES.map(c => <option key={c} value={c} />)}
+                          </datalist>
+                          <input
+                            type="text"
+                            value={fileDocTypeVal}
+                            list={datalistId}
+                            onChange={e => setFileDocTypeVal(e.target.value)}
+                            onBlur={() => handleUpdateDocType(wf.id, fileDocTypeVal)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleUpdateDocType(wf.id, fileDocTypeVal)
+                              if (e.key === 'Escape') setEditingFileDocId(null)
+                            }}
+                            autoFocus
+                            placeholder="種別を入力"
+                            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.4)', color: '#E2E8F0', padding: '2px 6px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      ) : (
+                        <span
+                          onClick={() => { setEditingFileDocId(wf.id); setFileDocTypeVal(wf.doc_type || '') }}
+                          style={{ fontSize: 9, background: wf.doc_type ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)', color: wf.doc_type ? '#c9a84c' : '#475569', border: wf.doc_type ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '1px 5px', fontWeight: 400, cursor: 'pointer', display: 'inline-block' }}
+                        >{wf.doc_type || '種別を設定'}</span>
+                      )}
+                      {wf.uploaded_by ? (
+                        <div style={{ fontSize: 9, color: '#334155', fontWeight: 400, marginTop: 2 }}>{wf.uploaded_by}</div>
+                      ) : null}
+                    </div>
+                    {/* アクション */}
+                    <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
+                      <button onClick={() => window.open(publicUrl, '_blank')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
+                        <Eye size={12} color="#64748B" />
+                      </button>
+                      <button onClick={() => handleDownloadFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
+                        <Download size={12} color="#64748B" />
+                      </button>
+                      <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
+                        <Trash2 size={12} color="#475569" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )
+      })}
+
+      {/* フォルダ追加 */}
+      {addingFolder ? (
+        <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="text"
+            value={newFolderLabel}
+            onChange={e => setNewFolderLabel(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleAddFolder()
+              if (e.key === 'Escape') { setAddingFolder(false); setNewFolderLabel('') }
+            }}
+            autoFocus
+            placeholder="役割名（例：司法書士）"
+            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', flex: 1, boxSizing: 'border-box' }}
+          />
+          <button
+            onClick={handleAddFolder}
+            style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+          >追加</button>
+          <button
+            onClick={() => { setAddingFolder(false); setNewFolderLabel('') }}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
+          >キャンセル</button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setAddingFolder(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box' }}
+        >
+          <Plus size={12} />
+          役割（フォルダ）を追加
+        </button>
+      )}
     </div>
   )
 }
