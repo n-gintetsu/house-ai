@@ -1158,6 +1158,7 @@ function FileFolderPanel({ workspaceId }) {
                   onChange={e => setFolderEditVal(e.target.value)}
                   onBlur={() => handleSaveFolderLabel(folder.id, folderEditVal)}
                   onKeyDown={e => {
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) return
                     if (e.key === 'Enter') handleSaveFolderLabel(folder.id, folderEditVal)
                     if (e.key === 'Escape') setEditingFolderId(null)
                   }}
@@ -1291,6 +1292,7 @@ function FileFolderPanel({ workspaceId }) {
             value={newFolderLabel}
             onChange={e => setNewFolderLabel(e.target.value)}
             onKeyDown={e => {
+              if (e.nativeEvent.isComposing || e.keyCode === 229) return
               if (e.key === 'Enter') handleAddFolder()
               if (e.key === 'Escape') { setAddingFolder(false); setNewFolderLabel('') }
             }}
