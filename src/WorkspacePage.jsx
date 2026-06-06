@@ -128,8 +128,26 @@ function ListView() {
   const [showCreate, setShowCreate] = useState(false)
 
   useEffect(() => {
-    supabase.from('workspaces').select('*').order('updated_at', { ascending: false })
-      .then(({ data }) => { setWorkspaces(data || []); setLoading(false) })
+    async function fetchFiltered() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setWorkspaces([]); setLoading(false); return }
+      const userId = session.user.id
+      const { data: memberships } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+      const ids = (memberships || []).map(m => m.workspace_id)
+      if (ids.length === 0) { setWorkspaces([]); setLoading(false); return }
+      const { data: wsData } = await supabase
+        .from('workspaces')
+        .select('*')
+        .in('id', ids)
+        .order('updated_at', { ascending: false })
+      setWorkspaces(wsData || [])
+      setLoading(false)
+    }
+    fetchFiltered()
   }, [])
 
   return (
@@ -154,7 +172,7 @@ function ListView() {
           </div>
         ) : workspaces.length === 0 ? (
           <div style={{ textAlign: 'center', paddingTop: 80 }}>
-            <div style={{ fontSize: 14, color: '#64748B', fontWeight: 400, marginBottom: 24 }}>案件がありません。新規案件を作成してください。</div>
+            <div style={{ fontSize: 14, color: '#64748B', fontWeight: 400, marginBottom: 24 }}>表示できる案件がありません。</div>
             <button onClick={() => setShowCreate(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
               <Plus size={16} />新規案件作成
             </button>
@@ -225,6 +243,18 @@ function CreateModal({ onClose, onCreated }) {
         { workspace_id: wsData.id, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
         { workspace_id: wsData.id, role_label: '顧客', is_fixed: true, sort_order: 1 },
       ])
+      // 作成者を Owner として workspace_members に登録（unique衝突は握りつぶす）
+      const { data: { session: createSession } } = await supabase.auth.getSession()
+      if (createSession) {
+        await supabase.from('workspace_members').insert({
+          workspace_id: wsData.id,
+          user_id: createSession.user.id,
+          email: createSession.user.email || '',
+          role: 'Owner',
+          status: 'active',
+          invited_by: createSession.user.id,
+        }).select().maybeSingle()
+      }
       onCreated(wsData.id)
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
@@ -617,6 +647,19 @@ function DashboardView({ id }) {
         <div style={{ fontSize: 15, color: '#94A3B8', fontWeight: 400 }}>案件が見つかりません。</div>
         <button onClick={() => { window.location.href = '/workspace' }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}>
           <ChevronLeft size={14} />一覧に戻る
+        </button>
+      </div>
+    )
+  }
+
+  // ローディング完了後: ログイン済みだがこの案件のメンバーでない → アクセス拒否
+  // currentUserId !== null はセッション解決済みを意味する（WorkspaceAuthGuardで未ログインは弾かれている）
+  if (currentUserId !== null && currentRole === null) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
+        <div style={{ fontSize: 15, color: '#94A3B8', fontWeight: 400 }}>この案件へのアクセス権がありません。</div>
+        <button onClick={() => { window.location.href = '/workspace' }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}>
+          <ChevronLeft size={14} />案件一覧へ戻る
         </button>
       </div>
     )
