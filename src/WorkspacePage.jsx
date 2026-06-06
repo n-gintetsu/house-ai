@@ -1441,8 +1441,11 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     const allFolderFiles = files.filter(f => f.folder_id === folderId)
     const filtered = docTypeFilter === 'all' ? allFolderFiles : allFolderFiles.filter(f => f.doc_type === docTypeFilter)
     if (isFullAccess) return filtered
-    // 業者ロール: 自分の memberId に対する grant があるファイルのみ
+    // 業者ロール: 自分のフォルダなら全ファイル、それ以外は自分に grant されたファイルのみ
     if (!myMemberId) return []
+    const folderObj = folders.find(f => f.id === folderId)
+    const isMyFolder = folderObj ? folderObj.owner_member_id === myMemberId : false
+    if (isMyFolder) return filtered
     return filtered.filter(f => fileGrants.some(g => g.file_id === f.id && g.member_id === myMemberId))
   }
 
@@ -1478,6 +1481,10 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       {/* フォルダ一覧 */}
       {folders.map(folder => {
         const folderFiles = getFolderFiles(folder.id)
+
+        // 業者ロール: 自分のフォルダ または 表示可能ファイルがあるフォルダのみ描画
+        if (!isFullAccess && (myMemberId === null || folder.owner_member_id !== myMemberId) && folderFiles.length === 0) return null
+
         const isUploading = uploadingFolderId === folder.id
         const inputId = `ws-folder-input-${folder.id}`
 
@@ -1551,7 +1558,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                   if (f) handleUpload(folder.id, f)
                 }}
               />
-              {fpCanAdd ? (
+              {isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId) ? (
                 <label
                   htmlFor={inputId}
                   onClick={e => { if (isUploading) e.preventDefault() }}
