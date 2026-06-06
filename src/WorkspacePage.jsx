@@ -37,7 +37,7 @@ function formatFileSize(bytes) {
 }
 
 const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン']
-const ROLE_OPTIONS = ['顧客', '担当', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
+const ROLE_OPTIONS = ['顧客', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
 const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
 const PERMISSION_LABEL = {
   Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: '顧客',
