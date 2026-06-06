@@ -1377,7 +1377,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   function nameForUser(userId) {
     const m = (workspaceMembers || []).find(wm => wm.user_id === userId)
     if (!m) return '不明'
-    const dn = (m.profiles && m.profiles.display_name) || ''
+    const dn = (m.profiles && m.profiles.display_name) || m.display_name || ''
     if (dn) return dn
     const em = m.email || ''
     return em.split('@')[0] || '不明'
