@@ -1389,38 +1389,39 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     return action || ''
   }
 
-  async function handleViewFile(file, url) {
-    window.open(url, '_blank')
-    try {
-      await supabase.from('access_logs').insert({
-        workspace_id: workspaceId,
-        user_id: currentUserId || null,
-        file_id: file.id,
-        action: 'view',
-      })
-    } catch (e) {
-      console.error('access_log view error', e)
+  async function getSignedFileUrl(fileId, action) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = (session && session.access_token) || ''
+    const res = await fetch('/api/sign-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ fileId: fileId, action: action }),
+    })
+    if (!res.ok) {
+      if (res.status === 403) alert('このファイルへのアクセス権限がありません')
+      else if (res.status === 401) alert('セッションが切れました。再度ログインしてください')
+      else alert('ファイルの取得に失敗しました')
+      return null
     }
+    return (await res.json()).url
+  }
+
+  async function handleViewFile(file) {
+    const url = await getSignedFileUrl(file.id, 'view')
+    if (url) window.open(url, '_blank')
   }
 
   async function handleDownloadFile(file) {
     try {
-      const { data: blob, error } = await supabase.storage.from('workspace-files').download(file.storage_path)
-      if (error) throw error
-      const url = URL.createObjectURL(blob)
+      const url = await getSignedFileUrl(file.id, 'download')
+      if (!url) return
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('fetch failed')
+      const blob = await res.blob()
+      const objUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url; a.download = file.file_name; a.click()
-      URL.revokeObjectURL(url)
-      try {
-        await supabase.from('access_logs').insert({
-          workspace_id: workspaceId,
-          user_id: currentUserId || null,
-          file_id: file.id,
-          action: 'download',
-        })
-      } catch (le) {
-        console.error('access_log download error', le)
-      }
+      a.href = objUrl; a.download = file.file_name; a.click()
+      URL.revokeObjectURL(objUrl)
     } catch (e) {
       console.error('download error', e)
     }
@@ -1707,7 +1708,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     </div>
                     {/* アクション */}
                     <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
-                      <button onClick={() => handleViewFile(wf, publicUrl)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
+                      <button onClick={() => handleViewFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
                         <Eye size={12} color="#64748B" />
                       </button>
                       <button onClick={() => handleDownloadFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
