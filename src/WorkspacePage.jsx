@@ -38,7 +38,12 @@ function formatFileSize(bytes) {
 
 const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン']
 const ROLE_OPTIONS = ['顧客', '担当', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
-const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Member', 'Guest']
+const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
+const PERMISSION_LABEL = {
+  Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: '顧客',
+  JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
+  Member: 'Member',
+}
 const STEP_STATES = ['未着手', '進行中', '承認待ち', '差戻し', '完了']
 
 const ROADMAP_TEMPLATES = {
@@ -93,9 +98,14 @@ function noticeStyle(level) {
 }
 
 function permissionStyle(p) {
-  if (p === 'Owner')   return { bg: 'rgba(201,168,76,0.14)',  color: '#c9a84c',  border: '1px solid rgba(201,168,76,0.25)' }
-  if (p === 'Manager') return { bg: 'rgba(59,130,246,0.14)',  color: '#60A5FA',  border: '1px solid rgba(59,130,246,0.25)' }
-  if (p === 'Guest')   return { bg: 'rgba(99,102,241,0.14)', color: '#818CF8',  border: '1px solid rgba(99,102,241,0.25)' }
+  if (p === 'Owner')             return { bg: 'rgba(201,168,76,0.14)',  color: '#c9a84c',  border: '1px solid rgba(201,168,76,0.25)' }
+  if (p === 'Manager')           return { bg: 'rgba(59,130,246,0.14)',  color: '#60A5FA',  border: '1px solid rgba(59,130,246,0.25)' }
+  if (p === 'Staff')             return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8',  border: '1px solid rgba(100,116,139,0.25)' }
+  if (p === 'Customer')          return { bg: 'rgba(45,212,191,0.12)',  color: '#2dd4bf',  border: '1px solid rgba(45,212,191,0.25)' }
+  if (p === 'JudicialScrivener') return { bg: 'rgba(139,92,246,0.12)',  color: '#a78bfa',  border: '1px solid rgba(139,92,246,0.25)' }
+  if (p === 'Bank')              return { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8',  border: '1px solid rgba(56,189,248,0.25)' }
+  if (p === 'ReformCompany')     return { bg: 'rgba(52,211,153,0.12)',  color: '#34d399',  border: '1px solid rgba(52,211,153,0.25)' }
+  if (p === 'Guest')             return { bg: 'rgba(99,102,241,0.14)',  color: '#818CF8',  border: '1px solid rgba(99,102,241,0.25)' }
   return { bg: 'rgba(255,255,255,0.07)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
 }
 
@@ -264,7 +274,7 @@ function DashboardView({ id }) {
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
   const [showMemberForm, setShowMemberForm] = useState(false)
-  const [memberForm, setMemberForm] = useState({ name: '', role_label: '顧客', permission: 'Member' })
+  const [memberForm, setMemberForm] = useState({ name: '', role_label: '顧客', permission: 'Staff' })
   const [showTimelineForm, setShowTimelineForm] = useState(false)
   const [timelineForm, setTimelineForm] = useState({ event_date: '', label: '' })
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -279,12 +289,25 @@ function DashboardView({ id }) {
   // 家カルテ昇格用
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
+  // ログイン中ユーザーのこの案件でのロール
+  const [currentRole, setCurrentRole] = useState(null)
 
   useEffect(() => {
     async function fetchAll() {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
+      // ログイン中ユーザーのこの案件でのロールを取得
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: wmData } = await supabase.from('workspace_members')
+          .select('role')
+          .eq('workspace_id', id)
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .maybeSingle()
+        setCurrentRole(wmData ? wmData.role : null)
+      }
       const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }] = await Promise.all([
         supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
@@ -518,6 +541,11 @@ function DashboardView({ id }) {
   const ws = workspace
   const lastDoneIdx = steps.reduce((acc, s, i) => s.state === '完了' ? i : acc, -1)
 
+  // UXガード変数
+  const canDel    = currentRole === 'Owner' || currentRole === 'Manager'
+  const canAdd    = currentRole !== null
+  const canManage = canDel
+
   // ステータスに応じたアクセント色（チップ色分け用）
   const statusAccent = ws.status === '完了' ? '#D4AF37' : ws.status === '進行中' ? '#38bdf8' : '#f87171'
   const statusBorderRgba = ws.status === '完了' ? 'rgba(212,175,55,0.3)' : ws.status === '進行中' ? 'rgba(56,189,248,0.3)' : 'rgba(248,113,113,0.3)'
@@ -587,23 +615,32 @@ function DashboardView({ id }) {
           </div>
           <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{ws.progress || 0}%</span>
         </div>
-        {/* 家カルテ保存ボタン */}
-        {ws.promoted_at ? (
-          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-            <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
-              {promoting ? <Loader size={11} /> : null}
-              家カルテに上書き保存
-            </button>
-            <button onClick={() => { window.location.href = `/house/${ws.house_record_id}` }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
-              家カルテを開く
-            </button>
+        {/* currentRole バッジ */}
+        {currentRole ? (
+          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 4, padding: '2px 8px', flexShrink: 0 }}>
+            <span style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>あなた: </span>
+            <span style={{ fontSize: 9, color: '#c9a84c', fontWeight: 500 }}>{PERMISSION_LABEL[currentRole] || currentRole}</span>
           </div>
-        ) : (
-          <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
-            {promoting ? <Loader size={11} /> : null}
-            家カルテに保存して完了
-          </button>
-        )}
+        ) : null}
+        {/* 家カルテ保存ボタン（Owner/Manager のみ） */}
+        {canManage ? (
+          ws.promoted_at ? (
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
+                {promoting ? <Loader size={11} /> : null}
+                家カルテに上書き保存
+              </button>
+              <button onClick={() => { window.location.href = `/house/${ws.house_record_id}` }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                家カルテを開く
+              </button>
+            </div>
+          ) : (
+            <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+              {promoting ? <Loader size={11} /> : null}
+              家カルテに保存して完了
+            </button>
+          )
+        ) : null}
         <div style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
           <Bell size={18} color="#94A3B8" />
           {notices.length > 0 ? (
@@ -624,7 +661,7 @@ function DashboardView({ id }) {
         <div className="ws-grid">
 
           {/* 左カラム：役割フォルダ */}
-          <FileFolderPanel workspaceId={id} />
+          <FileFolderPanel workspaceId={id} currentRole={currentRole} />
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -643,8 +680,8 @@ function DashboardView({ id }) {
                     return (
                       <div key={step.id || idx} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                         <div
-                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                          onClick={() => setActiveStepPopover(activeStepPopover === step.id ? null : step.id)}
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: canManage ? 'pointer' : 'default' }}
+                          onClick={canManage ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
                         >
                           {dotType === 'done' ? (
                             <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -712,9 +749,11 @@ function DashboardView({ id }) {
                       <span style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500, marginRight: 10 }}>{formatEventDate(item.event_date)}</span>
                       <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400 }}>{item.label || ''}</span>
                     </div>
-                    <button onClick={() => handleDeleteTimeline(item.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 1 }}>
-                      <Trash2 size={12} color="#475569" />
-                    </button>
+                    {canDel ? (
+                      <button onClick={() => handleDeleteTimeline(item.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 1 }}>
+                        <Trash2 size={12} color="#475569" />
+                      </button>
+                    ) : null}
                   </div>
                 ))
               )}
@@ -732,7 +771,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setShowTimelineForm(true)} style={addBtn}><Plus size={12} />記録を追加</button>
+                canAdd ? <button onClick={() => setShowTimelineForm(true)} style={addBtn}><Plus size={12} />記録を追加</button> : null
               )}
             </div>
 
@@ -754,9 +793,11 @@ function DashboardView({ id }) {
                     <div key={n.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < notices.length - 1 ? 8 : 0 }}>
                       <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
                       <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.message || ''}</span>
-                      <button onClick={() => handleDeleteNotice(n.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
-                        <Trash2 size={11} color="#475569" />
-                      </button>
+                      {canDel ? (
+                        <button onClick={() => handleDeleteNotice(n.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
+                          <Trash2 size={11} color="#475569" />
+                        </button>
+                      ) : null}
                     </div>
                   )
                 })
@@ -776,7 +817,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setShowNoticeForm(true)} style={addBtn}><Plus size={12} />通知を追加</button>
+                canAdd ? <button onClick={() => setShowNoticeForm(true)} style={addBtn}><Plus size={12} />通知を追加</button> : null
               )}
             </div>
 
@@ -799,10 +840,12 @@ function DashboardView({ id }) {
                         <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{m.role_label || ''}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{m.permission || 'Member'}</span>
-                        <button onClick={() => handleDeleteMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
-                          <Trash2 size={11} color="#475569" />
-                        </button>
+                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[m.permission] || m.permission || 'Member'}</span>
+                        {canDel ? (
+                          <button onClick={() => handleDeleteMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
+                            <Trash2 size={11} color="#475569" />
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   )
@@ -815,16 +858,16 @@ function DashboardView({ id }) {
                     {ROLE_OPTIONS.map(r => <option key={r} value={r} style={{ background: '#0F172A' }}>{r}</option>)}
                   </select>
                   <select value={memberForm.permission} onChange={e => setMemberForm(prev => ({ ...prev, permission: e.target.value }))} style={{ ...fiSel, width: '100%' }}>
-                    {PERMISSION_OPTIONS.map(p => <option key={p} value={p} style={{ background: '#0F172A' }}>{p}</option>)}
+                    {PERMISSION_OPTIONS.map(p => <option key={p} value={p} style={{ background: '#0F172A' }}>{PERMISSION_LABEL[p] || p}</option>)}
                   </select>
                   {memberError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{memberError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: '顧客', permission: 'Member' }); setMemberError('') }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: '顧客', permission: 'Staff' }); setMemberError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddMember} style={saveBtn}>追加</button>
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setShowMemberForm(true)} style={addBtn}><Plus size={12} />関係者を追加</button>
+                canAdd ? <button onClick={() => setShowMemberForm(true)} style={addBtn}><Plus size={12} />関係者を追加</button> : null
               )}
             </div>
 
@@ -844,9 +887,11 @@ function DashboardView({ id }) {
                       <div style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500 }}>{formatEventDate(s.scheduled_date)}</div>
                     </div>
                     <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400, flex: 1 }}>{s.label || ''}</span>
-                    <button onClick={() => handleDeleteSchedule(s.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
-                      <Trash2 size={11} color="#475569" />
-                    </button>
+                    {canDel ? (
+                      <button onClick={() => handleDeleteSchedule(s.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
+                        <Trash2 size={11} color="#475569" />
+                      </button>
+                    ) : null}
                   </div>
                 ))
               )}
@@ -861,7 +906,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setShowScheduleForm(true)} style={addBtn}><Plus size={12} />予定を追加</button>
+                canAdd ? <button onClick={() => setShowScheduleForm(true)} style={addBtn}><Plus size={12} />予定を追加</button> : null
               )}
             </div>
 
@@ -911,7 +956,9 @@ function DashboardView({ id }) {
 
 // ===================== 役割フォルダパネル =====================
 
-function FileFolderPanel({ workspaceId }) {
+function FileFolderPanel({ workspaceId, currentRole }) {
+  const fpCanDel = currentRole === 'Owner' || currentRole === 'Manager'
+  const fpCanAdd = currentRole !== null
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
   const [docTypeFilter, setDocTypeFilter] = useState('all')
@@ -1178,13 +1225,15 @@ function FileFolderPanel({ workspaceId }) {
                 >{folder.role_label || ''}</span>
               )}
               {!folder.is_fixed ? (
-                <button
-                  onClick={() => handleDeleteFolder(folder)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
-                  title="フォルダを削除"
-                >
-                  <Trash2 size={12} color="#475569" />
-                </button>
+                fpCanDel ? (
+                  <button
+                    onClick={() => handleDeleteFolder(folder)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
+                    title="フォルダを削除"
+                  >
+                    <Trash2 size={12} color="#475569" />
+                  </button>
+                ) : null
               ) : null}
               <input
                 id={inputId}
@@ -1197,14 +1246,16 @@ function FileFolderPanel({ workspaceId }) {
                   if (f) handleUpload(folder.id, f)
                 }}
               />
-              <label
-                htmlFor={inputId}
-                onClick={e => { if (isUploading) e.preventDefault() }}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
-              >
-                {isUploading ? <Loader size={11} /> : <Plus size={11} />}
-                アップロード
-              </label>
+              {fpCanAdd ? (
+                <label
+                  htmlFor={inputId}
+                  onClick={e => { if (isUploading) e.preventDefault() }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
+                >
+                  {isUploading ? <Loader size={11} /> : <Plus size={11} />}
+                  アップロード
+                </label>
+              ) : null}
             </div>
 
             {/* ファイル0件 */}
@@ -1272,9 +1323,11 @@ function FileFolderPanel({ workspaceId }) {
                       <button onClick={() => handleDownloadFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
                         <Download size={12} color="#64748B" />
                       </button>
-                      <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
-                        <Trash2 size={12} color="#475569" />
-                      </button>
+                      {fpCanDel ? (
+                        <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
+                          <Trash2 size={12} color="#475569" />
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 )
@@ -1285,39 +1338,41 @@ function FileFolderPanel({ workspaceId }) {
       })}
 
       {/* フォルダ追加 */}
-      {addingFolder ? (
-        <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            type="text"
-            value={newFolderLabel}
-            onChange={e => setNewFolderLabel(e.target.value)}
-            onKeyDown={e => {
-              if (e.nativeEvent.isComposing || e.keyCode === 229) return
-              if (e.key === 'Enter') handleAddFolder()
-              if (e.key === 'Escape') { setAddingFolder(false); setNewFolderLabel('') }
-            }}
-            autoFocus
-            placeholder="役割名（例：司法書士）"
-            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', flex: 1, boxSizing: 'border-box' }}
-          />
+      {fpCanAdd ? (
+        addingFolder ? (
+          <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="text"
+              value={newFolderLabel}
+              onChange={e => setNewFolderLabel(e.target.value)}
+              onKeyDown={e => {
+                if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                if (e.key === 'Enter') handleAddFolder()
+                if (e.key === 'Escape') { setAddingFolder(false); setNewFolderLabel('') }
+              }}
+              autoFocus
+              placeholder="役割名（例：司法書士）"
+              style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', flex: 1, boxSizing: 'border-box' }}
+            />
+            <button
+              onClick={handleAddFolder}
+              style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+            >追加</button>
+            <button
+              onClick={() => { setAddingFolder(false); setNewFolderLabel('') }}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
+            >キャンセル</button>
+          </div>
+        ) : (
           <button
-            onClick={handleAddFolder}
-            style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
-          >追加</button>
-          <button
-            onClick={() => { setAddingFolder(false); setNewFolderLabel('') }}
-            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
-          >キャンセル</button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setAddingFolder(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box' }}
-        >
-          <Plus size={12} />
-          役割（フォルダ）を追加
-        </button>
-      )}
+            onClick={() => setAddingFolder(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box' }}
+          >
+            <Plus size={12} />
+            役割（フォルダ）を追加
+          </button>
+        )
+      ) : null}
     </div>
   )
 }
