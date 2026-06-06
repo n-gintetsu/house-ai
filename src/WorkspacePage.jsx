@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -295,6 +295,7 @@ function DashboardView({ id }) {
   const [promoteMessage, setPromoteMessage] = useState('')
   // ログイン中ユーザーのこの案件でのロール
   const [currentRole, setCurrentRole] = useState(null)
+  const [currentUserId, setCurrentUserId] = useState(null)
   // ログインメンバー（workspace_members）
   const [workspaceMembers, setWorkspaceMembers] = useState([])
   const [showInviteForm, setShowInviteForm] = useState(false)
@@ -311,6 +312,7 @@ function DashboardView({ id }) {
       // ログイン中ユーザーのこの案件でのロールを取得
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
+        setCurrentUserId(session.user.id)
         const { data: wmData } = await supabase.from('workspace_members')
           .select('role')
           .eq('workspace_id', id)
@@ -744,7 +746,7 @@ function DashboardView({ id }) {
         <div className="ws-grid">
 
           {/* 左カラム：役割フォルダ */}
-          <FileFolderPanel workspaceId={id} currentRole={currentRole} />
+          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} />
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1130,11 +1132,22 @@ function DashboardView({ id }) {
 
 // ===================== 役割フォルダパネル =====================
 
-function FileFolderPanel({ workspaceId, currentRole }) {
+// 社内・顧客は全ファイル閲覧可。それ以外（業者系）はgrantされたファイルのみ。
+const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
+
+function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId }) {
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
+  const isFullAccess = FULL_ACCESS_ROLES.includes(normRole(currentRole))
+  // ログイン中ユーザー自身の workspace_members.id（業者絞り込みに使う）
+  const myMemberId = (workspaceMembers || []).find(m => m.user_id === currentUserId) ? (workspaceMembers || []).find(m => m.user_id === currentUserId).id : null
+  // 業者ロールのメンバー一覧（共有UI用）
+  const vendorMembers = (workspaceMembers || []).filter(m => !FULL_ACCESS_ROLES.includes(normRole(m.role)))
+
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
+  const [fileGrants, setFileGrants] = useState([])
+  const [shareOpenFileId, setShareOpenFileId] = useState(null)
   const [docTypeFilter, setDocTypeFilter] = useState('all')
   const [loadingFolders, setLoadingFolders] = useState(true)
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
@@ -1185,6 +1198,12 @@ function FileFolderPanel({ workspaceId, currentRole }) {
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false })
       setFiles(filesData || [])
+
+      const { data: grantsData } = await supabase
+        .from('file_grants')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+      setFileGrants(grantsData || [])
     } catch (e) {
       console.error('FileFolderPanel loadAll error', e)
     } finally {
@@ -1307,12 +1326,32 @@ function FileFolderPanel({ workspaceId, currentRole }) {
     }
   }
 
+  async function handleGrantToggle(fileId, memberId, currentlyGranted) {
+    if (currentlyGranted) {
+      await supabase.from('file_grants').delete()
+        .eq('file_id', fileId).eq('member_id', memberId)
+      setFileGrants(prev => prev.filter(g => !(g.file_id === fileId && g.member_id === memberId)))
+    } else {
+      const { data: inserted } = await supabase.from('file_grants').insert({
+        workspace_id: workspaceId,
+        file_id: fileId,
+        member_id: memberId,
+        granted_by: currentUserId,
+      }).select().maybeSingle()
+      if (inserted) setFileGrants(prev => [...prev, inserted])
+      // unique(file_id, member_id) 衝突エラーは握りつぶす
+    }
+  }
+
   const allDocTypes = [...new Set(files.filter(f => f.doc_type).map(f => f.doc_type))]
 
   function getFolderFiles(folderId) {
-    const folderFiles = files.filter(f => f.folder_id === folderId)
-    if (docTypeFilter === 'all') return folderFiles
-    return folderFiles.filter(f => f.doc_type === docTypeFilter)
+    const allFolderFiles = files.filter(f => f.folder_id === folderId)
+    const filtered = docTypeFilter === 'all' ? allFolderFiles : allFolderFiles.filter(f => f.doc_type === docTypeFilter)
+    if (isFullAccess) return filtered
+    // 業者ロール: 自分の memberId に対する grant があるファイルのみ
+    if (!myMemberId) return []
+    return filtered.filter(f => fileGrants.some(g => g.file_id === f.id && g.member_id === myMemberId))
   }
 
   if (loadingFolders) {
@@ -1445,7 +1484,8 @@ function FileFolderPanel({ workspaceId, currentRole }) {
                 const datalistId = `doc-type-list-${wf.id}`
 
                 return (
-                  <div key={wf.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: idx === folderFiles.length - 1 ? 'none' : 'none' }}>
+                  <div key={wf.id} style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                     {/* サムネ or PDF アイコン */}
                     <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {isImage ? (
@@ -1498,11 +1538,58 @@ function FileFolderPanel({ workspaceId, currentRole }) {
                         <Download size={12} color="#64748B" />
                       </button>
                       {fpCanDel ? (
+                        <button
+                          onClick={() => setShareOpenFileId(shareOpenFileId === wf.id ? null : wf.id)}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }}
+                          title="共有"
+                        >
+                          <Share2 size={12} color={shareOpenFileId === wf.id ? '#c9a84c' : '#64748B'} />
+                        </button>
+                      ) : null}
+                      {fpCanDel ? (
                         <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
                           <Trash2 size={12} color="#475569" />
                         </button>
                       ) : null}
                     </div>
+                    </div>
+                    {/* 共有パネル（fpCanDel かつ開いているときのみ） */}
+                    {shareOpenFileId === wf.id ? (
+                    <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 1, marginBottom: 8 }}>共有相手（業者ロール）</div>
+                      {vendorMembers.length === 0 ? (
+                        <div style={{ fontSize: 11, color: '#475569', fontWeight: 400 }}>業者ロールのメンバーがいません</div>
+                      ) : (
+                        vendorMembers.map(vm => {
+                          const granted = fileGrants.some(g => g.file_id === wf.id && g.member_id === vm.id)
+                          const displayName = (vm.profiles && vm.profiles.display_name) || vm.email || ''
+                          const roleLabel = PERMISSION_LABEL[normRole(vm.role)] || normRole(vm.role)
+                          return (
+                            <div key={vm.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                              <div>
+                                <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400 }}>{displayName}</div>
+                                <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>{roleLabel}</div>
+                              </div>
+                              <button
+                                onClick={() => handleGrantToggle(wf.id, vm.id, granted)}
+                                style={{
+                                  background: granted ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.05)',
+                                  border: granted ? '1px solid rgba(201,168,76,0.45)' : '1px solid rgba(255,255,255,0.12)',
+                                  color: granted ? '#c9a84c' : '#64748B',
+                                  borderRadius: 5,
+                                  padding: '3px 8px',
+                                  fontSize: 10,
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  flexShrink: 0,
+                                }}
+                              >{granted ? '共有中' : '共有する'}</button>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                    ) : null}
                   </div>
                 )
               })
