@@ -673,6 +673,7 @@ function DashboardView({ id }) {
   const canDel    = role === 'Owner' || role === 'Manager'
   const canAdd    = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const canManage = canDel
+  const isInternal = ['Owner', 'Manager', 'Staff'].includes(role)
 
   // ステータスに応じたアクセント色（チップ色分け用）
   const statusAccent = ws.status === '完了' ? '#D4AF37' : ws.status === '進行中' ? '#38bdf8' : '#f87171'
@@ -798,7 +799,9 @@ function DashboardView({ id }) {
             <div style={{ ...glass, borderRadius: 14, padding: 24 }}>
               <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>ROADMAP</div>
               <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 8 }}>進捗ロードマップ（{ws.contract_type || ''}）</div>
-              <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginBottom: 20 }}>各ステップをクリックして状態を変更できます</div>
+              {isInternal ? (
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginBottom: 20 }}>各ステップをクリックして状態を変更できます</div>
+              ) : null}
               {steps.length === 0 ? (
                 <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>ロードマップがありません。</div>
               ) : (
@@ -808,8 +811,8 @@ function DashboardView({ id }) {
                     return (
                       <div key={step.id || idx} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                         <div
-                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: canManage ? 'pointer' : 'default' }}
-                          onClick={canManage ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: isInternal ? 'pointer' : 'default' }}
+                          onClick={isInternal ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
                         >
                           {dotType === 'done' ? (
                             <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -899,7 +902,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                canAdd ? <button onClick={() => setShowTimelineForm(true)} style={addBtn}><Plus size={12} />記録を追加</button> : null
+                isInternal ? <button onClick={() => setShowTimelineForm(true)} style={addBtn}><Plus size={12} />記録を追加</button> : null
               )}
             </div>
 
@@ -945,7 +948,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                canAdd ? <button onClick={() => setShowNoticeForm(true)} style={addBtn}><Plus size={12} />通知を追加</button> : null
+                isInternal ? <button onClick={() => setShowNoticeForm(true)} style={addBtn}><Plus size={12} />通知を追加</button> : null
               )}
             </div>
 
@@ -995,7 +998,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                canAdd ? <button onClick={() => setShowMemberForm(true)} style={addBtn}><Plus size={12} />関係者を追加</button> : null
+                isInternal ? <button onClick={() => setShowMemberForm(true)} style={addBtn}><Plus size={12} />関係者を追加</button> : null
               )}
             </div>
 
@@ -1125,7 +1128,7 @@ function DashboardView({ id }) {
                   </div>
                 </div>
               ) : (
-                canAdd ? <button onClick={() => setShowScheduleForm(true)} style={addBtn}><Plus size={12} />予定を追加</button> : null
+                isInternal ? <button onClick={() => setShowScheduleForm(true)} style={addBtn}><Plus size={12} />予定を追加</button> : null
               )}
             </div>
 
@@ -1181,6 +1184,7 @@ const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId }) {
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
+  const fpIsInternal = ['Owner', 'Manager', 'Staff'].includes(normRole(currentRole))
   const isFullAccess = FULL_ACCESS_ROLES.includes(normRole(currentRole))
   // ログイン中ユーザー自身の workspace_members.id（業者絞り込みに使う）
   const myMemberId = (workspaceMembers || []).find(m => m.user_id === currentUserId) ? (workspaceMembers || []).find(m => m.user_id === currentUserId).id : null
@@ -1642,7 +1646,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       })}
 
       {/* フォルダ追加 */}
-      {fpCanAdd ? (
+      {fpIsInternal ? (
         addingFolder ? (
           <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
