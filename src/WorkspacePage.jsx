@@ -38,13 +38,13 @@ function formatFileSize(bytes) {
 
 const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン']
 const ROLE_OPTIONS = ['顧客', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
-const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
+const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
 const PERMISSION_LABEL = {
   Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: '顧客',
-  JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
+  Broker: '仲介業者', JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
   Member: 'Member',
 }
-const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
+const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const STEP_STATES = ['未着手', '進行中', '承認待ち', '差戻し', '完了']
 
@@ -105,6 +105,7 @@ function permissionStyle(p) {
   if (n === 'Manager')           return { bg: 'rgba(59,130,246,0.14)',  color: '#60A5FA',  border: '1px solid rgba(59,130,246,0.25)' }
   if (n === 'Staff')             return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8',  border: '1px solid rgba(100,116,139,0.25)' }
   if (n === 'Customer')          return { bg: 'rgba(45,212,191,0.12)',  color: '#2dd4bf',  border: '1px solid rgba(45,212,191,0.25)' }
+  if (n === 'Broker')            return { bg: 'rgba(251,146,60,0.12)',  color: '#fb923c',  border: '1px solid rgba(251,146,60,0.25)' }
   if (n === 'JudicialScrivener') return { bg: 'rgba(139,92,246,0.12)',  color: '#a78bfa',  border: '1px solid rgba(139,92,246,0.25)' }
   if (n === 'Bank')              return { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8',  border: '1px solid rgba(56,189,248,0.25)' }
   if (n === 'ReformCompany')     return { bg: 'rgba(52,211,153,0.12)',  color: '#34d399',  border: '1px solid rgba(52,211,153,0.25)' }
