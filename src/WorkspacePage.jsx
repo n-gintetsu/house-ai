@@ -365,7 +365,7 @@ function DashboardView({ id }) {
       setSchedule(scheduleData || [])
       const { data: wsMembersRaw } = await supabase
         .from('workspace_members')
-        .select('*, profiles(display_name)')
+        .select('*')
         .eq('workspace_id', id)
       setWorkspaceMembers(wsMembersRaw || [])
       setLoading(false)
@@ -500,7 +500,7 @@ function DashboardView({ id }) {
       setShowInviteForm(false)
       const { data: wsMembersRaw } = await supabase
         .from('workspace_members')
-        .select('*, profiles(display_name)')
+        .select('*')
         .eq('workspace_id', id)
       setWorkspaceMembers(wsMembersRaw || [])
     } catch (e) {
