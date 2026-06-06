@@ -44,6 +44,8 @@ const PERMISSION_LABEL = {
   JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
   Member: 'Member',
 }
+const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
+const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const STEP_STATES = ['未着手', '進行中', '承認待ち', '差戻し', '完了']
 
 const ROADMAP_TEMPLATES = {
@@ -98,14 +100,15 @@ function noticeStyle(level) {
 }
 
 function permissionStyle(p) {
-  if (p === 'Owner')             return { bg: 'rgba(201,168,76,0.14)',  color: '#c9a84c',  border: '1px solid rgba(201,168,76,0.25)' }
-  if (p === 'Manager')           return { bg: 'rgba(59,130,246,0.14)',  color: '#60A5FA',  border: '1px solid rgba(59,130,246,0.25)' }
-  if (p === 'Staff')             return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8',  border: '1px solid rgba(100,116,139,0.25)' }
-  if (p === 'Customer')          return { bg: 'rgba(45,212,191,0.12)',  color: '#2dd4bf',  border: '1px solid rgba(45,212,191,0.25)' }
-  if (p === 'JudicialScrivener') return { bg: 'rgba(139,92,246,0.12)',  color: '#a78bfa',  border: '1px solid rgba(139,92,246,0.25)' }
-  if (p === 'Bank')              return { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8',  border: '1px solid rgba(56,189,248,0.25)' }
-  if (p === 'ReformCompany')     return { bg: 'rgba(52,211,153,0.12)',  color: '#34d399',  border: '1px solid rgba(52,211,153,0.25)' }
-  if (p === 'Guest')             return { bg: 'rgba(99,102,241,0.14)',  color: '#818CF8',  border: '1px solid rgba(99,102,241,0.25)' }
+  const n = normRole(p)
+  if (n === 'Owner')             return { bg: 'rgba(201,168,76,0.14)',  color: '#c9a84c',  border: '1px solid rgba(201,168,76,0.25)' }
+  if (n === 'Manager')           return { bg: 'rgba(59,130,246,0.14)',  color: '#60A5FA',  border: '1px solid rgba(59,130,246,0.25)' }
+  if (n === 'Staff')             return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8',  border: '1px solid rgba(100,116,139,0.25)' }
+  if (n === 'Customer')          return { bg: 'rgba(45,212,191,0.12)',  color: '#2dd4bf',  border: '1px solid rgba(45,212,191,0.25)' }
+  if (n === 'JudicialScrivener') return { bg: 'rgba(139,92,246,0.12)',  color: '#a78bfa',  border: '1px solid rgba(139,92,246,0.25)' }
+  if (n === 'Bank')              return { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8',  border: '1px solid rgba(56,189,248,0.25)' }
+  if (n === 'ReformCompany')     return { bg: 'rgba(52,211,153,0.12)',  color: '#34d399',  border: '1px solid rgba(52,211,153,0.25)' }
+  if (n === 'Guest')             return { bg: 'rgba(99,102,241,0.14)',  color: '#818CF8',  border: '1px solid rgba(99,102,241,0.25)' }
   return { bg: 'rgba(255,255,255,0.07)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
 }
 
@@ -619,9 +622,10 @@ function DashboardView({ id }) {
   const ws = workspace
   const lastDoneIdx = steps.reduce((acc, s, i) => s.state === '完了' ? i : acc, -1)
 
-  // UXガード変数
-  const canDel    = currentRole === 'Owner' || currentRole === 'Manager'
-  const canAdd    = currentRole !== null
+  // UXガード変数（DBの大文字小文字揺れを正規化してから判定）
+  const role = normRole(currentRole)
+  const canDel    = role === 'Owner' || role === 'Manager'
+  const canAdd    = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const canManage = canDel
 
   // ステータスに応じたアクセント色（チップ色分け用）
@@ -697,7 +701,7 @@ function DashboardView({ id }) {
         {currentRole ? (
           <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 4, padding: '2px 8px', flexShrink: 0 }}>
             <span style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>あなた: </span>
-            <span style={{ fontSize: 9, color: '#c9a84c', fontWeight: 500 }}>{PERMISSION_LABEL[currentRole] || currentRole}</span>
+            <span style={{ fontSize: 9, color: '#c9a84c', fontWeight: 500 }}>{PERMISSION_LABEL[normRole(currentRole)] || normRole(currentRole)}</span>
           </div>
         ) : null}
         {/* 家カルテ保存ボタン（Owner/Manager のみ） */}
@@ -918,7 +922,7 @@ function DashboardView({ id }) {
                         <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{m.role_label || ''}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[m.permission] || m.permission || 'Member'}</span>
+                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.permission)] || normRole(m.permission) || 'Member'}</span>
                         {canDel ? (
                           <button onClick={() => handleDeleteMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
                             <Trash2 size={11} color="#475569" />
@@ -973,7 +977,7 @@ function DashboardView({ id }) {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
                         <div style={{ display: 'flex', gap: 4, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[m.role] || m.role}</span>
+                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.role)] || normRole(m.role)}</span>
                           <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 400, background: statusBadge.bg, color: statusBadge.color, border: statusBadge.border }}>{statusBadge.label}</span>
                         </div>
                       </div>
@@ -1126,8 +1130,8 @@ function DashboardView({ id }) {
 // ===================== 役割フォルダパネル =====================
 
 function FileFolderPanel({ workspaceId, currentRole }) {
-  const fpCanDel = currentRole === 'Owner' || currentRole === 'Manager'
-  const fpCanAdd = currentRole !== null
+  const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
+  const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
   const [docTypeFilter, setDocTypeFilter] = useState('all')
