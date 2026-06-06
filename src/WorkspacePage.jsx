@@ -291,6 +291,13 @@ function DashboardView({ id }) {
   const [promoteMessage, setPromoteMessage] = useState('')
   // ログイン中ユーザーのこの案件でのロール
   const [currentRole, setCurrentRole] = useState(null)
+  // ログインメンバー（workspace_members）
+  const [workspaceMembers, setWorkspaceMembers] = useState([])
+  const [showInviteForm, setShowInviteForm] = useState(false)
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'Staff' })
+  const [inviteStatus, setInviteStatus] = useState('')
+  const [inviteError, setInviteError] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
 
   useEffect(() => {
     async function fetchAll() {
@@ -320,6 +327,11 @@ function DashboardView({ id }) {
       setTimeline(timelineData || [])
       setNotices(noticesData || [])
       setSchedule(scheduleData || [])
+      const { data: wsMembersRaw } = await supabase
+        .from('workspace_members')
+        .select('*, profiles(display_name)')
+        .eq('workspace_id', id)
+      setWorkspaceMembers(wsMembersRaw || [])
       setLoading(false)
     }
     fetchAll()
@@ -369,6 +381,72 @@ function DashboardView({ id }) {
   const handleDeleteMember = async (memberId) => {
     await supabase.from('ws_members').delete().eq('id', memberId)
     setMembers(prev => prev.filter(m => m.id !== memberId))
+  }
+
+  // --- WORKSPACE MEMBERS（招待・ログインメンバー）---
+  const handleInvite = async () => {
+    const email = inviteForm.email.trim().toLowerCase()
+    if (!email) { setInviteError('メールアドレスを入力してください'); return }
+    setInviteLoading(true); setInviteError(''); setInviteStatus('')
+    try {
+      const { data: existingPending } = await supabase
+        .from('workspace_members')
+        .select('id')
+        .eq('workspace_id', id)
+        .eq('email', email)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (existingPending) {
+        await supabase
+          .from('workspace_members')
+          .update({ role: inviteForm.role })
+          .eq('id', existingPending.id)
+      } else {
+        const { data: { session } } = await supabase.auth.getSession()
+        const invitedBy = session ? session.user.id : null
+        const { error: insErr } = await supabase.from('workspace_members').insert({
+          workspace_id: id,
+          email,
+          role: inviteForm.role,
+          status: 'pending',
+          invited_by: invitedBy,
+        })
+        if (insErr) throw insErr
+      }
+
+      await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://house-ai.co.jp/workspace',
+          shouldCreateUser: true,
+        },
+      })
+
+      setInviteStatus('招待メールを送信しました')
+      setInviteForm({ email: '', role: 'Staff' })
+      setShowInviteForm(false)
+      const { data: wsMembersRaw } = await supabase
+        .from('workspace_members')
+        .select('*, profiles(display_name)')
+        .eq('workspace_id', id)
+      setWorkspaceMembers(wsMembersRaw || [])
+    } catch (e) {
+      console.error('handleInvite error', e)
+      setInviteError('招待に失敗しました: ' + (e.message || ''))
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  const handleUpdateMemberRole = async (memberId, newRole) => {
+    await supabase.from('workspace_members').update({ role: newRole }).eq('id', memberId)
+    setWorkspaceMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m))
+  }
+
+  const handleDeleteWorkspaceMember = async (memberId) => {
+    await supabase.from('workspace_members').delete().eq('id', memberId)
+    setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
   // --- TIMELINE ---
@@ -869,6 +947,97 @@ function DashboardView({ id }) {
               ) : (
                 canAdd ? <button onClick={() => setShowMemberForm(true)} style={addBtn}><Plus size={12} />関係者を追加</button> : null
               )}
+            </div>
+
+            {/* LOGIN MEMBERS */}
+            <div style={{ ...glass, borderRadius: 14, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Users size={12} color="#60A5FA" />
+                <span style={{ fontSize: 10, color: '#60A5FA', fontWeight: 500, letterSpacing: 3 }}>LOGIN MEMBERS</span>
+              </div>
+              <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>ログインメンバー</div>
+              {inviteStatus ? (
+                <div style={{ fontSize: 11, color: '#22C55E', fontWeight: 400, marginBottom: 10, padding: '6px 10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 6 }}>{inviteStatus}</div>
+              ) : null}
+              {workspaceMembers.length === 0 ? (
+                <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>招待済みメンバーがいません。</div>
+              ) : (
+                workspaceMembers.map((m, idx) => {
+                  const ps = permissionStyle(m.role)
+                  const displayName = (m.profiles && m.profiles.display_name) || m.email || ''
+                  const statusBadge = m.status === 'active'
+                    ? { bg: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)', label: '参加中' }
+                    : { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)', label: '招待中' }
+                  return (
+                    <div key={m.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[m.role] || m.role}</span>
+                          <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 400, background: statusBadge.bg, color: statusBadge.color, border: statusBadge.border }}>{statusBadge.label}</span>
+                        </div>
+                      </div>
+                      {canManage ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                          <select
+                            value={m.role || ''}
+                            onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
+                            style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 4, padding: '2px 4px', outline: 'none', fontFamily: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
+                          >
+                            {PERMISSION_OPTIONS.map(p => {
+                              const jaLabel = PERMISSION_LABEL[p] || p
+                              const optLabel = jaLabel === p ? p : `${p} / ${jaLabel}`
+                              return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
+                            })}
+                          </select>
+                          <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
+                            <Trash2 size={11} color="#475569" />
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })
+              )}
+              {canManage ? (
+                showInviteForm ? (
+                  <div style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <input
+                      type="email"
+                      value={inviteForm.email}
+                      onChange={e => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="招待するメールアドレス"
+                      style={{ ...fi, width: '100%' }}
+                    />
+                    <select
+                      value={inviteForm.role}
+                      onChange={e => setInviteForm(prev => ({ ...prev, role: e.target.value }))}
+                      style={{ ...fiSel, width: '100%' }}
+                    >
+                      {PERMISSION_OPTIONS.map(p => {
+                        const jaLabel = PERMISSION_LABEL[p] || p
+                        const optLabel = jaLabel === p ? p : `${p} / ${jaLabel}`
+                        return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
+                      })}
+                    </select>
+                    {inviteError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{inviteError}</div> : null}
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => { setShowInviteForm(false); setInviteForm({ email: '', role: 'Staff' }); setInviteError('') }}
+                        style={cancelBtn}
+                      >キャンセル</button>
+                      <button
+                        onClick={handleInvite}
+                        style={{ ...saveBtn, opacity: inviteLoading ? 0.5 : 1, cursor: inviteLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                      >
+                        {inviteLoading ? <Loader size={11} /> : null}招待を送る
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setShowInviteForm(true); setInviteStatus('') }} style={addBtn}><Plus size={12} />メンバーを招待</button>
+                )
+              ) : null}
             </div>
 
             {/* SCHEDULE */}
