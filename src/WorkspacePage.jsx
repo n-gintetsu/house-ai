@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -1251,6 +1251,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [files, setFiles] = useState([])
   const [fileGrants, setFileGrants] = useState([])
   const [shareOpenFileId, setShareOpenFileId] = useState(null)
+  const [historyOpenFileId, setHistoryOpenFileId] = useState(null)
+  const [accessLogs, setAccessLogs] = useState([])
   const [docTypeFilter, setDocTypeFilter] = useState('all')
   const [loadingFolders, setLoadingFolders] = useState(true)
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
@@ -1307,6 +1309,13 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         .select('*')
         .eq('workspace_id', workspaceId)
       setFileGrants(grantsData || [])
+
+      const { data: logsData } = await supabase
+        .from('access_logs')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false })
+      setAccessLogs(logsData || [])
     } catch (e) {
       console.error('FileFolderPanel loadAll error', e)
     } finally {
@@ -1355,6 +1364,29 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     } catch (e) {
       console.error('file delete error', e)
     }
+  }
+
+  function formatJst(iso) {
+    try {
+      return new Date(iso).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    } catch (e) {
+      return ''
+    }
+  }
+
+  function nameForUser(userId) {
+    const m = (workspaceMembers || []).find(wm => wm.user_id === userId)
+    if (!m) return '不明'
+    const dn = (m.profiles && m.profiles.display_name) || ''
+    if (dn) return dn
+    const em = m.email || ''
+    return em.split('@')[0] || '不明'
+  }
+
+  function actionLabel(action) {
+    if (action === 'view') return '閲覧'
+    if (action === 'download') return 'DL'
+    return action || ''
   }
 
   async function handleViewFile(file, url) {
@@ -1662,6 +1694,16 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                       {wf.uploaded_by ? (
                         <div style={{ fontSize: 9, color: '#334155', fontWeight: 400, marginTop: 2 }}>{wf.uploaded_by}</div>
                       ) : null}
+                      {isFullAccess ? (
+                        (() => {
+                          const logs = (accessLogs || []).filter(l => l.file_id === wf.id)
+                          return logs.length > 0 ? (
+                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 3 }}>
+                              {'最終アクセス：' + nameForUser(logs[0].user_id) + '・' + formatJst(logs[0].created_at) + '・' + actionLabel(logs[0].action)}
+                            </div>
+                          ) : null
+                        })()
+                      ) : null}
                     </div>
                     {/* アクション */}
                     <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
@@ -1671,6 +1713,15 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                       <button onClick={() => handleDownloadFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
                         <Download size={12} color="#64748B" />
                       </button>
+                      {isFullAccess ? (
+                        <button
+                          onClick={() => setHistoryOpenFileId(historyOpenFileId === wf.id ? null : wf.id)}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }}
+                          title="アクセス履歴"
+                        >
+                          <History size={12} color={historyOpenFileId === wf.id ? '#c9a84c' : '#64748B'} />
+                        </button>
+                      ) : null}
                       {fpCanDel ? (
                         <button
                           onClick={() => setShareOpenFileId(shareOpenFileId === wf.id ? null : wf.id)}
@@ -1722,6 +1773,23 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                           )
                         })
                       )}
+                    </div>
+                    ) : null}
+                    {isFullAccess && historyOpenFileId === wf.id ? (
+                    <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 1, marginBottom: 8 }}>アクセス履歴</div>
+                      {(() => {
+                        const logs = (accessLogs || []).filter(l => l.file_id === wf.id)
+                        return logs.length === 0 ? (
+                          <div style={{ fontSize: 11, color: '#475569', fontWeight: 400 }}>アクセス履歴はありません</div>
+                        ) : (
+                          logs.map((l, li) => (
+                            <div key={l.id || li} style={{ fontSize: 11, color: '#94A3B8', fontWeight: 400, padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                              {nameForUser(l.user_id) + '・' + formatJst(l.created_at) + '・' + actionLabel(l.action)}
+                            </div>
+                          ))
+                        )
+                      })()}
                     </div>
                     ) : null}
                   </div>
