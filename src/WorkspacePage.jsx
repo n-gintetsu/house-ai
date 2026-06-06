@@ -1357,6 +1357,20 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     }
   }
 
+  async function handleViewFile(file, url) {
+    window.open(url, '_blank')
+    try {
+      await supabase.from('access_logs').insert({
+        workspace_id: workspaceId,
+        user_id: currentUserId || null,
+        file_id: file.id,
+        action: 'view',
+      })
+    } catch (e) {
+      console.error('access_log view error', e)
+    }
+  }
+
   async function handleDownloadFile(file) {
     try {
       const { data: blob, error } = await supabase.storage.from('workspace-files').download(file.storage_path)
@@ -1365,6 +1379,16 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       const a = document.createElement('a')
       a.href = url; a.download = file.file_name; a.click()
       URL.revokeObjectURL(url)
+      try {
+        await supabase.from('access_logs').insert({
+          workspace_id: workspaceId,
+          user_id: currentUserId || null,
+          file_id: file.id,
+          action: 'download',
+        })
+      } catch (le) {
+        console.error('access_log download error', le)
+      }
     } catch (e) {
       console.error('download error', e)
     }
@@ -1641,7 +1665,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     </div>
                     {/* アクション */}
                     <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
-                      <button onClick={() => window.open(publicUrl, '_blank')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
+                      <button onClick={() => handleViewFile(wf, publicUrl)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="プレビュー">
                         <Eye size={12} color="#64748B" />
                       </button>
                       <button onClick={() => handleDownloadFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="ダウンロード">
