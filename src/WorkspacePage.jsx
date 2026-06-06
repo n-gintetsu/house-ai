@@ -329,7 +329,7 @@ function DashboardView({ id }) {
   // ログインメンバー（workspace_members）
   const [workspaceMembers, setWorkspaceMembers] = useState([])
   const [showInviteForm, setShowInviteForm] = useState(false)
-  const [inviteForm, setInviteForm] = useState({ email: '', role: 'Staff', displayName: '' })
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'Staff', displayName: '', companyName: '' })
   const [inviteStatus, setInviteStatus] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
@@ -438,7 +438,7 @@ function DashboardView({ id }) {
       if (existingPending) {
         await supabase
           .from('workspace_members')
-          .update({ role: inviteForm.role })
+          .update({ role: inviteForm.role, display_name: (inviteForm.companyName || '').trim() })
           .eq('id', existingPending.id)
         newMemberId = existingPending.id
       } else {
@@ -450,6 +450,7 @@ function DashboardView({ id }) {
           role: inviteForm.role,
           status: 'pending',
           invited_by: invitedBy,
+          display_name: (inviteForm.companyName || '').trim(),
         }).select().single()
         if (insErr) throw insErr
         newMemberId = newMember.id
@@ -495,7 +496,7 @@ function DashboardView({ id }) {
       })
 
       setInviteStatus('招待メールを送信しました')
-      setInviteForm({ email: '', role: 'Staff', displayName: '' })
+      setInviteForm({ email: '', role: 'Staff', displayName: '', companyName: '' })
       setShowInviteForm(false)
       const { data: wsMembersRaw } = await supabase
         .from('workspace_members')
@@ -1118,10 +1119,20 @@ function DashboardView({ id }) {
                       placeholder="フォルダ名（例：司法書士法人〇〇 移転登記）"
                       style={{ ...fi, width: '100%' }}
                     />
+                    <input
+                      type="text"
+                      value={inviteForm.companyName}
+                      onChange={e => setInviteForm(prev => ({ ...prev, companyName: e.target.value }))}
+                      onKeyDown={e => {
+                        if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                      }}
+                      placeholder="名称（例：リーガル司法書士法人）"
+                      style={{ ...fi, width: '100%' }}
+                    />
                     {inviteError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{inviteError}</div> : null}
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                       <button
-                        onClick={() => { setShowInviteForm(false); setInviteForm({ email: '', role: 'Staff', displayName: '' }); setInviteError('') }}
+                        onClick={() => { setShowInviteForm(false); setInviteForm({ email: '', role: 'Staff', displayName: '', companyName: '' }); setInviteError('') }}
                         style={cancelBtn}
                       >キャンセル</button>
                       <button
