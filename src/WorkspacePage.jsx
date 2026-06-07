@@ -1310,17 +1310,21 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         .eq('workspace_id', workspaceId)
       setFileGrants(grantsData || [])
 
-      const { data: logsData } = await supabase
-        .from('access_logs')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false })
-      setAccessLogs(logsData || [])
+      await loadAccessLogs()
     } catch (e) {
       console.error('FileFolderPanel loadAll error', e)
     } finally {
       setLoadingFolders(false)
     }
+  }
+
+  async function loadAccessLogs() {
+    const { data: logsData } = await supabase
+      .from('access_logs')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false })
+    setAccessLogs(logsData || [])
   }
 
   async function handleUpload(folderId, file) {
@@ -1409,7 +1413,10 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
 
   async function handleViewFile(file) {
     const url = await getSignedFileUrl(file.id, 'view')
-    if (url) window.open(url, '_blank')
+    if (url) {
+      window.open(url, '_blank')
+      loadAccessLogs()
+    }
   }
 
   async function handleDownloadFile(file) {
@@ -1423,6 +1430,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       const a = document.createElement('a')
       a.href = objUrl; a.download = file.file_name; a.click()
       URL.revokeObjectURL(objUrl)
+      loadAccessLogs()
     } catch (e) {
       console.error('download error', e)
     }
