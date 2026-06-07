@@ -1133,13 +1133,10 @@ export default function AdminDashboard() {
     setAiResult(null)
     setReflectDone(false)
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY || '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
@@ -1153,8 +1150,7 @@ export default function AdminDashboard() {
         })
       })
       const data = await res.json()
-      const textBlock = (data.content || []).find(c => c.type === 'text')
-      const text = textBlock ? textBlock.text : ''
+      const text = (data && data.text) || ''
       const jsonMatch = text.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
         try {
