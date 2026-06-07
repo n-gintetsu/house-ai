@@ -6,13 +6,10 @@ import { Check } from 'lucide-react';
 const steps = ['内容分析', 'カテゴリ分類', 'AI要約作成', 'タグ生成', '投稿カード作成'];
 
 const generateExperience = async (answers) => {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('/api/claude', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5',
@@ -36,7 +33,7 @@ const generateExperience = async (answers) => {
     }),
   });
   const data = await response.json();
-  const text = data.content[0].text;
+  const text = (data && data.text) || '';
   const clean = text.replace(/```json|```/g, '').trim();
   return JSON.parse(clean);
 };
