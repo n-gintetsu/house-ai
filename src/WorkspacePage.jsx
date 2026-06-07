@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -1646,7 +1646,6 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
               </div>
             ) : (
               folderFiles.map((wf, idx) => {
-                const publicUrl = supabase.storage.from('workspace-files').getPublicUrl(wf.storage_path).data.publicUrl
                 const isImage = (wf.mime_type || '').startsWith('image/')
                 const isEditingDocType = editingFileDocId === wf.id
                 const datalistId = `doc-type-list-${wf.id}`
@@ -1654,10 +1653,10 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 return (
                   <div key={wf.id} style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    {/* サムネ or PDF アイコン */}
+                    {/* ファイルアイコン */}
                     <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {isImage ? (
-                        <img src={publicUrl} alt="" style={{ width: 34, height: 34, objectFit: 'cover' }} />
+                        <Image size={16} color="#c9a84c" />
                       ) : (
                         <FileText size={16} color="#c9a84c" />
                       )}
