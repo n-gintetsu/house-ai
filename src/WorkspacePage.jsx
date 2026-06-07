@@ -1058,31 +1058,40 @@ function DashboardView({ id }) {
                     ? { bg: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)', label: '参加中' }
                     : { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)', label: '招待中' }
                   return (
-                    <div key={m.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
-                        <div style={{ display: 'flex', gap: 4, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.role)] || normRole(m.role)}</span>
-                          <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 400, background: statusBadge.bg, color: statusBadge.color, border: statusBadge.border }}>{statusBadge.label}</span>
+                    <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      {/* 上段: 名前 + 削除ボタン */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {displayName}
                         </div>
-                      </div>
-                      {canManage ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                          <select
-                            value={m.role || ''}
-                            onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
-                            style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 4, padding: '2px 4px', outline: 'none', fontFamily: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
-                          >
-                            {PERMISSION_OPTIONS.map(p => {
-                              const jaLabel = PERMISSION_LABEL[p] || p
-                              const optLabel = jaLabel === p ? p : `${p} / ${jaLabel}`
-                              return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
-                            })}
-                          </select>
-                          <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
-                            <Trash2 size={11} color="#475569" />
+                        {canManage ? (
+                          <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
+                            <Trash2 size={13} color="#475569" />
                           </button>
-                        </div>
+                        ) : null}
+                      </div>
+                      {/* 中段: 役割バッジ + 状態バッジ */}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0, background: ps.bg, color: ps.color, border: ps.border }}>
+                          {PERMISSION_LABEL[normRole(m.role)] || normRole(m.role)}
+                        </span>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0, background: statusBadge.bg, color: statusBadge.color, border: statusBadge.border }}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+                      {/* 下段: 役割select（管理者のみ・1行・幅100%） */}
+                      {canManage ? (
+                        <select
+                          value={m.role || ''}
+                          onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
+                          style={{ marginTop: 8, width: '100%', boxSizing: 'border-box', fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '8px 10px', outline: 'none', appearance: 'none', WebkitAppearance: 'none' }}
+                        >
+                          {PERMISSION_OPTIONS.map(p => {
+                            const jaLabel = PERMISSION_LABEL[p] || p
+                            const optLabel = jaLabel === p ? p : `${p} / ${jaLabel}`
+                            return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
+                          })}
+                        </select>
                       ) : null}
                     </div>
                   )
