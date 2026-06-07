@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   const authHeader = req.headers['authorization'] || ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
-  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+  if (!token) return res.status(401).json({ error: 'no_token' })
 
   const { fileId, action } = req.body || {}
   if (!fileId) return res.status(400).json({ error: 'fileId required' })
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   // ユーザー特定
   const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token)
-  if (userErr || !user) return res.status(401).json({ error: 'Invalid token' })
+  if (userErr || !user) return res.status(401).json({ error: 'invalid_token' })
 
   // ファイル取得
   const { data: file, error: fileErr } = await supabaseAdmin

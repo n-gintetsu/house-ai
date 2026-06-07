@@ -1390,14 +1390,15 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   }
 
   async function getSignedFileUrl(fileId, action) {
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = (session && session.access_token) || ''
+    const { data } = await supabase.auth.getSession()
+    const token = (data && data.session && data.session.access_token) || ''
     const res = await fetch('/api/sign-file', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ fileId: fileId, action: action }),
     })
     if (!res.ok) {
+      console.log(res.status, await res.clone().json().catch(() => null))
       if (res.status === 403) alert('このファイルへのアクセス権限がありません')
       else if (res.status === 401) alert('セッションが切れました。再度ログインしてください')
       else alert('ファイルの取得に失敗しました')
