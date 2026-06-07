@@ -173,3 +173,38 @@ canManage = canDel
 ---
 
 ## セッション開始時の確認コマンド
+
+---
+
+## セキュリティ / Anthropic APIキー管理（重要・2026-06-07 追記）
+
+### プロジェクトごとに別キーを使用（Anthropic組織は共通）
+Anthropic の APIキーは1ワークスペース（組織）に複数あり、プロジェクトごとに使い分けている。
+Revoke / 削除するときは、他プロジェクトのキーを誤って消さないよう必ず照合すること。
+
+| 用途 | Console上のキー名 | 末尾4文字 | 置き場所 |
+|---|---|---|---|
+| House-AI（現行・サーバー専用） | house-ai-server-202606 | ...2AAA | house-ai プロジェクトの ANTHROPIC_API_KEY（/api/claude・/api/ai-chat が使用） |
+| GINTETSU不動産HP | gintetsu-fudosan | ...BwAA | gintetsu-fudosan プロジェクトの ANTHROPIC_API_KEY |
+| EstateFlow | gintetsu-promiq | ...FQAA | estateflow プロジェクトの ANTHROPIC_API_KEY |
+
+- 無効化済み（漏洩対応）: house-ai-2026（...SwAA）= House-AI の旧キー。フロントバンドルに露出していたため 2026-06-07 に無効化。
+- その他の古い house-ai 系キー（ハウスAI / house-ai ×3、いずれも2026-04-06作成・休眠中）は孤児キー。整理する場合も下記ルールを守る。
+
+### 古いキーを削除/無効化する前のチェック（厳守）
+1. 各 Vercel プロジェクト（house-ai / gintetsu-fudosan / estateflow）の ANTHROPIC_API_KEY の末尾4文字を確認する。
+2. 消そうとしているキーの末尾4文字が、どのプロジェクトでも使われていないことを確認してから Revoke する。
+3. 共用していた場合は、先に該当プロジェクトを別キーへ移してから消す。
+   ※ 誤って消すと本番サイト（gintetsu-fudosan.co.jp 等）のAI機能が停止する。
+
+### House-AI のキー露出対策（済み・参考）
+- フロントの Anthropic 直呼び（VITE_ANTHROPIC_API_KEY）は廃止し、すべて /api/claude（process.env.ANTHROPIC_API_KEY）経由に統一済み。
+- VITE_ANTHROPIC_API_KEY は Vercel から削除済み。
+- 未対応: VITE_SUPABASE_SERVICE_ROLE_KEY は AdminDashboard.jsx でまだフロント露出（バンドルに service_role が焼き込まれている）。フェーズ2で api 経由へ移設＋ローテーション予定。
+- /api/claude は現状「認証なしプロキシ」。ローンチ前に保護（レート制限/呼び出し元チェック）を追加すること。
+
+### 後日の必須タスク（GINTETSU不動産HP / EstateFlow のセキュリティ点検）
+House-AI と同様の漏洩チェックを、gintetsu-fudosan と estateflow の両プロジェクトでも実施すること（各プロジェクトの専用セッションで行う。House-AIセッションからは触らない）:
+- フロント側コードで NEXT_PUBLIC_ 接頭辞の Anthropic / Supabase service_role キーを参照していないか grep で確認（両プロジェクトは Next.js なので公開接頭辞は NEXT_PUBLIC_）。
+- 露出していれば、サーバー（api / route handler）経由へ移設 → キーをローテーション → 露出していた env 変数を削除。
+- service_role キー・APIキーがクライアントバンドルに焼き込まれていないか点検。
