@@ -34,6 +34,7 @@ export default async function handler(req, res) {
     temperature = 0.4,
     max_tokens: maxTokensBody,
     maxTokens: maxTokensAlt,
+    tools,
   } = body
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -43,6 +44,17 @@ export default async function handler(req, res) {
   const max_tokens =
     maxTokensBody ?? maxTokensAlt ?? 900
 
+  const anthropicBody = {
+    model: model || 'claude-sonnet-4-5',
+    max_tokens,
+    temperature,
+    system: typeof system === 'string' ? system : '',
+    messages,
+  }
+  if (Array.isArray(tools) && tools.length > 0) {
+    anthropicBody.tools = tools
+  }
+
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -50,13 +62,7 @@ export default async function handler(req, res) {
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({
-      model: model || 'claude-sonnet-4-5',
-      max_tokens,
-      temperature,
-      system: typeof system === 'string' ? system : '',
-      messages,
-    }),
+    body: JSON.stringify(anthropicBody),
   })
 
   const data = await anthropicRes.json().catch(() => ({}))
