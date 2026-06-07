@@ -19,14 +19,17 @@ export default async function handler(req, res) {
   if (!fileId) return res.status(400).json({ error: 'fileId required' })
 
   const supabaseAdmin = createClient(
-    process.env.SUPABASE_URL,
+    'https://bbkjnetmdfdrzcedmbdn.supabase.co',
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
   // ユーザー特定
-  const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token)
-  if (userErr || !user) return res.status(401).json({ error: 'invalid_token' })
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+  if (authError || !user) {
+    console.error('sign-file: getUser failed', authError)
+    return res.status(401).json({ error: 'invalid_token', detail: (authError && authError.message) || null })
+  }
 
   // ファイル取得
   const { data: file, error: fileErr } = await supabaseAdmin
