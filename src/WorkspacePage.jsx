@@ -832,7 +832,7 @@ function DashboardView({ id }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* ROADMAP */}
-            <div style={{ ...glass, borderRadius: 14, padding: 24 }}>
+            <div style={{ ...glass, borderRadius: 14, padding: 24, overflow: 'visible' }}>
               <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>ROADMAP</div>
               <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 8 }}>進捗ロードマップ（{ws.contract_type || ''}）</div>
               {isInternal ? (
@@ -841,7 +841,7 @@ function DashboardView({ id }) {
               {steps.length === 0 ? (
                 <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>ロードマップがありません。</div>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                   {steps.map((step, idx) => {
                     const dotType = stepDotType(step.state)
                     return (
