@@ -35,12 +35,12 @@ export default function WorkspaceLoginPage() {
 
         {/* ロゴ */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 38, objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(201,168,76,0.6))' }} />
+          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 64, display: 'block', margin: '0 auto', objectFit: 'contain', filter: 'drop-shadow(0 0 14px rgba(201,168,76,0.7))' }} />
           <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginTop: 8, letterSpacing: 3 }}>WORKSPACE</div>
         </div>
 
         {/* カード */}
-        <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 40px rgba(201,168,76,0.12)', borderRadius: 16, padding: 32 }}>
+        <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(201,168,76,0.45)', boxShadow: '0 0 60px rgba(201,168,76,0.28)', borderRadius: 16, padding: 32 }}>
           {sent ? (
             <div>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -89,7 +89,7 @@ export default function WorkspaceLoginPage() {
           )}
         </div>
 
-        <div style={{ fontSize: 11, color: '#1E293B', fontWeight: 400, textAlign: 'center', marginTop: 24 }}>
+        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400, textAlign: 'center', marginTop: 24 }}>
           House-AI Workspace はスタッフ専用です
         </div>
       </div>
