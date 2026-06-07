@@ -1310,7 +1310,7 @@ function DashboardView({ id }) {
             position: 'fixed', top: 0, left: p.x + '%',
             width: p.size + 'px', height: (p.size * 1.6) + 'px',
             background: p.color, borderRadius: 2,
-            zIndex: 100000, pointerEvents: 'none',
+            zIndex: 100002, pointerEvents: 'none',
           }}
         />
       ))}
