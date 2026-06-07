@@ -10,6 +10,19 @@ const supabaseAdmin = createClient(
 
 const ADMIN_PASSWORD = 'gintetsu2024admin'
 
+async function fetchAdminUsers() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return []
+  const res = await fetch('/api/admin-users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+  })
+  if (!res.ok) return []
+  const json = await res.json()
+  return (json && json.users) || []
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -612,9 +625,8 @@ function MembersPanel({ supabaseAdmin }) {
     async function load() {
       setLoading(true)
       try {
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers()
-        if (error) throw error
-        setMembers(data.users || [])
+        const users = await fetchAdminUsers()
+        setMembers(users)
       } catch (err) {
         setError('会員一覧の取得に失敗しました: ' + err.message)
       } finally {
@@ -1038,9 +1050,8 @@ export default function AdminDashboard() {
   async function fetchPartners() {
     setPartnerLoading(true)
     try {
-      const { data: authData, error } = await supabaseAdmin.auth.admin.listUsers()
-      if (error) throw error
-      const partnerUsers = (authData.users || []).filter(u => u.user_metadata?.user_type === 'partner')
+      const users = await fetchAdminUsers()
+      const partnerUsers = users.filter(u => u.user_metadata?.user_type === 'partner')
       const { data: profiles } = await supabase.from('partner_profiles').select('*')
       const profileMap = {}
       if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
@@ -1093,8 +1104,8 @@ export default function AdminDashboard() {
 
   async function fetchAllMembers() {
     try {
-      const { data } = await supabaseAdmin.auth.admin.listUsers()
-      setAllMembers(data?.users || [])
+      const users = await fetchAdminUsers()
+      setAllMembers(users)
     } catch(e) { console.error(e) }
   }
 
@@ -2091,9 +2102,8 @@ function AdManagement({ supabaseAdmin }) {
   const fetchPartners = async () => {
     setPartnerLoading(true)
     try {
-      const { data: authData, error } = await supabaseAdmin.auth.admin.listUsers()
-      if (error) throw error
-      const partnerUsers = (authData.users || []).filter(u => u.user_metadata?.user_type === 'partner')
+      const users = await fetchAdminUsers()
+      const partnerUsers = users.filter(u => u.user_metadata?.user_type === 'partner')
       const { data: profiles } = await supabaseAdmin.from('partner_profiles').select('*')
       const profileMap = {}
       if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
