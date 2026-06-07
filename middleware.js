@@ -1,8 +1,11 @@
 export const config = {
-  matcher: '/:path*',
+  matcher: '/((?!api).*)',
 }
 
 export default function middleware(request) {
+  const { pathname } = request.nextUrl || new URL(request.url)
+  if (pathname.startsWith('/api')) return
+
   const authHeader = request.headers.get('authorization')
 
   if (authHeader) {
