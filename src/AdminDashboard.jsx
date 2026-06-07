@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
-)
-
 const ADMIN_PASSWORD = 'gintetsu2024admin'
 
 async function fetchAdminUsers() {
@@ -595,7 +588,7 @@ function SellersPanel() {
   )
 }
 
-function MembersPanel({ supabaseAdmin }) {
+function MembersPanel() {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -693,7 +686,7 @@ function MembersPanel({ supabaseAdmin }) {
   }
 
   async function updateMemberStatus(userId, status, reason) {
-    await supabaseAdmin.from('profiles').update({
+    await supabase.from('profiles').update({
       account_status: status,
       status_reason: reason,
       status_updated_at: new Date().toISOString()
@@ -968,11 +961,11 @@ export default function AdminDashboard() {
     try {
       const [m, a, v, e, c, o] = await Promise.all([
         { data: [] },
-        supabaseAdmin.from('agency_registrations').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('valuations').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('expert_requests').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('community_posts').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('owner_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('agency_registrations').select('*').order('created_at', { ascending: false }),
+        supabase.from('valuations').select('*').order('created_at', { ascending: false }),
+        supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
+        supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
         ])
       setAgencies(a.data || [])
       setValuations(v.data || [])
@@ -1011,7 +1004,7 @@ export default function AdminDashboard() {
 
   async function deletePost(id) {
     if (!window.confirm('この投稿を削除しますか？')) return
-    const { error } = await supabaseAdmin.from('community_posts').delete().eq('id', id)
+    const { error } = await supabase.from('community_posts').delete().eq('id', id)
     if (error) { alert('削除失敗: ' + error.message); return }
     setCommunity(list => list.filter(p => p.id !== id))
   }
@@ -1037,7 +1030,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ userId: target.agency_user_id, action: 'hard' }),
       })
     }
-    await supabaseAdmin.from('agency_registrations').delete().eq('id', id)
+    await supabase.from('agency_registrations').delete().eq('id', id)
     setAgencies(list => list.filter(a => a.id !== id))
     setSelectedAgency(null)
   }
@@ -1087,13 +1080,13 @@ export default function AdminDashboard() {
 
   async function fetchReports() {
     setReportLoading(true)
-    const { data } = await supabaseAdmin.from('reports').select('*').order('created_at', { ascending: false })
+    const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false })
     setReports(data || [])
     setReportLoading(false)
   }
 
   async function updateReportStatus(id, status) {
-    await supabaseAdmin.from('reports').update({ status }).eq('id', id)
+    await supabase.from('reports').update({ status }).eq('id', id)
     setReports(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
@@ -1747,14 +1740,14 @@ export default function AdminDashboard() {
 
           {/* 会員管理 */}
           {tab === 'members' && (
-            <MembersPanel supabaseAdmin={supabaseAdmin} />
+            <MembersPanel />
           )}
 
           {/* 広告管理 */}
           {tab === 'ads' && (
             <div>
               <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>📢 広告管理</h2>
-              <AdManagement supabaseAdmin={supabaseAdmin} />
+              <AdManagement />
             </div>
           )}
 
@@ -2078,7 +2071,7 @@ export default function AdminDashboard() {
 }
 
 
-function AdManagement({ supabaseAdmin }) {
+function AdManagement() {
   const [tickerItems, setTickerItems] = useState([])
   const [adItems, setAdItems] = useState([])
   const [partners, setPartners] = useState([])
@@ -2104,7 +2097,7 @@ function AdManagement({ supabaseAdmin }) {
     try {
       const users = await fetchAdminUsers()
       const partnerUsers = users.filter(u => u.user_metadata?.user_type === 'partner')
-      const { data: profiles } = await supabaseAdmin.from('partner_profiles').select('*')
+      const { data: profiles } = await supabase.from('partner_profiles').select('*')
       const profileMap = {}
       if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
       setPartners(partnerUsers.map(u => ({ ...u, profile: profileMap[u.id] || null })))
@@ -2116,7 +2109,7 @@ function AdManagement({ supabaseAdmin }) {
   }
 
   const updatePartnerStatus = async (userId, status) => {
-    await supabaseAdmin.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
+    await supabase.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
     setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
     setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
   }
@@ -2138,38 +2131,38 @@ function AdManagement({ supabaseAdmin }) {
   }
 
   const fetchTicker = async () => {
-    const { data } = await supabaseAdmin.from('ticker_items').select('*').order('sort_order')
+    const { data } = await supabase.from('ticker_items').select('*').order('sort_order')
     if (data) setTickerItems(data)
   }
 
   const fetchAds = async () => {
-    const { data } = await supabaseAdmin.from('ad_items').select('*').order('sort_order')
+    const { data } = await supabase.from('ad_items').select('*').order('sort_order')
     if (data) setAdItems(data)
   }
 
   const saveTicker = async () => {
     setSaving(true)
-    const { error } = await supabaseAdmin.from('ticker_items').insert([{ ...form, sort_order: Number(form.sort_order) }])
+    const { error } = await supabase.from('ticker_items').insert([{ ...form, sort_order: Number(form.sort_order) }])
     if (!error) { setMsg('✅ 追加しました'); fetchTicker(); setForm({ label: 'PR', text: '', url: '', active: true, sort_order: 0 }) }
     else setMsg('❌ エラー: ' + error.message)
     setSaving(false)
   }
 
   const deleteTicker = async (id) => {
-    await supabaseAdmin.from('ticker_items').delete().eq('id', id)
+    await supabase.from('ticker_items').delete().eq('id', id)
     fetchTicker()
   }
 
   const saveAd = async () => {
     setSaving(true)
-    const { error } = await supabaseAdmin.from('ad_items').insert([{ ...adForm }])
+    const { error } = await supabase.from('ad_items').insert([{ ...adForm }])
     if (!error) { setMsg('✅ 追加しました'); fetchAds(); setAdForm({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' }) }
     else setMsg('❌ エラー: ' + error.message)
     setSaving(false)
   }
 
   const deleteAd = async (id) => {
-    await supabaseAdmin.from('ad_items').delete().eq('id', id)
+    await supabase.from('ad_items').delete().eq('id', id)
     fetchAds()
   }
 
