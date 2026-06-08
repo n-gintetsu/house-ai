@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Edit, Send, X } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from './supabaseClient';
 
 const VIOLATION_RE = /https?:\/\/|[\w.+-]+@[\w-]+\.[a-z]{2,}|\d{10,}/i;
 const SPAM_RE = /営業|宣伝|広告/;

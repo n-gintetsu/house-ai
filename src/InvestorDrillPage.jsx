@@ -1,11 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { drillLevel1, drillExtreme, drillLevel2, drillLevel3 } from './drillData';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from './supabaseClient';
 
 const correctComments = [
   '分析精度が上昇しています…',
