@@ -227,35 +227,35 @@ function CreateModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.title || !form.customer_name || !form.contract_type) { setError('案件名・顧客名・契約種別は必須です。'); return }
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setError('ログインの有効期限が切れています。ログアウトして入り直してください。'); setSubmitting(false); return }
     setSubmitting(true); setError('')
     try {
+      const newId = crypto.randomUUID()
       const { count } = await supabase.from('workspaces').select('*', { count: 'exact', head: true })
       const wsCode = `WS-2026-${String((count || 0) + 1).padStart(6, '0')}`
-      const { data: wsData, error: wsErr } = await supabase.from('workspaces').insert({
-        ws_code: wsCode, title: form.title, customer_name: form.customer_name,
+      const { error: wsErr } = await supabase.from('workspaces').insert({
+        id: newId, ws_code: wsCode, title: form.title, customer_name: form.customer_name,
         agent_name: form.agent_name, contract_type: form.contract_type,
         property_address: form.property_address, status: '進行中', progress: 0,
-      }).select().single()
+      })
       if (wsErr) throw wsErr
       const labels = getRoadmapLabels(form.contract_type)
-      await supabase.from('roadmap_steps').insert(labels.map((label, i) => ({ workspace_id: wsData.id, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手' })))
+      await supabase.from('roadmap_steps').insert(labels.map((label, i) => ({ workspace_id: newId, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手' })))
       await supabase.from('ws_file_folders').insert([
-        { workspace_id: wsData.id, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
-        { workspace_id: wsData.id, role_label: '顧客', is_fixed: true, sort_order: 1 },
+        { workspace_id: newId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
+        { workspace_id: newId, role_label: '顧客', is_fixed: true, sort_order: 1 },
       ])
       // 作成者を Owner として workspace_members に登録（unique衝突は握りつぶす）
-      const { data: { session: createSession } } = await supabase.auth.getSession()
-      if (createSession) {
-        await supabase.from('workspace_members').insert({
-          workspace_id: wsData.id,
-          user_id: createSession.user.id,
-          email: createSession.user.email || '',
-          role: 'Owner',
-          status: 'active',
-          invited_by: createSession.user.id,
-        }).select().maybeSingle()
-      }
-      onCreated(wsData.id)
+      await supabase.from('workspace_members').insert({
+        workspace_id: newId,
+        user_id: session.user.id,
+        email: session.user.email || '',
+        role: 'Owner',
+        status: 'active',
+        invited_by: session.user.id,
+      })
+      onCreated(newId)
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
 
