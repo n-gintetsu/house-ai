@@ -333,6 +333,8 @@ function DashboardView({ id }) {
   const [renameVal, setRenameVal] = useState('')
   const [insertingAfterIdx, setInsertingAfterIdx] = useState(null)
   const [insertLabel, setInsertLabel] = useState('')
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
 
   const [celebration, setCelebration] = useState(null)
   const [confettiPieces, setConfettiPieces] = useState([])
@@ -458,6 +460,8 @@ function DashboardView({ id }) {
     setRenameVal('')
     setInsertingAfterIdx(null)
     setInsertLabel('')
+    setDraggingIdx(null)
+    setDragOverIdx(null)
   }
 
   async function handleRenameStep(stepId, label) {
@@ -496,6 +500,19 @@ function DashboardView({ id }) {
       supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
     ))
     await recalcAndSaveProgress(combined)
+  }
+
+  async function handleDropReorder(fromIdx, toIdx) {
+    if (fromIdx === toIdx) return
+    const reordered = [...steps]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    const renumbered = reordered.map((s, i) => ({ ...s, step_order: i + 1 }))
+    setSteps(renumbered)
+    await Promise.all(renumbered.map(s =>
+      supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
+    ))
+    await recalcAndSaveProgress(renumbered)
   }
 
   useEffect(() => {
@@ -1015,7 +1032,15 @@ function DashboardView({ id }) {
                   {steps.map((step, idx) => {
                     const dotType = stepDotType(step.state)
                     return (
-                      <div key={step.id || idx} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                      <div
+                        key={step.id || idx}
+                        draggable={editingRoadmap}
+                        onDragStart={editingRoadmap ? () => setDraggingIdx(idx) : undefined}
+                        onDragEnd={editingRoadmap ? () => { setDraggingIdx(null); setDragOverIdx(null) } : undefined}
+                        onDragOver={editingRoadmap ? e => { e.preventDefault(); setDragOverIdx(idx) } : undefined}
+                        onDrop={editingRoadmap ? e => { e.preventDefault(); if (draggingIdx !== null && draggingIdx !== idx) handleDropReorder(draggingIdx, idx); setDraggingIdx(null); setDragOverIdx(null) } : undefined}
+                        style={{ display: 'flex', alignItems: 'center', position: 'relative', opacity: editingRoadmap && draggingIdx === idx ? 0.4 : 1, outline: editingRoadmap && dragOverIdx === idx && draggingIdx !== idx ? '2px dashed #c9a84c' : 'none', borderRadius: 8, transition: 'opacity 0.15s', cursor: editingRoadmap ? 'grab' : 'default' }}
+                      >
                         {/* ステップ本体 */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                           {/* ドット（削除ボタンオーバーレイ付き） */}
@@ -1054,6 +1079,7 @@ function DashboardView({ id }) {
                             {editingRoadmap ? (
                               <button
                                 onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleDeleteStep(step.id) }}
+                                onDragStart={e => e.stopPropagation()}
                                 style={{ position: 'absolute', top: -5, right: -5, width: 16, height: 16, borderRadius: '50%', background: 'rgba(239,68,68,0.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2 }}
                                 title="削除"
                               >
@@ -1065,6 +1091,7 @@ function DashboardView({ id }) {
                           {editingRoadmap && renamingStepId === step.id ? (
                             <input
                               type="text"
+                              draggable={false}
                               value={renameVal}
                               onChange={e => setRenameVal(e.target.value)}
                               onBlur={() => handleRenameStep(step.id, renameVal)}
@@ -1099,7 +1126,7 @@ function DashboardView({ id }) {
                         {/* 連結線（通常）/ ＋ボタン（編集） */}
                         {editingRoadmap ? (
                           idx < steps.length - 1 ? (
-                            <div style={{ width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 26, flexShrink: 0, position: 'relative' }}>
+                            <div onDragStart={e => e.stopPropagation()} style={{ width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 26, flexShrink: 0, position: 'relative' }}>
                               {insertingAfterIdx === idx ? (
                                 <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 50, background: '#0F172A', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 8, padding: '6px 8px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)', display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
                                   <input
