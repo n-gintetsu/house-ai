@@ -327,6 +327,12 @@ function DashboardView({ id }) {
   const [currentRole, setCurrentRole] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [orgName, setOrgName] = useState(null)
+  // ロードマップ編集モード
+  const [editingRoadmap, setEditingRoadmap] = useState(false)
+  const [renamingStepId, setRenamingStepId] = useState(null)
+  const [renameVal, setRenameVal] = useState('')
+  const [insertingAfterIdx, setInsertingAfterIdx] = useState(null)
+  const [insertLabel, setInsertLabel] = useState('')
 
   const [celebration, setCelebration] = useState(null)
   const [confettiPieces, setConfettiPieces] = useState([])
@@ -434,6 +440,62 @@ function DashboardView({ id }) {
         setTimeout(() => setPromoteMessage(''), 5000)
       }
     }
+  }
+
+  // --- ROADMAP 編集 ---
+  async function recalcAndSaveProgress(stepsArr) {
+    const doneCount = stepsArr.filter(s => s.state === '完了').length
+    const newProgress = stepsArr.length > 0 ? Math.round(doneCount / stepsArr.length * 100) : 0
+    const now = new Date().toISOString()
+    await supabase.from('workspaces').update({ progress: newProgress, updated_at: now }).eq('id', id)
+    setWorkspace(prev => ({ ...prev, progress: newProgress, updated_at: now }))
+  }
+
+  function handleToggleRoadmapEdit() {
+    setEditingRoadmap(prev => !prev)
+    setActiveStepPopover(null)
+    setRenamingStepId(null)
+    setRenameVal('')
+    setInsertingAfterIdx(null)
+    setInsertLabel('')
+  }
+
+  async function handleRenameStep(stepId, label) {
+    const trimmed = (label || '').trim()
+    if (!trimmed) { setRenamingStepId(null); return }
+    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, label: trimmed } : s))
+    setRenamingStepId(null)
+    await supabase.from('roadmap_steps').update({ label: trimmed }).eq('id', stepId)
+  }
+
+  async function handleDeleteStep(stepId) {
+    const newSteps = steps.filter(s => s.id !== stepId).map((s, i) => ({ ...s, step_order: i + 1 }))
+    setSteps(newSteps)
+    await supabase.from('roadmap_steps').delete().eq('id', stepId)
+    if (newSteps.length > 0) {
+      await Promise.all(newSteps.map(s =>
+        supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
+      ))
+    }
+    await recalcAndSaveProgress(newSteps)
+  }
+
+  async function handleInsertStep(afterIdx, label) {
+    const trimmed = (label || '').trim()
+    if (!trimmed) return
+    const newId = crypto.randomUUID()
+    const before = steps.slice(0, afterIdx + 1)
+    const after = steps.slice(afterIdx + 1)
+    const newStepObj = { id: newId, workspace_id: id, label: trimmed, state: '未着手', step_order: 0 }
+    const combined = [...before, newStepObj, ...after].map((s, i) => ({ ...s, step_order: i + 1 }))
+    setSteps(combined)
+    setInsertingAfterIdx(null)
+    setInsertLabel('')
+    await supabase.from('roadmap_steps').insert({ id: newId, workspace_id: id, label: trimmed, state: '未着手', step_order: 0 })
+    await Promise.all(combined.map(s =>
+      supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
+    ))
+    await recalcAndSaveProgress(combined)
   }
 
   useEffect(() => {
@@ -902,51 +964,128 @@ function DashboardView({ id }) {
             {/* ROADMAP */}
             <div style={{ ...glass, borderRadius: 14, padding: 24, overflow: 'visible' }}>
               <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>ROADMAP</div>
-              <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 8 }}>進捗ロードマップ（{ws.contract_type || ''}）</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500 }}>進捗ロードマップ（{ws.contract_type || ''}）</div>
+                {canManage ? (
+                  <button
+                    onClick={handleToggleRoadmapEdit}
+                    style={{ fontSize: 11, fontWeight: 400, background: editingRoadmap ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.06)', border: editingRoadmap ? '1px solid rgba(201,168,76,0.45)' : '1px solid rgba(255,255,255,0.12)', color: editingRoadmap ? '#c9a84c' : '#94A3B8', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+                  >{editingRoadmap ? '完了' : '編集'}</button>
+                ) : null}
+              </div>
               {isInternal ? (
-                <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginBottom: 20 }}>各ステップをクリックして状態を変更できます</div>
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginBottom: 20 }}>
+                  {editingRoadmap ? 'クリックで名前変更 / ＋で挿入 / ✕で削除' : '各ステップをクリックして状態を変更できます'}
+                </div>
               ) : null}
               {steps.length === 0 ? (
                 <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>ロードマップがありません。</div>
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  {/* 先頭 ＋ (編集モードのみ) */}
+                  {editingRoadmap ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', paddingTop: 7, marginRight: 4, position: 'relative' }}>
+                      {insertingAfterIdx === -1 ? (
+                        <div style={{ position: 'absolute', top: 24, left: 0, zIndex: 50, background: '#0F172A', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 8, padding: '6px 8px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)', display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                          <input
+                            type="text"
+                            value={insertLabel}
+                            onChange={e => setInsertLabel(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                              if (e.key === 'Enter') handleInsertStep(-1, insertLabel)
+                              if (e.key === 'Escape') { setInsertingAfterIdx(null); setInsertLabel('') }
+                            }}
+                            autoFocus
+                            placeholder="ステップ名"
+                            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '4px 8px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', width: 96, boxSizing: 'border-box' }}
+                          />
+                          <button onClick={() => handleInsertStep(-1, insertLabel)} style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>追加</button>
+                          <button onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInsertingAfterIdx(null); setInsertLabel('') }} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 4, padding: '4px 6px', fontSize: 11, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setInsertingAfterIdx(-1); setInsertLabel('') }}
+                          style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: 14, fontWeight: 400, lineHeight: 1 }}
+                          title="先頭に追加"
+                        >＋</button>
+                      )}
+                    </div>
+                  ) : null}
                   {steps.map((step, idx) => {
                     const dotType = stepDotType(step.state)
                     return (
                       <div key={step.id || idx} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                        <div
-                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: isInternal ? 'pointer' : 'default' }}
-                          onClick={isInternal ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
-                        >
-                          {dotType === 'done' ? (
-                            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Check size={14} color="#c9a84c" />
-                            </div>
-                          ) : dotType === 'active' ? (
-                            <motion.div
-                              animate={{ boxShadow: ['0 0 0px rgba(59,130,246,0)', '0 0 20px 4px rgba(59,130,246,0.75)', '0 0 0px rgba(59,130,246,0)'] }}
-                              transition={{ duration: 1.6, repeat: Infinity }}
-                              style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(59,130,246,0.15)', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        {/* ステップ本体 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                          {/* ドット（削除ボタンオーバーレイ付き） */}
+                          <div style={{ position: 'relative' }}>
+                            <div
+                              style={{ cursor: isInternal && !editingRoadmap ? 'pointer' : 'default' }}
+                              onClick={isInternal && !editingRoadmap ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
                             >
-                              <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} style={{ width: 10, height: 10, borderRadius: '50%', background: '#60A5FA' }} />
-                            </motion.div>
-                          ) : dotType === 'waiting' ? (
-                            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '2px solid #F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FCD34D' }} />
+                              {dotType === 'done' ? (
+                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Check size={14} color="#c9a84c" />
+                                </div>
+                              ) : dotType === 'active' ? (
+                                <motion.div
+                                  animate={{ boxShadow: ['0 0 0px rgba(59,130,246,0)', '0 0 20px 4px rgba(59,130,246,0.75)', '0 0 0px rgba(59,130,246,0)'] }}
+                                  transition={{ duration: 1.6, repeat: Infinity }}
+                                  style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(59,130,246,0.15)', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} style={{ width: 10, height: 10, borderRadius: '50%', background: '#60A5FA' }} />
+                                </motion.div>
+                              ) : dotType === 'waiting' ? (
+                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '2px solid #F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FCD34D' }} />
+                                </div>
+                              ) : dotType === 'rejected' ? (
+                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(239,68,68,0.15)', border: '2px solid #EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <X size={14} color="#F87171" />
+                                </div>
+                              ) : (
+                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '2px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.18)' }} />
+                                </div>
+                              )}
                             </div>
-                          ) : dotType === 'rejected' ? (
-                            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(239,68,68,0.15)', border: '2px solid #EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <X size={14} color="#F87171" />
-                            </div>
+                            {/* 削除ボタン（編集モードのみ） */}
+                            {editingRoadmap ? (
+                              <button
+                                onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleDeleteStep(step.id) }}
+                                style={{ position: 'absolute', top: -5, right: -5, width: 16, height: 16, borderRadius: '50%', background: 'rgba(239,68,68,0.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2 }}
+                                title="削除"
+                              >
+                                <X size={8} color="#fff" />
+                              </button>
+                            ) : null}
+                          </div>
+                          {/* ラベル / リネーム入力 */}
+                          {editingRoadmap && renamingStepId === step.id ? (
+                            <input
+                              type="text"
+                              value={renameVal}
+                              onChange={e => setRenameVal(e.target.value)}
+                              onBlur={() => handleRenameStep(step.id, renameVal)}
+                              onKeyDown={e => {
+                                if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                                if (e.key === 'Enter') handleRenameStep(step.id, renameVal)
+                                if (e.key === 'Escape') setRenamingStepId(null)
+                              }}
+                              autoFocus
+                              style={{ fontSize: 16, fontWeight: 400, width: 60, textAlign: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#c9a84c', padding: '2px 4px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                            />
                           ) : (
-                            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '2px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.18)' }} />
-                            </div>
+                            <span
+                              style={{ fontSize: 10, fontWeight: step.state === '進行中' ? 500 : 400, color: stepLabelColor(step.state), whiteSpace: 'nowrap', textAlign: 'center', maxWidth: 58, lineHeight: 1.3, cursor: editingRoadmap ? 'pointer' : 'inherit' }}
+                              onClick={editingRoadmap ? () => { setRenamingStepId(step.id); setRenameVal(step.label) } : undefined}
+                              title={editingRoadmap ? 'クリックで名前変更' : undefined}
+                            >{step.label}</span>
                           )}
-                          <span style={{ fontSize: 10, fontWeight: step.state === '進行中' ? 500 : 400, color: stepLabelColor(step.state), whiteSpace: 'nowrap', textAlign: 'center', maxWidth: 58, lineHeight: 1.3 }}>{step.label}</span>
                         </div>
-                        {/* 状態選択ポップオーバー */}
-                        {activeStepPopover === step.id ? (
+                        {/* 状態選択ポップオーバー（通常モードのみ） */}
+                        {!editingRoadmap && activeStepPopover === step.id ? (
                           <div style={{ position: 'absolute', top: 38, left: '50%', transform: 'translateX(-50%)', zIndex: 50, background: '#0F172A', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 8, padding: '4px 0', minWidth: 96, boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
                             {STEP_STATES.map(s => (
                               <div
@@ -957,12 +1096,75 @@ function DashboardView({ id }) {
                             ))}
                           </div>
                         ) : null}
-                        {idx < steps.length - 1 ? (
-                          <div style={{ width: 20, height: 2, background: idx <= lastDoneIdx ? 'rgba(201,168,76,0.55)' : 'rgba(255,255,255,0.1)', marginBottom: 26, flexShrink: 0 }} />
-                        ) : null}
+                        {/* 連結線（通常）/ ＋ボタン（編集） */}
+                        {editingRoadmap ? (
+                          idx < steps.length - 1 ? (
+                            <div style={{ width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 26, flexShrink: 0, position: 'relative' }}>
+                              {insertingAfterIdx === idx ? (
+                                <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 50, background: '#0F172A', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 8, padding: '6px 8px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)', display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                  <input
+                                    type="text"
+                                    value={insertLabel}
+                                    onChange={e => setInsertLabel(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                                      if (e.key === 'Enter') handleInsertStep(idx, insertLabel)
+                                      if (e.key === 'Escape') { setInsertingAfterIdx(null); setInsertLabel('') }
+                                    }}
+                                    autoFocus
+                                    placeholder="ステップ名"
+                                    style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '4px 8px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', width: 96, boxSizing: 'border-box' }}
+                                  />
+                                  <button onClick={() => handleInsertStep(idx, insertLabel)} style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>追加</button>
+                                  <button onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInsertingAfterIdx(null); setInsertLabel('') }} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 4, padding: '4px 6px', fontSize: 11, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => { setInsertingAfterIdx(idx); setInsertLabel('') }}
+                                  style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: 14, fontWeight: 400, lineHeight: 1 }}
+                                  title="ここに挿入"
+                                >＋</button>
+                              )}
+                            </div>
+                          ) : null
+                        ) : (
+                          idx < steps.length - 1 ? (
+                            <div style={{ width: 20, height: 2, background: idx <= lastDoneIdx ? 'rgba(201,168,76,0.55)' : 'rgba(255,255,255,0.1)', marginBottom: 26, flexShrink: 0 }} />
+                          ) : null
+                        )}
                       </div>
                     )
                   })}
+                  {/* 末尾 ＋ (編集モードのみ) */}
+                  {editingRoadmap ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', paddingTop: 7, marginLeft: 4, position: 'relative' }}>
+                      {insertingAfterIdx === steps.length - 1 ? (
+                        <div style={{ position: 'absolute', top: 24, left: 0, zIndex: 50, background: '#0F172A', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 8, padding: '6px 8px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)', display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                          <input
+                            type="text"
+                            value={insertLabel}
+                            onChange={e => setInsertLabel(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                              if (e.key === 'Enter') handleInsertStep(steps.length - 1, insertLabel)
+                              if (e.key === 'Escape') { setInsertingAfterIdx(null); setInsertLabel('') }
+                            }}
+                            autoFocus
+                            placeholder="ステップ名"
+                            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '4px 8px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', width: 96, boxSizing: 'border-box' }}
+                          />
+                          <button onClick={() => handleInsertStep(steps.length - 1, insertLabel)} style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>追加</button>
+                          <button onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInsertingAfterIdx(null); setInsertLabel('') }} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 4, padding: '4px 6px', fontSize: 11, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setInsertingAfterIdx(steps.length - 1); setInsertLabel('') }}
+                          style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: 14, fontWeight: 400, lineHeight: 1 }}
+                          title="末尾に追加"
+                        >＋</button>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
