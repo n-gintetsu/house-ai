@@ -326,6 +326,7 @@ function DashboardView({ id }) {
   // ログイン中ユーザーのこの案件でのロール
   const [currentRole, setCurrentRole] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [orgName, setOrgName] = useState(null)
 
   const [celebration, setCelebration] = useState(null)
   const [confettiPieces, setConfettiPieces] = useState([])
@@ -370,6 +371,11 @@ function DashboardView({ id }) {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
+      // 組織名を取得（RLSで読めない場合は0行 → null のままフォールバック）
+      if (ws.org_id) {
+        const { data: orgData } = await supabase.from('organizations').select('name').eq('id', ws.org_id).maybeSingle()
+        setOrgName(orgData ? orgData.name || null : null)
+      }
       // ログイン中ユーザーのこの案件でのロールを取得
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
@@ -888,7 +894,7 @@ function DashboardView({ id }) {
         <div className="ws-grid">
 
           {/* 左カラム：役割フォルダ */}
-          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} />
+          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} />
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1377,7 +1383,7 @@ function DashboardView({ id }) {
 // 社内・顧客は全ファイル閲覧可。それ以外（業者系）はgrantされたファイルのみ。
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 
-function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId }) {
+function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId, customerName, orgName }) {
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const fpIsInternal = ['Owner', 'Manager', 'Staff'].includes(normRole(currentRole))
@@ -1751,7 +1757,13 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                   }}
                   style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: folder.is_fixed ? 'default' : 'pointer' }}
                   title={folder.is_fixed ? undefined : 'クリックで編集'}
-                >{folder.role_label || ''}</span>
+                >{
+                  folder.is_fixed && folder.role_label === '自社（不動産）'
+                    ? (orgName || '会社')
+                    : folder.is_fixed && folder.role_label === '顧客'
+                      ? (customerName ? customerName + ' 様' : 'お客様')
+                      : (folder.role_label || '')
+                }</span>
               )}
               {!folder.is_fixed ? (
                 fpCanDel ? (
@@ -1971,7 +1983,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
               style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
             >追加</button>
             <button
-              onClick={() => { setAddingFolder(false); setNewFolderLabel('') }}
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setAddingFolder(false); setNewFolderLabel('') }}
               style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
             >キャンセル</button>
           </div>
