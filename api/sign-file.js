@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   if (!fileId) return res.status(400).json({ error: 'fileId required' })
 
   const supabaseAdmin = createClient(
-    'https://bbkjnetmdfdrzcedmbdn.supabase.co',
+    process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )

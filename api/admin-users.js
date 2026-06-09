@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 const ADMIN_EMAILS = ['gintetsu.fudosan@gmail.com']
 
 const supabaseAdmin = createClient(
-  'https://bbkjnetmdfdrzcedmbdn.supabase.co',
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
