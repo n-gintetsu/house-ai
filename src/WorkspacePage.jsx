@@ -335,6 +335,7 @@ function DashboardView({ id }) {
   const [insertLabel, setInsertLabel] = useState('')
   const [draggingIdx, setDraggingIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [glowingSteps, setGlowingSteps] = useState(false)
 
   const [celebration, setCelebration] = useState(null)
   const [confettiPieces, setConfettiPieces] = useState([])
@@ -366,6 +367,12 @@ function DashboardView({ id }) {
     setTimeout(() => setConfettiPieces([]), 4200)
     setTimeout(() => setCelebration(null), 8000)
   }
+
+  const fireStepGlow = (stepCount) => {
+    setGlowingSteps(true)
+    setTimeout(() => setGlowingSteps(false), stepCount * 120 + 1500)
+  }
+
   // ログインメンバー（workspace_members）
   const [workspaceMembers, setWorkspaceMembers] = useState([])
   const [showInviteForm, setShowInviteForm] = useState(false)
@@ -431,6 +438,16 @@ function DashboardView({ id }) {
     const wsUpdate = { progress: newProgress, updated_at: now, status: allDone ? '完了' : '進行中', completed_at: allDone ? now : null }
     await supabase.from('workspaces').update(wsUpdate).eq('id', id)
     setWorkspace(prev => ({ ...prev, ...wsUpdate }))
+    // 全ステップ完了アニメ（編集モード中は発火しない・一度だけ）
+    if (allDone && !editingRoadmap) {
+      const kAllDone = 'houseai_celebrated_alldone_' + currentUserId + '_' + id
+      let seenAllDone = false
+      try { seenAllDone = localStorage.getItem(kAllDone) === '1' } catch (e) {}
+      if (!seenAllDone) {
+        try { localStorage.setItem(kAllDone, '1') } catch (e) {}
+        fireStepGlow(newSteps.length)
+      }
+    }
     // 全工程完了で自動昇格（address_keyが作れる場合のみ）
     if (allDone) {
       const mergedWs = { ...workspace, ...wsUpdate }
@@ -462,6 +479,7 @@ function DashboardView({ id }) {
     setInsertLabel('')
     setDraggingIdx(null)
     setDragOverIdx(null)
+    setGlowingSteps(false)
   }
 
   async function handleRenameStep(stepId, label) {
@@ -876,6 +894,8 @@ function DashboardView({ id }) {
         .ws-grid { display: grid; grid-template-columns: 260px 1fr 280px; gap: 16px; }
         @media (max-width: 960px) { .ws-grid { grid-template-columns: 1fr !important; } }
         @keyframes statusDotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        @keyframes stepGlow { 0% { box-shadow: none; } 50% { box-shadow: 0 0 12px 4px rgba(201,168,76,0.7); } 100% { box-shadow: none; } }
+        @keyframes stepBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
       `}</style>
 
       {/* ポップオーバー用バックドロップ */}
@@ -1050,7 +1070,7 @@ function DashboardView({ id }) {
                               onClick={isInternal && !editingRoadmap ? () => setActiveStepPopover(activeStepPopover === step.id ? null : step.id) : null}
                             >
                               {dotType === 'done' ? (
-                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: glowingSteps ? (idx === steps.length - 1 ? ('stepGlow 0.5s ease-out ' + (idx * 0.12).toFixed(2) + 's 1 both, stepBlink 0.28s ease-in-out ' + (idx * 0.12 + 0.55).toFixed(2) + 's 3 both') : ('stepGlow 0.5s ease-out ' + (idx * 0.12).toFixed(2) + 's 1 both')) : 'none' }}>
                                   <Check size={14} color="#c9a84c" />
                                 </div>
                               ) : dotType === 'active' ? (
