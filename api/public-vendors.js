@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabaseAdmin
     .from('partner_profiles')
-    .select('id, company_name, ad_title, ad_description, created_at, plan, category')
+    .select('id, company_name, ad_title, ad_description, created_at')
     .eq('ad_status', '掲載中')
     .order('created_at', { ascending: false })
 
