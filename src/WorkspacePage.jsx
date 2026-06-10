@@ -736,11 +736,11 @@ function DashboardView({ id }) {
     if (!timelineForm.event_date || !timelineForm.label) { setTimelineError('日付と内容は必須です'); return }
     setTimelineError('')
     try {
-      const { data, error } = await supabase.from('timeline_events').insert({
-        workspace_id: id, event_date: timelineForm.event_date, label: timelineForm.label
-      }).select().single()
+      const newId = crypto.randomUUID()
+      const newItem = { id: newId, workspace_id: id, event_date: timelineForm.event_date, label: timelineForm.label }
+      const { error } = await supabase.from('timeline_events').insert(newItem)
       if (error) throw error
-      setTimeline(prev => [...prev, data].sort((a, b) => a.event_date > b.event_date ? 1 : -1))
+      setTimeline(prev => [...prev, newItem].sort((a, b) => a.event_date > b.event_date ? 1 : -1))
       setTimelineForm({ event_date: '', label: '' })
       setShowTimelineForm(false)
     } catch (e) { console.error('timeline_events insert error', e); setTimelineError('追加に失敗しました: ' + (e.message || '')) }
@@ -756,11 +756,11 @@ function DashboardView({ id }) {
     if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
     setScheduleError('')
     try {
-      const { data, error } = await supabase.from('ws_schedule').insert({
-        workspace_id: id, scheduled_date: scheduleForm.scheduled_date, label: scheduleForm.label
-      }).select().single()
+      const newId = crypto.randomUUID()
+      const newItem = { id: newId, workspace_id: id, scheduled_date: scheduleForm.scheduled_date, label: scheduleForm.label }
+      const { error } = await supabase.from('ws_schedule').insert(newItem)
       if (error) throw error
-      setSchedule(prev => [...prev, data].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
+      setSchedule(prev => [...prev, newItem].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
       setScheduleForm({ scheduled_date: '', label: '' })
       setShowScheduleForm(false)
     } catch (e) { console.error('ws_schedule insert error', e); setScheduleError('追加に失敗しました: ' + (e.message || '')) }
@@ -776,11 +776,11 @@ function DashboardView({ id }) {
     if (!noticeForm.message) { setNoticeError('通知内容は必須です'); return }
     setNoticeError('')
     try {
-      const { data, error } = await supabase.from('ws_notices').insert({
-        workspace_id: id, level: noticeForm.level, message: noticeForm.message
-      }).select().single()
+      const newId = crypto.randomUUID()
+      const newItem = { id: newId, workspace_id: id, level: noticeForm.level, message: noticeForm.message }
+      const { error } = await supabase.from('ws_notices').insert(newItem)
       if (error) throw error
-      setNotices(prev => [...prev, data])
+      setNotices(prev => [...prev, newItem])
       setNoticeForm({ level: 'info', message: '' })
       setShowNoticeForm(false)
     } catch (e) { console.error('ws_notices insert error', e); setNoticeError('追加に失敗しました: ' + (e.message || '')) }
