@@ -158,10 +158,7 @@ function VendorCard({ vendor, onInquiry, aiRecommended }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        {vendor.phone && <span style={{ color: '#666', fontSize: 12 }}>📞 {vendor.phone}</span>}
-        {vendor.email && <span style={{ color: '#666', fontSize: 12 }}>✉️ {vendor.email}</span>}
-      </div>
+      <div style={{ marginBottom: 14 }} />
 
       <button onClick={() => onInquiry(vendor)}
         style={{ width: '100%', padding: '11px', background: isPremium ? gold : navy, color: isPremium ? navy : '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
@@ -220,12 +217,9 @@ export default function VendorPage() {
 
   const fetchVendors = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('partner_profiles')
-      .select('*')
-      .eq('ad_status', '掲載中')
-      .order('created_at', { ascending: false })
-    setVendors(data || [])
+    const res = await fetch('/api/public-vendors')
+    const json = res.ok ? await res.json() : { vendors: [] }
+    setVendors((json && json.vendors) || [])
     setLoading(false)
   }
 
