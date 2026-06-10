@@ -306,6 +306,10 @@ function DashboardView({ id }) {
   const [secretaryOpen, setSecretaryOpen] = useState(true)
   const [chatMessages, setChatMessages] = useState([])
   const [isSending, setIsSending] = useState(false)
+  const [activeChatTab, setActiveChatTab] = useState('ai')
+  const [memberMessages, setMemberMessages] = useState([])
+  const [memberInput, setMemberInput] = useState('')
+  const [isMemberSending, setIsMemberSending] = useState(false)
 
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
@@ -344,6 +348,8 @@ function DashboardView({ id }) {
   const celebrationCheckedRef = useRef(null)
   const chatBottomRef = useRef(null)
   const chatComposingRef = useRef(false)
+  const memberBottomRef = useRef(null)
+  const memberComposingRef = useRef(false)
 
   const CELEBRATIONS = {
     contract: {
@@ -434,6 +440,27 @@ function DashboardView({ id }) {
       chatBottomRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [chatMessages])
+
+  useEffect(() => {
+    if (memberBottomRef.current) {
+      memberBottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [memberMessages])
+
+  useEffect(() => {
+    if (!secretaryOpen || activeChatTab !== 'member') return
+    const fetchMemberMessages = async () => {
+      const { data } = await supabase
+        .from('workspace_messages')
+        .select('*')
+        .eq('workspace_id', id)
+        .order('created_at', { ascending: true })
+      if (data) setMemberMessages(data)
+    }
+    fetchMemberMessages()
+    const timer = setInterval(fetchMemberMessages, 5000)
+    return () => clearInterval(timer)
+  }, [secretaryOpen, activeChatTab, id])
 
   // --- ROADMAP 状態変更 ---
   const handleStepStateChange = async (stepId, newState) => {
@@ -970,6 +997,33 @@ ${timelineText}
       setChatMessages(prev => [...prev, { id: Date.now() + '-e', role: 'assistant', content: 'エラーが発生しました' }])
     }
     setIsSending(false)
+  }
+
+  const handleMemberSend = async () => {
+    const body = memberInput.trim()
+    if (!body || isMemberSending) return
+    const myWm = workspaceMembers.find(m => m.user_id === currentUserId)
+    const senderName = myWm
+      ? ((myWm.profiles && myWm.profiles.display_name) || myWm.display_name || myWm.email || '')
+      : ''
+    const newId = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const newMsg = { id: newId, workspace_id: id, user_id: currentUserId, sender_name: senderName, body, created_at: now }
+    setMemberInput('')
+    setMemberMessages(prev => [...prev, newMsg])
+    setIsMemberSending(true)
+    try {
+      await supabase.from('workspace_messages').insert({
+        id: newId,
+        workspace_id: id,
+        user_id: currentUserId,
+        sender_name: senderName,
+        body,
+      })
+    } catch (e) {
+      // 楽観更新済み
+    }
+    setIsMemberSending(false)
   }
 
   return (
@@ -1602,94 +1656,134 @@ ${timelineText}
         </div>
       </main>
 
-      {/* AI案件秘書 - 本物ガラス・固定右下 */}
+      {/* AI案件秘書 + メンバーチャット - 本物ガラス・固定右下 */}
       {secretaryOpen ? (
         <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 340, background: 'rgba(10,15,30,0.84)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
-          {/* ヘッダー */}
-          <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <img src="/logo.png" alt="AI" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>AI案件秘書</span>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
-            <button onClick={() => setSecretaryOpen(false)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}>
+
+          {/* ヘッダー：アイコン + タブ + 閉じるボタン */}
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <img src="/logo.png" alt="AI" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
+            <div style={{ display: 'flex', gap: 2, flex: 1 }}>
+              <button
+                onClick={() => setActiveChatTab('ai')}
+                style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: activeChatTab === 'ai' ? 'rgba(201,168,76,0.18)' : 'transparent', color: activeChatTab === 'ai' ? '#c9a84c' : '#64748B' }}
+              >AI秘書</button>
+              <button
+                onClick={() => setActiveChatTab('member')}
+                style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: activeChatTab === 'member' ? 'rgba(201,168,76,0.18)' : 'transparent', color: activeChatTab === 'member' ? '#c9a84c' : '#64748B' }}
+              >メンバー</button>
+            </div>
+            <button onClick={() => setSecretaryOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, flexShrink: 0 }}>
               <X size={14} color="#64748B" />
             </button>
           </div>
 
-          {/* 本文エリア */}
-          <div style={{ padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden', flex: 1, minHeight: 0 }}>
-            {/* 紹介文 */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10, flexShrink: 0 }}>
-              <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>{ws.title || '案件'}のAI秘書です。質問はお気軽にどうぞ。</span>
-            </div>
-
-            {/* クイックアクション */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, flexShrink: 0 }}>
-              {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
-                <button key={chip} onClick={() => handleSendMessage(chip)} disabled={isSending} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: isSending ? '#64748B' : '#c9a84c', cursor: isSending ? 'not-allowed' : 'pointer', fontWeight: 400 }}>{chip}</button>
-              ))}
-            </div>
-
-            {/* メッセージ履歴エリア */}
-            {chatMessages.length > 0 ? (
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10, paddingRight: 2 }}>
-                {chatMessages.map(msg => (
-                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{
-                      maxWidth: '82%',
-                      padding: '8px 11px',
-                      borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
-                      background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)',
-                      border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)',
-                      fontSize: 13,
-                      color: '#E2E8F0',
-                      fontWeight: 400,
-                      lineHeight: 1.6,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}>
-                      {msg.content}
-                    </div>
-                  </div>
+          {/* AI秘書タブ */}
+          {activeChatTab === 'ai' ? (
+            <div style={{ padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden', flex: 1, minHeight: 0 }}>
+              <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10, flexShrink: 0 }}>
+                <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>{ws.title || '案件'}のAI秘書です。質問はお気軽にどうぞ。</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, flexShrink: 0 }}>
+                {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
+                  <button key={chip} onClick={() => handleSendMessage(chip)} disabled={isSending} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: isSending ? '#64748B' : '#c9a84c', cursor: isSending ? 'not-allowed' : 'pointer', fontWeight: 400 }}>{chip}</button>
                 ))}
-                {isSending ? (
-                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '8px 14px', borderRadius: '12px 12px 12px 3px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#64748B', fontWeight: 400 }}>
-                      考え中...
-                    </div>
-                  </div>
-                ) : null}
-                <div ref={chatBottomRef} />
               </div>
-            ) : null}
-
-            {/* 入力エリア */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-              <textarea
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onCompositionStart={() => { chatComposingRef.current = true }}
-                onCompositionEnd={() => { chatComposingRef.current = false }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey && !chatComposingRef.current) {
-                    e.preventDefault()
-                    handleSendMessage()
-                  }
-                }}
-                placeholder="AIに質問する...（Shift+Enterで改行）"
-                rows={2}
-                style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => handleSendMessage()}
-                  disabled={isSending || !chatInput.trim()}
-                  style={{ background: (isSending || !chatInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isSending || !chatInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
-                >
-                  <Send size={12} />送信
-                </button>
+              {chatMessages.length > 0 ? (
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10, paddingRight: 2 }}>
+                  {chatMessages.map(msg => (
+                    <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                      <div style={{ maxWidth: '82%', padding: '8px 11px', borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isSending ? (
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                      <div style={{ padding: '8px 14px', borderRadius: '12px 12px 12px 3px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#64748B', fontWeight: 400 }}>考え中...</div>
+                    </div>
+                  ) : null}
+                  <div ref={chatBottomRef} />
+                </div>
+              ) : null}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                <textarea
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onCompositionStart={() => { chatComposingRef.current = true }}
+                  onCompositionEnd={() => { chatComposingRef.current = false }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey && !chatComposingRef.current) {
+                      e.preventDefault()
+                      handleSendMessage()
+                    }
+                  }}
+                  placeholder="AIに質問する...（Shift+Enterで改行）"
+                  rows={2}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => handleSendMessage()}
+                    disabled={isSending || !chatInput.trim()}
+                    style={{ background: (isSending || !chatInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isSending || !chatInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                  ><Send size={12} />送信</button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* メンバーチャットタブ */
+            <div style={{ padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden', flex: 1, minHeight: 0 }}>
+              {memberMessages.length > 0 ? (
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10, paddingRight: 2 }}>
+                  {memberMessages.map(msg => {
+                    const isMe = msg.user_id === currentUserId
+                    const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''
+                    return (
+                      <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                        {isMe ? null : (
+                          <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginBottom: 2, paddingLeft: 2 }}>{msg.sender_name || '不明'}</span>
+                        )}
+                        <div style={{ maxWidth: '82%', padding: '8px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {msg.body}
+                        </div>
+                        <span style={{ fontSize: 10, color: '#475569', marginTop: 2, paddingLeft: 2, paddingRight: 2 }}>{timeStr}</span>
+                      </div>
+                    )
+                  })}
+                  <div ref={memberBottomRef} />
+                </div>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 13, color: '#475569', fontWeight: 400 }}>まだメッセージはありません</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                <textarea
+                  value={memberInput}
+                  onChange={e => setMemberInput(e.target.value)}
+                  onCompositionStart={() => { memberComposingRef.current = true }}
+                  onCompositionEnd={() => { memberComposingRef.current = false }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey && !memberComposingRef.current) {
+                      e.preventDefault()
+                      handleMemberSend()
+                    }
+                  }}
+                  placeholder="メッセージを送る...（Shift+Enterで改行）"
+                  rows={2}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => handleMemberSend()}
+                    disabled={isMemberSending || !memberInput.trim()}
+                    style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                  ><Send size={12} />送信</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <button onClick={() => setSecretaryOpen(true)} style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 56, height: 56, borderRadius: '50%', background: 'rgba(10,15,30,0.9)', border: '1px solid rgba(201,168,76,0.6)', boxShadow: '0 0 16px rgba(201,168,76,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
