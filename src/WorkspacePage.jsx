@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -1006,6 +1006,9 @@ ${timelineText}
     setIsSending(false)
   }
 
+  const chatAccent = activeChatTab === 'ai' ? '#c9a84c' : '#3b82f6'
+  const chatAccentRgb = activeChatTab === 'ai' ? '201,168,76' : '59,130,246'
+
   const handleMemberSend = async () => {
     const body = memberInput.trim()
     if (!body || isMemberSending) return
@@ -1665,20 +1668,20 @@ ${timelineText}
 
       {/* AI案件秘書 + メンバーチャット - 本物ガラス・固定右下 */}
       {secretaryOpen ? (
-        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 340, background: 'rgba(10,15,30,0.84)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 340, background: 'rgba(10,15,30,0.84)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: `1px solid rgba(${chatAccentRgb},0.38)`, borderRadius: 14, boxShadow: `0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(${chatAccentRgb},0.12)`, display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
 
           {/* ヘッダー：アイコン + タブ + 閉じるボタン */}
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <img src="/logo.png" alt="AI" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
-            <div style={{ display: 'flex', gap: 2, flex: 1 }}>
+          <div style={{ padding: '10px 14px', borderBottom: `1px solid rgba(${chatAccentRgb},0.18)`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <img src="/logo.png" alt="AI" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: '#000', border: `2px solid ${chatAccent}`, flexShrink: 0 }} />
+            <div style={{ display: 'flex', gap: 3, flex: 1 }}>
               <button
                 onClick={() => setActiveChatTab('ai')}
-                style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: activeChatTab === 'ai' ? 'rgba(201,168,76,0.18)' : 'transparent', color: activeChatTab === 'ai' ? '#c9a84c' : '#64748B' }}
-              >AI秘書</button>
+                style={{ fontSize: 12, fontWeight: activeChatTab === 'ai' ? 500 : 400, padding: '4px 9px', borderRadius: 6, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, background: activeChatTab === 'ai' ? 'rgba(201,168,76,0.18)' : 'transparent', color: activeChatTab === 'ai' ? '#c9a84c' : 'rgba(148,163,184,0.45)' }}
+              ><Sparkles size={11} />AI秘書</button>
               <button
                 onClick={() => setActiveChatTab('member')}
-                style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: activeChatTab === 'member' ? 'rgba(201,168,76,0.18)' : 'transparent', color: activeChatTab === 'member' ? '#c9a84c' : '#64748B' }}
-              >メンバー</button>
+                style={{ fontSize: 12, fontWeight: activeChatTab === 'member' ? 500 : 400, padding: '4px 9px', borderRadius: 6, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, background: activeChatTab === 'member' ? 'rgba(59,130,246,0.18)' : 'transparent', color: activeChatTab === 'member' ? '#3b82f6' : 'rgba(148,163,184,0.45)' }}
+              ><Users size={11} />メンバー</button>
             </div>
             <button onClick={() => setSecretaryOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, flexShrink: 0 }}>
               <X size={14} color="#64748B" />
@@ -1727,14 +1730,14 @@ ${timelineText}
                   }}
                   placeholder="AIに質問する...（Shift+Enterで改行）"
                   rows={2}
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,168,76,0.22)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={isSending || !chatInput.trim()}
-                    style={{ background: (isSending || !chatInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isSending || !chatInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
-                  ><Send size={12} />送信</button>
+                    style={{ background: (isSending || !chatInput.trim()) ? 'rgba(201,168,76,0.3)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: (isSending || !chatInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  ><Send size={11} />AIに送信</button>
                 </div>
               </div>
             </div>
@@ -1754,7 +1757,7 @@ ${timelineText}
                         {isMe ? null : (
                           <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginBottom: 2, paddingLeft: 2 }}>{msg.sender_name || '不明'}</span>
                         )}
-                        <div style={{ maxWidth: '82%', padding: '8px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        <div style={{ maxWidth: '82%', padding: '8px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(59,130,246,0.38)' : '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                           {msg.body}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingLeft: 2, paddingRight: 2 }}>
@@ -1785,24 +1788,24 @@ ${timelineText}
                       handleMemberSend()
                     }
                   }}
-                  placeholder="メッセージを送る...（Shift+Enterで改行）"
+                  placeholder="関係者にメッセージ...（Shift+Enterで改行）"
                   rows={2}
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(59,130,246,0.28)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleMemberSend()}
                     disabled={isMemberSending || !memberInput.trim()}
-                    style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
-                  ><Send size={12} />送信</button>
+                    style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  ><Send size={11} />関係者に送信</button>
                 </div>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <button onClick={() => setSecretaryOpen(true)} style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 56, height: 56, borderRadius: '50%', background: 'rgba(10,15,30,0.9)', border: '1px solid rgba(201,168,76,0.6)', boxShadow: '0 0 16px rgba(201,168,76,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-          <MessageSquare size={22} color="#c9a84c" />
+        <button onClick={() => setSecretaryOpen(true)} style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 56, height: 56, borderRadius: '50%', background: 'rgba(10,15,30,0.9)', border: `1px solid rgba(${chatAccentRgb},0.6)`, boxShadow: `0 0 16px rgba(${chatAccentRgb},0.4)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+          <MessageSquare size={22} color={chatAccent} />
         </button>
       )}
 
