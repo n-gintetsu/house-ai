@@ -1043,11 +1043,19 @@ export default function AdminDashboard() {
   async function fetchPartners() {
     setPartnerLoading(true)
     try {
-      const users = await fetchAdminUsers()
-      const partnerUsers = users.filter(u => u.user_metadata?.user_type === 'partner')
-      const { data: profiles } = await supabase.from('partner_profiles').select('*')
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
+      const [users, partnersRes] = await Promise.all([
+        fetchAdminUsers(),
+        fetch('/api/admin-partners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        }).then(r => r.ok ? r.json() : { partners: [] }),
+      ])
+      const partnerUsers = users.filter(u => u.user_metadata && u.user_metadata.user_type === 'partner')
+      const profiles = (partnersRes && partnersRes.partners) || []
       const profileMap = {}
-      if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
+      profiles.forEach(p => { profileMap[p.user_id] = p })
       setPartners(partnerUsers.map(u => ({ ...u, profile: profileMap[u.id] || null })))
     } catch (e) {
       console.error(e)
@@ -1057,9 +1065,15 @@ export default function AdminDashboard() {
   }
 
   async function updatePartnerStatus(userId, status) {
-    await supabase.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    await fetch('/api/update-partner-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ user_id: userId, ad_status: status }),
+    })
     setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
-    setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
+    setSelectedPartner(prev => prev && prev.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
   }
 
   async function deletePartner(userId, companyName) {
@@ -2095,11 +2109,19 @@ function AdManagement() {
   const fetchPartners = async () => {
     setPartnerLoading(true)
     try {
-      const users = await fetchAdminUsers()
-      const partnerUsers = users.filter(u => u.user_metadata?.user_type === 'partner')
-      const { data: profiles } = await supabase.from('partner_profiles').select('*')
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
+      const [users, partnersRes] = await Promise.all([
+        fetchAdminUsers(),
+        fetch('/api/admin-partners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        }).then(r => r.ok ? r.json() : { partners: [] }),
+      ])
+      const partnerUsers = users.filter(u => u.user_metadata && u.user_metadata.user_type === 'partner')
+      const profiles = (partnersRes && partnersRes.partners) || []
       const profileMap = {}
-      if (profiles) profiles.forEach(p => { profileMap[p.user_id] = p })
+      profiles.forEach(p => { profileMap[p.user_id] = p })
       setPartners(partnerUsers.map(u => ({ ...u, profile: profileMap[u.id] || null })))
     } catch (e) {
       console.error(e)
@@ -2109,9 +2131,15 @@ function AdManagement() {
   }
 
   const updatePartnerStatus = async (userId, status) => {
-    await supabase.from('partner_profiles').upsert({ user_id: userId, ad_status: status }, { onConflict: 'user_id' })
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    await fetch('/api/update-partner-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ user_id: userId, ad_status: status }),
+    })
     setPartners(list => list.map(p => p.id === userId ? { ...p, profile: { ...(p.profile || {}), ad_status: status } } : p))
-    setSelectedPartner(prev => prev?.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
+    setSelectedPartner(prev => prev && prev.id === userId ? { ...prev, profile: { ...(prev.profile || {}), ad_status: status } } : prev)
   }
 
   const deletePartner = async (userId, companyName) => {
