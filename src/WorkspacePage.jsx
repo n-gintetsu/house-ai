@@ -304,6 +304,8 @@ function DashboardView({ id }) {
   const [notFound, setNotFound] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [secretaryOpen, setSecretaryOpen] = useState(true)
+  const [chatMessages, setChatMessages] = useState([])
+  const [isSending, setIsSending] = useState(false)
 
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
@@ -340,6 +342,8 @@ function DashboardView({ id }) {
   const [celebration, setCelebration] = useState(null)
   const [confettiPieces, setConfettiPieces] = useState([])
   const celebrationCheckedRef = useRef(null)
+  const chatBottomRef = useRef(null)
+  const chatComposingRef = useRef(false)
 
   const CELEBRATIONS = {
     contract: {
@@ -424,6 +428,12 @@ function DashboardView({ id }) {
     }
     fetchAll()
   }, [id])
+
+  useEffect(() => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [chatMessages])
 
   // --- ROADMAP 状態変更 ---
   const handleStepStateChange = async (stepId, newState) => {
@@ -887,6 +897,80 @@ function DashboardView({ id }) {
   const addBtn = { display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 10 }
   const saveBtn = { background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }
   const cancelBtn = { background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 12px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }
+
+  const buildSystemPrompt = () => {
+    const stepsText = steps.length > 0
+      ? steps.map(s => `  - ${s.label}（${s.state || '未着手'}）`).join('\n')
+      : '  （未設定）'
+    const membersText = members.length > 0
+      ? members.map(m => `  - ${m.role_label || '-'}：${m.name || '-'}`).join('\n')
+      : '  （未設定）'
+    const scheduleText = schedule.slice(0, 5).length > 0
+      ? schedule.slice(0, 5).map(s => `  - ${s.scheduled_date}：${s.label}`).join('\n')
+      : '  （なし）'
+    const noticesText = notices.length > 0
+      ? notices.map(n => `  - [${n.level || 'info'}] ${n.message}`).join('\n')
+      : '  （なし）'
+    const timelineText = timeline.slice(-5).length > 0
+      ? timeline.slice(-5).map(t => `  - ${t.event_date}：${t.label}`).join('\n')
+      : '  （なし）'
+
+    return `あなたはHouse-AIの案件秘書です。以下の案件情報を踏まえて丁寧に回答してください。
+
+【案件情報】
+案件名：${ws.title || '-'}
+顧客名：${ws.customer_name || '-'}
+担当者：${ws.agent_name || '-'}
+契約種別：${ws.contract_type || '-'}
+物件住所：${ws.property_address || '-'}
+ステータス：${ws.status || '-'}
+進捗率：${ws.progress || 0}%
+
+【ロードマップ】
+${stepsText}
+
+【関係者】
+${membersText}
+
+【今後の予定（直近5件）】
+${scheduleText}
+
+【通知・メモ】
+${noticesText}
+
+【直近のタイムライン（最新5件）】
+${timelineText}
+
+丁寧かつ簡潔に、案件の担当者・顧客の立場に寄り添って回答してください。`
+  }
+
+  const handleSendMessage = async (text) => {
+    const content = (text !== undefined ? text : chatInput).trim()
+    if (!content || isSending) return
+    setChatInput('')
+    const userMsg = { id: Date.now() + '-u', role: 'user', content }
+    setChatMessages(prev => [...prev, userMsg])
+    setIsSending(true)
+    try {
+      const history = [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content }))
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          system: buildSystemPrompt(),
+          messages: history,
+          max_tokens: 900,
+        }),
+      })
+      const data = await res.json()
+      const replyText = (data.text && data.text.trim()) ? data.text : 'エラーが発生しました'
+      setChatMessages(prev => [...prev, { id: Date.now() + '-a', role: 'assistant', content: replyText }])
+    } catch (e) {
+      setChatMessages(prev => [...prev, { id: Date.now() + '-e', role: 'assistant', content: 'エラーが発生しました' }])
+    }
+    setIsSending(false)
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -1520,8 +1604,9 @@ function DashboardView({ id }) {
 
       {/* AI案件秘書 - 本物ガラス・固定右下 */}
       {secretaryOpen ? (
-        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 340, background: 'rgba(10,15,30,0.84)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)' }}>
-          <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, width: 340, background: 'rgba(10,15,30,0.84)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+          {/* ヘッダー */}
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <img src="/logo.png" alt="AI" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', background: '#000', border: '2px solid #c9a84c', flexShrink: 0 }} />
             <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>AI案件秘書</span>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
@@ -1529,19 +1614,77 @@ function DashboardView({ id }) {
               <X size={14} color="#64748B" />
             </button>
           </div>
-          <div style={{ padding: '14px 14px 12px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10 }}>
+
+          {/* 本文エリア */}
+          <div style={{ padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden', flex: 1, minHeight: 0 }}>
+            {/* 紹介文 */}
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 11px', marginBottom: 10, flexShrink: 0 }}>
               <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>{ws.title || '案件'}のAI秘書です。質問はお気軽にどうぞ。</span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+
+            {/* クイックアクション */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, flexShrink: 0 }}>
               {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
-                <button key={chip} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', cursor: 'pointer', fontWeight: 400 }}>{chip}</button>
+                <button key={chip} onClick={() => handleSendMessage(chip)} disabled={isSending} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: isSending ? '#64748B' : '#c9a84c', cursor: isSending ? 'not-allowed' : 'pointer', fontWeight: 400 }}>{chip}</button>
               ))}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <textarea value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="AIに質問する..." rows={2} style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} />
+
+            {/* メッセージ履歴エリア */}
+            {chatMessages.length > 0 ? (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10, paddingRight: 2 }}>
+                {chatMessages.map(msg => (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      maxWidth: '82%',
+                      padding: '8px 11px',
+                      borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+                      background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)',
+                      border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                      fontSize: 13,
+                      color: '#E2E8F0',
+                      fontWeight: 400,
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isSending ? (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '8px 14px', borderRadius: '12px 12px 12px 3px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#64748B', fontWeight: 400 }}>
+                      考え中...
+                    </div>
+                  </div>
+                ) : null}
+                <div ref={chatBottomRef} />
+              </div>
+            ) : null}
+
+            {/* 入力エリア */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onCompositionStart={() => { chatComposingRef.current = true }}
+                onCompositionEnd={() => { chatComposingRef.current = false }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey && !chatComposingRef.current) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+                placeholder="AIに質問する...（Shift+Enterで改行）"
+                rows={2}
+                style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#E2E8F0', padding: '7px 10px', borderRadius: 7, width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+              />
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={isSending || !chatInput.trim()}
+                  style={{ background: (isSending || !chatInput.trim()) ? 'rgba(201,168,76,0.35)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: (isSending || !chatInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                >
                   <Send size={12} />送信
                 </button>
               </div>
