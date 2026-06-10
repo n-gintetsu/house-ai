@@ -310,6 +310,7 @@ function DashboardView({ id }) {
   const [memberMessages, setMemberMessages] = useState([])
   const [memberInput, setMemberInput] = useState('')
   const [isMemberSending, setIsMemberSending] = useState(false)
+  const [chatReads, setChatReads] = useState([])
 
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
@@ -450,17 +451,23 @@ function DashboardView({ id }) {
   useEffect(() => {
     if (!secretaryOpen || activeChatTab !== 'member') return
     const fetchMemberMessages = async () => {
-      const { data } = await supabase
-        .from('workspace_messages')
-        .select('*')
-        .eq('workspace_id', id)
-        .order('created_at', { ascending: true })
-      if (data) setMemberMessages(data)
+      const [{ data: msgs }, { data: reads }] = await Promise.all([
+        supabase.from('workspace_messages').select('*').eq('workspace_id', id).order('created_at', { ascending: true }),
+        supabase.from('workspace_chat_reads').select('*').eq('workspace_id', id),
+      ])
+      if (msgs) setMemberMessages(msgs)
+      if (reads) setChatReads(reads)
+      if (currentUserId) {
+        await supabase.from('workspace_chat_reads').upsert(
+          { workspace_id: id, user_id: currentUserId, last_read_at: new Date().toISOString() },
+          { onConflict: 'workspace_id,user_id' }
+        )
+      }
     }
     fetchMemberMessages()
     const timer = setInterval(fetchMemberMessages, 5000)
     return () => clearInterval(timer)
-  }, [secretaryOpen, activeChatTab, id])
+  }, [secretaryOpen, activeChatTab, id, currentUserId])
 
   // --- ROADMAP 状態変更 ---
   const handleStepStateChange = async (stepId, newState) => {
@@ -1739,6 +1746,9 @@ ${timelineText}
                   {memberMessages.map(msg => {
                     const isMe = msg.user_id === currentUserId
                     const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''
+                    const readCount = isMe
+                      ? chatReads.filter(r => r.user_id !== currentUserId && new Date(r.last_read_at) >= new Date(msg.created_at)).length
+                      : 0
                     return (
                       <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                         {isMe ? null : (
@@ -1747,7 +1757,12 @@ ${timelineText}
                         <div style={{ maxWidth: '82%', padding: '8px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                           {msg.body}
                         </div>
-                        <span style={{ fontSize: 10, color: '#475569', marginTop: 2, paddingLeft: 2, paddingRight: 2 }}>{timeStr}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingLeft: 2, paddingRight: 2 }}>
+                          {isMe && readCount > 0 ? (
+                            <span style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{readCount === 1 ? '既読' : '既読 ' + readCount}</span>
+                          ) : null}
+                          <span style={{ fontSize: 10, color: '#475569' }}>{timeStr}</span>
+                        </div>
                       </div>
                     )
                   })}
