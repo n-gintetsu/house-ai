@@ -975,7 +975,11 @@ ${noticesText}
 【直近のタイムライン（最新5件）】
 ${timelineText}
 
-丁寧かつ簡潔に、案件の担当者・顧客の立場に寄り添って回答してください。回答はマークダウン記法（#見出し・**強調**・---区切り線・>引用など）を使わず、プレーンな日本語の文章で答えてください。箇条書きが必要なときは行頭に「・」を使い、簡潔に。`
+丁寧かつ簡潔に、案件の担当者・顧客の立場に寄り添って回答してください。回答はマークダウン記法（#見出し・**強調**・---区切り線・>引用など）を使わず、プレーンな日本語の文章で答えてください。箇条書きが必要なときは行頭に「・」を使い、簡潔に。
+
+【利用料金についての回答方針】
+利用料金について質問されたら、次の内容を基に、わかりやすく簡潔に、優しく不安にさせない表現で答えてください。
+内容：House-AIは現在、無料でご利用いただけます。より多くの方に使っていただきたいという思いから、今のところ有料プランは設けていません。将来、運営の都合で有料プランを設ける可能性はありますが、その場合も必ず事前にご案内し、ご了承いただいてから変更します。勝手に課金されることはありませんので、安心してお使いください。`
   }
 
   const handleSendMessage = async (text) => {
@@ -1695,7 +1699,7 @@ ${timelineText}
                 <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.6 }}>{ws.title || '案件'}のAI秘書です。質問はお気軽にどうぞ。</span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, flexShrink: 0 }}>
-                {['火災保険比較を行う', 'リフォーム見積を取得'].map(chip => (
+                {['Workspaceの使い方', '利用料金について'].map(chip => (
                   <button key={chip} onClick={() => handleSendMessage(chip)} disabled={isSending} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: isSending ? '#64748B' : '#c9a84c', cursor: isSending ? 'not-allowed' : 'pointer', fontWeight: 400 }}>{chip}</button>
                 ))}
               </div>
