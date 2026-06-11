@@ -235,3 +235,15 @@ House-AI と同様の漏洩チェックを、gintetsu-fudosan と estateflow の
 - 注意：このポリシーが MemberDashboard の自分profile upsert、AdminDashboard の他人profile 読み取り/更新を支えている可能性が高い。単純に削除/締め直すと それらが壊れる。
 - 修正方針（要・事前確認）：①Admin/Member がどう profiles にアクセスしているか（service_role経由API か クライアント直か）を調査 → ②「Service role full access」を TO service_role に限定（service_roleはRLSをバイパスするので本来これで十分）→ ③ユーザー用 INSERT(own) ポリシーを追加（upsert用）→ ④動作確認（管理画面・プロフィール保存が壊れていないか）。
 - 補足：アバターはこの問題と切り離して user_avatars テーブルで実装済み（profilesに非依存）。
+
+## セキュリティ対応ログ（2026-06-11）
+### 修正済み
+- api/delete-user.js：管理者認証ゲートを追加（Authorizationヘッダ → Bearerトークン → supabaseAdmin.auth.getUser → ADMIN_EMAILS判定。無認証/非adminは401/403で即return）。admin-users.js と同じ流儀。AdminDashboard の5箇所（handleDeleteUser/executeSoftDelete/executeHardDelete/executeRestore/deleteAgency）の fetch に Authorization: Bearer を付与。→ 無認証でのユーザー削除（auth.admin.deleteUser）の穴を閉鎖。実機で①admin削除が動く ②無認証GETが {"error":"no_token"} を返す、を確認済み。
+
+### 未対応（次にやる：B-2〜B-4）
+- profiles の過大なRLSポリシー締め直し（"Service role full access profiles" が実際は TO public / ALL / USING(true) で、全認証ユーザーが他人の profiles 行を読み書き可能。露出列に email・stripe_customer_id・account_status 等）。
+  - B-2：AdminDashboard:635(select)/689(update) を service_role API（admin-update-profile）経由に移設（admin-users.js と同じ認証ゲート付き）
+  - B-3：profiles に「自分の行のみ INSERT」ポリシー追加（MemberDashboard の自分upsert用。UPDATE-own は既存）
+  - B-4：「Service role full access profiles」を TO service_role に限定
+  - B-5：動作確認（Admin読み取り/更新・自分のプロフィール保存・一般ユーザーが他人を読めないこと）
+- 横断監査（将来）：他テーブルにも同種の "service role full access が TO public" ミスが無いか確認。
