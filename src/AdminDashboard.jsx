@@ -641,7 +641,11 @@ function MembersPanel() {
 
   async function handleDeleteUser(member) {
     setDeleteModal({ member, checking: true })
-    const res = await fetch(`/api/delete-user?userId=${member.id}`)
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    const res = await fetch(`/api/delete-user?userId=${member.id}`, {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
     const data = await res.json()
     setDeleteModal({ member, checking: false, ...data })
   }
@@ -649,9 +653,11 @@ function MembersPanel() {
   async function executeSoftDelete() {
     const { member } = deleteModal
     setDeleteModal(prev => ({ ...prev, checking: true }))
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
     const res = await fetch('/api/delete-user', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId: member.id, action: 'soft' }),
     })
     if (!res.ok) { alert('削除に失敗しました'); setDeleteModal(null); return }
@@ -663,9 +669,11 @@ function MembersPanel() {
   async function executeHardDelete() {
     const { member } = deleteModal
     setDeleteModal(prev => ({ ...prev, checking: true }))
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
     const res = await fetch('/api/delete-user', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId: member.id, action: 'hard' }),
     })
     if (!res.ok) { alert('削除に失敗しました'); setDeleteModal(null); return }
@@ -675,9 +683,11 @@ function MembersPanel() {
   }
 
   async function executeRestore(member) {
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
     const res = await fetch('/api/delete-user', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId: member.id, action: 'restore' }),
     })
     if (!res.ok) { alert('復活に失敗しました'); return }
@@ -1024,9 +1034,11 @@ export default function AdminDashboard() {
     const target = agencies.find(a => a.id === id)
     if (!window.confirm(`「${target?.company_name || ''}」を削除しますか？この操作は取り消せません。`)) return
     if (target?.agency_user_id) {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
       await fetch('/api/delete-user', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ userId: target.agency_user_id, action: 'hard' }),
       })
     }
