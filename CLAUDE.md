@@ -225,3 +225,7 @@ House-AI と同様の漏洩チェックを、gintetsu-fudosan と estateflow の
 - フロント側コードで NEXT_PUBLIC_ 接頭辞の Anthropic / Supabase service_role キーを参照していないか grep で確認（両プロジェクトは Next.js なので公開接頭辞は NEXT_PUBLIC_）。
 - 露出していれば、サーバー（api / route handler）経由へ移設 → キーをローテーション → 露出していた env 変数を削除。
 - service_role キー・APIキーがクライアントバンドルに焼き込まれていないか点検。
+
+## 通知ベル既読管理
+- 現状：通知ベルの既読は localStorage（キー `houseai_notices_read_{currentUserId}_{id}`、id=案件/ワークスペースID）で端末ローカル管理。赤バッジ＝未読お知らせ件数。ベルを開いた瞬間に全件既読化してバッジが消える。
+- 将来アップグレード：端末をまたいで既読を同期したくなったら、`ws_notice_reads`（user_id, notice_id, read_at）テーブル＋RLS を追加し、サーバー側の既読管理へ移行する。
