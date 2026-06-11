@@ -325,6 +325,12 @@ function DashboardView({ id }) {
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
   const [showLogoMenu, setShowLogoMenu] = useState(false)
   const [legalModal, setLegalModal] = useState(null)
+  const [showAvatarModal, setShowAvatarModal] = useState(false)
+  const [myAvatarUrl, setMyAvatarUrl] = useState(null)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
   const [showNotices, setShowNotices] = useState(false)
   const [readNoticeIds, setReadNoticeIds] = useState(() => {
     try {
@@ -478,6 +484,46 @@ function DashboardView({ id }) {
     const timer = setInterval(fetchMemberMessages, 5000)
     return () => clearInterval(timer)
   }, [secretaryOpen, activeChatTab, id, currentUserId])
+
+  useEffect(() => {
+    if (!currentUserId) return
+    supabase.from('user_avatars').select('avatar_url').eq('user_id', currentUserId).maybeSingle()
+      .then(({ data }) => { if (data ? data.avatar_url : null) setMyAvatarUrl(data.avatar_url) })
+  }, [currentUserId])
+
+  const onPickAvatar = (e) => {
+    const f = e.target.files ? e.target.files[0] : null
+    if (!f) return
+    setAvatarError('')
+    if (f.type.indexOf('image/') !== 0) { setAvatarError('画像ファイルを選んでください'); return }
+    if (f.size > 2 * 1024 * 1024) { setAvatarError('2MB以下の画像にしてください'); return }
+    setAvatarFile(f)
+    setAvatarPreview(URL.createObjectURL(f))
+  }
+
+  const saveAvatar = async () => {
+    if (!avatarFile || !currentUserId) return
+    setAvatarUploading(true); setAvatarError('')
+    try {
+      const ext = (avatarFile.name.split('.').pop() || 'png').toLowerCase()
+      const path = currentUserId + '/' + Date.now() + '.' + ext
+      const up = await supabase.storage.from('avatars').upload(path, avatarFile, { contentType: avatarFile.type, upsert: false })
+      if (up.error) { setAvatarError('アップロードに失敗しました'); setAvatarUploading(false); return }
+      const publicUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const db = await supabase.from('user_avatars').upsert({ user_id: currentUserId, avatar_url: publicUrl, updated_at: new Date().toISOString() })
+      if (db.error) { setAvatarError('保存に失敗しました'); setAvatarUploading(false); return }
+      setMyAvatarUrl(publicUrl); setAvatarFile(null); setAvatarPreview(null); setShowAvatarModal(false)
+    } catch (err) { setAvatarError('エラーが発生しました') }
+    setAvatarUploading(false)
+  }
+
+  const removeAvatar = async () => {
+    if (!currentUserId) return
+    setAvatarUploading(true)
+    const db = await supabase.from('user_avatars').delete().eq('user_id', currentUserId)
+    if (!db.error) { setMyAvatarUrl(null); setAvatarFile(null); setAvatarPreview(null) }
+    setAvatarUploading(false)
+  }
 
   // --- ROADMAP 状態変更 ---
   const handleStepStateChange = async (stepId, newState) => {
@@ -1075,8 +1121,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             <>
               <div onClick={(e) => { e.stopPropagation(); setShowLogoMenu(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
               <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 48, left: 0, width: 210, background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 6 }}>
-                {/* TODO: 4bで実装 */}
-                <div onClick={() => { setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アイコン編集</div>
+                <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アイコン編集</div>
                 <div onClick={() => { setLegalModal('terms'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>利用規約</div>
                 <div onClick={() => { setLegalModal('privacy'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>プライバシーポリシー</div>
               </div>
@@ -1941,6 +1986,43 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {showAvatarModal ? (
+        <div onClick={() => { setShowAvatarModal(false); setAvatarError(''); setAvatarFile(null); setAvatarPreview(null) }}
+             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()}
+               style={{ width: '100%', maxWidth: 420, background: 'rgba(15,23,42,.98)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.6)', padding: 28, position: 'relative' }}>
+            <div onClick={() => setShowAvatarModal(false)} style={{ position: 'absolute', top: 16, right: 16, cursor: 'pointer', color: '#94A3B8', fontSize: 20, lineHeight: 1 }}>×</div>
+            <div style={{ fontSize: 18, fontWeight: 500, color: '#fff', marginBottom: 20 }}>アイコン編集</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {(avatarPreview || myAvatarUrl) ? (
+                  <img src={avatarPreview || myAvatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ color: '#64748B', fontSize: 32 }}>👤</span>
+                )}
+              </div>
+            </div>
+            <label style={{ display: 'block', textAlign: 'center', marginBottom: 12 }}>
+              <span style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 10, border: '1px solid #c9a84c', color: '#c9a84c', cursor: 'pointer', fontSize: 14 }}>画像を選択</span>
+              <input type="file" accept="image/*" onChange={onPickAvatar} style={{ display: 'none' }} />
+            </label>
+            {avatarError !== '' ? (
+              <div style={{ color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 12 }}>{avatarError}</div>
+            ) : null}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button onClick={saveAvatar} disabled={!avatarFile || avatarUploading}
+                      style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: (!avatarFile || avatarUploading) ? 'rgba(201,168,76,.4)' : '#c9a84c', color: '#1a1a1a', fontWeight: 500, fontSize: 14, cursor: (!avatarFile || avatarUploading) ? 'default' : 'pointer' }}>
+                {avatarUploading ? '保存中…' : '保存'}
+              </button>
+              {myAvatarUrl ? (
+                <button onClick={removeAvatar} disabled={avatarUploading}
+                        style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.15)', background: 'transparent', color: '#94A3B8', fontSize: 14, cursor: 'pointer' }}>削除</button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {legalModal !== null ? (
         <div onClick={() => setLegalModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
