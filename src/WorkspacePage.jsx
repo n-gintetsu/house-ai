@@ -322,6 +322,13 @@ function DashboardView({ id }) {
   const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
+  const [showNotices, setShowNotices] = useState(false)
+  const [readNoticeIds, setReadNoticeIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem('houseai_notices_read_' + currentUserId + '_' + id)
+      return raw ? JSON.parse(raw) : []
+    } catch (e) { return [] }
+  })
   // insert失敗時にフォーム内に表示するエラー文言
   const [memberError, setMemberError] = useState('')
   const [timelineError, setTimelineError] = useState('')
@@ -1127,14 +1134,49 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             </button>
           )
         ) : null}
-        <div style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-          <Bell size={18} color="#94A3B8" />
-          {notices.length > 0 ? (
-            <div style={{ position: 'absolute', top: -5, right: -5, width: 15, height: 15, background: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 9, color: '#fff', fontWeight: 500 }}>{notices.length}</span>
+        {(() => {
+          const unreadCount = notices.filter(n => readNoticeIds.indexOf(n.id) === -1).length
+          const toggleNotices = () => {
+            const willOpen = !showNotices
+            setShowNotices(willOpen)
+            if (willOpen) {
+              const merged = Array.from(new Set([...readNoticeIds, ...notices.map(n => n.id)]))
+              setReadNoticeIds(merged)
+              try { localStorage.setItem('houseai_notices_read_' + currentUserId + '_' + id, JSON.stringify(merged)) } catch (e) {}
+            }
+          }
+          return (
+            <div style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }} onClick={toggleNotices}>
+              <Bell size={18} color="#94A3B8" />
+              {unreadCount > 0 ? (
+                <div style={{ position: 'absolute', top: -5, right: -5, width: 15, height: 15, background: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 9, color: '#fff', fontWeight: 500 }}>{unreadCount}</span>
+                </div>
+              ) : null}
+              {showNotices ? (
+                <>
+                  <div onClick={(e) => { e.stopPropagation(); setShowNotices(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                  <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 28, right: 0, width: 300, maxHeight: 360, overflowY: 'auto', background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, padding: '4px 6px 10px' }}>お知らせ</div>
+                    {notices.length > 0 ? (
+                      notices.map((n, idx) => {
+                        const ns = noticeStyle(n.level)
+                        return (
+                          <div key={n.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < notices.length - 1 ? 8 : 0 }}>
+                            <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
+                            <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.message || ''}</span>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div style={{ padding: 12, fontSize: 13, color: '#64748B' }}>お知らせはありません</div>
+                    )}
+                  </div>
+                </>
+              ) : null}
             </div>
-          ) : null}
-        </div>
+          )
+        })()}
       </header>
       {/* 家カルテ保存メッセージ（固定トースト） */}
       {promoteMessage ? (
