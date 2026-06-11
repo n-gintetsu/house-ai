@@ -632,8 +632,13 @@ function MembersPanel() {
   async function handleSelectMember(m) {
     setSelectedMember(m)
     setProfile(null)
-    const { data } = await supabase.from('profiles').select('*').eq('id', m.id).single()
-    setProfile(data || {})
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    const res = await fetch('/api/admin-profile?userId=' + m.id, {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const json = res.ok ? await res.json() : {}
+    setProfile(json.profile || {})
   }
 
   const [deleteModal, setDeleteModal] = useState(null)
@@ -696,11 +701,14 @@ function MembersPanel() {
   }
 
   async function updateMemberStatus(userId, status, reason) {
-    await supabase.from('profiles').update({
-      account_status: status,
-      status_reason: reason,
-      status_updated_at: new Date().toISOString()
-    }).eq('id', userId)
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    const res = await fetch('/api/admin-profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ userId, account_status: status, status_reason: reason }),
+    })
+    if (!res.ok) { alert('ステータス更新に失敗しました'); return }
     setMembers(list => list.map(m => m.id === userId ? { ...m, account_status: status } : m))
     setSelectedMember(prev => prev?.id === userId ? { ...prev, account_status: status } : prev)
   }
