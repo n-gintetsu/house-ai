@@ -229,3 +229,9 @@ House-AI と同様の漏洩チェックを、gintetsu-fudosan と estateflow の
 ## 通知ベル既読管理
 - 現状：通知ベルの既読は localStorage（キー `houseai_notices_read_{currentUserId}_{id}`、id=案件/ワークスペースID）で端末ローカル管理。赤バッジ＝未読お知らせ件数。ベルを開いた瞬間に全件既読化してバッジが消える。
 - 将来アップグレード：端末をまたいで既読を同期したくなったら、`ws_notice_reads`（user_id, notice_id, read_at）テーブル＋RLS を追加し、サーバー側の既読管理へ移行する。
+
+## セキュリティTODO：profiles の過大なRLSポリシー締め直し
+- 問題：profiles テーブルの「Service role full access profiles」ポリシーが、実際は TO public（全員）/ FOR ALL / USING(true) で効いており、全認証ユーザー（場合により公開anonキー）が他人の profiles 行を全件 読み書き/削除できる状態。露出列に email・stripe_customer_id・account_status 等の機微情報を含む。
+- 注意：このポリシーが MemberDashboard の自分profile upsert、AdminDashboard の他人profile 読み取り/更新を支えている可能性が高い。単純に削除/締め直すと それらが壊れる。
+- 修正方針（要・事前確認）：①Admin/Member がどう profiles にアクセスしているか（service_role経由API か クライアント直か）を調査 → ②「Service role full access」を TO service_role に限定（service_roleはRLSをバイパスするので本来これで十分）→ ③ユーザー用 INSERT(own) ポリシーを追加（upsert用）→ ④動作確認（管理画面・プロフィール保存が壊れていないか）。
+- 補足：アバターはこの問題と切り離して user_avatars テーブルで実装済み（profilesに非依存）。
