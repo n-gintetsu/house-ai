@@ -653,16 +653,18 @@ function DashboardView({ id }) {
       } else {
         const { data: { session } } = await supabase.auth.getSession()
         const invitedBy = session ? session.user.id : null
-        const { data: newMember, error: insErr } = await supabase.from('workspace_members').insert({
+        const newId = crypto.randomUUID()
+        const { error: insErr } = await supabase.from('workspace_members').insert({
+          id: newId,
           workspace_id: id,
           email,
           role: inviteForm.role,
           status: 'pending',
           invited_by: invitedBy,
           display_name: (inviteForm.companyName || '').trim(),
-        }).select().single()
+        })
         if (insErr) throw insErr
-        newMemberId = newMember.id
+        newMemberId = newId
       }
 
       // 業者ロール（社内・顧客以外）の場合、専用フォルダを自動作成
