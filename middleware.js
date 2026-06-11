@@ -6,6 +6,8 @@ export default function middleware(request) {
   const { pathname } = request.nextUrl || new URL(request.url)
   if (
     pathname.startsWith('/api') ||
+    pathname.startsWith('/assets/') ||
+    /\.(js|mjs|css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$/i.test(pathname) ||
     pathname === '/workspace' ||
     pathname === '/workspace/' ||
     pathname === '/login' ||
