@@ -9,6 +9,19 @@ import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 
+const Avatar = ({ url, name, size }) => {
+  const s = size || 28
+  return (
+    <div style={{ width: s, height: s, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {url ? (
+        <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <span style={{ color: '#94A3B8', fontSize: Math.round(s * 0.45), fontWeight: 500 }}>{name ? name.charAt(0).toUpperCase() : '?'}</span>
+      )}
+    </div>
+  )
+}
+
 const glass = {
   background: 'rgba(15,23,42,0.85)',
   border: '1px solid rgba(255,255,255,0.08)',
@@ -331,6 +344,7 @@ function DashboardView({ id }) {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const [avatarMap, setAvatarMap] = useState({})
   const [showNotices, setShowNotices] = useState(false)
   const [readNoticeIds, setReadNoticeIds] = useState(() => {
     try {
@@ -491,6 +505,18 @@ function DashboardView({ id }) {
       .then(({ data }) => { if (data ? data.avatar_url : null) setMyAvatarUrl(data.avatar_url) })
   }, [currentUserId])
 
+  useEffect(() => {
+    const ids = (workspaceMembers || []).map(m => m.user_id).filter(Boolean)
+    if (ids.length === 0) return
+    supabase.from('user_avatars').select('user_id, avatar_url').in('user_id', ids)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(r => { map[r.user_id] = r.avatar_url })
+        setAvatarMap(map)
+      })
+  }, [workspaceMembers])
+
   const onPickAvatar = (e) => {
     const f = e.target.files ? e.target.files[0] : null
     if (!f) return
@@ -513,6 +539,7 @@ function DashboardView({ id }) {
       const db = await supabase.from('user_avatars').upsert({ user_id: currentUserId, avatar_url: publicUrl, updated_at: new Date().toISOString() })
       if (db.error) { setAvatarError('保存に失敗しました'); setAvatarUploading(false); return }
       setMyAvatarUrl(publicUrl); setAvatarFile(null); setAvatarPreview(null); setShowAvatarModal(false)
+      setAvatarMap(prev => ({ ...prev, [currentUserId]: publicUrl }))
     } catch (err) { setAvatarError('エラーが発生しました') }
     setAvatarUploading(false)
   }
@@ -521,7 +548,10 @@ function DashboardView({ id }) {
     if (!currentUserId) return
     setAvatarUploading(true)
     const db = await supabase.from('user_avatars').delete().eq('user_id', currentUserId)
-    if (!db.error) { setMyAvatarUrl(null); setAvatarFile(null); setAvatarPreview(null) }
+    if (!db.error) {
+      setMyAvatarUrl(null); setAvatarFile(null); setAvatarPreview(null)
+      setAvatarMap(prev => { const next = { ...prev }; delete next[currentUserId]; return next })
+    }
     setAvatarUploading(false)
   }
 
@@ -1171,7 +1201,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         </div>
         {/* currentRole バッジ */}
         {currentRole ? (
-          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 4, padding: '2px 8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 4, padding: '2px 8px', flexShrink: 0 }}>
+            <Avatar url={myAvatarUrl} name={(workspaceMembers.find(m => m.user_id === currentUserId) ? (workspaceMembers.find(m => m.user_id === currentUserId).display_name || workspaceMembers.find(m => m.user_id === currentUserId).email || '') : '')} size={18} />
             <span style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>あなた: </span>
             <span style={{ fontSize: 9, color: '#c9a84c', fontWeight: 500 }}>{PERMISSION_LABEL[normRole(currentRole)] || normRole(currentRole)}</span>
           </div>
@@ -1633,8 +1664,9 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                     : { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)', label: '招待中' }
                   return (
                     <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                      {/* 上段: 名前 + 削除ボタン */}
+                      {/* 上段: アバター + 名前 + 削除ボタン */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Avatar url={avatarMap[m.user_id] || null} name={displayName} size={28} />
                         <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {displayName}
                         </div>
