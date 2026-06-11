@@ -4,7 +4,13 @@ export const config = {
 
 export default function middleware(request) {
   const { pathname } = request.nextUrl || new URL(request.url)
-  if (pathname.startsWith('/api')) return
+  if (
+    pathname.startsWith('/api') ||
+    pathname === '/workspace' ||
+    pathname === '/workspace/' ||
+    pathname === '/login' ||
+    pathname === '/login/'
+  ) return
 
   const authHeader = request.headers.get('authorization')
 
