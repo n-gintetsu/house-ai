@@ -37,10 +37,10 @@ function formatFileSize(bytes) {
 }
 
 const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン']
-const ROLE_OPTIONS = ['顧客', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
+const ROLE_OPTIONS = ['お客様', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
 const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
 const PERMISSION_LABEL = {
-  Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: '顧客',
+  Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: 'お客様',
   Broker: '仲介業者', JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
   Member: 'Member',
 }
@@ -315,7 +315,7 @@ function DashboardView({ id }) {
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
   const [showMemberForm, setShowMemberForm] = useState(false)
-  const [memberForm, setMemberForm] = useState({ name: '', role_label: '顧客', permission: 'Staff' })
+  const [memberForm, setMemberForm] = useState({ name: '', role_label: 'お客様', permission: 'Staff' })
   const [showTimelineForm, setShowTimelineForm] = useState(false)
   const [timelineForm, setTimelineForm] = useState({ event_date: '', label: '' })
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -619,7 +619,7 @@ function DashboardView({ id }) {
       }).select().single()
       if (error) throw error
       setMembers(prev => [...prev, data])
-      setMemberForm({ name: '', role_label: '顧客', permission: 'Member' })
+      setMemberForm({ name: '', role_label: 'お客様', permission: 'Member' })
       setShowMemberForm(false)
     } catch (e) { console.error('ws_members insert error', e); setMemberError('追加に失敗しました: ' + (e.message || '')) }
   }
@@ -1500,7 +1500,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   </select>
                   {memberError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{memberError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: '顧客', permission: 'Staff' }); setMemberError('') }} style={cancelBtn}>キャンセル</button>
+                    <button onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: 'お客様', permission: 'Staff' }); setMemberError('') }} style={cancelBtn}>キャンセル</button>
                     <button onClick={handleAddMember} style={saveBtn}>追加</button>
                   </div>
                 </div>

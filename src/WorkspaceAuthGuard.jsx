@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import { Loader } from 'lucide-react'
 
 const CLAIM_ROLE_LABEL = {
-  owner: 'Owner', manager: 'Manager', staff: '担当', customer: '顧客',
+  owner: 'Owner', manager: 'Manager', staff: '担当', customer: 'お客様',
   broker: '仲介業者', judicialscrivener: '司法書士', bank: '銀行',
   reformcompany: 'リフォーム', guest: 'Guest',
 }
