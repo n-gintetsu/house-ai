@@ -145,6 +145,13 @@ canManage = canDel
 - 【将来の注意】/workspace/:id のようなパスベースのサブルートを導入する場合は、その時に限り `=== '/workspace'`（および '/workspace/'）を `startsWith('/workspace')` に変更すること。完全一致のままだとサブパスがBasic認証ダイアログに阻まれる。
 - 本体トップ（/）は引き続き Basic認証で保護。本体公開時にこの仮ゲート自体を廃止予定。
 
+### 静的アセット免除の追記（2026-06-11, commit d0c4af7）
+- HTMLルート（/workspace・/login）だけ免除しても不十分。SPAが後から読み込む /assets/ 配下のJS/CSS（および public配下の拡張子付き静的ファイル）が免除外だと、ブラウザがサブリソースの401でBasic認証ダイアログを出す。→ 静的アセットも免除が必須。
+- 現在の免除: /api、/assets/、拡張子付き静的ファイル（js|mjs|css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf。.map=ソースマップは除外し生ソースを晒さない）、/workspace(/)、/login(/)。
+- 副作用: 静的アセット公開によりJSバンドル（=アプリ全クライアントコード）が公開取得可能。Basic認証は開発中の仮の蓋で本物の防御ではない（実防御はRLS/API Bearer/AuthGuard）。クライアントの秘密混入なしは確認済み（参照はVITE_SUPABASE_ANON_KEYとVITE_CLAUDE_MODELのみ、service_roleはsrc/dist共に無し）。
+- 【将来タスク】本体コードを公開面から外すなら、Workspaceを別ビルド/別デプロイに分離（スライス戦略§7と整合）。
+- 【検証の注意】middleware変更の検証は「資格情報未入力の新しいシークレット」で行う。ブラウザはBasic認証資格情報をセッション中キャッシュ自動送信するため、一度認証したウィンドウでは免除の効きを誤判定する。curl検証は x-vercel-cache: HIT に注意（キャッシュ応答はmiddlewareを反映しない）。POST等のキャッシュされないリクエストでmiddleware実走を確認できる。
+
 ---
 
 ## アクセス制御の設計合意（段階5の核心）
