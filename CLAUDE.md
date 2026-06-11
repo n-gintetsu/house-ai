@@ -137,6 +137,16 @@ canManage = canDel
 
 ---
 
+## アクセス制御・Basic認証
+
+### Workspace先行リリースのBasic認証免除（2026-06-11, commit 4dedacb）
+- middleware.js の Basic認証免除は /workspace・/login を「完全一致（===）」で免除している。
+- これは Magic Link の着地（/workspace ぴったり）と WorkspaceAuthGuard のリダイレクト（/login ぴったり）に対応した最小設定。
+- 【将来の注意】/workspace/:id のようなパスベースのサブルートを導入する場合は、その時に限り `=== '/workspace'`（および '/workspace/'）を `startsWith('/workspace')` に変更すること。完全一致のままだとサブパスがBasic認証ダイアログに阻まれる。
+- 本体トップ（/）は引き続き Basic認証で保護。本体公開時にこの仮ゲート自体を廃止予定。
+
+---
+
 ## アクセス制御の設計合意（段階5の核心）
 
 ### 決定事項
