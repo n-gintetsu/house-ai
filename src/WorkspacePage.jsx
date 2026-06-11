@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
+import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
@@ -322,6 +323,8 @@ function DashboardView({ id }) {
   const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
+  const [showLogoMenu, setShowLogoMenu] = useState(false)
+  const [legalModal, setLegalModal] = useState(null)
   const [showNotices, setShowNotices] = useState(false)
   const [readNoticeIds, setReadNoticeIds] = useState(() => {
     try {
@@ -1066,7 +1069,20 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
       {/* ヘッダー - 本物ガラス */}
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px', boxSizing: 'border-box' }}>
-        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 42, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+        <div style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }} onClick={() => setShowLogoMenu(prev => !prev)}>
+          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 42, objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+          {showLogoMenu ? (
+            <>
+              <div onClick={(e) => { e.stopPropagation(); setShowLogoMenu(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 48, left: 0, width: 210, background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 6 }}>
+                {/* TODO: 4bで実装 */}
+                <div onClick={() => { setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アイコン編集</div>
+                <div onClick={() => { setLegalModal('terms'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>利用規約</div>
+                <div onClick={() => { setLegalModal('privacy'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>プライバシーポリシー</div>
+              </div>
+            </>
+          ) : null}
+        </div>
         <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
         <button onClick={() => { window.location.href = '/workspace' }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 6px', flexShrink: 0 }}>
           <ChevronLeft size={14} color="#64748B" />
@@ -1925,6 +1941,24 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {legalModal !== null ? (
+        <div onClick={() => setLegalModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 640, maxHeight: '80vh', overflowY: 'auto', background: 'rgba(15,23,42,.98)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.6)', padding: 28, position: 'relative' }}>
+            <div onClick={() => setLegalModal(null)} style={{ position: 'absolute', top: 16, right: 16, cursor: 'pointer', color: '#94A3B8', fontSize: 20, lineHeight: 1 }}>×</div>
+            {(legalModal === 'terms' ? TERMS_OF_SERVICE : PRIVACY_POLICY).split('\n').map((line, i) => {
+              const t = line.trim()
+              if (t === '') return <div key={i} style={{ height: 10 }} />
+              if (t === '---') return <div key={i} style={{ borderTop: '1px solid rgba(255,255,255,.08)', margin: '14px 0' }} />
+              if (t.indexOf('### ') === 0) return <div key={i} style={{ fontSize: 14, fontWeight: 500, color: '#c9a84c', margin: '12px 0 4px' }}>{t.slice(4)}</div>
+              if (t.indexOf('## ') === 0) return <div key={i} style={{ fontSize: 16, fontWeight: 500, color: '#E2E8F0', margin: '18px 0 6px' }}>{t.slice(3)}</div>
+              if (t.indexOf('# ') === 0) return <div key={i} style={{ fontSize: 20, fontWeight: 500, color: '#fff', margin: '4px 0 12px' }}>{t.slice(2)}</div>
+              if (t.indexOf('* ') === 0 || t.indexOf('- ') === 0) return <div key={i} style={{ display: 'flex', gap: 8, padding: '2px 0 2px 8px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.7 }}><span style={{ color: '#c9a84c' }}>・</span><span>{t.slice(2)}</span></div>
+              return <div key={i} style={{ fontSize: 13, color: '#CBD5E1', lineHeight: 1.8, margin: '2px 0' }}>{t}</div>
+            })}
+          </div>
+        </div>
+      ) : null}
 
     </div>
   )
