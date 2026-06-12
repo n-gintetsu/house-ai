@@ -247,3 +247,16 @@ House-AI と同様の漏洩チェックを、gintetsu-fudosan と estateflow の
   - B-4：「Service role full access profiles」を TO service_role に限定
   - B-5：動作確認（Admin読み取り/更新・自分のプロフィール保存・一般ユーザーが他人を読めないこと）
 - 横断監査（将来）：他テーブルにも同種の "service role full access が TO public" ミスが無いか確認。
+
+---
+## セキュリティ対応ログ（2026-06-11〜12）
+profiles テーブルのRLS穴を塞いだ。
+- B-1: api/delete-user.js が無認証だった（誰でもユーザー削除可能）→ 管理者認証ゲート追加（Bearer→getUser→ADMIN_EMAILS判定）
+- B-2: AdminDashboard の他人profile読み書きを service_role API（api/admin-profile.js）経由に移設
+- B-3: profiles に own-INSERT ポリシー追加（to authenticated, with check auth.uid()=id）
+- B-4: 「Service role full access profiles」ポリシーを TO public → TO service_role に限定（これが本丸の穴）
+- B-5: 検証済み。他人=0行/本人=1行/Admin動作OK。新規ユーザーのprofiles作成は on_auth_user_created→handle_new_user（SECURITY DEFINER）でRLSバイパスのため影響なし。
+
+【教訓】RLS有効テーブルで「Service role full access」を TO public / USING(true) で作るのは穴。service_role はRLSをバイパスするのでポリシーは必ず TO service_role にする。
+【TODO】①他テーブルにも同種の "TO public full access" ミスが無いか監査 ②MemberDashboard:213 の name/phone カラム不存在バグ ③業者管理の管理者メモ保存バグ
+---
