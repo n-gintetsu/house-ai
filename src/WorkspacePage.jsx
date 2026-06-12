@@ -1658,7 +1658,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               ) : (
                 workspaceMembers.map((m, idx) => {
                   const ps = permissionStyle(m.role)
-                  const displayName = m.display_name || 'メンバー'
+                  const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : 'メンバー')
                   const statusBadge = m.status === 'active'
                     ? { bg: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)', label: '参加中' }
                     : { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)', label: '招待中' }
