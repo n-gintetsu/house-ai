@@ -80,7 +80,7 @@ export default function ClientsListPage() {
                 <div
                   key={c.id}
                   onClick={() => handleCardClick(c)}
-                  style={{ ...glass, borderRadius: 14, padding: 20, cursor: canNav ? 'pointer' : 'default', border: '1px solid rgba(249,115,22,0.5)', boxShadow: '0 0 30px rgba(249,115,22,0.25)' }}
+                  style={{ ...glass, borderRadius: 14, padding: 20, cursor: canNav ? 'pointer' : 'default', border: '1px solid rgba(168,85,247,0.5)', boxShadow: '0 0 30px rgba(168,85,247,0.25)' }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>{c.name || '-'}</div>
