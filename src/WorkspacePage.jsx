@@ -194,7 +194,7 @@ function ListView() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16, paddingTop: 8 }}>
             {workspaces.map(ws => (
-              <div key={ws.id} onClick={() => { window.location.href = `/workspace?id=${ws.id}` }} style={{ ...glass, borderRadius: 14, padding: 20, cursor: 'pointer' }}>
+              <div key={ws.id} onClick={() => { window.location.href = `/workspace?id=${ws.id}` }} style={{ ...glass, borderRadius: 14, padding: 20, cursor: 'pointer', border: ws.status === '完了' ? '1px solid rgba(212,175,55,0.5)' : ws.status === '進行中' ? '1px solid rgba(56,189,248,0.5)' : glass.border, boxShadow: ws.status === '完了' ? '0 0 30px rgba(212,175,55,0.25)' : ws.status === '進行中' ? '0 0 30px rgba(56,189,248,0.25)' : glass.boxShadow }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ws.title || '-'}</div>

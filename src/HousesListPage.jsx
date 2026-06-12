@@ -70,7 +70,7 @@ export default function HousesListPage() {
               <div
                 key={r.id}
                 onClick={() => { window.location.href = `/house/${r.id}` }}
-                style={{ ...glass, borderRadius: 14, padding: 20, cursor: 'pointer' }}
+                style={{ ...glass, borderRadius: 14, padding: 20, cursor: 'pointer', border: '1px solid rgba(34,197,94,0.5)', boxShadow: '0 0 30px rgba(34,197,94,0.25)' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
