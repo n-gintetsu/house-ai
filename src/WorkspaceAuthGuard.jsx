@@ -91,15 +91,37 @@ export default function WorkspaceAuthGuard({ children }) {
   }
 
   useEffect(() => {
+    let mounted = true
+    let sawSession = false
+
     supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session)
+      if (!mounted) return
+      if (data.session) {
+        sawSession = true
+        setAuthed(true)
+      }
       runClaim(data.session)
     })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthed(!!session)
+      if (!mounted) return
+      if (session) {
+        sawSession = true
+        setAuthed(true)
+      }
       runClaim(session)
     })
-    return () => subscription.unsubscribe()
+
+    // 猶予：2秒待ってもセッションが一切観測できなければ未ログイン確定
+    const graceTimer = setTimeout(() => {
+      if (mounted && !sawSession) { setAuthed(false) }
+    }, 2000)
+
+    return () => {
+      mounted = false
+      clearTimeout(graceTimer)
+      subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
