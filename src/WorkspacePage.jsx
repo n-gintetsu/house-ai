@@ -516,6 +516,18 @@ function DashboardView({ id }) {
   }, [id])
 
   useEffect(() => {
+    if (!id) return
+    const channel = supabase
+      .channel(`ws-members-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workspace_members', filter: `workspace_id=eq.${id}` }, async () => {
+        const { data } = await supabase.from('workspace_members').select('*').eq('workspace_id', id)
+        setWorkspaceMembers(data || [])
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id])
+
+  useEffect(() => {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: 'smooth' })
     }
