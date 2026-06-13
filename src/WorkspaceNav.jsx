@@ -1,13 +1,35 @@
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { LogOut } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: '案件',      href: '/workspace' },
-  { label: '家カルテ',  href: '/houses' },
-  { label: '顧客カルテ', href: '/clients' },
+  { label: '案件',       href: '/workspace', orgOnly: false },
+  { label: '家カルテ',   href: '/houses',    orgOnly: true },
+  { label: '顧客カルテ', href: '/clients',   orgOnly: true },
 ]
 
 export default function WorkspaceNav({ current }) {
+  const [isOrgMember, setIsOrgMember] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+    async function check() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        if (mounted) setIsOrgMember(false)
+        return
+      }
+      const { data: org } = await supabase.from('organizations').select('id').maybeSingle()
+      if (mounted) setIsOrgMember(org ? true : false)
+    }
+    check()
+    return () => { mounted = false }
+  }, [])
+
+  const visibleItems = isOrgMember === true
+    ? NAV_ITEMS
+    : NAV_ITEMS.filter(item => !item.orgOnly)
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     window.location.replace('/login')
@@ -15,7 +37,7 @@ export default function WorkspaceNav({ current }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-      {NAV_ITEMS.map((item, idx) => (
+      {visibleItems.map((item, idx) => (
         <div key={item.href} style={{ display: 'flex', alignItems: 'center' }}>
           <button
             onClick={() => { window.location.href = item.href }}
@@ -31,7 +53,7 @@ export default function WorkspaceNav({ current }) {
               borderBottom: current === item.href ? '1px solid rgba(201,168,76,0.5)' : '1px solid transparent',
             }}
           >{item.label}</button>
-          {idx < NAV_ITEMS.length - 1 ? (
+          {idx < visibleItems.length - 1 ? (
             <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11, userSelect: 'none' }}>|</span>
           ) : null}
         </div>

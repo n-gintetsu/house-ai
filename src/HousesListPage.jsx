@@ -28,7 +28,11 @@ export default function HousesListPage() {
       setCurrentUserId(uid)
       if (uid) {
         const { data: org } = await supabase.from('organizations').select('owner_id').maybeSingle()
-        setIsAdmin(org ? org.owner_id === uid : false)
+        if (!org) {
+          window.location.replace('/workspace')
+          return
+        }
+        setIsAdmin(org.owner_id === uid)
       }
       const { data } = await supabase
         .from('house_records')
