@@ -18,10 +18,27 @@ export default function HousesListPage() {
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    supabase.from('house_records').select('*').order('updated_at', { ascending: false })
-      .then(({ data }) => { setRecords(data || []); setLoading(false) })
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      const uid = session ? session.user.id : null
+      setCurrentUserId(uid)
+      if (uid) {
+        const { data: org } = await supabase.from('organizations').select('owner_id').maybeSingle()
+        setIsAdmin(org ? org.owner_id === uid : false)
+      }
+      const { data } = await supabase
+        .from('house_records')
+        .select('*')
+        .is('deleted_at', null)
+        .order('updated_at', { ascending: false })
+      setRecords(data || [])
+      setLoading(false)
+    }
+    load()
   }, [])
 
   // クライアント側フィルタ: property_name / address_raw / contract_type を NFKC正規化して部分一致
@@ -30,6 +47,17 @@ export default function HousesListPage() {
     const check = (str) => (str || '').normalize('NFKC').toLowerCase().includes(q)
     return check(r.property_name) || check(r.address_raw) || check(r.contract_type)
   }) : records
+
+  const canDelete = (r) => isAdmin || (r.created_by ? r.created_by === currentUserId : false)
+
+  async function handleDelete(e, r) {
+    e.stopPropagation()
+    const ok = window.confirm('「' + (r.property_name || r.address_key || '無題') + '」を削除しますか？\n削除すると一覧から消えます（管理者は後で復元できます）。')
+    if (!ok) { return }
+    const { error } = await supabase.from('house_records').update({ deleted_at: new Date().toISOString() }).eq('id', r.id)
+    if (error) { window.alert('削除できませんでした：' + error.message); return }
+    setRecords(prev => prev.filter(x => x.id !== r.id))
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -81,9 +109,21 @@ export default function HousesListPage() {
                       {r.address_raw || r.address_key || '-'}
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 500, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>
-                    {r.transaction_count || 0}回
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8, flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 500, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)', whiteSpace: 'nowrap' }}>
+                      {r.transaction_count || 0}回
+                    </span>
+                    {canDelete(r) ? (
+                      <button onClick={(e) => handleDelete(e, r)} title="削除" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', color: '#64748B', borderRadius: 6 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
                   {[
