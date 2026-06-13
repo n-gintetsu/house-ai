@@ -262,7 +262,7 @@ function ListView() {
 // ===================== 新規作成モーダル =====================
 
 function CreateModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ title: '', customer_name: '', agent_name: '', contract_type: '売買', property_address: '' })
+  const [form, setForm] = useState({ title: '', customer_name: '', agent_name: '', contract_type: '売買', property_address: '', customer_email: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -270,6 +270,8 @@ function CreateModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.title || !form.customer_name || !form.contract_type) { setError('案件名・顧客名・契約種別は必須です。'); return }
+    const custEmail = (form.customer_email || '').trim().toLowerCase()
+    if (custEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(custEmail)) { setError('お客様メールアドレスの形式が正しくありません。'); return }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setError('ログインの有効期限が切れています。ログアウトして入り直してください。'); setSubmitting(false); return }
     setSubmitting(true); setError('')
@@ -289,7 +291,6 @@ function CreateModal({ onClose, onCreated }) {
         { workspace_id: newId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
         { workspace_id: newId, role_label: '顧客', is_fixed: true, sort_order: 1 },
       ])
-      // 作成者を Owner として workspace_members に登録（unique衝突は握りつぶす）
       await supabase.from('workspace_members').insert({
         workspace_id: newId,
         user_id: session.user.id,
@@ -298,6 +299,20 @@ function CreateModal({ onClose, onCreated }) {
         status: 'active',
         invited_by: session.user.id,
       })
+      if (custEmail) {
+        await supabase.from('workspace_members').insert({
+          id: crypto.randomUUID(),
+          workspace_id: newId,
+          email: custEmail,
+          role: 'Customer',
+          status: 'pending',
+          invited_by: session.user.id,
+          display_name: form.customer_name || '',
+        })
+        try {
+          await supabase.auth.signInWithOtp({ email: custEmail, options: { emailRedirectTo: 'https://house-ai.co.jp/workspace', shouldCreateUser: true } })
+        } catch (inviteErr) { console.warn('招待メール送信失敗:', inviteErr) }
+      }
       onCreated(newId)
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
@@ -321,6 +336,11 @@ function CreateModal({ onClose, onCreated }) {
             </select>
           </div>
           <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>物件住所</div><input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} placeholder="例：さいたま市大宮区〇〇" style={inputStyle} /></div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様メールアドレス（任意）</div>
+            <input type="text" value={form.customer_email} onChange={e => handleChange('customer_email', e.target.value)} placeholder="customer@example.com" style={inputStyle} />
+            <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginTop: 6, lineHeight: 1.6 }}>入力すると、案件作成と同時にお客様へ招待メール（マジックリンク）を送ります。空欄なら送りません。</div>
+          </div>
         </div>
         {error ? <div style={{ marginTop: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
         <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
