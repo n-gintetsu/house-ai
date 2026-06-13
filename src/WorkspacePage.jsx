@@ -476,11 +476,8 @@ function DashboardView({ id }) {
       const { data: ws, error: wsErr } = await supabase.from('workspaces').select('*').eq('id', id).single()
       if (wsErr || !ws) { setNotFound(true); setLoading(false); return }
       setWorkspace(ws)
-      // 組織名を取得（RLSで読めない場合は0行 → null のままフォールバック）
-      if (ws.org_id) {
-        const { data: orgData } = await supabase.from('organizations').select('name').eq('id', ws.org_id).maybeSingle()
-        setOrgName(orgData ? orgData.name || null : null)
-      }
+      const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
+      setOrgName(orgNameData || null)
       // ログイン中ユーザーのこの案件でのロールを取得
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
