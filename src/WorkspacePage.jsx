@@ -518,10 +518,14 @@ function DashboardView({ id }) {
   useEffect(() => {
     if (!id) return
     const channel = supabase
-      .channel(`ws-members-${id}`)
+      .channel(`ws-realtime-${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'workspace_members', filter: `workspace_id=eq.${id}` }, async () => {
         const { data } = await supabase.from('workspace_members').select('*').eq('workspace_id', id)
         setWorkspaceMembers(data || [])
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ws_notices', filter: `workspace_id=eq.${id}` }, async () => {
+        const { data } = await supabase.from('ws_notices').select('*').eq('workspace_id', id)
+        setNotices(data || [])
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
