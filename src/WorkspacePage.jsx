@@ -140,12 +140,17 @@ function ListView() {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     async function fetchFiltered() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { setWorkspaces([]); setLoading(false); return }
       const userId = session.user.id
+      setCurrentUserId(userId)
+      const { data: org } = await supabase.from('organizations').select('owner_id').maybeSingle()
+      setIsAdmin(org ? org.owner_id === userId : false)
       const { data: memberships } = await supabase
         .from('workspace_members')
         .select('workspace_id')
@@ -157,12 +162,24 @@ function ListView() {
         .from('workspaces')
         .select('*')
         .in('id', ids)
+        .is('deleted_at', null)
         .order('updated_at', { ascending: false })
       setWorkspaces(wsData || [])
       setLoading(false)
     }
     fetchFiltered()
   }, [])
+
+  const canDelete = (ws) => isAdmin || (ws.created_by ? (ws.created_by === currentUserId && ws.status !== '完了') : false)
+
+  async function handleDelete(e, ws) {
+    e.stopPropagation()
+    const ok = window.confirm('「' + (ws.title || '無題') + '」を削除しますか？\n削除すると一覧から消えます（管理者は後で復元できます）。')
+    if (!ok) { return }
+    const { error } = await supabase.from('workspaces').update({ deleted_at: new Date().toISOString() }).eq('id', ws.id)
+    if (error) { window.alert('削除できませんでした：' + error.message); return }
+    setWorkspaces(prev => prev.filter(x => x.id !== ws.id))
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -200,7 +217,19 @@ function ListView() {
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ws.title || '-'}</div>
                     <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 400, letterSpacing: 1 }}>{ws.ws_code || '-'}</div>
                   </div>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 400, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>{ws.status || '-'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8, flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 400, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)', whiteSpace: 'nowrap' }}>{ws.status || '-'}</span>
+                    {canDelete(ws) ? (
+                      <button onClick={(e) => handleDelete(e, ws)} title="削除" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', color: '#64748B', borderRadius: 6 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
                   {[{ label: '顧客', value: ws.customer_name }, { label: '担当', value: ws.agent_name }, { label: '契約種別', value: ws.contract_type }].map(item => (
