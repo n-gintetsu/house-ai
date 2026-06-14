@@ -280,8 +280,9 @@ function CreateModal({ onClose, onCreated }) {
       const { error: ensureOrgError } = await supabase.rpc('ensure_org_for_current_user')
       if (ensureOrgError) { setError('組織の準備に失敗しました。' + (ensureOrgError.message || '')); setSubmitting(false); return }
       const newId = crypto.randomUUID()
-      const { count } = await supabase.from('workspaces').select('*', { count: 'exact', head: true })
-      const wsCode = `WS-2026-${String((count || 0) + 1).padStart(6, '0')}`
+      const codeRes = await supabase.rpc('next_workspace_code')
+      if (codeRes.error) { setError('案件番号の採番に失敗しました。' + (codeRes.error.message || '')); setSubmitting(false); return }
+      const wsCode = codeRes.data
       const { error: wsErr } = await supabase.from('workspaces').insert({
         id: newId, ws_code: wsCode, title: form.title, customer_name: form.customer_name,
         agent_name: form.agent_name, contract_type: form.contract_type,
