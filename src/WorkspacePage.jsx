@@ -276,6 +276,9 @@ function CreateModal({ onClose, onCreated }) {
     if (!session) { setError('ログインの有効期限が切れています。ログアウトして入り直してください。'); setSubmitting(false); return }
     setSubmitting(true); setError('')
     try {
+      // org を持たないユーザーは、案件作成の前に自分専用の org を発行（workspaces の INSERT RLS が current_org_id() IS NOT NULL を要求するため）
+      const { error: ensureOrgError } = await supabase.rpc('ensure_org_for_current_user')
+      if (ensureOrgError) { setError('組織の準備に失敗しました。' + (ensureOrgError.message || '')); setSubmitting(false); return }
       const newId = crypto.randomUUID()
       const { count } = await supabase.from('workspaces').select('*', { count: 'exact', head: true })
       const wsCode = `WS-2026-${String((count || 0) + 1).padStart(6, '0')}`
