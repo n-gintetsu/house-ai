@@ -422,6 +422,7 @@ function DashboardView({ id }) {
   const [timeline, setTimeline] = useState([])
   const [schedule, setSchedule] = useState([])
   const [notices, setNotices] = useState([])
+  const [wsFiles, setWsFiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [chatInput, setChatInput] = useState('')
@@ -549,18 +550,20 @@ function DashboardView({ id }) {
           .maybeSingle()
         setCurrentRole(wmData ? wmData.role : null)
       }
-      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }] = await Promise.all([
+      const [{ data: stepsData }, { data: membersData }, { data: timelineData }, { data: noticesData }, { data: scheduleData }, { data: wsFilesData }] = await Promise.all([
         supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
         supabase.from('timeline_events').select('*').eq('workspace_id', id).order('event_date', { ascending: true }),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_schedule').select('*').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
+        supabase.from('ws_files').select('file_name, doc_type, created_at').eq('workspace_id', id).order('created_at', { ascending: false }),
       ])
       setSteps(stepsData || [])
       setMembers(membersData || [])
       setTimeline(timelineData || [])
       setNotices(noticesData || [])
       setSchedule(scheduleData || [])
+      setWsFiles(wsFilesData || [])
       const { data: wsMembersRaw } = await supabase
         .from('workspace_members')
         .select('*')
@@ -1157,6 +1160,12 @@ function DashboardView({ id }) {
     const timelineText = timeline.slice(-5).length > 0
       ? timeline.slice(-5).map(t => `  - ${t.event_date}：${t.label}`).join('\n')
       : '  （なし）'
+    const wsFilesText = wsFiles.length > 0
+      ? wsFiles.map(f => {
+          const date = f.created_at ? new Date(f.created_at).toLocaleDateString('ja-JP') : ''
+          return `  - ${f.file_name || '(不明)'}${f.doc_type ? '（' + f.doc_type + '）' : ''}${date ? ' ' + date + 'アップ' : ''}`
+        }).join('\n')
+      : '  （アップロード済みファイルなし）'
 
     return `あなたはHouse-AIの案件秘書です。以下の案件情報を踏まえて丁寧に回答してください。
 
@@ -1168,6 +1177,7 @@ function DashboardView({ id }) {
 物件住所：${ws.property_address || '-'}
 ステータス：${ws.status || '-'}
 進捗率：${ws.progress || 0}%
+自社：${orgName || '-'}
 
 【ロードマップ】
 ${stepsText}
@@ -1183,6 +1193,9 @@ ${noticesText}
 
 【直近のタイムライン（最新5件）】
 ${timelineText}
+
+【アップロード済みファイル】
+${wsFilesText}
 
 丁寧かつ簡潔に、案件の担当者・顧客の立場に寄り添って回答してください。案件情報に書かれていない内容（Workspaceの使い方、火災保険・リフォーム・住宅ローンなど不動産一般の話題）でも、「案件情報の範囲外です」「サポート窓口へ」などと断らず、知っている範囲でわかりやすく前向き・具体的に答えてください。確実でない点は可能性として軽く補足する程度にとどめ、回答自体は前向きに行ってください。回答はマークダウン記法（#見出し・**強調**・---区切り線・>引用など）を使わず、プレーンな日本語の文章で答えてください。箇条書きが必要なときは行頭に「・」を使い、簡潔に。
 
