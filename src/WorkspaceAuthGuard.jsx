@@ -92,34 +92,30 @@ export default function WorkspaceAuthGuard({ children }) {
 
   useEffect(() => {
     let mounted = true
-    let sawSession = false
 
+    // 速い経路：すでにセッションがキャッシュにあれば即表示（true のみセット・false は出さない）
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return
-      if (data.session) {
-        sawSession = true
-        setAuthed(true)
-      }
+      if (data.session) { setAuthed(true) }
       runClaim(data.session)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 確定判定：INITIAL_SESSION（クライアントがセッション復元＋必要ならリフレッシュした後に1回発火）を正とする。
+    // キャッシュミスやリフレッシュ中は false にせず、ここで確定させる。
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
-      if (session) {
-        sawSession = true
+      if (event === 'INITIAL_SESSION') {
+        setAuthed(!!session)
+      } else if (session) {
         setAuthed(true)
+      } else if (event === 'SIGNED_OUT') {
+        setAuthed(false)
       }
       runClaim(session)
     })
 
-    // 猶予：2秒待ってもセッションが一切観測できなければ未ログイン確定
-    const graceTimer = setTimeout(() => {
-      if (mounted && !sawSession) { setAuthed(false) }
-    }, 2000)
-
     return () => {
       mounted = false
-      clearTimeout(graceTimer)
       subscription.unsubscribe()
     }
   }, [])
