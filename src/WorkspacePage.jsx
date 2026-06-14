@@ -8,6 +8,7 @@ import {
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
+import MobileWorkspaceLayout from './MobileWorkspaceLayout'
 
 const Avatar = ({ url, name, size }) => {
   const s = size || 28
@@ -131,7 +132,17 @@ function permissionStyle(p) {
 
 export default function WorkspacePage() {
   const workspaceId = new URLSearchParams(window.location.search).get('id')
-  return workspaceId ? <DashboardView id={workspaceId} /> : <ListView />
+  const previewMobile = new URLSearchParams(window.location.search).get('preview_mobile') === '1'
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  return (isMobile && previewMobile) ? <MobileWorkspaceLayout /> : (workspaceId ? <DashboardView id={workspaceId} /> : <ListView />)
 }
 
 // ===================== 案件一覧 =====================
