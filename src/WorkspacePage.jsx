@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles
+  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -142,6 +142,8 @@ function ListView() {
   const [showCreate, setShowCreate] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [org, setOrg] = useState(null)
+  const [showOrgSettings, setShowOrgSettings] = useState(false)
 
   useEffect(() => {
     async function fetchFiltered() {
@@ -149,8 +151,9 @@ function ListView() {
       if (!session) { setWorkspaces([]); setLoading(false); return }
       const userId = session.user.id
       setCurrentUserId(userId)
-      const { data: org } = await supabase.from('organizations').select('owner_id').maybeSingle()
-      setIsAdmin(org ? org.owner_id === userId : false)
+      const { data: orgData } = await supabase.from('organizations').select('id, name, owner_id').maybeSingle()
+      setIsAdmin(orgData ? orgData.owner_id === userId : false)
+      setOrg(orgData && orgData.owner_id === userId ? { id: orgData.id, name: orgData.name } : null)
       const { data: memberships } = await supabase
         .from('workspace_members')
         .select('workspace_id')
@@ -188,7 +191,13 @@ function ListView() {
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
         <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>House-AI Workspace</div>
         <WorkspaceNav current="/workspace" />
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {org !== null ? (
+            <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
+              <Settings size={13} />
+              組織設定
+            </button>
+          ) : null}
           <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
             <Plus size={15} />
             新規案件作成
@@ -255,6 +264,7 @@ function ListView() {
         )}
       </main>
       {showCreate ? <CreateModal onClose={() => setShowCreate(false)} onCreated={(id) => { window.location.href = `/workspace?id=${id}` }} /> : null}
+      {showOrgSettings && org ? <OrgSettingsModal org={org} onClose={() => setShowOrgSettings(false)} onSaved={(newName) => { setOrg(prev => ({ ...prev, name: newName })); setShowOrgSettings(false) }} /> : null}
     </div>
   )
 }
@@ -351,6 +361,51 @@ function CreateModal({ onClose, onCreated }) {
           <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
           <button onClick={handleSubmit} style={{ flex: 1, background: submitting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             {submitting ? <Loader size={14} /> : null}作成
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ===================== 組織設定モーダル =====================
+
+function OrgSettingsModal({ org, onClose, onSaved }) {
+  const [name, setName] = useState(org.name || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSave = async () => {
+    const trimmed = name.trim()
+    if (!trimmed) { setError('会社名を入力してください。'); return }
+    setSaving(true); setError('')
+    const { error: updErr } = await supabase.from('organizations').update({ name: trimmed }).eq('id', org.id)
+    if (updErr) { setError('保存に失敗しました。' + (updErr.message || '')); setSaving(false); return }
+    onSaved(trimmed)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 440 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>組織設定</div>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>会社名</div>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="例：〇〇不動産株式会社"
+            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', padding: '10px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
+          />
+        </div>
+        {error ? <div style={{ marginBottom: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
+          <button onClick={handleSave} style={{ flex: 1, background: saving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {saving ? <Loader size={14} /> : null}保存
           </button>
         </div>
       </div>
