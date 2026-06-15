@@ -11,7 +11,12 @@ export default function middleware(request) {
     pathname === '/workspace' ||
     pathname === '/workspace/' ||
     pathname === '/login' ||
-    pathname === '/login/'
+    pathname === '/login/' ||
+    pathname === '/houses' ||
+    pathname === '/houses/' ||
+    pathname === '/clients' ||
+    pathname === '/clients/' ||
+    pathname.startsWith('/house/')
   ) return
 
   const authHeader = request.headers.get('authorization')
