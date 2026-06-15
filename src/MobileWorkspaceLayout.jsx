@@ -132,6 +132,7 @@ export default function MobileWorkspaceLayout() {
   const [memberInput, setMemberInput] = useState('')
   const [isMemberSending, setIsMemberSending] = useState(false)
   const [myDisplayName, setMyDisplayName] = useState('')
+  const [chatReads, setChatReads] = useState([])
   const memberComposingRef = useRef(false)
   const memberBottomRef = useRef(null)
 
@@ -174,11 +175,12 @@ export default function MobileWorkspaceLayout() {
   useEffect(() => {
     if (!id || activeTab !== 2) return
     const fetchMemberMessages = async () => {
-      const [{ data: msgs }] = await Promise.all([
+      const [{ data: msgs }, { data: reads }] = await Promise.all([
         supabase.from('workspace_messages').select('*').eq('workspace_id', id).order('created_at', { ascending: true }),
         supabase.from('workspace_chat_reads').select('*').eq('workspace_id', id),
       ])
       if (msgs) setMemberMessages(msgs)
+      if (reads) setChatReads(reads)
       if (currentUserId) {
         await supabase.from('workspace_chat_reads').upsert(
           { workspace_id: id, user_id: currentUserId, last_read_at: new Date().toISOString() },
@@ -696,6 +698,7 @@ export default function MobileWorkspaceLayout() {
               memberMessages.map(msg => {
                 const isMe = msg.user_id === currentUserId
                 const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''
+                const readCount = isMe ? chatReads.filter(r => r.user_id !== currentUserId && new Date(r.last_read_at) >= new Date(msg.created_at)).length : 0
                 return (
                   <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                     {isMe ? null : (
@@ -704,7 +707,12 @@ export default function MobileWorkspaceLayout() {
                     <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(59,130,246,0.38)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {msg.body}
                     </div>
-                    <span style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginTop: 2, paddingRight: isMe ? 2 : 0, paddingLeft: isMe ? 0 : 2 }}>{timeStr}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingRight: isMe ? 2 : 0, paddingLeft: isMe ? 0 : 2 }}>
+                      {isMe && readCount > 0 ? (
+                        <span style={{ fontSize: 10, color: '#64748B', fontWeight: 400 }}>{readCount === 1 ? '既読' : '既読 ' + readCount}</span>
+                      ) : null}
+                      <span style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>{timeStr}</span>
+                    </div>
                   </div>
                 )
               })
