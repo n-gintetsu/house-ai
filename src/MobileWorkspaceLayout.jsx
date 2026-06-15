@@ -585,6 +585,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <input
                   type="date"
+                  className="ws-mobile-date"
                   value={scheduleForm.scheduled_date}
                   onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
                   style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40 }}
