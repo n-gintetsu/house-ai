@@ -13,6 +13,12 @@ const NAV_TABS = [
 const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
+const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
+
+function makeSafeStoragePath(workspaceId, ext) {
+  const rand = crypto.randomUUID().replace(/-/g, '')
+  return `${workspaceId}/${Date.now()}_${rand}.${ext}`
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -117,6 +123,10 @@ export default function MobileWorkspaceLayout() {
   const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
   const [scheduleError, setScheduleError] = useState('')
 
+  // 資料タブ アップロード state
+  const [uploadingFolderId, setUploadingFolderId] = useState(null)
+  const [uploadError, setUploadError] = useState('')
+
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
@@ -196,6 +206,39 @@ export default function MobileWorkspaceLayout() {
     return (await res.json()).url
   }
 
+  async function handleUpload(folderId, file) {
+    if (!file) return
+    const ext = (file.name.split('.').pop() || '').toLowerCase()
+    if (!ALLOWED_EXTS.includes(ext)) {
+      setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
+      return
+    }
+    setUploadError('')
+    setUploadingFolderId(folderId)
+    try {
+      const path = makeSafeStoragePath(id, ext)
+      const { error: storageErr } = await supabase.storage.from('workspace-files').upload(path, file)
+      if (storageErr) throw storageErr
+      const { data: dbRow, error: dbErr } = await supabase.from('ws_files').insert({
+        workspace_id: id,
+        folder_id: folderId,
+        file_name: file.name,
+        storage_path: path,
+        mime_type: file.type,
+        size_bytes: file.size,
+        doc_type: null,
+        uploaded_by: null,
+      }).select().single()
+      if (dbErr) throw dbErr
+      setFiles(prev => [dbRow, ...prev])
+    } catch (e) {
+      console.error('upload error', e)
+      setUploadError('アップロードに失敗しました: ' + (e.message || ''))
+    } finally {
+      setUploadingFolderId(null)
+    }
+  }
+
   const handleAddSchedule = async () => {
     if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
     setScheduleError('')
@@ -242,6 +285,8 @@ export default function MobileWorkspaceLayout() {
                 const folderFiles = getFolderFiles(folder.id)
                 const isExpanded = expandedFolders[folder.id] || false
                 const displayName = getFolderDisplayName(folder)
+                const canUpload = isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId)
+                const isUploading = uploadingFolderId === folder.id
                 return (
                   <div key={folder.id} style={{ ...CARD_STYLE, marginBottom: 12 }}>
 
@@ -283,6 +328,38 @@ export default function MobileWorkspaceLayout() {
                             </div>
                           ))
                         )}
+
+                        {canUpload ? (
+                          <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+                            <input
+                              type="file"
+                              id={`upload-${folder.id}`}
+                              accept=".pdf,.png,.jpg,.jpeg,.webp"
+                              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
+                              onChange={e => {
+                                const f = e.target.files ? e.target.files[0] : null
+                                e.target.value = ''
+                                if (f) handleUpload(folder.id, f)
+                              }}
+                            />
+                            {isUploading ? (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#c9a84c', fontSize: 13, fontWeight: 400 }}>
+                                <Loader size={14} color="#c9a84c" />アップロード中...
+                              </div>
+                            ) : (
+                              <label
+                                htmlFor={`upload-${folder.id}`}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box' }}
+                              >
+                                <Plus size={14} color="#c9a84c" />ファイルを追加
+                              </label>
+                            )}
+                            {uploadError ? (
+                              <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 6 }}>{uploadError}</div>
+                            ) : null}
+                          </div>
+                        ) : null}
+
                       </div>
                     ) : null}
 
