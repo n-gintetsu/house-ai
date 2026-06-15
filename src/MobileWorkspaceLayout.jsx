@@ -290,7 +290,7 @@ export default function MobileWorkspaceLayout() {
         mime_type: file.type,
         size_bytes: file.size,
         doc_type: null,
-        uploaded_by: null,
+        uploaded_by: currentUserId,
       }).select().single()
       if (dbErr) throw dbErr
       setFiles(prev => [dbRow, ...prev])
@@ -509,7 +509,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                               >
                                 <Eye size={12} color="#94A3B8" />閲覧
                               </button>
-                              {canDel ? (
+                              {(canDel || (wf.uploaded_by && wf.uploaded_by === currentUserId)) ? (
                                 <button
                                   onClick={() => handleDeleteFile(wf)}
                                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}

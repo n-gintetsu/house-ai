@@ -2339,7 +2339,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         mime_type: file.type,
         size_bytes: file.size,
         doc_type: null,
-        uploaded_by: null,
+        uploaded_by: currentUserId,
       }).select().single()
       if (dbErr) throw dbErr
       setFiles(prev => [dbRow, ...prev])
@@ -2737,7 +2737,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                           <Share2 size={12} color={shareOpenFileId === wf.id ? '#c9a84c' : '#64748B'} />
                         </button>
                       ) : null}
-                      {fpCanDel ? (
+                      {(fpCanDel || (wf.uploaded_by && wf.uploaded_by === currentUserId)) ? (
                         <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
                           <Trash2 size={12} color="#475569" />
                         </button>
