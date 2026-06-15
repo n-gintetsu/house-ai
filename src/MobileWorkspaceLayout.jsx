@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -12,6 +12,7 @@ const NAV_TABS = [
 
 const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
+const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 
 function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -32,6 +33,13 @@ function formatMD(dateStr) {
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
   return `${d.getMonth() + 1}/${d.getDate()}`
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
 function stepLabelColor(state) {
@@ -92,11 +100,17 @@ export default function MobileWorkspaceLayout() {
   const [steps, setSteps] = useState([])
   const [schedule, setSchedule] = useState([])
   const [timeline, setTimeline] = useState([])
+  const [folders, setFolders] = useState([])
+  const [files, setFiles] = useState([])
+  const [fileGrants, setFileGrants] = useState([])
+  const [orgName, setOrgName] = useState(null)
+  const [myMemberId, setMyMemberId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [currentRole, setCurrentRole] = useState(null)
+  const [expandedFolders, setExpandedFolders] = useState({})
 
   // 予定タブ用フォーム state
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -106,22 +120,31 @@ export default function MobileWorkspaceLayout() {
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
         supabase.from('timeline_events').select('id, event_date, label').eq('workspace_id', id).order('event_date', { ascending: true }),
+        supabase.from('ws_file_folders').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
+        supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
+        supabase.from('file_grants').select('*').eq('workspace_id', id),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
       setSteps(stepsData || [])
       setSchedule(scheduleData || [])
       setTimeline(timelineData || [])
+      setFolders(foldersData || [])
+      setFiles(filesData || [])
+      setFileGrants(fileGrantsData || [])
+      const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
+      setOrgName(orgNameData || null)
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         setCurrentUserId(session.user.id)
-        const { data: wmData } = await supabase.from('workspace_members').select('role').eq('workspace_id', id).eq('user_id', session.user.id).eq('status', 'active').maybeSingle()
+        const { data: wmData } = await supabase.from('workspace_members').select('id, role').eq('workspace_id', id).eq('user_id', session.user.id).eq('status', 'active').maybeSingle()
         setCurrentRole(wmData ? wmData.role : null)
+        setMyMemberId(wmData ? wmData.id : null)
       }
       setLoading(false)
     }
@@ -138,6 +161,40 @@ export default function MobileWorkspaceLayout() {
   const role = normRole(currentRole)
   const isInternal = ['Owner', 'Manager', 'Staff'].includes(role)
   const canDel = role === 'Owner' || role === 'Manager'
+  const isFullAccess = FULL_ACCESS_ROLES.includes(role)
+
+  function getFolderDisplayName(folder) {
+    if (folder.is_fixed && folder.role_label === '自社（不動産）') return orgName || '会社'
+    if (folder.is_fixed && folder.role_label === '顧客') return (workspace && workspace.customer_name) ? workspace.customer_name + ' 様' : 'お客様'
+    return folder.role_label || ''
+  }
+
+  function getFolderFiles(folderId) {
+    const folderFiles = files.filter(f => f.folder_id === folderId)
+    if (isFullAccess) return folderFiles
+    if (!myMemberId) return []
+    const folderObj = folders.find(f => f.id === folderId)
+    const isMyFolder = folderObj ? folderObj.owner_member_id === myMemberId : false
+    if (isMyFolder) return folderFiles
+    return folderFiles.filter(f => fileGrants.some(g => g.file_id === f.id && g.member_id === myMemberId))
+  }
+
+  async function getSignedFileUrl(fileId, action) {
+    const { data } = await supabase.auth.getSession()
+    const token = (data && data.session && data.session.access_token) || ''
+    const res = await fetch('/api/sign-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ fileId: fileId, action: action }),
+    })
+    if (!res.ok) {
+      if (res.status === 403) alert('このファイルへのアクセス権限がありません')
+      else if (res.status === 401) alert('セッションが切れました。再度ログインしてください')
+      else alert('ファイルの取得に失敗しました')
+      return null
+    }
+    return (await res.json()).url
+  }
 
   const handleAddSchedule = async () => {
     if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
@@ -172,6 +229,69 @@ export default function MobileWorkspaceLayout() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c' }}>案件が見つかりません</span>
           </div>
+        ) : activeTab === 1 ? (
+
+          /* ===== 資料タブ ===== */
+          <div>
+            {folders.length === 0 ? (
+              <div style={{ ...CARD_STYLE, textAlign: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: '#475569' }}>フォルダがありません</span>
+              </div>
+            ) : (
+              folders.map(folder => {
+                const folderFiles = getFolderFiles(folder.id)
+                const isExpanded = expandedFolders[folder.id] || false
+                const displayName = getFolderDisplayName(folder)
+                return (
+                  <div key={folder.id} style={{ ...CARD_STYLE, marginBottom: 12 }}>
+
+                    <div
+                      onClick={() => setExpandedFolders(prev => ({ ...prev, [folder.id]: !prev[folder.id] }))}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 500, color: '#c9a84c', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+                      <span style={{ fontSize: 12, fontWeight: 400, color: '#475569', flexShrink: 0 }}>{folderFiles.length}件</span>
+                      {isExpanded ? <ChevronUp size={16} color="#475569" /> : <ChevronDown size={16} color="#475569" />}
+                    </div>
+
+                    {isExpanded ? (
+                      <div style={{ marginTop: 12 }}>
+                        {folderFiles.length === 0 ? (
+                          <div style={{ fontSize: 13, fontWeight: 400, color: '#475569', textAlign: 'center', padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>ファイルがありません</div>
+                        ) : (
+                          folderFiles.map((wf, idx) => (
+                            <div key={wf.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                              <FileText size={16} color="#c9a84c" style={{ flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wf.file_name || ''}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: '#475569' }}>{formatFileSize(wf.size_bytes)}</span>
+                                  {wf.doc_type ? (
+                                    <span style={{ fontSize: 10, fontWeight: 400, color: '#c9a84c', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 3, padding: '1px 5px' }}>{wf.doc_type}</span>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  const url = await getSignedFileUrl(wf.id, 'view')
+                                  if (url) window.open(url, '_blank')
+                                }}
+                                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+                              >
+                                <Eye size={12} color="#94A3B8" />閲覧
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    ) : null}
+
+                  </div>
+                )
+              })
+            )}
+          </div>
+
         ) : activeTab === 3 ? (
 
           /* ===== 予定タブ ===== */
