@@ -472,6 +472,13 @@ function DashboardView({ id }) {
       return raw ? JSON.parse(raw) : []
     } catch (e) { return [] }
   })
+  useEffect(() => {
+    if (!currentUserId || !id) return
+    try {
+      const raw = localStorage.getItem('houseai_notices_read_' + currentUserId + '_' + id)
+      setReadNoticeIds(raw ? JSON.parse(raw) : [])
+    } catch (e) {}
+  }, [currentUserId, id])
   // insert失敗時にフォーム内に表示するエラー文言
   const [memberError, setMemberError] = useState('')
   const [timelineError, setTimelineError] = useState('')
