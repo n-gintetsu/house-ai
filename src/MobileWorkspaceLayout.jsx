@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -127,6 +127,14 @@ export default function MobileWorkspaceLayout() {
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
   const [uploadError, setUploadError] = useState('')
 
+  // チャットタブ state
+  const [memberMessages, setMemberMessages] = useState([])
+  const [memberInput, setMemberInput] = useState('')
+  const [isMemberSending, setIsMemberSending] = useState(false)
+  const [myDisplayName, setMyDisplayName] = useState('')
+  const memberComposingRef = useRef(false)
+  const memberBottomRef = useRef(null)
+
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
@@ -152,14 +160,43 @@ export default function MobileWorkspaceLayout() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         setCurrentUserId(session.user.id)
-        const { data: wmData } = await supabase.from('workspace_members').select('id, role').eq('workspace_id', id).eq('user_id', session.user.id).eq('status', 'active').maybeSingle()
+        const { data: wmData } = await supabase.from('workspace_members').select('id, role, display_name, email').eq('workspace_id', id).eq('user_id', session.user.id).eq('status', 'active').maybeSingle()
         setCurrentRole(wmData ? wmData.role : null)
         setMyMemberId(wmData ? wmData.id : null)
+        setMyDisplayName(wmData ? (wmData.display_name || wmData.email || '') : '')
       }
       setLoading(false)
     }
     fetchAll()
   }, [id])
+
+  // チャットポーリング (activeTab === 2 のときだけ)
+  useEffect(() => {
+    if (!id || activeTab !== 2) return
+    const fetchMemberMessages = async () => {
+      const [{ data: msgs }] = await Promise.all([
+        supabase.from('workspace_messages').select('*').eq('workspace_id', id).order('created_at', { ascending: true }),
+        supabase.from('workspace_chat_reads').select('*').eq('workspace_id', id),
+      ])
+      if (msgs) setMemberMessages(msgs)
+      if (currentUserId) {
+        await supabase.from('workspace_chat_reads').upsert(
+          { workspace_id: id, user_id: currentUserId, last_read_at: new Date().toISOString() },
+          { onConflict: 'workspace_id,user_id' }
+        )
+      }
+    }
+    fetchMemberMessages()
+    const timer = setInterval(fetchMemberMessages, 5000)
+    return () => clearInterval(timer)
+  }, [activeTab, id, currentUserId])
+
+  // チャット最下部スクロール
+  useEffect(() => {
+    if (memberBottomRef.current) {
+      memberBottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [memberMessages])
 
   const progress = (workspace && workspace.progress) ? workspace.progress : 0
   const statusColor = (workspace && workspace.status === '完了') ? '#D4AF37' : '#38bdf8'
@@ -247,6 +284,31 @@ export default function MobileWorkspaceLayout() {
       setFiles(prev => prev.filter(f => f.id !== wf.id))
     } catch (e) {
       console.error('file delete error', e)
+    }
+  }
+
+  const handleMemberSend = async () => {
+    const body = memberInput.trim()
+    if (!body || isMemberSending) return
+    const senderName = myDisplayName
+    const newId = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const newMsg = { id: newId, workspace_id: id, user_id: currentUserId, sender_name: senderName, body, created_at: now }
+    setMemberInput('')
+    setMemberMessages(prev => [...prev, newMsg])
+    setIsMemberSending(true)
+    try {
+      await supabase.from('workspace_messages').insert({
+        id: newId,
+        workspace_id: id,
+        user_id: currentUserId,
+        sender_name: senderName,
+        body,
+      })
+    } catch (e) {
+      // 楽観更新済み
+    } finally {
+      setIsMemberSending(false)
     }
   }
 
@@ -614,6 +676,70 @@ export default function MobileWorkspaceLayout() {
         )}
 
       </div>
+
+      {/* ===== チャットタブ: position fixed で全面表示 (下部ナビより下) ===== */}
+      {activeTab === 2 ? (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 64, zIndex: 100, background: '#0A0F1E', display: 'flex', flexDirection: 'column' }}>
+
+          {/* ヘッダー */}
+          <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>チャット</span>
+          </div>
+
+          {/* メッセージエリア */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {memberMessages.length === 0 ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 13, color: '#475569', fontWeight: 400 }}>まだメッセージはありません</span>
+              </div>
+            ) : (
+              memberMessages.map(msg => {
+                const isMe = msg.user_id === currentUserId
+                const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''
+                return (
+                  <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                    {isMe ? null : (
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginBottom: 2, paddingLeft: 2 }}>{msg.sender_name || '不明'}</span>
+                    )}
+                    <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(59,130,246,0.38)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.body}
+                    </div>
+                    <span style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginTop: 2, paddingRight: isMe ? 2 : 0, paddingLeft: isMe ? 0 : 2 }}>{timeStr}</span>
+                  </div>
+                )
+              })
+            )}
+            <div ref={memberBottomRef} />
+          </div>
+
+          {/* 入力エリア */}
+          <div style={{ flexShrink: 0, padding: '8px 16px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#0A0F1E', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <textarea
+              value={memberInput}
+              onChange={e => setMemberInput(e.target.value)}
+              onCompositionStart={() => { memberComposingRef.current = true }}
+              onCompositionEnd={() => { memberComposingRef.current = false }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey && !memberComposingRef.current) {
+                  e.preventDefault()
+                  handleMemberSend()
+                }
+              }}
+              placeholder="メッセージを入力...（Shift+Enterで改行）"
+              rows={2}
+              style={{ flex: 1, fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 8, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+            <button
+              onClick={handleMemberSend}
+              disabled={isMemberSending || !memberInput.trim()}
+              style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}
+            >
+              <Send size={15} />送信
+            </button>
+          </div>
+
+        </div>
+      ) : null}
 
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 64, background: 'rgba(10,15,30,0.97)', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', zIndex: 200, boxSizing: 'border-box' }}>
         {NAV_TABS.map((tab, i) => {
