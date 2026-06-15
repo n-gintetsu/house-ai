@@ -1840,5 +1840,3 @@ body {
   box-shadow: 0 8px 24px rgba(0,166,81,0.4);
   transform: translateY(-1px);
 }
-
-.ws-mobile-date::-webkit-date-and-time-value { margin: 0; text-align: left; }

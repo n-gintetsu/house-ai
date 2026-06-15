@@ -20,6 +20,13 @@ function makeSafeStoragePath(workspaceId, ext) {
   return `${workspaceId}/${Date.now()}_${rand}.${ext}`
 }
 
+const fmtWsDate = (s) => {
+  if (!s) return ''
+  const d = new Date(s + 'T00:00:00')
+  const w = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()]
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${w})`
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   const d = new Date(dateStr)
@@ -583,13 +590,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
             {showScheduleForm ? (
               <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <input
-                  type="date"
-                  className="ws-mobile-date"
-                  value={scheduleForm.scheduled_date}
-                  onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40 }}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '8px 10px', minHeight: 40, boxSizing: 'border-box', color: scheduleForm.scheduled_date ? '#E2E8F0' : '#94A3B8' }}>
+                    <Calendar size={18} color="#c9a84c" />
+                    <span>{scheduleForm.scheduled_date ? fmtWsDate(scheduleForm.scheduled_date) : '日付を選択'}</span>
+                  </div>
+                  <input
+                    type="date"
+                    value={scheduleForm.scheduled_date}
+                    onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', opacity: 0, margin: 0, padding: 0, border: 'none', background: 'transparent', fontSize: 16 }}
+                  />
+                </div>
                 <input
                   type="text"
                   value={scheduleForm.label}
