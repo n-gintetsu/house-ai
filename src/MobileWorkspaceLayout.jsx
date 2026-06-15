@@ -142,6 +142,7 @@ export default function MobileWorkspaceLayout() {
   const [aiMessages, setAiMessages] = useState([])
   const [isAiSending, setIsAiSending] = useState(false)
   const aiComposingRef = useRef(false)
+  const aiBottomRef = useRef(null)
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
@@ -208,6 +209,13 @@ export default function MobileWorkspaceLayout() {
       memberBottomRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [memberMessages])
+
+  // AI秘書 最下部スクロール
+  useEffect(() => {
+    if (aiBottomRef.current) {
+      aiBottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [aiMessages])
 
   const progress = (workspace && workspace.progress) ? workspace.progress : 0
   const statusColor = (workspace && workspace.status === '完了') ? '#D4AF37' : '#38bdf8'
@@ -856,17 +864,30 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           {/* メッセージエリア */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {aiMessages.length === 0 ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                 <span style={{ fontSize: 13, color: '#475569', fontWeight: 400 }}>案件について何でも聞いてください</span>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {['Workspaceの使い方', '利用料金について'].map(chip => (
+                    <button key={chip} onClick={() => handleAiSend(chip)} disabled={isAiSending} style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: isAiSending ? '#64748B' : '#c9a84c', borderRadius: 20, fontSize: 12, padding: '5px 12px', fontWeight: 400, cursor: isAiSending ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{chip}</button>
+                  ))}
+                </div>
               </div>
             ) : (
-              aiMessages.map(msg => (
-                <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {msg.content}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {aiMessages.map(msg => (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.content}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {isAiSending ? (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '8px 12px', borderRadius: '12px 12px 12px 3px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#64748B', fontWeight: 400 }}>考え中...</div>
+                  </div>
+                ) : null}
+                <div ref={aiBottomRef} />
+              </div>
             )}
           </div>
 
