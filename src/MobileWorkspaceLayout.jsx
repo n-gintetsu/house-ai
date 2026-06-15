@@ -91,6 +91,7 @@ export default function MobileWorkspaceLayout() {
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
@@ -131,6 +132,10 @@ export default function MobileWorkspaceLayout() {
         ) : failed || !workspace ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c' }}>案件が見つかりません</span>
+          </div>
+        ) : activeTab !== 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
+            <span style={{ fontSize: 14, fontWeight: 400, color: '#475569' }}>{NAV_TABS[activeTab].label}は準備中です</span>
           </div>
         ) : (
           <div>
@@ -289,9 +294,9 @@ export default function MobileWorkspaceLayout() {
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 64, background: 'rgba(10,15,30,0.97)', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', zIndex: 200, boxSizing: 'border-box' }}>
         {NAV_TABS.map((tab, i) => {
           const Icon = tab.icon
-          const active = i === 0
+          const active = activeTab === i
           return (
-            <div key={tab.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
+            <div key={tab.label} onClick={() => setActiveTab(i)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1, cursor: 'pointer' }}>
               <Icon size={20} color={active ? '#c9a84c' : '#475569'} />
               <span style={{ fontSize: 10, fontWeight: 400, color: active ? '#c9a84c' : '#475569' }}>{tab.label}</span>
             </div>
