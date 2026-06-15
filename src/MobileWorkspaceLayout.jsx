@@ -20,6 +20,17 @@ function formatDate(dateStr) {
   return `${y}/${m}/${day}`
 }
 
+function formatMD(dateStr) {
+  if (!dateStr) return ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const p = dateStr.split('-')
+    return `${parseInt(p[1])}/${parseInt(p[2])}`
+  }
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
+
 function stepLabelColor(state) {
   if (state === '完了')    return '#c9a84c'
   if (state === '進行中')  return '#60A5FA'
@@ -76,19 +87,25 @@ export default function MobileWorkspaceLayout() {
   const id = new URLSearchParams(window.location.search).get('id')
   const [workspace, setWorkspace] = useState(null)
   const [steps, setSteps] = useState([])
+  const [schedule, setSchedule] = useState([])
+  const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
+        supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
+        supabase.from('timeline_events').select('id, event_date, label').eq('workspace_id', id).order('event_date', { ascending: true }),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
       setSteps(stepsData || [])
+      setSchedule(scheduleData || [])
+      setTimeline(timelineData || [])
       setLoading(false)
     }
     fetchAll()
@@ -185,7 +202,6 @@ export default function MobileWorkspaceLayout() {
                     return (
                       <div key={step.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
-                        {/* ドット + 縦線 */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                           <StepDot state={step.state} />
                           {isLast ? null : (
@@ -193,7 +209,6 @@ export default function MobileWorkspaceLayout() {
                           )}
                         </div>
 
-                        {/* ラベル行 */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: isLast ? 0 : 20, minHeight: 18 }}>
                           <span style={{ fontSize: 14, fontWeight: step.state === '進行中' ? 500 : 400, color: stepLabelColor(step.state) }}>
                             {step.label}
@@ -212,6 +227,59 @@ export default function MobileWorkspaceLayout() {
 
               </div>
             ) : null}
+
+            {/* 次回予定カード */}
+            <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', marginBottom: 14, letterSpacing: 0.5 }}>次回予定</div>
+
+              {schedule.length === 0 ? (
+                <div style={{ fontSize: 13, fontWeight: 400, color: '#475569' }}>予定はありません</div>
+              ) : (
+                <div>
+                  {schedule.map((s, idx) => (
+                    <div key={s.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: idx < schedule.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                      <div style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.28)', borderRadius: 7, padding: '4px 8px', textAlign: 'center', flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, whiteSpace: 'nowrap' }}>{formatMD(s.scheduled_date)}</div>
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', flex: 1 }}>{s.label || ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+
+            {/* タイムラインカード */}
+            <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', marginBottom: 14, letterSpacing: 0.5 }}>タイムライン</div>
+
+              {timeline.length === 0 ? (
+                <div style={{ fontSize: 13, fontWeight: 400, color: '#475569' }}>履歴はありません</div>
+              ) : (
+                <div>
+                  {timeline.map((item, idx) => {
+                    const isLast = idx === timeline.length - 1
+                    return (
+                      <div key={item.id || idx} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#c9a84c', marginTop: 3, flexShrink: 0 }} />
+                          {isLast ? null : (
+                            <div style={{ width: 1, height: 32, background: 'rgba(201,168,76,0.25)', marginTop: 4 }} />
+                          )}
+                        </div>
+                        <div style={{ flex: 1, paddingBottom: isLast ? 0 : 8 }}>
+                          <span style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, marginRight: 10 }}>{formatMD(item.event_date)}</span>
+                          <span style={{ fontSize: 14, fontWeight: 400, color: '#94A3B8' }}>{item.label || ''}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+            </div>
 
           </div>
         )}
