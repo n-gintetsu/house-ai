@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -9,6 +9,9 @@ const NAV_TABS = [
   { label: '予定',   icon: Calendar },
   { label: 'AI',    icon: Sparkles },
 ]
+
+const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
+const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 
 function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -92,6 +95,13 @@ export default function MobileWorkspaceLayout() {
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentRole, setCurrentRole] = useState(null)
+
+  // 予定タブ用フォーム state
+  const [showScheduleForm, setShowScheduleForm] = useState(false)
+  const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
+  const [scheduleError, setScheduleError] = useState('')
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
@@ -107,6 +117,12 @@ export default function MobileWorkspaceLayout() {
       setSteps(stepsData || [])
       setSchedule(scheduleData || [])
       setTimeline(timelineData || [])
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setCurrentUserId(session.user.id)
+        const { data: wmData } = await supabase.from('workspace_members').select('role').eq('workspace_id', id).eq('user_id', session.user.id).eq('status', 'active').maybeSingle()
+        setCurrentRole(wmData ? wmData.role : null)
+      }
       setLoading(false)
     }
     fetchAll()
@@ -118,6 +134,29 @@ export default function MobileWorkspaceLayout() {
   const statusBorder = (workspace && workspace.status === '完了') ? 'rgba(212,175,55,0.4)' : 'rgba(56,189,248,0.4)'
 
   const lastDoneIdx = steps.reduce((acc, s, i) => s.state === '完了' ? i : acc, -1)
+
+  const role = normRole(currentRole)
+  const isInternal = ['Owner', 'Manager', 'Staff'].includes(role)
+  const canDel = role === 'Owner' || role === 'Manager'
+
+  const handleAddSchedule = async () => {
+    if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
+    setScheduleError('')
+    try {
+      const newId = crypto.randomUUID()
+      const newItem = { id: newId, workspace_id: id, scheduled_date: scheduleForm.scheduled_date, label: scheduleForm.label }
+      const { error } = await supabase.from('ws_schedule').insert(newItem)
+      if (error) throw error
+      setSchedule(prev => [...prev, newItem].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
+      setScheduleForm({ scheduled_date: '', label: '' })
+      setShowScheduleForm(false)
+    } catch (e) { setScheduleError('追加に失敗しました: ' + (e.message || '')) }
+  }
+
+  const handleDeleteSchedule = async (itemId) => {
+    await supabase.from('ws_schedule').delete().eq('id', itemId)
+    setSchedule(prev => prev.filter(s => s.id !== itemId))
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
@@ -133,6 +172,75 @@ export default function MobileWorkspaceLayout() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c' }}>案件が見つかりません</span>
           </div>
+        ) : activeTab === 3 ? (
+
+          /* ===== 予定タブ ===== */
+          <div style={CARD_STYLE}>
+
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', marginBottom: 14, letterSpacing: 0.5 }}>予定</div>
+
+            {schedule.length === 0 ? (
+              <div style={{ fontSize: 13, fontWeight: 400, color: '#475569', marginBottom: 14 }}>予定はありません</div>
+            ) : (
+              <div style={{ marginBottom: 14 }}>
+                {schedule.map((s, idx) => (
+                  <div key={s.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: idx < schedule.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    <div style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.28)', borderRadius: 7, padding: '4px 8px', textAlign: 'center', flexShrink: 0 }}>
+                      <div style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, whiteSpace: 'nowrap' }}>{formatMD(s.scheduled_date)}</div>
+                    </div>
+                    <span style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', flex: 1 }}>{s.label || ''}</span>
+                    {canDel ? (
+                      <button onClick={() => handleDeleteSchedule(s.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
+                        <Trash2 size={14} color="#475569" />
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showScheduleForm ? (
+              <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  type="date"
+                  value={scheduleForm.scheduled_date}
+                  onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                />
+                <input
+                  type="text"
+                  value={scheduleForm.label}
+                  onChange={e => setScheduleForm(prev => ({ ...prev, label: e.target.value }))}
+                  placeholder="内容"
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                />
+                {scheduleError ? (
+                  <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171' }}>{scheduleError}</div>
+                ) : null}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => { setShowScheduleForm(false); setScheduleForm({ scheduled_date: '', label: '' }); setScheduleError('') }}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '8px 14px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}
+                  >キャンセル</button>
+                  <button
+                    onClick={handleAddSchedule}
+                    style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                  >追加</button>
+                </div>
+              </div>
+            ) : null}
+
+            {isInternal ? (
+              <button
+                onClick={() => setShowScheduleForm(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: showScheduleForm ? 10 : 0 }}
+              >
+                <Plus size={14} />予定を追加
+              </button>
+            ) : null}
+
+          </div>
+
         ) : activeTab !== 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
             <span style={{ fontSize: 14, fontWeight: 400, color: '#475569' }}>{NAV_TABS[activeTab].label}は準備中です</span>
