@@ -239,6 +239,17 @@ export default function MobileWorkspaceLayout() {
     }
   }
 
+  async function handleDeleteFile(wf) {
+    if (!window.confirm('このファイルを削除しますか？この操作は取り消せません')) return
+    try {
+      await supabase.storage.from('workspace-files').remove([wf.storage_path])
+      await supabase.from('ws_files').delete().eq('id', wf.id)
+      setFiles(prev => prev.filter(f => f.id !== wf.id))
+    } catch (e) {
+      console.error('file delete error', e)
+    }
+  }
+
   const handleAddSchedule = async () => {
     if (!scheduleForm.scheduled_date || !scheduleForm.label) { setScheduleError('日付と内容は必須です'); return }
     setScheduleError('')
@@ -325,6 +336,14 @@ export default function MobileWorkspaceLayout() {
                               >
                                 <Eye size={12} color="#94A3B8" />閲覧
                               </button>
+                              {canDel ? (
+                                <button
+                                  onClick={() => handleDeleteFile(wf)}
+                                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}
+                                >
+                                  <Trash2 size={14} color="#475569" />
+                                </button>
+                              ) : null}
                             </div>
                           ))
                         )}
