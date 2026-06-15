@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -20,32 +20,86 @@ function formatDate(dateStr) {
   return `${y}/${m}/${day}`
 }
 
+function stepLabelColor(state) {
+  if (state === '完了')    return '#c9a84c'
+  if (state === '進行中')  return '#60A5FA'
+  if (state === '承認待ち') return '#FCD34D'
+  if (state === '差戻し')  return '#F87171'
+  return '#475569'
+}
+
+function StepDot({ state }) {
+  if (state === '完了') {
+    return (
+      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '2px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Check size={12} color="#c9a84c" />
+      </div>
+    )
+  }
+  if (state === '進行中') {
+    return (
+      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(59,130,246,0.15)', border: '2px solid #60A5FA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#60A5FA' }} />
+      </div>
+    )
+  }
+  if (state === '承認待ち') {
+    return (
+      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '2px solid #FCD34D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FCD34D' }} />
+      </div>
+    )
+  }
+  if (state === '差戻し') {
+    return (
+      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(239,68,68,0.15)', border: '2px solid #F87171', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <X size={12} color="#F87171" />
+      </div>
+    )
+  }
+  return (
+    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569' }} />
+    </div>
+  )
+}
+
+const CARD_STYLE = {
+  background: 'rgba(15,23,42,0.85)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 0 30px rgba(201,168,76,0.15)',
+  borderRadius: 16,
+  padding: 16,
+}
+
 export default function MobileWorkspaceLayout() {
   const id = new URLSearchParams(window.location.search).get('id')
   const [workspace, setWorkspace] = useState(null)
+  const [steps, setSteps] = useState([])
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
-    async function fetchWorkspace() {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('*')
-        .eq('id', id)
-        .is('deleted_at', null)
-        .maybeSingle()
-      if (error || !data) { setFailed(true); setLoading(false); return }
-      setWorkspace(data)
+    async function fetchAll() {
+      const [{ data: wsData, error: wsError }, { data: stepsData }] = await Promise.all([
+        supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
+        supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
+      ])
+      if (wsError || !wsData) { setFailed(true); setLoading(false); return }
+      setWorkspace(wsData)
+      setSteps(stepsData || [])
       setLoading(false)
     }
-    fetchWorkspace()
+    fetchAll()
   }, [id])
 
   const progress = (workspace && workspace.progress) ? workspace.progress : 0
   const statusColor = (workspace && workspace.status === '完了') ? '#D4AF37' : '#38bdf8'
   const statusBg = (workspace && workspace.status === '完了') ? 'rgba(212,175,55,0.15)' : 'rgba(56,189,248,0.15)'
   const statusBorder = (workspace && workspace.status === '完了') ? 'rgba(212,175,55,0.4)' : 'rgba(56,189,248,0.4)'
+
+  const lastDoneIdx = steps.reduce((acc, s, i) => s.state === '完了' ? i : acc, -1)
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
@@ -62,56 +116,102 @@ export default function MobileWorkspaceLayout() {
             <span style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c' }}>案件が見つかりません</span>
           </div>
         ) : (
-          <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 16, padding: 16 }}>
+          <div>
 
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 500, color: '#c9a84c', lineHeight: 1.3 }}>
-                  {workspace.customer_name || '-'}様
+            {/* サマリーカード */}
+            <div style={CARD_STYLE}>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: '#c9a84c', lineHeight: 1.3 }}>
+                    {workspace.customer_name || '-'}様
+                  </div>
+                  {workspace.ws_code ? (
+                    <div style={{ fontSize: 10, fontWeight: 400, color: '#475569', marginTop: 3, letterSpacing: 1 }}>{workspace.ws_code}</div>
+                  ) : null}
                 </div>
-                {workspace.ws_code ? (
-                  <div style={{ fontSize: 10, fontWeight: 400, color: '#475569', marginTop: 3, letterSpacing: 1 }}>{workspace.ws_code}</div>
+                <span style={{ fontSize: 11, fontWeight: 400, padding: '3px 10px', borderRadius: 20, color: statusColor, background: statusBg, border: `1px solid ${statusBorder}`, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 8 }}>
+                  {workspace.status || '-'}
+                </span>
+              </div>
+
+              {workspace.title ? (
+                <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', marginBottom: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {workspace.title}
+                </div>
+              ) : null}
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                {workspace.contract_type ? (
+                  <span style={{ fontSize: 11, fontWeight: 400, padding: '3px 10px', borderRadius: 20, color: '#c9a84c', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }}>
+                    {workspace.contract_type}
+                  </span>
                 ) : null}
               </div>
-              <span style={{ fontSize: 11, fontWeight: 400, padding: '3px 10px', borderRadius: 20, color: statusColor, background: statusBg, border: `1px solid ${statusBorder}`, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 8 }}>
-                {workspace.status || '-'}
-              </span>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B', minWidth: 40 }}>担当</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>{workspace.agent_name || '-'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B', minWidth: 40 }}>更新日</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>{formatDate(workspace.updated_at)}</span>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B' }}>進捗</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c' }}>{progress}%</span>
+                </div>
+                <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #c9a84c, #D4AF37)', borderRadius: 3, transition: 'width 0.4s ease' }} />
+                </div>
+              </div>
+
             </div>
 
-            {workspace.title ? (
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', marginBottom: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {workspace.title}
+            {/* ロードマップカード */}
+            {steps.length > 0 ? (
+              <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', marginBottom: 16, letterSpacing: 0.5 }}>進捗ロードマップ</div>
+
+                <div style={{ paddingLeft: 4 }}>
+                  {steps.map((step, idx) => {
+                    const isLast = idx === steps.length - 1
+                    const lineColor = idx < lastDoneIdx ? 'rgba(201,168,76,0.55)' : 'rgba(255,255,255,0.1)'
+                    return (
+                      <div key={step.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+
+                        {/* ドット + 縦線 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                          <StepDot state={step.state} />
+                          {isLast ? null : (
+                            <div style={{ width: 2, flex: 1, minHeight: 24, background: lineColor, marginTop: 3, marginBottom: 3 }} />
+                          )}
+                        </div>
+
+                        {/* ラベル行 */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: isLast ? 0 : 20, minHeight: 18 }}>
+                          <span style={{ fontSize: 14, fontWeight: step.state === '進行中' ? 500 : 400, color: stepLabelColor(step.state) }}>
+                            {step.label}
+                          </span>
+                          {step.state === '進行中' ? (
+                            <span style={{ fontSize: 10, fontWeight: 400, padding: '2px 7px', borderRadius: 20, color: '#60A5FA', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.35)', whiteSpace: 'nowrap' }}>
+                              進行中
+                            </span>
+                          ) : null}
+                        </div>
+
+                      </div>
+                    )
+                  })}
+                </div>
+
               </div>
             ) : null}
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-              {workspace.contract_type ? (
-                <span style={{ fontSize: 11, fontWeight: 400, padding: '3px 10px', borderRadius: 20, color: '#c9a84c', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }}>
-                  {workspace.contract_type}
-                </span>
-              ) : null}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B', minWidth: 40 }}>担当</span>
-                <span style={{ fontSize: 13, fontWeight: 400, color: '#E2E8F0' }}>{workspace.agent_name || '-'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B', minWidth: 40 }}>更新日</span>
-                <span style={{ fontSize: 13, fontWeight: 400, color: '#E2E8F0' }}>{formatDate(workspace.updated_at)}</span>
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 400, color: '#64748B' }}>進捗</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c' }}>{progress}%</span>
-              </div>
-              <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #c9a84c, #D4AF37)', borderRadius: 3, transition: 'width 0.4s ease' }} />
-              </div>
-            </div>
 
           </div>
         )}
