@@ -587,14 +587,14 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   type="date"
                   value={scheduleForm.scheduled_date}
                   onChange={e => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, WebkitAppearance: 'none' }}
                 />
                 <input
                   type="text"
                   value={scheduleForm.label}
                   onChange={e => setScheduleForm(prev => ({ ...prev, label: e.target.value }))}
                   placeholder="内容"
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0 }}
                 />
                 {scheduleError ? (
                   <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171' }}>{scheduleError}</div>
