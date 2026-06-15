@@ -136,10 +136,17 @@ export default function MobileWorkspaceLayout() {
   const memberComposingRef = useRef(false)
   const memberBottomRef = useRef(null)
 
+  // AIタブ state
+  const [workspaceMembers, setWorkspaceMembers] = useState([])
+  const [aiInput, setAiInput] = useState('')
+  const [aiMessages, setAiMessages] = useState([])
+  const [isAiSending, setIsAiSending] = useState(false)
+  const aiComposingRef = useRef(false)
+
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: wsMembersData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
@@ -147,6 +154,7 @@ export default function MobileWorkspaceLayout() {
         supabase.from('ws_file_folders').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
         supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
         supabase.from('file_grants').select('*').eq('workspace_id', id),
+        supabase.from('workspace_members').select('id, role, display_name, email').eq('workspace_id', id).eq('status', 'active'),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
@@ -156,6 +164,7 @@ export default function MobileWorkspaceLayout() {
       setFolders(foldersData || [])
       setFiles(filesData || [])
       setFileGrants(fileGrantsData || [])
+      setWorkspaceMembers(wsMembersData || [])
       const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
       setOrgName(orgNameData || null)
       const { data: { session } } = await supabase.auth.getSession()
@@ -312,6 +321,91 @@ export default function MobileWorkspaceLayout() {
     } finally {
       setIsMemberSending(false)
     }
+  }
+
+  const buildAiSystemPrompt = () => {
+    const stepsText = steps.length > 0
+      ? steps.map(s => `  - ${s.label}（${s.state || '未着手'}）`).join('\n')
+      : '  （未設定）'
+    const membersText = workspaceMembers.length > 0
+      ? workspaceMembers.map(m => `  - ${m.role || '-'}：${m.display_name || m.email || '-'}`).join('\n')
+      : '  （未設定）'
+    const scheduleText = schedule.slice(0, 5).length > 0
+      ? schedule.slice(0, 5).map(s => `  - ${s.scheduled_date}：${s.label}`).join('\n')
+      : '  （なし）'
+    const timelineText = timeline.slice(-5).length > 0
+      ? timeline.slice(-5).map(t => `  - ${t.event_date}：${t.label}`).join('\n')
+      : '  （なし）'
+    const wsFilesText = files.length > 0
+      ? files.map(f => {
+          const date = f.created_at ? new Date(f.created_at).toLocaleDateString('ja-JP') : ''
+          return `  - ${f.file_name || '(不明)'}${f.doc_type ? '（' + f.doc_type + '）' : ''}${date ? ' ' + date + 'アップ' : ''}`
+        }).join('\n')
+      : '  （アップロード済みファイルなし）'
+    const ws = workspace || {}
+    return `あなたはHouse-AIの案件秘書です。以下の案件情報を踏まえて丁寧に回答してください。
+
+【案件情報】
+案件名：${ws.title || '-'}
+顧客名：${ws.customer_name || '-'}
+担当者：${ws.agent_name || '-'}
+契約種別：${ws.contract_type || '-'}
+物件住所：${ws.property_address || '-'}
+ステータス：${ws.status || '-'}
+進捗率：${ws.progress || 0}%
+自社：${orgName || '-'}
+
+【ロードマップ】
+${stepsText}
+
+【関係者】
+${membersText}
+
+【今後の予定（直近5件）】
+${scheduleText}
+
+【通知・メモ】
+  （なし）
+
+【直近のタイムライン（最新5件）】
+${timelineText}
+
+【アップロード済みファイル】
+${wsFilesText}
+
+丁寧かつ簡潔に、案件の担当者・顧客の立場に寄り添って回答してください。案件情報に書かれていない内容（Workspaceの使い方、火災保険・リフォーム・住宅ローンなど不動産一般の話題）でも、「案件情報の範囲外です」「サポート窓口へ」などと断らず、知っている範囲でわかりやすく前向き・具体的に答えてください。確実でない点は可能性として軽く補足する程度にとどめ、回答自体は前向きに行ってください。回答はマークダウン記法（#見出し・**強調**・---区切り線・>引用など）を使わず、プレーンな日本語の文章で答えてください。箇条書きが必要なときは行頭に「・」を使い、簡潔に。
+
+【補足情報：利用料金について】
+House-AIは現在、無料でご利用いただけます。より多くの方に使っていただきたいという思いから、今のところ有料プランは設けていません。将来、運営の都合で有料プランを設ける可能性はありますが、その場合も必ず事前にご案内し、ご了承いただいてから変更します。勝手に課金されることはありません。
+料金について質問されたときは、この内容をわかりやすく簡潔に、優しく不安にさせない表現で伝えてください。`
+  }
+
+  const handleAiSend = async (text) => {
+    const content = (text !== undefined ? text : aiInput).trim()
+    if (!content || isAiSending) return
+    setAiInput('')
+    const userMsg = { id: Date.now() + '-u', role: 'user', content }
+    setAiMessages(prev => [...prev, userMsg])
+    setIsAiSending(true)
+    try {
+      const history = [...aiMessages, userMsg].map(m => ({ role: m.role, content: m.content }))
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          system: buildAiSystemPrompt(),
+          messages: history,
+          max_tokens: 900,
+        }),
+      })
+      const data = await res.json()
+      const replyText = (data.text && data.text.trim()) ? data.text : 'エラーが発生しました'
+      setAiMessages(prev => [...prev, { id: Date.now() + '-a', role: 'assistant', content: replyText }])
+    } catch (e) {
+      setAiMessages(prev => [...prev, { id: Date.now() + '-e', role: 'assistant', content: 'エラーが発生しました' }])
+    }
+    setIsAiSending(false)
   }
 
   const handleAddSchedule = async () => {
@@ -741,6 +835,62 @@ export default function MobileWorkspaceLayout() {
               onClick={handleMemberSend}
               disabled={isMemberSending || !memberInput.trim()}
               style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}
+            >
+              <Send size={15} />送信
+            </button>
+          </div>
+
+        </div>
+      ) : null}
+
+      {/* ===== AIタブ: position fixed で全面表示 (下部ナビより下) ===== */}
+      {activeTab === 4 ? (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 64, zIndex: 100, background: '#0A0F1E', display: 'flex', flexDirection: 'column' }}>
+
+          {/* ヘッダー */}
+          <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(201,168,76,0.18)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={16} color="#c9a84c" />
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>AI秘書</span>
+          </div>
+
+          {/* メッセージエリア */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {aiMessages.length === 0 ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 13, color: '#475569', fontWeight: 400 }}>案件について何でも聞いてください</span>
+              </div>
+            ) : (
+              aiMessages.map(msg => (
+                <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: msg.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: msg.role === 'user' ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)', border: msg.role === 'user' ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 入力エリア */}
+          <div style={{ flexShrink: 0, padding: '8px 16px 10px', borderTop: '1px solid rgba(201,168,76,0.18)', background: '#0A0F1E', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <textarea
+              value={aiInput}
+              onChange={e => setAiInput(e.target.value)}
+              onCompositionStart={() => { aiComposingRef.current = true }}
+              onCompositionEnd={() => { aiComposingRef.current = false }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey && !aiComposingRef.current) {
+                  e.preventDefault()
+                  handleAiSend()
+                }
+              }}
+              placeholder="AIに質問する...（Shift+Enterで改行）"
+              rows={2}
+              style={{ flex: 1, fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.22)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 8, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+            <button
+              onClick={() => handleAiSend()}
+              disabled={isAiSending || !aiInput.trim()}
+              style={{ background: (isAiSending || !aiInput.trim()) ? 'rgba(201,168,76,0.3)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 500, cursor: (isAiSending || !aiInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}
             >
               <Send size={15} />送信
             </button>
