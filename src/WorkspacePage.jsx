@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 import MobileWorkspaceLayout from './MobileWorkspaceLayout'
+import MobileHeader from './MobileHeader'
 
 const Avatar = ({ url, name, size }) => {
   const s = size || 28
@@ -205,29 +206,45 @@ function ListView() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
-      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box', overflowX: 'auto' }}>
-        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
-        {isNarrow ? null : (
-          <>
-            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
-            <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', flexShrink: 0 }}>House-AI Workspace</div>
-          </>
-        )}
-        <WorkspaceNav current="/workspace" />
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-          {org !== null ? (
-            <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
-              <Settings size={13} />
-              組織設定
+      {isNarrow ? (
+        <MobileHeader
+          current="/workspace"
+          pageTitle="案件一覧"
+          actions={(
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {org !== null ? (
+                <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
+                  <Settings size={12} />
+                </button>
+              ) : null}
+              <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                <Plus size={13} />
+                新規
+              </button>
+            </div>
+          )}
+        />
+      ) : (
+        <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box', overflowX: 'auto' }}>
+          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
+          <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', flexShrink: 0 }}>House-AI Workspace</div>
+          <WorkspaceNav current="/workspace" />
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {org !== null ? (
+              <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
+                <Settings size={13} />
+                組織設定
+              </button>
+            ) : null}
+            <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+              <Plus size={15} />
+              新規案件作成
             </button>
-          ) : null}
-          <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-            <Plus size={15} />
-            新規案件作成
-          </button>
-        </div>
-      </header>
-      <main style={{ paddingTop: 80, paddingBottom: 40, paddingLeft: 24, paddingRight: 24, maxWidth: 1200, margin: '0 auto', boxSizing: 'border-box' }}>
+          </div>
+        </header>
+      )}
+      <main style={{ paddingTop: isNarrow ? 110 : 80, paddingBottom: 40, paddingLeft: 24, paddingRight: 24, maxWidth: 1200, margin: '0 auto', boxSizing: 'border-box' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 12 }}>
             <Loader size={20} color="#c9a84c" />
