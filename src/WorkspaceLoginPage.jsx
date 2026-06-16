@@ -97,8 +97,8 @@ export default function WorkspaceLoginPage() {
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>STAFF LOGIN</div>
-              <div style={{ fontSize: 15, color: '#E2E8F0', fontWeight: 500, marginBottom: 24 }}>スタッフログイン</div>
+              <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>WORKSPACE LOGIN</div>
+              <div style={{ fontSize: 15, color: '#E2E8F0', fontWeight: 500, marginBottom: 24 }}>Workspaceにログイン</div>
 
               {/* メール */}
               <div style={{ marginBottom: 12 }}>
@@ -180,7 +180,7 @@ export default function WorkspaceLoginPage() {
         </div>
 
         <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400, textAlign: 'center', marginTop: 24 }}>
-          House-AI Workspace はスタッフ専用です
+          House-AI Workspace
         </div>
       </div>
     </div>
