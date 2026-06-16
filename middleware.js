@@ -28,7 +28,9 @@ export default function middleware(request) {
       const colonIndex = decoded.indexOf(':')
       const user = decoded.slice(0, colonIndex)
       const pass = decoded.slice(colonIndex + 1)
-      if (user === 'gintetsu' && pass === 'gintetsu2024') {
+      const expectedUser = process.env.BASIC_AUTH_USER
+      const expectedPass = process.env.BASIC_AUTH_PASS
+      if (expectedUser && expectedPass && user === expectedUser && pass === expectedPass) {
         return
       }
     }
