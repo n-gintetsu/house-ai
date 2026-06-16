@@ -133,6 +133,8 @@ export default function MobileWorkspaceLayout() {
   const [currentUserId, setCurrentUserId] = useState(null)
   const [currentRole, setCurrentRole] = useState(null)
   const [expandedFolders, setExpandedFolders] = useState({})
+  const [promoting, setPromoting] = useState(false)
+  const [promoteMessage, setPromoteMessage] = useState('')
 
   // 予定タブ用フォーム state
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -456,6 +458,86 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     setSchedule(prev => prev.filter(s => s.id !== itemId))
   }
 
+  const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
+    const rawAddr = (currentWs.property_address || currentWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+    if (!rawAddr) return { skipped: true }
+    setPromoting(true)
+    setPromoteMessage('')
+    try {
+      const now = new Date().toISOString()
+      const snapshot = {
+        property: { address_raw: currentWs.property_address, property_name: currentWs.title, contract_type: currentWs.contract_type },
+        meta: { ws_code: currentWs.ws_code, customer_name: currentWs.customer_name, agent_name: currentWs.agent_name, progress: currentWs.progress, completed_at: currentWs.completed_at },
+        roadmap: (currentSteps || []).map(s => ({ step_order: s.step_order, label: s.label, state: s.state })),
+        timeline: (currentTimeline || []).map(t => ({ event_date: t.event_date, label: t.label })),
+        members: (currentMembers || []).map(m => ({ name: m.name, role_label: m.role_label, permission: m.permission })),
+        notices: (currentNotices || []).map(n => ({ level: n.level, message: n.message, created_at: n.created_at })),
+        schedule: (currentSchedule || []).map(s => ({ scheduled_date: s.scheduled_date, label: s.label })),
+        outputs: []
+      }
+      const txRecord = {
+        workspace_id: currentWs.id, ws_code: currentWs.ws_code, contract_type: currentWs.contract_type,
+        customer_name: currentWs.customer_name, agent_name: currentWs.agent_name,
+        completed_at: currentWs.completed_at || now, promoted_at: now
+      }
+      let houseRecordId = currentWs.house_record_id || null
+      let clientRecordId = currentWs.client_record_id || null
+      if (!houseRecordId) {
+        const { data: existing } = await supabase.from('house_records').select('*').eq('address_key', rawAddr).maybeSingle()
+        if (existing) {
+          await supabase.from('house_records').update({
+            snapshot, latest_workspace_id: currentWs.id, last_completed_at: now,
+            transactions: [...(existing.transactions || []), txRecord],
+            transaction_count: (existing.transaction_count || 0) + 1, updated_at: now
+          }).eq('id', existing.id)
+          houseRecordId = existing.id
+        } else {
+          const { data: inserted, error: insErr } = await supabase.from('house_records').insert({
+            address_key: rawAddr, property_name: currentWs.title, address_raw: currentWs.property_address,
+            contract_type: currentWs.contract_type, snapshot, latest_workspace_id: currentWs.id,
+            first_completed_at: now, last_completed_at: now, transaction_count: 1, transactions: [txRecord]
+          }).select().single()
+          if (insErr) throw insErr
+          houseRecordId = inserted.id
+        }
+        const { data: clientIns } = await supabase.from('client_records').insert({
+          name: currentWs.customer_name, last_workspace_id: currentWs.id,
+          last_house_record_id: houseRecordId, deal_count: 1
+        }).select().single()
+        if (clientIns) clientRecordId = clientIns.id
+      } else {
+        await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        if (clientRecordId) {
+          await supabase.from('client_records').update({
+            last_workspace_id: currentWs.id, last_house_record_id: houseRecordId, updated_at: now
+          }).eq('id', clientRecordId)
+        }
+      }
+      const wsFinish = {
+        house_record_id: houseRecordId, client_record_id: clientRecordId,
+        status: '完了', completed_at: currentWs.completed_at || now, promoted_at: now
+      }
+      await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      setWorkspace(prev => ({ ...prev, ...wsFinish }))
+      setPromoteMessage('家カルテに保存しました')
+      setTimeout(() => setPromoteMessage(''), 4000)
+      return { skipped: false, houseRecordId }
+    } catch (e) {
+      console.error('promoteToHouseRecord error', e)
+      setPromoteMessage('保存に失敗しました: ' + (e.message || ''))
+      return { skipped: false, error: e }
+    } finally {
+      setPromoting(false)
+    }
+  }
+
+  const handleManualPromote = async () => {
+    const ok = window.confirm('この案件を「家カルテに保存して完了」します。よろしいですか？')
+    if (!ok) return
+    const membersForSnapshot = (workspaceMembers || []).map(m => ({ name: m.display_name, role_label: m.role, permission: m.role }))
+    await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: membersForSnapshot, currentNotices: notices, currentSchedule: schedule })
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
 
@@ -725,6 +807,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 </div>
               </div>
 
+            </div>
+
+            {/* 家カルテ保存ボタン */}
+            <div style={{ marginTop: 16 }}>
+              {workspace.house_record_id ? (
+                <button onClick={() => { window.location.href = `/house/${workspace.house_record_id}` }} style={{ width: '100%', background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>家カルテを見る</button>
+              ) : (
+                <button onClick={handleManualPromote} disabled={promoting} style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  {promoting ? <Loader size={14} /> : null}家カルテに保存して完了
+                </button>
+              )}
+              {promoteMessage ? <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8', fontWeight: 400, textAlign: 'center' }}>{promoteMessage}</div> : null}
             </div>
 
             {/* ロードマップカード */}
