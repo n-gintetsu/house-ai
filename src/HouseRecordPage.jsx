@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, X, Loader, Plus } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
+import MobileHeader from './MobileHeader'
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
@@ -240,37 +241,47 @@ export default function HouseRecordPage() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
 
       {/* ヘッダー（疑似ガラス。backdrop-filterは使わない） */}
-      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box', overflowX: 'auto' }}>
-        <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
-        <button onClick={() => { window.history.back() }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 6px', flexShrink: 0 }}>
-          <ChevronLeft size={14} color="#64748B" />
-        </button>
-        {isNarrow ? null : (
+      {isNarrow ? (
+        <MobileHeader
+          current="/houses"
+          pageTitle={property.property_name || record.address_key || '家カルテ'}
+          actions={(
+            <button onClick={() => { window.history.back() }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 6px', flexShrink: 0 }}>
+              <ChevronLeft size={14} color="#64748B" />
+            </button>
+          )}
+        />
+      ) : (
+        <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box', overflowX: 'auto' }}>
+          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
+          <button onClick={() => { window.history.back() }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 6px', flexShrink: 0 }}>
+            <ChevronLeft size={14} color="#64748B" />
+          </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {property.property_name || record.address_key || '家カルテ'}
             </div>
             <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 400, letterSpacing: 1 }}>HOUSE RECORD</div>
           </div>
-        )}
-        <WorkspaceNav current="/houses" />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 20, padding: '3px 12px' }}>
-            <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>取引{record.transaction_count || 0}回</span>
+          <WorkspaceNav current="/houses" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 20, padding: '3px 12px' }}>
+              <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>取引{record.transaction_count || 0}回</span>
+            </div>
+            {/* プリフィル新規案件作成ボタン */}
+            <button
+              onClick={() => setShowPrefillModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '5px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
+            >
+              <Plus size={13} />
+              この家で新規案件を作成
+            </button>
           </div>
-          {/* プリフィル新規案件作成ボタン */}
-          <button
-            onClick={() => setShowPrefillModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '5px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
-          >
-            <Plus size={13} />
-            この家で新規案件を作成
-          </button>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main style={{ paddingTop: 80, paddingBottom: 60, paddingLeft: 24, paddingRight: 24, maxWidth: 1000, margin: '0 auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <main style={{ paddingTop: isNarrow ? 110 : 80, paddingBottom: 60, paddingLeft: 24, paddingRight: 24, maxWidth: 1000, margin: '0 auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* 物件基本情報 */}
         <div style={{ ...glass, borderRadius: 14, padding: 24 }}>

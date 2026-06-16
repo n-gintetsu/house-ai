@@ -10,7 +10,7 @@ export default function MobileHeader({ current, pageTitle, actions }) {
         </div>
         {actions ? actions : null}
       </div>
-      <div style={{ padding: '2px 16px 4px', fontSize: 15, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap' }}>{pageTitle}</div>
+      <div style={{ padding: '2px 16px 4px', fontSize: 15, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pageTitle}</div>
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', whiteSpace: 'nowrap', padding: '0 16px 8px', WebkitOverflowScrolling: 'touch' }}>
         <WorkspaceNav current={current} />
       </div>
