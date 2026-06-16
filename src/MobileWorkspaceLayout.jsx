@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send, AlertCircle } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -9,6 +9,14 @@ const NAV_TABS = [
   { label: '予定',   icon: Calendar },
   { label: 'AI',    icon: Sparkles },
 ]
+
+function noticeStyle(level) {
+  if (level === 'danger' || level === 'urgent' || level === 'high')
+    return { bg: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.22)', iconColor: '#F87171', textColor: '#FCA5A5' }
+  if (level === 'warning')
+    return { bg: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.22)', iconColor: '#FCD34D', textColor: '#FDE68A' }
+  return { bg: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', iconColor: '#64748B', textColor: '#94A3B8' }
+}
 
 const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
@@ -116,6 +124,7 @@ export default function MobileWorkspaceLayout() {
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
   const [fileGrants, setFileGrants] = useState([])
+  const [notices, setNotices] = useState([])
   const [orgName, setOrgName] = useState(null)
   const [myMemberId, setMyMemberId] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -154,7 +163,7 @@ export default function MobileWorkspaceLayout() {
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: wsMembersData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: wsMembersData }, { data: noticesData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
@@ -163,6 +172,7 @@ export default function MobileWorkspaceLayout() {
         supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
         supabase.from('file_grants').select('*').eq('workspace_id', id),
         supabase.from('workspace_members').select('id, role, display_name, email').eq('workspace_id', id).eq('status', 'active'),
+        supabase.from('ws_notices').select('*').eq('workspace_id', id),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
@@ -173,6 +183,7 @@ export default function MobileWorkspaceLayout() {
       setFiles(filesData || [])
       setFileGrants(fileGrantsData || [])
       setWorkspaceMembers(wsMembersData || [])
+      setNotices(noticesData || [])
       const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
       setOrgName(orgNameData || null)
       const { data: { session } } = await supabase.auth.getSession()
@@ -642,6 +653,22 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </div>
         ) : (
           <div>
+
+            {/* お知らせ */}
+            {notices.length > 0 ? (
+              <div style={{ ...CARD_STYLE, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginBottom: 10 }}>お知らせ</div>
+                {notices.map((n, idx) => {
+                  const ns = noticeStyle(n.level)
+                  return (
+                    <div key={n.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < notices.length - 1 ? 8 : 0 }}>
+                      <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
+                      <span style={{ fontSize: 13, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.message || ''}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
 
             {/* サマリーカード */}
             <div style={CARD_STYLE}>
