@@ -155,6 +155,7 @@ function ListView() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [org, setOrg] = useState(null)
   const [showOrgSettings, setShowOrgSettings] = useState(false)
+  const [orgOnboardingDismissed, setOrgOnboardingDismissed] = useState(false)
 
   useEffect(() => {
     async function fetchFiltered() {
@@ -276,6 +277,13 @@ function ListView() {
       </main>
       {showCreate ? <CreateModal onClose={() => setShowCreate(false)} onCreated={(id) => { window.location.href = `/workspace?id=${id}` }} /> : null}
       {showOrgSettings && org ? <OrgSettingsModal org={org} onClose={() => setShowOrgSettings(false)} onSaved={(newName) => { setOrg(prev => ({ ...prev, name: newName })); setShowOrgSettings(false) }} /> : null}
+      {org && org.name === '個人ワークスペース' && !orgOnboardingDismissed ? (
+        <OrgOnboardingModal
+          org={org}
+          onClose={() => setOrgOnboardingDismissed(true)}
+          onSaved={(newName) => { setOrg(prev => ({ ...prev, name: newName })) }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -416,6 +424,59 @@ function OrgSettingsModal({ org, onClose, onSaved }) {
         <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
           <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
           <button onClick={handleSave} style={{ flex: 1, background: saving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {saving ? <Loader size={14} /> : null}保存
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ===================== 会社名オンボーディングモーダル =====================
+
+function OrgOnboardingModal({ org, onClose, onSaved }) {
+  const [name, setName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSave = async () => {
+    const trimmed = name.trim()
+    if (!trimmed) { setError('会社名を入力してください。'); return }
+    setSaving(true); setError('')
+    const { error: updErr } = await supabase.from('organizations').update({ name: trimmed }).eq('id', org.id)
+    if (updErr) { setError('保存に失敗しました。' + (updErr.message || '')); setSaving(false); return }
+    onSaved(trimmed)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 440 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>会社名を登録してください</div>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
+        </div>
+        <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 400, lineHeight: 1.7, marginBottom: 20 }}>
+          会社名を登録すると、チーム招待や案件共有がスムーズになります。
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>会社名</div>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="例：〇〇不動産株式会社"
+            autoFocus
+            style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', padding: '10px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
+          />
+        </div>
+        {error ? <div style={{ marginBottom: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>後で登録する</button>
+          <button
+            onClick={handleSave}
+            disabled={!name.trim() || saving}
+            style={{ flex: 1, background: saving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: (!name.trim() || saving) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: !name.trim() ? 0.45 : 1 }}
+          >
             {saving ? <Loader size={14} /> : null}保存
           </button>
         </div>
