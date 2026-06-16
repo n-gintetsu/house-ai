@@ -359,6 +359,9 @@ export default function MobileWorkspaceLayout() {
     const scheduleText = schedule.slice(0, 5).length > 0
       ? schedule.slice(0, 5).map(s => `  - ${s.scheduled_date}：${s.label}`).join('\n')
       : '  （なし）'
+    const noticesText = notices.length > 0
+      ? notices.map(n => `  - [${n.level || 'info'}] ${n.message}`).join('\n')
+      : '  （なし）'
     const timelineText = timeline.slice(-5).length > 0
       ? timeline.slice(-5).map(t => `  - ${t.event_date}：${t.label}`).join('\n')
       : '  （なし）'
@@ -391,7 +394,7 @@ ${membersText}
 ${scheduleText}
 
 【通知・メモ】
-  （なし）
+${noticesText}
 
 【直近のタイムライン（最新5件）】
 ${timelineText}
