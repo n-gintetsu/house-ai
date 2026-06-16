@@ -33,7 +33,9 @@ import HouseRecordPage from './HouseRecordPage'
 import HousesListPage from './HousesListPage'
 import ClientsListPage from './ClientsListPage'
 import WorkspaceLoginPage from './WorkspaceLoginPage'
+import WorkspaceSignupPage from './WorkspaceSignupPage'
 import WorkspaceAuthGuard from './WorkspaceAuthGuard'
+import LegalPage from './LegalPage'
 
 function ExperienceApp() {
   return (
@@ -138,6 +140,10 @@ if (pathname === '/admin' || pathname === '/admin/') {
   Component = ProDocsPage
 } else if (pathname === '/login' || pathname === '/login/') {
   Component = WorkspaceLoginPage
+} else if (pathname === '/signup' || pathname === '/signup/') {
+  Component = WorkspaceSignupPage
+} else if (pathname === '/legal' || pathname === '/legal/') {
+  Component = () => <LegalPage onNavigate={() => { window.location.href = '/' }} />
 } else if (pathname === '/workspace' || pathname === '/workspace/') {
   Component = () => <WorkspaceAuthGuard><WorkspacePage /></WorkspaceAuthGuard>
 } else if (pathname === '/houses' || pathname === '/houses/') {

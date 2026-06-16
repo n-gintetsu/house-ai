@@ -1,55 +1,43 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
-import { Mail, Loader, Lock } from 'lucide-react'
+import { Mail, Loader, Lock, UserPlus } from 'lucide-react'
 
-export default function WorkspaceLoginPage() {
+export default function WorkspaceSignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(null) // 'password' | 'otp' | 'google' | null
+  const [agreed, setAgreed] = useState(false)
+  const [loading, setLoading] = useState(null) // 'password' | 'google' | null
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = async () => {
+  const isDisabled = !agreed || loading !== null
+
+  const handleSignup = async () => {
     const trimmed = (email || '').trim()
     if (!trimmed) { setError('メールアドレスを入力してください'); return }
     if (!password) { setError('パスワードを入力してください'); return }
+    if (!agreed) { setError('利用規約とプライバシーポリシーへの同意が必要です'); return }
     setLoading('password')
     setError('')
     try {
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
+      const { error: signUpErr } = await supabase.auth.signUp({
         email: trimmed,
         password,
-      })
-      if (signInErr) throw signInErr
-      window.location.href = window.location.origin + '/workspace'
-    } catch (e) {
-      setError('ログインに失敗しました。' + (e.message || ''))
-      setLoading(null)
-    }
-  }
-
-  const handleOtp = async () => {
-    const trimmed = (email || '').trim()
-    if (!trimmed) { setError('メールアドレスを入力してください'); return }
-    setLoading('otp')
-    setError('')
-    try {
-      const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: trimmed,
         options: {
           emailRedirectTo: window.location.origin + '/workspace',
         },
       })
-      if (otpErr) throw otpErr
+      if (signUpErr) throw signUpErr
       setSent(true)
     } catch (e) {
-      setError('送信に失敗しました。' + (e.message || ''))
+      setError('登録に失敗しました。' + (e.message || ''))
     } finally {
       setLoading(null)
     }
   }
 
   const handleGoogle = async () => {
+    if (!agreed) return
     setLoading('google')
     setError('')
     try {
@@ -84,21 +72,21 @@ export default function WorkspaceLoginPage() {
                 <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
                   <Mail size={22} color="#c9a84c" />
                 </div>
-                <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 12 }}>メールを送信しました</div>
+                <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 12 }}>確認メールを送信しました</div>
                 <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 400, lineHeight: 1.8 }}>
                   <span style={{ color: '#c9a84c', fontWeight: 500 }}>{email}</span><br />
-                  に送信したリンクを開いてログインしてください。
+                  に送信した確認リンクを開いて登録を完了してください。
                 </div>
               </div>
               <button
-                onClick={() => { setSent(false); setEmail('') }}
+                onClick={() => { setSent(false); setEmail(''); setPassword('') }}
                 style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 400, cursor: 'pointer', boxSizing: 'border-box' }}
               >別のアドレスで試す</button>
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>WORKSPACE LOGIN</div>
-              <div style={{ fontSize: 15, color: '#E2E8F0', fontWeight: 500, marginBottom: 24 }}>Workspaceにログイン</div>
+              <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 6 }}>WORKSPACE SIGNUP</div>
+              <div style={{ fontSize: 15, color: '#E2E8F0', fontWeight: 500, marginBottom: 24 }}>Workspaceに新規登録</div>
 
               {/* メール */}
               <div style={{ marginBottom: 12 }}>
@@ -114,41 +102,47 @@ export default function WorkspaceLoginPage() {
               </div>
 
               {/* パスワード */}
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 400, marginBottom: 8 }}>パスワード</div>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleLogin() }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSignup() }}
                   placeholder="••••••••"
                   style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '11px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
 
+              {/* 規約同意 */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={e => setAgreed(e.target.checked)}
+                    style={{ marginTop: 3, accentColor: '#c9a84c', cursor: 'pointer', width: 15, height: 15, flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 400, lineHeight: 1.8 }}>
+                    <a href="/legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>利用規約</a>
+                    {' と '}
+                    <a href="/legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>プライバシーポリシー</a>
+                    {' に同意します'}
+                  </span>
+                </label>
+              </div>
+
               {error ? <div style={{ fontSize: 12, color: '#F87171', fontWeight: 400, marginBottom: 12 }}>{error}</div> : null}
 
-              {/* ログインボタン */}
+              {/* 登録ボタン */}
               <button
-                onClick={handleLogin}
-                disabled={loading !== null}
-                style={{ width: '100%', background: loading === 'password' ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: loading !== null ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxSizing: 'border-box', marginBottom: 12 }}
+                onClick={handleSignup}
+                disabled={isDisabled}
+                style={{ width: '100%', background: loading === 'password' ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: isDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxSizing: 'border-box', marginBottom: 20, opacity: !agreed ? 0.45 : 1 }}
               >
-                {loading === 'password' ? <Loader size={14} /> : <Lock size={14} />}
-                ログイン
+                {loading === 'password' ? <Loader size={14} /> : <UserPlus size={14} />}
+                登録
               </button>
-
-              {/* マジックリンク */}
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <button
-                  onClick={handleOtp}
-                  disabled={loading !== null}
-                  style={{ background: 'none', border: 'none', color: '#64748B', fontSize: 12, fontWeight: 400, cursor: loading !== null ? 'not-allowed' : 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                >
-                  {loading === 'otp' ? <Loader size={11} color="#64748B" /> : null}
-                  パスワードなしでログインリンクを受け取る
-                </button>
-              </div>
 
               {/* OR 区切り */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -157,11 +151,11 @@ export default function WorkspaceLoginPage() {
                 <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
               </div>
 
-              {/* Googleログイン */}
+              {/* Googleで登録 */}
               <button
                 onClick={handleGoogle}
-                disabled={loading !== null}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 400, cursor: loading !== null ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxSizing: 'border-box' }}
+                disabled={isDisabled}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 400, cursor: isDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxSizing: 'border-box', opacity: !agreed ? 0.45 : 1 }}
               >
                 {loading === 'google' ? (
                   <Loader size={14} color="#94A3B8" />
@@ -173,7 +167,7 @@ export default function WorkspaceLoginPage() {
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
                 )}
-                Googleでログイン
+                Googleで登録
               </button>
             </div>
           )}
@@ -183,8 +177,8 @@ export default function WorkspaceLoginPage() {
           House-AI Workspace
         </div>
         <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400, textAlign: 'center', marginTop: 10 }}>
-          新規のご登録は{' '}
-          <a href="/signup" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>こちら</a>
+          既にアカウントをお持ちの方は{' '}
+          <a href="/login" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>ログイン</a>
         </div>
       </div>
     </div>
