@@ -18,6 +18,19 @@ function noticeStyle(level) {
   return { bg: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', iconColor: '#64748B', textColor: '#94A3B8' }
 }
 
+function permissionStyle(p) {
+  const n = normRole(p)
+  if (n === 'Owner') return { bg: 'rgba(201,168,76,0.14)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)' }
+  if (n === 'Manager') return { bg: 'rgba(59,130,246,0.14)', color: '#60A5FA', border: '1px solid rgba(59,130,246,0.25)' }
+  if (n === 'Staff') return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8', border: '1px solid rgba(100,116,139,0.25)' }
+  if (n === 'Customer') return { bg: 'rgba(45,212,191,0.12)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.25)' }
+  if (n === 'Broker') return { bg: 'rgba(251,146,60,0.12)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.25)' }
+  if (n === 'JudicialScrivener') return { bg: 'rgba(139,92,246,0.12)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.25)' }
+  if (n === 'Bank') return { bg: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)' }
+  if (n === 'ReformCompany') return { bg: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)' }
+  return { bg: 'rgba(100,116,139,0.14)', color: '#94A3B8', border: '1px solid rgba(100,116,139,0.25)' }
+}
+
 const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
@@ -911,6 +924,28 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 </div>
               )}
 
+            </div>
+
+            {/* MEMBERS */}
+            <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+              <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 8 }}>MEMBERS</div>
+              <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>関係者</div>
+              {workspaceMembers.length > 0 ? (
+                workspaceMembers.map((m, idx) => {
+                  const ps = permissionStyle(m.role)
+                  const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : 'メンバー')
+                  return (
+                    <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                      <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, marginBottom: 6 }}>{displayName}</div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{normRole(m.role)}</span>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>関係者が登録されていません。</div>
+              )}
             </div>
 
           </div>
