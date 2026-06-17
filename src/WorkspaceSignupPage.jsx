@@ -124,9 +124,9 @@ export default function WorkspaceSignupPage() {
                     style={{ marginTop: 3, accentColor: '#c9a84c', cursor: 'pointer', width: 15, height: 15, flexShrink: 0 }}
                   />
                   <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 400, lineHeight: 1.8 }}>
-                    <a href="/legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>利用規約</a>
+                    <a href="/ws-legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>利用規約</a>
                     {' と '}
-                    <a href="/legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>プライバシーポリシー</a>
+                    <a href="/ws-legal?tab=privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>プライバシーポリシー</a>
                     {' に同意します'}
                   </span>
                 </label>

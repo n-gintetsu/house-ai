@@ -114,7 +114,7 @@ const HONTAI_PUBLIC = false
 const pathname = window.location.pathname
 
 // Workspace系 + 認証系は常に通す
-const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/legal', '/ws-legal']
+const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/ws-legal']
 const _isWsPath =
   _WS_ALLOW.some(p => pathname === p || pathname === p + '/') ||
   pathname.startsWith('/house/') ||
