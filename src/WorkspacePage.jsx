@@ -322,6 +322,8 @@ function CreateModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ title: '', customer_name: '', agent_name: '', contract_type: '売買', property_address: '', customer_email: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [inviteFailed, setInviteFailed] = useState(false)
+  const [createdWsId, setCreatedWsId] = useState(null)
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
@@ -361,20 +363,26 @@ function CreateModal({ onClose, onCreated }) {
         invited_by: session.user.id,
       })
       if (custEmail) {
-        await supabase.from('workspace_members').insert({
-          id: crypto.randomUUID(),
-          workspace_id: newId,
-          email: custEmail,
-          role: 'Customer',
-          status: 'pending',
-          invited_by: session.user.id,
-          display_name: form.customer_name || '',
-        })
         try {
+          await supabase.from('workspace_members').insert({
+            id: crypto.randomUUID(),
+            workspace_id: newId,
+            email: custEmail,
+            role: 'Customer',
+            status: 'pending',
+            invited_by: session.user.id,
+            display_name: form.customer_name || '',
+          })
           await supabase.auth.signInWithOtp({ email: custEmail, options: { emailRedirectTo: 'https://house-ai.co.jp/workspace', shouldCreateUser: true } })
-        } catch (inviteErr) { console.warn('招待メール送信失敗:', inviteErr) }
+          onCreated(newId)
+        } catch (_inviteErr) {
+          setCreatedWsId(newId)
+          setInviteFailed(true)
+          setSubmitting(false)
+        }
+      } else {
+        onCreated(newId)
       }
-      onCreated(newId)
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
 
@@ -387,29 +395,40 @@ function CreateModal({ onClose, onCreated }) {
           <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>新規案件作成</div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>案件名 *</div><input type="text" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="例：山田様 さいたま市〇〇マンション購入" style={inputStyle} /></div>
-          <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>顧客名 *</div><input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="例：山田太郎" style={inputStyle} /></div>
-          <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>担当</div><input type="text" value={form.agent_name} onChange={e => handleChange('agent_name', e.target.value)} placeholder="例：自社スタッフ" style={inputStyle} /></div>
-          <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>契約種別 *</div>
-            <select value={form.contract_type} onChange={e => handleChange('contract_type', e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
-              {CONTRACT_TYPES.map(t => <option key={t} value={t} style={{ background: '#0F172A' }}>{t}</option>)}
-            </select>
-          </div>
-          <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>物件住所</div><input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} placeholder="例：さいたま市大宮区〇〇" style={inputStyle} /></div>
+        {inviteFailed ? (
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様メールアドレス（任意）</div>
-            <input type="text" value={form.customer_email} onChange={e => handleChange('customer_email', e.target.value)} placeholder="customer@example.com" style={inputStyle} />
-            <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginTop: 6, lineHeight: 1.6 }}>入力すると、案件作成と同時にお客様へ招待メール（マジックリンク）を送ります。空欄なら送りません。</div>
+            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              案件は作成されました。ただしお客様への招待メール送信に失敗しました（通信状況や送信回数制限の可能性があります）。案件を開いて「メンバー招待」から再送できます。
+            </div>
+            <button onClick={() => onCreated(createdWsId)} style={{ width: '100%', background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>案件を開く</button>
           </div>
-        </div>
-        {error ? <div style={{ marginTop: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
-          <button onClick={handleSubmit} style={{ flex: 1, background: submitting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            {submitting ? <Loader size={14} /> : null}作成
-          </button>
-        </div>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>案件名 *</div><input type="text" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="例：山田様 さいたま市〇〇マンション購入" style={inputStyle} /></div>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>顧客名 *</div><input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="例：山田太郎" style={inputStyle} /></div>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>担当</div><input type="text" value={form.agent_name} onChange={e => handleChange('agent_name', e.target.value)} placeholder="例：自社スタッフ" style={inputStyle} /></div>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>契約種別 *</div>
+                <select value={form.contract_type} onChange={e => handleChange('contract_type', e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
+                  {CONTRACT_TYPES.map(t => <option key={t} value={t} style={{ background: '#0F172A' }}>{t}</option>)}
+                </select>
+              </div>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>物件住所</div><input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} placeholder="例：さいたま市大宮区〇〇" style={inputStyle} /></div>
+              <div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様メールアドレス（任意）</div>
+                <input type="text" value={form.customer_email} onChange={e => handleChange('customer_email', e.target.value)} placeholder="例：yamada@example.com" style={inputStyle} />
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 400, marginTop: 6, lineHeight: 1.6 }}>入力すると、案件作成と同時にお客様へ招待メール（マジックリンク）を送ります。空欄なら送りません。</div>
+              </div>
+            </div>
+            {error ? <div style={{ marginTop: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
+              <button onClick={handleSubmit} style={{ flex: 1, background: submitting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {submitting ? <Loader size={14} /> : null}作成
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
