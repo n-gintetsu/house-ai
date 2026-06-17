@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
-const ADMIN_EMAIL = 'gintetsu.fudosan@gmail.com'
+import { ADMIN_EMAIL } from './adminEmail'
 
 async function fetchAdminUsers() {
   const { data: sess } = await supabase.auth.getSession()

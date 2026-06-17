@@ -1,7 +1,9 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
+import { supabase } from './supabaseClient'
+import { ADMIN_EMAIL } from './adminEmail'
 import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 import AgencyDashboard from './AgencyDashboard'
@@ -105,8 +107,38 @@ function CostCalculatorStandalone() {
   );
 }
 
+// ── DevGuard ─────────────────────────────────────────────────
+// 本体ルート(HONTAI_PUBLIC=false)をラップ。
+// Supabase セッションの email が ADMIN_EMAIL と一致する場合のみ children を描画。
+// 確認中は null（本体を一瞬も描画しない）。非管理者/未ログインは /login へ。
+function DevGuard({ children }) {
+  const [status, setStatus] = useState('checking')
+
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      setStatus(
+        session && session.user && session.user.email === ADMIN_EMAIL ? 'ok' : 'deny'
+      )
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      setStatus(
+        session && session.user && session.user.email === ADMIN_EMAIL ? 'ok' : 'deny'
+      )
+    })
+    return () => { mounted = false; subscription.unsubscribe() }
+  }, [])
+
+  if (status === 'checking') return null
+  if (status === 'deny') { window.location.replace('/login'); return null }
+  return children
+}
+// ─────────────────────────────────────────────────────────────
+
 // ── 本体公開フラグ ──────────────────────────────────────────
-// false = Workspace専用公開モード（本体ルートは /login にリダイレクト）
+// false = Workspace専用公開モード（本体ルートは管理者のみプレビュー可）
 // true  = 本体も公開（本体リリース時にここだけ変える）
 const HONTAI_PUBLIC = false
 // ────────────────────────────────────────────────────────────
@@ -120,13 +152,9 @@ const _isWsPath =
   pathname.startsWith('/house/') ||
   pathname.startsWith('/auth/')
 
-if (!HONTAI_PUBLIC && !_isWsPath) {
-  // 古い招待/マジックリンクのaccess_tokenが本体ルートに着地した場合も /workspace へ転送
-  if (window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery')) {
-    window.location.replace('/workspace' + window.location.search + window.location.hash)
-  } else {
-    window.location.replace('/login')
-  }
+// 認証コールバック（本体ルートに着地した access_token/recovery）→ /workspace へ転送（変更なし）
+if (!HONTAI_PUBLIC && !_isWsPath && (window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery'))) {
+  window.location.replace('/workspace' + window.location.search + window.location.hash)
 } else {
   let Component = App
   if (pathname === '/admin' || pathname === '/admin/') {
@@ -180,9 +208,12 @@ if (!HONTAI_PUBLIC && !_isWsPath) {
     Component = ExperienceApp
   }
 
+  // 本体ルートかつ HONTAI_PUBLIC=false → DevGuard でラップ（管理者のみ描画、他は /login）
+  // Workspace系（_isWsPath）・HONTAI_PUBLIC=true はそのまま描画
+  const needsGuard = !HONTAI_PUBLIC && !_isWsPath
   createRoot(document.getElementById('root')).render(
     <StrictMode>
-      <Component />
+      {needsGuard ? <DevGuard><Component /></DevGuard> : <Component />}
     </StrictMode>,
   )
   // cache bust 2026年 4月29日 水曜日 19時04分58秒 JST
