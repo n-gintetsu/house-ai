@@ -35,6 +35,13 @@ const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', custome
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
+const ROLE_OPTIONS = ['お客様', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
+const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
+const PERMISSION_LABEL = {
+  Owner: 'Owner', Manager: 'Manager', Staff: 'スタッフ', Customer: 'お客様',
+  Broker: '仲介業者', JudicialScrivener: '司法書士', Bank: '金融機関', ReformCompany: 'リフォーム会社', Guest: 'Guest',
+  Member: 'Member',
+}
 
 function makeSafeStoragePath(workspaceId, ext) {
   const rand = crypto.randomUUID().replace(/-/g, '')
@@ -175,10 +182,16 @@ export default function MobileWorkspaceLayout() {
   const aiComposingRef = useRef(false)
   const aiBottomRef = useRef(null)
 
+  // MEMBERSカード state
+  const [members, setMembers] = useState([])
+  const [memberForm, setMemberForm] = useState({ name: '', role_label: 'お客様', permission: 'Member' })
+  const [showMemberForm, setShowMemberForm] = useState(false)
+  const [memberError, setMemberError] = useState('')
+
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: wsMembersData }, { data: noticesData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: loginMembersData }, { data: noticesData }, { data: contactsData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
@@ -186,8 +199,9 @@ export default function MobileWorkspaceLayout() {
         supabase.from('ws_file_folders').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
         supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
         supabase.from('file_grants').select('*').eq('workspace_id', id),
-        supabase.from('workspace_members').select('id, role, display_name, email').eq('workspace_id', id).eq('status', 'active'),
+        supabase.from('workspace_members').select('id, role, display_name, email, user_id').eq('workspace_id', id).eq('status', 'active'),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
+        supabase.from('ws_members').select('*').eq('workspace_id', id),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
@@ -197,8 +211,9 @@ export default function MobileWorkspaceLayout() {
       setFolders(foldersData || [])
       setFiles(filesData || [])
       setFileGrants(fileGrantsData || [])
-      setWorkspaceMembers(wsMembersData || [])
+      setWorkspaceMembers(loginMembersData || [])
       setNotices(noticesData || [])
+      setMembers(contactsData || [])
       const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
       setOrgName(orgNameData || null)
       const { data: { session } } = await supabase.auth.getSession()
@@ -260,6 +275,7 @@ export default function MobileWorkspaceLayout() {
   const role = normRole(currentRole)
   const isInternal = ['Owner', 'Manager', 'Staff'].includes(role)
   const canDel = role === 'Owner' || role === 'Manager'
+  const canManage = canDel
   const isFullAccess = FULL_ACCESS_ROLES.includes(role)
 
   function getFolderDisplayName(folder) {
@@ -469,6 +485,38 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   const handleDeleteSchedule = async (itemId) => {
     await supabase.from('ws_schedule').delete().eq('id', itemId)
     setSchedule(prev => prev.filter(s => s.id !== itemId))
+  }
+
+  // --- ws_members（連絡先）---
+  const handleAddMember = async () => {
+    if (!memberForm.name) { setMemberError('氏名は必須です'); return }
+    setMemberError('')
+    try {
+      const newId = crypto.randomUUID()
+      const { error } = await supabase.from('ws_members').insert({
+        id: newId, workspace_id: id, name: memberForm.name, role_label: memberForm.role_label, permission: memberForm.permission
+      })
+      if (error) throw error
+      setMembers(prev => [...prev, { id: newId, workspace_id: id, name: memberForm.name, role_label: memberForm.role_label, permission: memberForm.permission }])
+      setMemberForm({ name: '', role_label: 'お客様', permission: 'Member' })
+      setShowMemberForm(false)
+    } catch (e) { console.error('ws_members insert error', e); setMemberError('追加に失敗しました: ' + (e.message || '')) }
+  }
+
+  const handleDeleteMember = async (memberId) => {
+    await supabase.from('ws_members').delete().eq('id', memberId)
+    setMembers(prev => prev.filter(m => m.id !== memberId))
+  }
+
+  // --- workspace_members（ログインメンバー）---
+  const handleUpdateMemberRole = async (memberId, newRole) => {
+    await supabase.from('workspace_members').update({ role: newRole }).eq('id', memberId)
+    setWorkspaceMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m))
+  }
+
+  const handleDeleteWorkspaceMember = async (memberId) => {
+    await supabase.from('workspace_members').delete().eq('id', memberId)
+    setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
@@ -928,24 +976,126 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
             {/* MEMBERS */}
             <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+
+              {/* Section A: 関係者（連絡先）ws_members */}
               <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 8 }}>MEMBERS</div>
-              <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>関係者</div>
-              {workspaceMembers.length > 0 ? (
-                workspaceMembers.map((m, idx) => {
-                  const ps = permissionStyle(m.role)
-                  const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : 'メンバー')
-                  return (
-                    <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                      <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, marginBottom: 6 }}>{displayName}</div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{normRole(m.role)}</span>
+              <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 14 }}>関係者（連絡先）</div>
+
+              {members.length > 0 ? (
+                <div style={{ marginBottom: 12 }}>
+                  {members.map((m, idx) => {
+                    const ps = permissionStyle(m.permission)
+                    return (
+                      <div key={m.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: idx < members.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, marginBottom: 4 }}>{m.name || ''}</div>
+                          <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>{m.role_label || ''}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.permission)] || normRole(m.permission) || 'Member'}</span>
+                          {canManage ? (
+                            <button onClick={() => handleDeleteMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}>
+                              <Trash2 size={14} color="#475569" />
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })
+                    )
+                  })}
+                </div>
               ) : (
-                <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>関係者が登録されていません。</div>
+                <div style={{ fontSize: 12, color: '#475569', fontWeight: 400, marginBottom: 12 }}>関係者が登録されていません。</div>
               )}
+
+              {canManage ? (
+                showMemberForm ? (
+                  <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                    <input
+                      type="text"
+                      value={memberForm.name}
+                      onChange={e => setMemberForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="氏名"
+                      style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                    />
+                    <select
+                      value={memberForm.role_label}
+                      onChange={e => setMemberForm(prev => ({ ...prev, role_label: e.target.value }))}
+                      style={{ fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '8px 10px', outline: 'none', appearance: 'none', WebkitAppearance: 'none', width: '100%', boxSizing: 'border-box' }}
+                    >
+                      {ROLE_OPTIONS.map(r => <option key={r} value={r} style={{ background: '#0F172A' }}>{r}</option>)}
+                    </select>
+                    <select
+                      value={memberForm.permission}
+                      onChange={e => setMemberForm(prev => ({ ...prev, permission: e.target.value }))}
+                      style={{ fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '8px 10px', outline: 'none', appearance: 'none', WebkitAppearance: 'none', width: '100%', boxSizing: 'border-box' }}
+                    >
+                      {PERMISSION_OPTIONS.map(p => <option key={p} value={p} style={{ background: '#0F172A' }}>{PERMISSION_LABEL[p] || p}</option>)}
+                    </select>
+                    {memberError ? <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171' }}>{memberError}</div> : null}
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => { setShowMemberForm(false); setMemberForm({ name: '', role_label: 'お客様', permission: 'Member' }); setMemberError('') }}
+                        style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '8px 14px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}
+                      >キャンセル</button>
+                      <button
+                        onClick={handleAddMember}
+                        style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                      >追加</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowMemberForm(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginBottom: 16, boxSizing: 'border-box' }}
+                  >
+                    <Plus size={14} />関係者を追加
+                  </button>
+                )
+              ) : null}
+
+              {/* Section B: ログインメンバー workspace_members */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+                <div style={{ fontSize: 10, color: '#60A5FA', fontWeight: 500, letterSpacing: 3, marginBottom: 14 }}>LOGIN MEMBERS</div>
+                {workspaceMembers.length > 0 ? (
+                  workspaceMembers.map((m, idx) => {
+                    const ps = permissionStyle(m.role)
+                    const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : 'メンバー')
+                    return (
+                      <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                          <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {displayName}
+                          </div>
+                          {canManage ? (
+                            <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                              <Trash2 size={14} color="#475569" />
+                            </button>
+                          ) : null}
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: canManage ? 8 : 0 }}>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.role)] || normRole(m.role)}</span>
+                        </div>
+                        {canManage ? (
+                          <select
+                            value={m.role || ''}
+                            onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
+                            style={{ fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '8px 10px', outline: 'none', appearance: 'none', WebkitAppearance: 'none', width: '100%', boxSizing: 'border-box' }}
+                          >
+                            {PERMISSION_OPTIONS.map(p => {
+                              const jaLabel = PERMISSION_LABEL[p] || p
+                              const optLabel = jaLabel === p ? p : p + ' / ' + jaLabel
+                              return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
+                            })}
+                          </select>
+                        ) : null}
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>ログインメンバーがいません。</div>
+                )}
+              </div>
+
             </div>
 
           </div>
