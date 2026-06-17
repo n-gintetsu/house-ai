@@ -36,6 +36,7 @@ import WorkspaceLoginPage from './WorkspaceLoginPage'
 import WorkspaceSignupPage from './WorkspaceSignupPage'
 import WorkspaceAuthGuard from './WorkspaceAuthGuard'
 import LegalPage from './LegalPage'
+import WorkspaceLegalPage from './WorkspaceLegalPage'
 
 function ExperienceApp() {
   return (
@@ -113,7 +114,7 @@ const HONTAI_PUBLIC = false
 const pathname = window.location.pathname
 
 // Workspace系 + 認証系は常に通す
-const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/legal']
+const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/legal', '/ws-legal']
 const _isWsPath =
   _WS_ALLOW.some(p => pathname === p || pathname === p + '/') ||
   pathname.startsWith('/house/') ||
@@ -165,6 +166,8 @@ if (!HONTAI_PUBLIC && !_isWsPath) {
     Component = WorkspaceSignupPage
   } else if (pathname === '/legal' || pathname === '/legal/') {
     Component = () => <LegalPage onNavigate={() => { window.location.href = '/' }} />
+  } else if (pathname === '/ws-legal' || pathname === '/ws-legal/') {
+    Component = WorkspaceLegalPage
   } else if (pathname === '/workspace' || pathname === '/workspace/') {
     Component = () => <WorkspaceAuthGuard><WorkspacePage /></WorkspaceAuthGuard>
   } else if (pathname === '/houses' || pathname === '/houses/') {
