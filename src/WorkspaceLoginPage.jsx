@@ -178,7 +178,7 @@ export default function WorkspaceLoginPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleForgot() }}
-                  placeholder="staff@example.com"
+                  placeholder="例：yamada@example.com"
                   autoFocus
                   style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '11px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
                 />
@@ -251,7 +251,7 @@ export default function WorkspaceLoginPage() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="staff@example.com"
+                  placeholder="例：yamada@example.com"
                   autoFocus
                   style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '11px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
                 />
