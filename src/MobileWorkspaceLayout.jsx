@@ -188,6 +188,13 @@ export default function MobileWorkspaceLayout() {
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [memberError, setMemberError] = useState('')
 
+  // 招待フォーム state
+  const [showInviteForm, setShowInviteForm] = useState(false)
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'Staff', displayName: '', companyName: '' })
+  const [inviteStatus, setInviteStatus] = useState('')
+  const [inviteError, setInviteError] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
@@ -199,7 +206,7 @@ export default function MobileWorkspaceLayout() {
         supabase.from('ws_file_folders').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
         supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
         supabase.from('file_grants').select('*').eq('workspace_id', id),
-        supabase.from('workspace_members').select('id, role, display_name, email, user_id').eq('workspace_id', id).eq('status', 'active'),
+        supabase.from('workspace_members').select('id, role, display_name, email, user_id, status').eq('workspace_id', id),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
       ])
@@ -517,6 +524,97 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   const handleDeleteWorkspaceMember = async (memberId) => {
     await supabase.from('workspace_members').delete().eq('id', memberId)
     setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId))
+  }
+
+  const handleInvite = async () => {
+    const email = inviteForm.email.trim().toLowerCase()
+    if (!email) { setInviteError('メールアドレスを入力してください'); return }
+    setInviteLoading(true); setInviteError(''); setInviteStatus('')
+    try {
+      let newMemberId = null
+
+      const { data: existingPending } = await supabase
+        .from('workspace_members')
+        .select('id')
+        .eq('workspace_id', id)
+        .eq('email', email)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (existingPending) {
+        await supabase
+          .from('workspace_members')
+          .update({ role: inviteForm.role, display_name: (inviteForm.companyName || '').trim() })
+          .eq('id', existingPending.id)
+        newMemberId = existingPending.id
+      } else {
+        const { data: { session } } = await supabase.auth.getSession()
+        const invitedBy = session ? session.user.id : null
+        const newId = crypto.randomUUID()
+        const { error: insErr } = await supabase.from('workspace_members').insert({
+          id: newId,
+          workspace_id: id,
+          email,
+          role: inviteForm.role,
+          status: 'pending',
+          invited_by: invitedBy,
+          display_name: (inviteForm.companyName || '').trim(),
+        })
+        if (insErr) throw insErr
+        newMemberId = newId
+      }
+
+      const isVendorRole = !FULL_ACCESS_ROLES.includes(normRole(inviteForm.role))
+      if (isVendorRole && newMemberId) {
+        const { data: existingFolder } = await supabase
+          .from('ws_file_folders')
+          .select('id')
+          .eq('workspace_id', id)
+          .eq('owner_member_id', newMemberId)
+          .maybeSingle()
+        if (!existingFolder) {
+          const { data: folderRows } = await supabase
+            .from('ws_file_folders')
+            .select('sort_order')
+            .eq('workspace_id', id)
+          const maxOrder = folderRows && folderRows.length > 0
+            ? Math.max(...folderRows.map(f => f.sort_order || 0))
+            : 1
+          const folderLabel = (inviteForm.displayName || '').trim()
+            || PERMISSION_LABEL[normRole(inviteForm.role)]
+            || inviteForm.role
+          await supabase.from('ws_file_folders').insert({
+            workspace_id: id,
+            role_label: folderLabel,
+            is_fixed: false,
+            sort_order: maxOrder + 1,
+            owner_member_id: newMemberId,
+          })
+        }
+      }
+
+      await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://house-ai.co.jp/workspace',
+          shouldCreateUser: true,
+        },
+      })
+
+      setInviteStatus('招待メールを送信しました')
+      setInviteForm({ email: '', role: 'Staff', displayName: '', companyName: '' })
+      setShowInviteForm(false)
+      const { data: wsMembersRaw } = await supabase
+        .from('workspace_members')
+        .select('id, role, display_name, email, user_id, status')
+        .eq('workspace_id', id)
+      setWorkspaceMembers(wsMembersRaw || [])
+    } catch (e) {
+      console.error('handleInvite error', e)
+      setInviteError('招待に失敗しました: ' + (e.message || ''))
+    } finally {
+      setInviteLoading(false)
+    }
   }
 
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
@@ -1059,23 +1157,27 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 {workspaceMembers.length > 0 ? (
                   workspaceMembers.map((m, idx) => {
                     const ps = permissionStyle(m.role)
-                    const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : 'メンバー')
+                    const displayName = m.display_name || (m.user_id === currentUserId ? 'あなた' : m.email || 'メンバー')
+                    const statusBadge = m.status === 'active'
+                      ? { bg: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)', label: '参加中' }
+                      : { bg: 'rgba(245,158,11,0.1)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)', label: '招待中' }
                     return (
                       <div key={m.id || idx} style={{ padding: '10px 0', borderBottom: idx < workspaceMembers.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                           <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {displayName}
                           </div>
-                          {canManage ? (
+                          {canManage && m.user_id !== currentUserId ? (
                             <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                               <Trash2 size={14} color="#475569" />
                             </button>
                           ) : null}
                         </div>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: canManage ? 8 : 0 }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: (canManage && m.user_id !== currentUserId) ? 8 : 0 }}>
                           <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: ps.bg, color: ps.color, border: ps.border }}>{PERMISSION_LABEL[normRole(m.role)] || normRole(m.role)}</span>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, fontWeight: 400, background: statusBadge.bg, color: statusBadge.color, border: statusBadge.border }}>{statusBadge.label}</span>
                         </div>
-                        {canManage ? (
+                        {canManage && m.user_id !== currentUserId ? (
                           <select
                             value={m.role || ''}
                             onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
@@ -1094,6 +1196,69 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 ) : (
                   <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>ログインメンバーがいません。</div>
                 )}
+
+                {inviteStatus ? <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 400, marginTop: 10 }}>{inviteStatus}</div> : null}
+
+                {canManage ? (
+                  showInviteForm ? (
+                    <div style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <input
+                        type="email"
+                        value={inviteForm.email}
+                        onChange={e => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="招待するメールアドレス"
+                        style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                      />
+                      <select
+                        value={inviteForm.role}
+                        onChange={e => setInviteForm(prev => ({ ...prev, role: e.target.value }))}
+                        style={{ fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '8px 10px', outline: 'none', appearance: 'none', WebkitAppearance: 'none', width: '100%', boxSizing: 'border-box' }}
+                      >
+                        {PERMISSION_OPTIONS.map(p => {
+                          const jaLabel = PERMISSION_LABEL[p] || p
+                          const optLabel = jaLabel === p ? p : p + ' / ' + jaLabel
+                          return <option key={p} value={p} style={{ background: '#0F172A' }}>{optLabel}</option>
+                        })}
+                      </select>
+                      <input
+                        type="text"
+                        value={inviteForm.displayName}
+                        onChange={e => setInviteForm(prev => ({ ...prev, displayName: e.target.value }))}
+                        onKeyDown={e => { if (e.nativeEvent.isComposing || e.keyCode === 229) return }}
+                        placeholder="フォルダ名（例：司法書士法人〇〇 移転登記）"
+                        style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                      />
+                      <input
+                        type="text"
+                        value={inviteForm.companyName}
+                        onChange={e => setInviteForm(prev => ({ ...prev, companyName: e.target.value }))}
+                        onKeyDown={e => { if (e.nativeEvent.isComposing || e.keyCode === 229) return }}
+                        placeholder="名称（例：リーガル司法書士法人）"
+                        style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
+                      />
+                      {inviteError ? <div style={{ fontSize: 12, color: '#F87171', fontWeight: 400 }}>{inviteError}</div> : null}
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => { setShowInviteForm(false); setInviteForm({ email: '', role: 'Staff', displayName: '', companyName: '' }); setInviteError('') }}
+                          style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '8px 14px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}
+                        >キャンセル</button>
+                        <button
+                          onClick={handleInvite}
+                          style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: inviteLoading ? 'not-allowed' : 'pointer', opacity: inviteLoading ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          {inviteLoading ? <Loader size={11} /> : null}招待を送る
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setShowInviteForm(true); setInviteStatus('') }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(96,165,250,0.4)', color: '#60A5FA', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 12, boxSizing: 'border-box' }}
+                    >
+                      <Plus size={14} />メンバーを招待
+                    </button>
+                  )
+                ) : null}
               </div>
 
             </div>

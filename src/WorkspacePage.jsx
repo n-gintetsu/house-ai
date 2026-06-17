@@ -1930,7 +1930,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#E2E8F0', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {displayName}
                         </div>
-                        {canManage ? (
+                        {canManage && m.user_id !== currentUserId ? (
                           <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}>
                             <Trash2 size={13} color="#475569" />
                           </button>
@@ -1946,7 +1946,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         </span>
                       </div>
                       {/* 下段: 役割select（管理者のみ・1行・幅100%） */}
-                      {canManage ? (
+                      {canManage && m.user_id !== currentUserId ? (
                         <select
                           value={m.role || ''}
                           onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
