@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { supabase } from './lib/supabase'
-const ADMIN_PASSWORD = 'gintetsu2024admin'
+const ADMIN_EMAIL = 'gintetsu.fudosan@gmail.com'
 
 async function fetchAdminUsers() {
   const { data: sess } = await supabase.auth.getSession()
@@ -907,9 +907,7 @@ function MembersPanel() {
 }
 
 export default function AdminDashboard() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true')
-  const [pw, setPw] = useState('')
-  const [pwError, setPwError] = useState('')
+  const [authed, setAuthed] = useState(false)
   const [tab, setTab] = useState('summary')
 
   // データ
@@ -942,6 +940,19 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false)
   const [adoptedRows, setAdoptedRows] = useState([])
   const [reflectDone, setReflectDone] = useState(false)
+
+  // 管理者認証チェック（Supabaseセッションのemailで判定）
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession()
+      setAuthed(!!(session && session.user && session.user.email === ADMIN_EMAIL))
+    }
+    checkAuth()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthed(!!(session && session.user && session.user.email === ADMIN_EMAIL))
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function fetchGrowthData() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -1236,28 +1247,20 @@ export default function AdminDashboard() {
     setMortgageRates(data || [])
   }
 
-  // ログイン画面
+  // 管理者未認証画面
   if (!authed) {
     return (
       <div style={{ minHeight: '100vh', background: '#eef2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: '#fff', borderRadius: 18, padding: 40, width: 360, boxShadow: '0 4px 24px rgba(26,58,92,0.1)' }}>
-          <h2 style={{ textAlign: 'center', color: '#1a3a5c', marginBottom: 8, fontSize: 20 }}>🔐 管理者ログイン</h2>
-          <p style={{ textAlign: 'center', color: '#777', fontSize: 13, marginBottom: 24 }}>House AI 管理ダッシュボード</p>
-          <label style={{ fontSize: 12, color: '#777', display: 'block', marginBottom: 6 }}>管理者パスワード</label>
-          <input
-            type="password"
-            value={pw}
-            onChange={e => setPw(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (pw === ADMIN_PASSWORD ? (setAuthed(true), localStorage.setItem('admin_authed', 'true'), setPwError('')) : setPwError('パスワードが違います'))}
-            style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 12, border: '1px solid rgba(26,58,92,0.15)', fontSize: 14, outline: 'none', marginBottom: 12 }}
-            placeholder="パスワードを入力"
-          />
-          {pwError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
+        <div style={{ background: '#fff', borderRadius: 18, padding: 40, width: 360, boxShadow: '0 4px 24px rgba(26,58,92,0.1)', textAlign: 'center' }}>
+          <div style={{ fontSize: 20, color: '#1a3a5c', fontWeight: 500, marginBottom: 8 }}>管理者専用</div>
+          <p style={{ color: '#777', fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
+            House AI 管理ダッシュボードにアクセスするには<br />管理者アカウントでログインしてください。
+          </p>
           <button
-            onClick={() => pw === ADMIN_PASSWORD ? (setAuthed(true), localStorage.setItem('admin_authed', 'true'), setPwError('')) : setPwError('パスワードが違います')}
-            style={{ width: '100%', padding: '11px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+            onClick={() => { window.location.href = '/login' }}
+            style={{ width: '100%', padding: '11px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 500, fontSize: 14, cursor: 'pointer' }}
           >
-            ログイン
+            ログインページへ
           </button>
         </div>
       </div>
@@ -1284,7 +1287,7 @@ export default function AdminDashboard() {
           <button onClick={loadAll} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
             🔄 更新
           </button>
-          <button onClick={() => { setAuthed(false); localStorage.removeItem('admin_authed'); }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
+          <button onClick={() => { setAuthed(false); supabase.auth.signOut().then(() => { window.location.href = '/login' }) }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
             ログアウト
           </button>
         </div>
