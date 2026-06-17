@@ -104,61 +104,83 @@ function CostCalculatorStandalone() {
   );
 }
 
+// ── 本体公開フラグ ──────────────────────────────────────────
+// false = Workspace専用公開モード（本体ルートは /login にリダイレクト）
+// true  = 本体も公開（本体リリース時にここだけ変える）
+const HONTAI_PUBLIC = false
+// ────────────────────────────────────────────────────────────
+
 const pathname = window.location.pathname
 
-let Component = App
-if (pathname === '/admin' || pathname === '/admin/') {
-  Component = AdminDashboard
-} else if (pathname === '/agency' || pathname === '/agency/') {
-  Component = AgencyDashboard
-} else if (pathname === '/partner' || pathname === '/partner/') {
-  Component = PartnerDashboard
-} else if (pathname === '/seller' || pathname === '/seller/') {
-  Component = SellerMyPage
-} else if (pathname === '/partner-lp' || pathname === '/partner-lp/') {
-  Component = PartnerLP
-} else if (pathname === '/tools' || pathname === '/tools/') {
-  Component = ToolHubStandalone
-} else if (pathname === '/tools/dictionary' || pathname === '/tools/dictionary/') {
-  Component = DictionaryStandalone
-} else if (pathname === '/tools/costs' || pathname === '/tools/costs/') {
-  Component = CostCalculatorStandalone
-} else if (pathname === '/tools/mortgage' || pathname === '/tools/mortgage/') {
-  Component = () => (
-    <MortgageSimulatorPage
-      onBack={() => { window.location.href = '/tools'; }}
-      onOpenConcierge={() => {}}
-    />
-  )
-} else if (pathname.startsWith('/community') || pathname.startsWith('/consultation') || pathname.startsWith('/search')) {
-  Component = CommunityApp
-} else if (pathname === '/pro' || pathname === '/pro/') {
-  Component = () => <ProTopPage onStart={() => { window.location.href = '/pro/investigation' }} onLogin={() => {}} />
-} else if (pathname === '/pro/investigation' || pathname === '/pro/investigation/') {
-  Component = ProInvestigationPage
-} else if (pathname === '/pro/docs' || pathname === '/pro/docs/') {
-  Component = ProDocsPage
-} else if (pathname === '/login' || pathname === '/login/') {
-  Component = WorkspaceLoginPage
-} else if (pathname === '/signup' || pathname === '/signup/') {
-  Component = WorkspaceSignupPage
-} else if (pathname === '/legal' || pathname === '/legal/') {
-  Component = () => <LegalPage onNavigate={() => { window.location.href = '/' }} />
-} else if (pathname === '/workspace' || pathname === '/workspace/') {
-  Component = () => <WorkspaceAuthGuard><WorkspacePage /></WorkspaceAuthGuard>
-} else if (pathname === '/houses' || pathname === '/houses/') {
-  Component = () => <WorkspaceAuthGuard><HousesListPage /></WorkspaceAuthGuard>
-} else if (pathname === '/clients' || pathname === '/clients/') {
-  Component = () => <WorkspaceAuthGuard><ClientsListPage /></WorkspaceAuthGuard>
-} else if (pathname.startsWith('/house/')) {
-  Component = () => <WorkspaceAuthGuard><HouseRecordPage /></WorkspaceAuthGuard>
-} else if (pathname.startsWith('/experiences')) {
-  Component = ExperienceApp
-}
+// Workspace系 + 認証系は常に通す
+const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/legal']
+const _isWsPath =
+  _WS_ALLOW.some(p => pathname === p || pathname === p + '/') ||
+  pathname.startsWith('/house/') ||
+  pathname.startsWith('/auth/')
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Component />
-  </StrictMode>,
-)
-// cache bust 2026年 4月29日 水曜日 19時04分58秒 JST
+if (!HONTAI_PUBLIC && !_isWsPath) {
+  // 古い招待/マジックリンクのaccess_tokenが本体ルートに着地した場合も /workspace へ転送
+  if (window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery')) {
+    window.location.replace('/workspace' + window.location.search + window.location.hash)
+  } else {
+    window.location.replace('/login')
+  }
+} else {
+  let Component = App
+  if (pathname === '/admin' || pathname === '/admin/') {
+    Component = AdminDashboard
+  } else if (pathname === '/agency' || pathname === '/agency/') {
+    Component = AgencyDashboard
+  } else if (pathname === '/partner' || pathname === '/partner/') {
+    Component = PartnerDashboard
+  } else if (pathname === '/seller' || pathname === '/seller/') {
+    Component = SellerMyPage
+  } else if (pathname === '/partner-lp' || pathname === '/partner-lp/') {
+    Component = PartnerLP
+  } else if (pathname === '/tools' || pathname === '/tools/') {
+    Component = ToolHubStandalone
+  } else if (pathname === '/tools/dictionary' || pathname === '/tools/dictionary/') {
+    Component = DictionaryStandalone
+  } else if (pathname === '/tools/costs' || pathname === '/tools/costs/') {
+    Component = CostCalculatorStandalone
+  } else if (pathname === '/tools/mortgage' || pathname === '/tools/mortgage/') {
+    Component = () => (
+      <MortgageSimulatorPage
+        onBack={() => { window.location.href = '/tools'; }}
+        onOpenConcierge={() => {}}
+      />
+    )
+  } else if (pathname.startsWith('/community') || pathname.startsWith('/consultation') || pathname.startsWith('/search')) {
+    Component = CommunityApp
+  } else if (pathname === '/pro' || pathname === '/pro/') {
+    Component = () => <ProTopPage onStart={() => { window.location.href = '/pro/investigation' }} onLogin={() => {}} />
+  } else if (pathname === '/pro/investigation' || pathname === '/pro/investigation/') {
+    Component = ProInvestigationPage
+  } else if (pathname === '/pro/docs' || pathname === '/pro/docs/') {
+    Component = ProDocsPage
+  } else if (pathname === '/login' || pathname === '/login/') {
+    Component = WorkspaceLoginPage
+  } else if (pathname === '/signup' || pathname === '/signup/') {
+    Component = WorkspaceSignupPage
+  } else if (pathname === '/legal' || pathname === '/legal/') {
+    Component = () => <LegalPage onNavigate={() => { window.location.href = '/' }} />
+  } else if (pathname === '/workspace' || pathname === '/workspace/') {
+    Component = () => <WorkspaceAuthGuard><WorkspacePage /></WorkspaceAuthGuard>
+  } else if (pathname === '/houses' || pathname === '/houses/') {
+    Component = () => <WorkspaceAuthGuard><HousesListPage /></WorkspaceAuthGuard>
+  } else if (pathname === '/clients' || pathname === '/clients/') {
+    Component = () => <WorkspaceAuthGuard><ClientsListPage /></WorkspaceAuthGuard>
+  } else if (pathname.startsWith('/house/')) {
+    Component = () => <WorkspaceAuthGuard><HouseRecordPage /></WorkspaceAuthGuard>
+  } else if (pathname.startsWith('/experiences')) {
+    Component = ExperienceApp
+  }
+
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <Component />
+    </StrictMode>,
+  )
+  // cache bust 2026年 4月29日 水曜日 19時04分58秒 JST
+}
