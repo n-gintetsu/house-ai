@@ -269,3 +269,61 @@ profiles テーブルのRLS穴を塞いだ。
 - マルチテナント：各事業者ユーザーは案件を作ると自分のorg(テナント)を持ち、自分の案件・家カルテ・顧客カルテは自分のものだけ（他orgとRLSで隔離）。1人が「自分のorgのオーナー」かつ「他orgの招待ゲスト」を両立。
 - 現状はGINTETSUが唯一のorg所有者。今後の主要開発＝招待ユーザーが新規案件作成時に自分のorgを持てるようにする（org自動発行＋サインアップ）。
 - 運営用「アカウント管理画面」を別枠で用意予定。全アカウントを蓄積するが目的は運営のみ（開発・セキュリティ・データ保存・ユーザー規模把握）で営業目的ではない。アクセスは運営者だけに厳格制限する。
+
+---
+
+## アーキテクチャ & 公開制御（2026-06-17時点）
+
+### 製品の全体像
+House-AIは「不動産まわりの便利ツールを束ねる本体OS/プラットフォーム」型マルチテナントSaaS。本体(house-ai.co.jp)に各ツール(AI相談/物件掲載/AI重説/AI現調/物確/AI査定…)を集約し、Workspace(案件管理)もその1スライス。戦略=本体を一気に出さず各ツールを"スライスリリース"。Workspaceの最大目的=新規ユーザーが案件を作りorgが増えること。後で本体OSに統合。
+
+### 公開制御は2層（別レイヤー・混同禁止）
+**① middleware.js Basic認証（DEMO段階の外側の蓋）**
+- env: BASIC_AUTH_USER / BASIC_AUTH_PASS（Vercel全環境）。未設定なら通さない safe-by-default。
+- サイト全体をゲート。除外(Basic認証なしで通す)=
+  - `/api`（startsWith）
+  - `/assets/`（startsWith）
+  - 拡張子付き静的ファイル（`js|mjs|css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf`）
+  - `/workspace`、`/workspace/`（完全一致）
+  - `/login`、`/login/`（完全一致）
+  - `/houses`、`/houses/`（完全一致）
+  - `/clients`、`/clients/`（完全一致）
+  - `/house/`（startsWith）
+  - ⚠ `/admin`・`/signup`・`/ws-legal` は除外に含まれない → Basic認証が掛かる
+- Basic認証はHTTPの蓋であり、Supabaseのデータ取得・RLS・admin判定には一切使われない（混同禁止）。
+
+**② main.jsx HONTAI_PUBLIC + DevGuard（内側の本体公開制御）**
+- `const HONTAI_PUBLIC = false`（src/main.jsx冒頭）
+  - `false` = 本体(消費者向け)ルートは ADMIN_EMAIL でログイン中の管理者のみプレビュー可。他は /login へ。
+  - `true`  = 本体も全公開（本番ローンチ時はこの1行だけ変える）。
+- `_WS_ALLOW`（常時通すルート）= `['/login', '/signup', '/workspace', '/houses', '/clients', '/ws-legal', '/admin']` ＋ `startsWith('/house/')` ＋ `startsWith('/auth/')`
+- DevGuard（main.jsx内）: 本体ルート(`!HONTAI_PUBLIC && !_isWsPath`)を `<DevGuard>` でラップ。`supabase.auth.getSession()` + `onAuthStateChange` で `email === ADMIN_EMAIL` の時のみ children を描画。確認中(checking)は null（本体を一瞬も描画しない＝戦略漏れ防止）、非管理者(deny)は /login へ。
+- 認証コールバック(URLハッシュに `access_token` or `type=recovery`)が本体ルートに着地した場合は、元の search+hash 保持で /workspace へ転送（古い招待/再設定リンクの本体直行を防止）。
+
+### /admin（管理ダッシュボード）
+- `/admin` は `_WS_ALLOW` 入り（DevGuard対象外）。AdminDashboard.jsx 内で `getSession()` + `onAuthStateChange` の email 判定で認証（旧 localStorage 平文パスは廃止済）。
+- `email === ADMIN_EMAIL` でなければサイドバー等を一切描画せず「管理者専用／ログインページへ」のみ。ログアウト = `signOut()` + /login。
+- データ取得の前提 = ADMIN_EMAIL で Supabase ログイン中であること（会員一覧等は `/api/admin-users` が Bearer トークンの email を照合）。満たされないと黙って0件になる仕様（バグではない）。
+
+### ADMIN_EMAIL（単一ソース）
+- `src/adminEmail.js` → `export const ADMIN_EMAIL = 'gintetsu.fudosan@gmail.com'`
+- AdminDashboard.jsx と main.jsx の DevGuard が両方ここから import（値のズレ防止）。
+
+### データ保護
+- 本物の顧客データは Supabase RLS ＋ Workspace認証 が守る。
+- admin系API（`api/admin-users.js` / `admin-profile.js` / `admin-partners.js` / `admin-sellers.js` / `delete-user.js` / `update-partner-status.js`）は共通で `ADMIN_EMAILS = ['gintetsu.fudosan@gmail.com']` を Bearer トークンで照合し不一致なら 403。`SUPABASE_SERVICE_ROLE_KEY`（Vercel環境変数）を使用（2026-06-17 に存在・正常動作を確認）。
+
+### 目標アーキテクチャ（サブドメイン分離）
+理想は1アプリ1サブドメイン＋デプロイ分離：
+- 本体 = house-ai.co.jp（OSの入口・各ツールへのリンク集だけ置く）
+- Workspace = workspace.house-ai.co.jp
+- 管理画面 = admin.house-ai.co.jp
+- 将来ツール = tools.house-ai.co.jp
+
+本体側は便利ツール（Workspace/AI重説/AI現調/物確…）の入口カードだけ置き、リンクで各サブドメインへ飛ばす＝スライスリリース戦略に最も合致。
+
+### 移行Phase
+- Phase1（済 2026-06-17）: /admin を ADMIN_EMAIL セッションでガード ＋ 本体ルートを DevGuard で管理者プレビュー化。
+- Phase2: Workspace をサブドメイン分離。
+- Phase3: admin を別デプロイ化。
+- Phase4: 本体を各ツールへのリンク集として統合。
