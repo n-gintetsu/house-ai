@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 
 const NAV_TABS = [
@@ -188,12 +189,60 @@ export default function MobileWorkspaceLayout() {
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [memberError, setMemberError] = useState('')
 
+  // celebration state
+  const [celebration, setCelebration] = useState(null)
+  const [confettiPieces, setConfettiPieces] = useState([])
+  const celebrationCheckedRef = useRef(null)
+  const [glowingSteps, setGlowingSteps] = useState(false)
+
+  const CELEBRATIONS = {
+    contract: {
+      title: 'ご契約、おめでとうございます',
+      body: 'ここまで本当にお疲れさまでした。\n新しい暮らしへの、大切な一歩です。',
+    },
+    settlement: {
+      title: 'お取引が完了しました',
+      body: 'いよいよ新生活のスタートですね。\nあなたの毎日が、素敵なものになりますように。',
+    },
+  }
+
   // 招待フォーム state
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'Staff', displayName: '', companyName: '' })
   const [inviteStatus, setInviteStatus] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
+
+  useEffect(() => {
+    if (!currentUserId || !id || steps.length === 0) return
+    if (celebrationCheckedRef.current === id) return
+    celebrationCheckedRef.current = id
+
+    const contractStep = steps.find(s => s.label === '契約')
+    const settlementStep = steps.find(s => s.label === '決済')
+    const contractDone = contractStep ? contractStep.state === '完了' : false
+    const settlementDone = settlementStep ? settlementStep.state === '完了' : false
+
+    const kSettle = 'houseai_celebrated_settlement_' + currentUserId + '_' + id
+    const kContract = 'houseai_celebrated_contract_' + currentUserId + '_' + id
+
+    let seenSettle = false
+    let seenContract = false
+    try {
+      seenSettle = localStorage.getItem(kSettle) === '1'
+      seenContract = localStorage.getItem(kContract) === '1'
+    } catch (e) {}
+
+    if (settlementDone ? !seenSettle : false) {
+      fireCelebration('settlement')
+      try { localStorage.setItem(kSettle, '1'); localStorage.setItem(kContract, '1') } catch (e) {}
+      return
+    }
+    if (contractDone ? !seenContract : false) {
+      fireCelebration('contract')
+      try { localStorage.setItem(kContract, '1') } catch (e) {}
+    }
+  }, [steps, currentUserId, id])
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
@@ -524,6 +573,27 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   const handleDeleteWorkspaceMember = async (memberId) => {
     await supabase.from('workspace_members').delete().eq('id', memberId)
     setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId))
+  }
+
+  const fireCelebration = (type) => {
+    setCelebration(type)
+    const pieces = Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      x: (i * 7.3 + 3) % 100,
+      color: ['#c9a84c', '#FFFFFF', '#93C5FD', '#E2E8F0'][i % 4],
+      delay: (i % 6) * 0.08,
+      dur: 2.4 + (i % 4) * 0.3,
+      rotation: (i * 41) % 360,
+      size: 7 + (i % 3) * 3,
+    }))
+    setConfettiPieces(pieces)
+    setTimeout(() => setConfettiPieces([]), 4200)
+    setTimeout(() => setCelebration(null), 8000)
+  }
+
+  const fireStepGlow = (stepCount) => {
+    setGlowingSteps(true)
+    setTimeout(() => setGlowingSteps(false), stepCount * 120 + 1500)
   }
 
   const handleInvite = async () => {
@@ -1419,6 +1489,73 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           )
         })}
       </div>
+
+      {confettiPieces.map(p => (
+        <motion.div
+          key={'mob-confetti-' + p.id}
+          initial={{ y: '-5%', opacity: 1, rotate: p.rotation }}
+          animate={{ y: '110vh', opacity: 0.9, rotate: p.rotation + 360 }}
+          transition={{ duration: p.dur, delay: p.delay, ease: 'easeIn' }}
+          style={{
+            position: 'fixed', top: 0, left: p.x + '%',
+            width: p.size + 'px', height: (p.size * 1.6) + 'px',
+            background: p.color, borderRadius: 2,
+            zIndex: 100002, pointerEvents: 'none',
+          }}
+        />
+      ))}
+
+      <AnimatePresence>
+        {celebration !== null ? (
+          <motion.div
+            key="mob-celebration"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            onClick={() => setCelebration(null)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(3,7,18,0.72)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 100001, padding: 20, boxSizing: 'border-box',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'rgba(15,23,42,0.96)',
+                border: '1px solid rgba(201,168,76,0.5)',
+                boxShadow: '0 0 80px rgba(201,168,76,0.35)',
+                borderRadius: 20, padding: '40px 28px',
+                maxWidth: 360, width: '100%', textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 11, letterSpacing: 4, color: '#c9a84c', fontWeight: 500, marginBottom: 16 }}>CONGRATULATIONS</div>
+              <div style={{ fontSize: 20, color: '#F8FAFC', fontWeight: 500, lineHeight: 1.5, marginBottom: 16 }}>
+                {CELEBRATIONS[celebration].title}
+              </div>
+              <div style={{ fontSize: 14, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.9, whiteSpace: 'pre-line', marginBottom: 28 }}>
+                {CELEBRATIONS[celebration].body}
+              </div>
+              <button
+                onClick={() => setCelebration(null)}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #b8973f)',
+                  color: '#0A0F1E', border: 'none', borderRadius: 10,
+                  padding: '12px 32px', fontSize: 16, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                ありがとう
+              </button>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
     </div>
   )
