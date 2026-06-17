@@ -21,6 +21,7 @@ export default function HousesListPage() {
   const [query, setQuery] = useState('')
   const [currentUserId, setCurrentUserId] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [ownedOrgId, setOwnedOrgId] = useState(null)
   const [isNarrow, setIsNarrow] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
@@ -35,12 +36,14 @@ export default function HousesListPage() {
       const uid = session ? session.user.id : null
       setCurrentUserId(uid)
       if (uid) {
-        const { data: org } = await supabase.from('organizations').select('owner_id').maybeSingle()
+        const { data: org } = await supabase.from('organizations').select('id, owner_id').maybeSingle()
         if (!org) {
           window.location.replace('/workspace')
           return
         }
-        setIsAdmin(org.owner_id === uid)
+        const owned = (org && org.owner_id === uid) ? org.id : null
+        setOwnedOrgId(owned)
+        setIsAdmin(!!owned)
       }
       const { data } = await supabase
         .from('house_records')
@@ -60,14 +63,18 @@ export default function HousesListPage() {
     return check(r.property_name) || check(r.address_raw) || check(r.contract_type)
   }) : records
 
-  const canDelete = (r) => isAdmin || (r.created_by ? r.created_by === currentUserId : false)
+  const isOrgOwnerOf = (row) => Boolean(ownedOrgId) && row.org_id === ownedOrgId
+  const canDelete = (r) => isOrgOwnerOf(r) || (r.created_by ? r.created_by === currentUserId : false)
 
   async function handleDelete(e, r) {
     e.stopPropagation()
     const ok = window.confirm('「' + (r.property_name || r.address_key || '無題') + '」を削除しますか？\n削除すると一覧から消えます（管理者は後で復元できます）。')
     if (!ok) { return }
     const { error } = await supabase.from('house_records').update({ deleted_at: new Date().toISOString() }).eq('id', r.id)
-    if (error) { window.alert('削除できませんでした：' + error.message); return }
+    if (error) {
+      window.alert('削除できませんでした。権限がない可能性があります。')
+      return
+    }
     setRecords(prev => prev.filter(x => x.id !== r.id))
   }
 

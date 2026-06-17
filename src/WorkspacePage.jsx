@@ -154,6 +154,7 @@ function ListView() {
   const [showCreate, setShowCreate] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [ownedOrgId, setOwnedOrgId] = useState(null)
   const [org, setOrg] = useState(null)
   const [showOrgSettings, setShowOrgSettings] = useState(false)
   const [orgOnboardingDismissed, setOrgOnboardingDismissed] = useState(false)
@@ -172,7 +173,9 @@ function ListView() {
       const userId = session.user.id
       setCurrentUserId(userId)
       const { data: orgData } = await supabase.from('organizations').select('id, name, owner_id').maybeSingle()
-      setIsAdmin(orgData ? orgData.owner_id === userId : false)
+      const owned = (orgData && orgData.owner_id === userId) ? orgData.id : null
+      setOwnedOrgId(owned)
+      setIsAdmin(!!owned)
       setOrg(orgData && orgData.owner_id === userId ? { id: orgData.id, name: orgData.name } : null)
       const { data: memberships } = await supabase
         .from('workspace_members')
@@ -193,14 +196,18 @@ function ListView() {
     fetchFiltered()
   }, [])
 
-  const canDelete = (ws) => isAdmin || (ws.created_by ? (ws.created_by === currentUserId && ws.status !== '完了') : false)
+  const isOrgOwnerOf = (row) => Boolean(ownedOrgId) && row.org_id === ownedOrgId
+  const canDelete = (ws) => isOrgOwnerOf(ws) || (ws.created_by ? (ws.created_by === currentUserId && ws.status !== '完了') : false)
 
   async function handleDelete(e, ws) {
     e.stopPropagation()
     const ok = window.confirm('「' + (ws.title || '無題') + '」を削除しますか？\n削除すると一覧から消えます（管理者は後で復元できます）。')
     if (!ok) { return }
     const { error } = await supabase.from('workspaces').update({ deleted_at: new Date().toISOString() }).eq('id', ws.id)
-    if (error) { window.alert('削除できませんでした：' + error.message); return }
+    if (error) {
+      window.alert('削除できませんでした。権限がない可能性があります。')
+      return
+    }
     setWorkspaces(prev => prev.filter(x => x.id !== ws.id))
   }
 
