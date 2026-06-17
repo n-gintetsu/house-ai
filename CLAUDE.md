@@ -313,6 +313,14 @@ House-AIは「不動産まわりの便利ツールを束ねる本体OS/プラッ
 - 本物の顧客データは Supabase RLS ＋ Workspace認証 が守る。
 - admin系API（`api/admin-users.js` / `admin-profile.js` / `admin-partners.js` / `admin-sellers.js` / `delete-user.js` / `update-partner-status.js`）は共通で `ADMIN_EMAILS = ['gintetsu.fudosan@gmail.com']` を Bearer トークンで照合し不一致なら 403。`SUPABASE_SERVICE_ROLE_KEY`（Vercel環境変数）を使用（2026-06-17 に存在・正常動作を確認）。
 
+### ⚠ 環境変数の命名ルール（最重要・漏洩防止）
+- **`VITE_` 接頭辞のenvはViteが公開クライアントバンドルに値ごと埋め込む**。よって秘密情報には絶対に `VITE_` を付けない。
+- 秘密（サーバー専用・api/からprocess.envで読む。VITE_を付けない）= `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL` / `STRIPE_SECRET_KEY` / `RESEND_API_KEY` / `ANTHROPIC_API_KEY` / `LINE_*_SECRET` / `LINE_*_ACCESS_TOKEN` / `BASIC_AUTH_USER` / `BASIC_AUTH_PASS`。
+- 公開してよい値のみ `VITE_` 可 = `VITE_SUPABASE_ANON_KEY`（anon/publishable）/ `VITE_SUPABASE_URL` / `VITE_STRIPE_PUBLISHABLE_KEY` / `VITE_SITE_URL`。
+- **確認済（2026-06-17）**: Vercel本番に `VITE_SUPABASE_SERVICE_ROLE_KEY` は存在しない。service_roleは `SUPABASE_SERVICE_ROLE_KEY`（VITE_無し・Sensitive・Production/Previewのみ）。クライアントバンドルへのservice_role漏れ無し。→ 以後このチェックで蒸し返さない。
+- **新env追加時の鉄則**: 秘密キーは必ずVITE_無し＋Sensitive＋api/からprocess.env参照。src/（クライアント）から秘密キーを参照しない。
+- **掃除TODO（軽微）**: ルートのローカルスクリプト `fix_admin_members.cjs` / `insert-test-properties.js` / `stripe-webhook.js` が `VITE_SUPABASE_SERVICE_ROLE_KEY` を参照（Vercelに該当変数は無く・バンドル外なので実害なし）。混乱防止のため将来 `SUPABASE_SERVICE_ROLE_KEY`（VITE_無し）に直す＋孤児の root `stripe-webhook.js` を削除（正規版は `api/stripe-webhook.js`）。
+
 ### 目標アーキテクチャ（サブドメイン分離）
 理想は1アプリ1サブドメイン＋デプロイ分離：
 - 本体 = house-ai.co.jp（OSの入口・各ツールへのリンク集だけ置く）
