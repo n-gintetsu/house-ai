@@ -143,7 +143,7 @@ export default function WorkspacePage() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  return (isMobile && previewMobile) ? <MobileWorkspaceLayout /> : (workspaceId ? <DashboardView id={workspaceId} /> : <ListView />)
+  return (isMobile && workspaceId) ? <MobileWorkspaceLayout /> : (workspaceId ? <DashboardView id={workspaceId} /> : <ListView />)
 }
 
 // ===================== 案件一覧 =====================
