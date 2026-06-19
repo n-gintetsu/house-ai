@@ -159,6 +159,7 @@ function ListView() {
   const [showOrgSettings, setShowOrgSettings] = useState(false)
   const [orgOnboardingDismissed, setOrgOnboardingDismissed] = useState(false)
   const [isNarrow, setIsNarrow] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+  const [unreadMap, setUnreadMap] = useState({})
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -194,6 +195,20 @@ function ListView() {
       setLoading(false)
     }
     fetchFiltered()
+  }, [])
+
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const { data } = await supabase.rpc('get_workspace_unread_counts')
+        if (data) {
+          const map = {}
+          data.forEach(row => { map[row.workspace_id] = row.unread })
+          setUnreadMap(map)
+        }
+      } catch (e) {}
+    }
+    fetchUnread()
   }, [])
 
   const isOrgOwnerOf = (row) => Boolean(ownedOrgId) && row.org_id === ownedOrgId
@@ -266,8 +281,15 @@ function ListView() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16, paddingTop: 8 }}>
-            {workspaces.map(ws => (
-              <div key={ws.id} onClick={() => { window.location.href = `/workspace?id=${ws.id}` }} style={{ ...glass, borderRadius: 14, padding: 20, cursor: 'pointer', border: ws.status === '完了' ? '1px solid rgba(212,175,55,0.5)' : ws.status === '進行中' ? '1px solid rgba(56,189,248,0.5)' : glass.border, boxShadow: ws.status === '完了' ? '0 0 30px rgba(212,175,55,0.25)' : ws.status === '進行中' ? '0 0 30px rgba(56,189,248,0.25)' : glass.boxShadow }}>
+            {workspaces.map(ws => {
+              const unread = unreadMap[ws.id] || 0
+              return (
+              <div key={ws.id} onClick={() => { window.location.href = `/workspace?id=${ws.id}` }} style={{ ...glass, position: 'relative', borderRadius: 14, padding: 20, cursor: 'pointer', border: ws.status === '完了' ? '1px solid rgba(212,175,55,0.5)' : ws.status === '進行中' ? '1px solid rgba(56,189,248,0.5)' : glass.border, boxShadow: ws.status === '完了' ? '0 0 30px rgba(212,175,55,0.25)' : ws.status === '進行中' ? '0 0 30px rgba(56,189,248,0.25)' : glass.boxShadow }}>
+                {unread > 0 ? (
+                  <div style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, background: '#EF4444', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxSizing: 'border-box' }}>
+                    <span style={{ fontSize: 9, color: '#fff', fontWeight: 500 }}>{unread > 9 ? '9+' : unread}</span>
+                  </div>
+                ) : null}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ws.title || '-'}</div>
@@ -306,7 +328,8 @@ function ListView() {
                 </div>
                 <div style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>最終更新: {formatDate(ws.updated_at)}</div>
               </div>
-            ))}
+            )
+            })}
           </div>
         )}
       </main>
