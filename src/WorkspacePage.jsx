@@ -2969,6 +2969,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
             >追加</button>
             <button
               onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setAddingFolder(false); setNewFolderLabel('') }}
+              onClick={() => { setAddingFolder(false); setNewFolderLabel('') }}
               style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
             >キャンセル</button>
           </div>

@@ -41,11 +41,12 @@ async function claimPendingInvitations(session) {
           claimed.push(row)
           // claim 成功行に通知 + 関係者を追加（失敗してもログインを止めない）
           try {
-            const joinName = row.display_name || session.user.email || '参加者'
+            const joinName = row.display_name || ''
+            const noticeMessage = joinName ? (joinName + '様が参加されました。') : '新しいメンバーが参加されました。'
             await supabase.from('ws_notices').insert({
               workspace_id: row.workspace_id,
               level: 'info',
-              message: joinName + '様が参加されました。',
+              message: noticeMessage,
             })
             const { data: existingMember } = await supabase
               .from('ws_members')
