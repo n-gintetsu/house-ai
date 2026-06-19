@@ -1356,12 +1356,14 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             ) : (
               memberMessages.map(msg => {
                 const isMe = msg.user_id === currentUserId
+                const wm = workspaceMembers.find(m => m.user_id === msg.user_id)
+                const senderLabel = (wm && wm.display_name) || 'メンバー'
                 const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''
                 const readCount = isMe ? chatReads.filter(r => r.user_id !== currentUserId && new Date(r.last_read_at) >= new Date(msg.created_at)).length : 0
                 return (
                   <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                     {isMe ? null : (
-                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginBottom: 2, paddingLeft: 2 }}>{msg.sender_name || '不明'}</span>
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginBottom: 2, paddingLeft: 2 }}>{senderLabel}</span>
                     )}
                     <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.07)', border: isMe ? '1px solid rgba(59,130,246,0.38)' : '1px solid rgba(255,255,255,0.1)', fontSize: 14, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {msg.body}
