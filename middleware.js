@@ -12,6 +12,11 @@ export default function middleware(request) {
     pathname === '/workspace/' ||
     pathname === '/login' ||
     pathname === '/login/' ||
+    pathname === '/signup' ||
+    pathname === '/signup/' ||
+    pathname === '/ws-legal' ||
+    pathname === '/ws-legal/' ||
+    pathname.startsWith('/auth/') ||
     pathname === '/houses' ||
     pathname === '/houses/' ||
     pathname === '/clients' ||
