@@ -599,6 +599,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   const handleInvite = async () => {
     const email = inviteForm.email.trim().toLowerCase()
     if (!email) { setInviteError('メールアドレスを入力してください'); return }
+    if ((inviteForm.companyName || '').trim() === '') { setInviteError('名称（表示名）を入力してください'); return }
     setInviteLoading(true); setInviteError(''); setInviteStatus('')
     try {
       let newMemberId = null
@@ -1306,6 +1307,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         placeholder="名称（例：リーガル司法書士法人）"
                         style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%' }}
                       />
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginTop: 2 }}>表示名として使われます（お客様名・会社名など）。未入力では招待できません。</span>
                       {inviteError ? <div style={{ fontSize: 12, color: '#F87171', fontWeight: 400 }}>{inviteError}</div> : null}
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                         <button

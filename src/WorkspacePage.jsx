@@ -991,6 +991,7 @@ function DashboardView({ id }) {
   const handleInvite = async () => {
     const email = inviteForm.email.trim().toLowerCase()
     if (!email) { setInviteError('メールアドレスを入力してください'); return }
+    if ((inviteForm.companyName || '').trim() === '') { setInviteError('名称（表示名）を入力してください'); return }
     setInviteLoading(true); setInviteError(''); setInviteStatus('')
     try {
       let newMemberId = null
@@ -2027,6 +2028,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                       placeholder="名称（例：リーガル司法書士法人）"
                       style={{ ...fi, width: '100%' }}
                     />
+                    <span style={{ fontSize: 11, color: '#64748B', fontWeight: 400, marginTop: 2 }}>表示名として使われます（お客様名・会社名など）。未入力では招待できません。</span>
                     {inviteError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{inviteError}</div> : null}
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                       <button
@@ -2949,7 +2951,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       {/* フォルダ追加 */}
       {fpIsInternal ? (
         addingFolder ? (
-          <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 8, alignItems: 'center', position: 'relative', zIndex: 51 }}>
             <input
               type="text"
               value={newFolderLabel}
