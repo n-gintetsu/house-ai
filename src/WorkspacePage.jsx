@@ -2845,82 +2845,88 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
             }}
           >
             {/* フォルダヘッダー */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: folderFiles.length > 0 ? 12 : 0 }}>
-              {!folder.is_fixed && editingFolderId === folder.id ? (
+            <div style={{ marginBottom: folderFiles.length > 0 ? 12 : 0 }}>
+              {/* 1段目: 名前 + 削除 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                {!folder.is_fixed && editingFolderId === folder.id ? (
+                  <input
+                    type="text"
+                    value={folderEditVal}
+                    onChange={e => setFolderEditVal(e.target.value)}
+                    onBlur={() => handleSaveFolderLabel(folder.id, folderEditVal)}
+                    onKeyDown={e => {
+                      if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                      if (e.key === 'Enter') handleSaveFolderLabel(folder.id, folderEditVal)
+                      if (e.key === 'Escape') setEditingFolderId(null)
+                    }}
+                    autoFocus
+                    style={{ fontSize: 16, fontWeight: 500, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#c9a84c', padding: '2px 8px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', flex: 1, minWidth: 0, boxSizing: 'border-box' }}
+                  />
+                ) : (
+                  <span
+                    onClick={() => {
+                      if (!folder.is_fixed) {
+                        setEditingFolderId(folder.id)
+                        setFolderEditVal(folder.role_label || '')
+                      }
+                    }}
+                    style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: folder.is_fixed ? 'default' : 'pointer' }}
+                    title={folder.is_fixed ? undefined : 'クリックで編集'}
+                  >{
+                    folder.is_fixed && folder.role_label === '自社（不動産）'
+                      ? (orgName || '会社')
+                      : folder.is_fixed && folder.role_label === '顧客'
+                        ? (customerName ? customerName + ' 様' : 'お客様')
+                        : (folder.role_label || '')
+                  }</span>
+                )}
+                {!folder.is_fixed ? (
+                  fpCanDel ? (
+                    <button
+                      onClick={() => handleDeleteFolder(folder)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
+                      title="フォルダを削除"
+                    >
+                      <Trash2 size={12} color="#475569" />
+                    </button>
+                  ) : null
+                ) : null}
+              </div>
+              {/* 2段目: アップロード + 全部DL */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <input
-                  type="text"
-                  value={folderEditVal}
-                  onChange={e => setFolderEditVal(e.target.value)}
-                  onBlur={() => handleSaveFolderLabel(folder.id, folderEditVal)}
-                  onKeyDown={e => {
-                    if (e.nativeEvent.isComposing || e.keyCode === 229) return
-                    if (e.key === 'Enter') handleSaveFolderLabel(folder.id, folderEditVal)
-                    if (e.key === 'Escape') setEditingFolderId(null)
+                  id={inputId}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
+                  multiple
+                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
+                  onChange={async e => {
+                    const files = Array.from(e.target.files || [])
+                    e.target.value = ''
+                    for (const f of files) { await handleUpload(folder.id, f) }
                   }}
-                  autoFocus
-                  style={{ fontSize: 16, fontWeight: 500, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.45)', color: '#c9a84c', padding: '2px 8px', borderRadius: 4, outline: 'none', fontFamily: 'inherit', flex: 1, minWidth: 0, boxSizing: 'border-box' }}
                 />
-              ) : (
-                <span
-                  onClick={() => {
-                    if (!folder.is_fixed) {
-                      setEditingFolderId(folder.id)
-                      setFolderEditVal(folder.role_label || '')
-                    }
-                  }}
-                  style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: folder.is_fixed ? 'default' : 'pointer' }}
-                  title={folder.is_fixed ? undefined : 'クリックで編集'}
-                >{
-                  folder.is_fixed && folder.role_label === '自社（不動産）'
-                    ? (orgName || '会社')
-                    : folder.is_fixed && folder.role_label === '顧客'
-                      ? (customerName ? customerName + ' 様' : 'お客様')
-                      : (folder.role_label || '')
-                }</span>
-              )}
-              {!folder.is_fixed ? (
-                fpCanDel ? (
-                  <button
-                    onClick={() => handleDeleteFolder(folder)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0 }}
-                    title="フォルダを削除"
+                {isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId) ? (
+                  <label
+                    htmlFor={inputId}
+                    onClick={e => { if (isUploading) e.preventDefault() }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
                   >
-                    <Trash2 size={12} color="#475569" />
+                    {isUploading ? <Loader size={11} /> : <Plus size={11} />}
+                    アップロード
+                  </label>
+                ) : null}
+                {folderFiles.length >= 2 ? (
+                  <button
+                    onClick={() => downloadFolderZip(folder, folderFiles)}
+                    disabled={zipping}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+                  >
+                    <Download size={11} />
+                    {zipping ? (zipMsg || '準備中...') : '全部DL'}
                   </button>
-                ) : null
-              ) : null}
-              <input
-                id={inputId}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
-                multiple
-                style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
-                onChange={async e => {
-                  const files = Array.from(e.target.files || [])
-                  e.target.value = ''
-                  for (const f of files) { await handleUpload(folder.id, f) }
-                }}
-              />
-              {isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId) ? (
-                <label
-                  htmlFor={inputId}
-                  onClick={e => { if (isUploading) e.preventDefault() }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
-                >
-                  {isUploading ? <Loader size={11} /> : <Plus size={11} />}
-                  アップロード
-                </label>
-              ) : null}
-              {folderFiles.length >= 2 ? (
-                <button
-                  onClick={() => downloadFolderZip(folder, folderFiles)}
-                  disabled={zipping}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', flexShrink: 0 }}
-                >
-                  <Download size={11} />
-                  {zipping ? (zipMsg || '準備中...') : '全部DL'}
-                </button>
-              ) : null}
+                ) : null}
+              </div>
             </div>
 
             {/* ファイル0件 */}
