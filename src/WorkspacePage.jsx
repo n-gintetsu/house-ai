@@ -2662,12 +2662,26 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       let done = 0
       for (const fl of folders) {
         const dir = safeName(getFolderLabel(fl)) || ('folder_' + fl.id)
+        const used = {}
         for (const f of getFolderFiles(fl.id)) {
           setZipMsg('準備中 ' + (done + 1) + '/' + total)
           const blob = await fetchFileBlob(f)
           done++
           if (!blob) continue
-          zip.file(dir + '/' + (f.file_name || ('file_' + f.id)), blob)
+          const origName = f.file_name || ('file_' + f.id)
+          if (!used[origName]) used[origName] = 0
+          const count = used[origName]
+          used[origName]++
+          let nm
+          if (count === 0) {
+            nm = origName
+          } else {
+            const d = origName.lastIndexOf('.')
+            const b = d > 0 ? origName.slice(0, d) : origName
+            const e = d > 0 ? origName.slice(d) : ''
+            nm = b + '_' + count + e
+          }
+          zip.file(dir + '/' + nm, blob)
         }
       }
       const content = await zip.generateAsync({ type: 'blob' })
@@ -2731,6 +2745,11 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   async function handleSaveFolderLabel(folderId, newLabel) {
     const trimmed = (newLabel || '').trim()
     if (!trimmed) { setEditingFolderId(null); return }
+    const dup = folders.some(f => f.id !== folderId && (f.role_label || '').trim() === trimmed)
+    if (dup) {
+      alert('同じ名前の役割フォルダが既にあります。別の名前にしてください。')
+      return
+    }
     try {
       await supabase.from('ws_file_folders').update({ role_label: trimmed }).eq('id', folderId)
       setFolders(prev => prev.map(f => f.id === folderId ? { ...f, role_label: trimmed } : f))
@@ -2759,6 +2778,11 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   async function handleAddFolder() {
     const trimmed = (newFolderLabel || '').trim()
     if (!trimmed) return
+    const dup = folders.some(f => (f.role_label || '').trim() === trimmed)
+    if (dup) {
+      alert('同じ名前の役割フォルダが既にあります。別の名前にしてください。')
+      return
+    }
     try {
       const maxOrder = folders.length > 0 ? Math.max(...folders.map(f => f.sort_order || 0)) : 1
       const { data, error } = await supabase.from('ws_file_folders').insert({
