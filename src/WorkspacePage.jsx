@@ -4,7 +4,7 @@ import JSZip from 'jszip'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
-  Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
+  Check, Users, Calendar, Send, AlertCircle, X, MessageSquare, MessageCircle,
   Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
@@ -589,6 +589,8 @@ function DashboardView({ id }) {
   const [memberInput, setMemberInput] = useState('')
   const [isMemberSending, setIsMemberSending] = useState(false)
   const [chatReads, setChatReads] = useState([])
+  const [bellChatMessages, setBellChatMessages] = useState([])
+  const [bellChatReads, setBellChatReads] = useState([])
 
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
@@ -744,6 +746,23 @@ function DashboardView({ id }) {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    let active = true
+    async function fetchBellChat() {
+      const [{ data: msgs }, { data: reads }] = await Promise.all([
+        supabase.from('workspace_messages').select('*').eq('workspace_id', id).order('created_at', { ascending: false }).limit(50),
+        supabase.from('workspace_chat_reads').select('*').eq('workspace_id', id),
+      ])
+      if (!active) return
+      if (msgs) setBellChatMessages(msgs)
+      if (reads) setBellChatReads(reads)
+    }
+    fetchBellChat()
+    const timer = setInterval(fetchBellChat, 30000)
+    return () => { active = false; clearInterval(timer) }
+  }, [id, currentUserId])
 
   useEffect(() => {
     if (chatBottomRef.current) {
@@ -1418,6 +1437,13 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     setIsMemberSending(false)
   }
 
+  const bellMyRead = bellChatReads.find(r => r.user_id === currentUserId)
+  const bellMyLastRead = bellMyRead ? bellMyRead.last_read_at : null
+  const unreadChatItems = bellChatMessages.filter(m =>
+    m.user_id !== currentUserId &&
+    (!bellMyLastRead || new Date(m.created_at) > new Date(bellMyLastRead))
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
       <style>{`
@@ -1517,7 +1543,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           )
         ) : null}
         {(() => {
-          const unreadCount = notices.filter(n => readNoticeIds.indexOf(n.id) === -1).length
+          const noticeUnread = notices.filter(n => readNoticeIds.indexOf(n.id) === -1).length
+          const totalUnread = noticeUnread + unreadChatItems.length
           const toggleNotices = () => {
             const willOpen = !showNotices
             setShowNotices(willOpen)
@@ -1527,31 +1554,43 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               try { localStorage.setItem('houseai_notices_read_' + currentUserId + '_' + id, JSON.stringify(merged)) } catch (e) {}
             }
           }
+          const noticeItems = notices.map(n => ({ _type: 'notice', _at: n.created_at || '', ...n }))
+          const chatItems = unreadChatItems.map(m => ({ _type: 'chat', _at: m.created_at || '', ...m }))
+          const merged = [...noticeItems, ...chatItems].sort((a, b) => (a._at < b._at ? 1 : a._at > b._at ? -1 : 0))
           return (
             <div style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }} onClick={toggleNotices}>
               <Bell size={18} color="#94A3B8" />
-              {unreadCount > 0 ? (
+              {totalUnread > 0 ? (
                 <div style={{ position: 'absolute', top: -5, right: -5, width: 15, height: 15, background: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 9, color: '#fff', fontWeight: 500 }}>{unreadCount}</span>
+                  <span style={{ fontSize: 9, color: '#fff', fontWeight: 500 }}>{totalUnread > 9 ? '9+' : totalUnread}</span>
                 </div>
               ) : null}
               {showNotices ? (
                 <>
                   <div onClick={(e) => { e.stopPropagation(); setShowNotices(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
                   <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 28, right: 0, width: 300, maxHeight: 360, overflowY: 'auto', background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 12 }}>
-                    <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, padding: '4px 6px 10px' }}>お知らせ</div>
-                    {notices.length > 0 ? (
-                      notices.map((n, idx) => {
-                        const ns = noticeStyle(n.level)
+                    <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, padding: '4px 6px 10px' }}>通知</div>
+                    {merged.length > 0 ? (
+                      merged.map((item, idx) => {
+                        if (item._type === 'notice') {
+                          const ns = noticeStyle(item.level)
+                          return (
+                            <div key={'n_' + (item.id || idx)} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < merged.length - 1 ? 8 : 0 }}>
+                              <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
+                              <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{item.message || ''}</span>
+                            </div>
+                          )
+                        }
+                        const senderLabel = ((workspaceMembers.find(w => w.user_id === item.user_id) || {}).display_name) || 'メンバー'
                         return (
-                          <div key={n.id || idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: ns.bg, border: ns.border, marginBottom: idx < notices.length - 1 ? 8 : 0 }}>
-                            <div style={{ flexShrink: 0, marginTop: 1 }}><AlertCircle size={13} color={ns.iconColor} /></div>
-                            <span style={{ fontSize: 12, color: ns.textColor, fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{n.message || ''}</span>
+                          <div key={'c_' + (item.id || idx)} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.22)', marginBottom: idx < merged.length - 1 ? 8 : 0 }}>
+                            <div style={{ flexShrink: 0, marginTop: 1 }}><MessageCircle size={13} color="#60A5FA" /></div>
+                            <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{senderLabel}: {item.body || ''}</span>
                           </div>
                         )
                       })
                     ) : (
-                      <div style={{ padding: 12, fontSize: 13, color: '#64748B' }}>お知らせはありません</div>
+                      <div style={{ padding: 12, fontSize: 13, color: '#64748B' }}>通知はありません</div>
                     )}
                   </div>
                 </>
