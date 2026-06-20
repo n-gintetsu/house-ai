@@ -13,6 +13,10 @@ import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 import MobileWorkspaceLayout from './MobileWorkspaceLayout'
 import MobileHeader from './MobileHeader'
 
+function normalizeLabel(s) {
+  return (s || '').trim().replace(/\s+/g, ' ')
+}
+
 const Avatar = ({ url, name, size }) => {
   const s = size || 28
   return (
@@ -2745,7 +2749,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   async function handleSaveFolderLabel(folderId, newLabel) {
     const trimmed = (newLabel || '').trim()
     if (!trimmed) { setEditingFolderId(null); return }
-    const dup = folders.some(f => f.id !== folderId && (f.role_label || '').trim() === trimmed)
+    const dup = folders.some(f => f.id !== folderId && normalizeLabel(f.role_label) === normalizeLabel(trimmed))
     if (dup) {
       alert('同じ名前の役割フォルダが既にあります。別の名前にしてください。')
       return
@@ -2778,7 +2782,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   async function handleAddFolder() {
     const trimmed = (newFolderLabel || '').trim()
     if (!trimmed) return
-    const dup = folders.some(f => (f.role_label || '').trim() === trimmed)
+    const dup = folders.some(f => normalizeLabel(f.role_label) === normalizeLabel(trimmed))
     if (dup) {
       alert('同じ名前の役割フォルダが既にあります。別の名前にしてください。')
       return
