@@ -591,6 +591,7 @@ function DashboardView({ id }) {
   const [chatReads, setChatReads] = useState([])
   const [bellChatMessages, setBellChatMessages] = useState([])
   const [bellChatReads, setBellChatReads] = useState([])
+  const [bellNoticeReads, setBellNoticeReads] = useState([])
 
   // 編集UI用 state
   const [activeStepPopover, setActiveStepPopover] = useState(null)
@@ -751,13 +752,15 @@ function DashboardView({ id }) {
     if (!id) return
     let active = true
     async function fetchBellChat() {
-      const [{ data: msgs }, { data: reads }] = await Promise.all([
+      const [{ data: msgs }, { data: reads }, { data: nreads }] = await Promise.all([
         supabase.from('workspace_messages').select('*').eq('workspace_id', id).order('created_at', { ascending: false }).limit(50),
         supabase.from('workspace_chat_reads').select('*').eq('workspace_id', id),
+        supabase.from('ws_notice_reads').select('*').eq('workspace_id', id),
       ])
       if (!active) return
       if (msgs) setBellChatMessages(msgs)
       if (reads) setBellChatReads(reads)
+      if (nreads) setBellNoticeReads(nreads)
     }
     fetchBellChat()
     const timer = setInterval(fetchBellChat, 30000)
@@ -1444,6 +1447,12 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     (!bellMyLastRead || new Date(m.created_at) > new Date(bellMyLastRead))
   )
 
+  const bellMyNoticeRead = bellNoticeReads.find(r => r.user_id === currentUserId)
+  const bellMyNoticeLastRead = bellMyNoticeRead ? bellMyNoticeRead.last_read_at : null
+  const unreadNoticeItems = notices.filter(n =>
+    !bellMyNoticeLastRead || new Date(n.created_at) > new Date(bellMyNoticeLastRead)
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
       <style>{`
@@ -1543,18 +1552,25 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           )
         ) : null}
         {(() => {
-          const noticeUnread = notices.filter(n => readNoticeIds.indexOf(n.id) === -1).length
+          const noticeUnread = unreadNoticeItems.length
           const totalUnread = noticeUnread + unreadChatItems.length
           const toggleNotices = () => {
             const willOpen = !showNotices
             setShowNotices(willOpen)
-            if (willOpen) {
-              const merged = Array.from(new Set([...readNoticeIds, ...notices.map(n => n.id)]))
-              setReadNoticeIds(merged)
-              try { localStorage.setItem('houseai_notices_read_' + currentUserId + '_' + id, JSON.stringify(merged)) } catch (e) {}
+            if (willOpen && currentUserId) {
+              const nowIso = new Date().toISOString()
+              supabase.from('ws_notice_reads').upsert(
+                { workspace_id: id, user_id: currentUserId, last_read_at: nowIso },
+                { onConflict: 'workspace_id,user_id' }
+              ).then(() => {
+                setBellNoticeReads(prev => {
+                  const others = prev.filter(r => r.user_id !== currentUserId)
+                  return [...others, { workspace_id: id, user_id: currentUserId, last_read_at: nowIso }]
+                })
+              }).catch(e => {})
             }
           }
-          const noticeItems = notices.map(n => ({ _type: 'notice', _at: n.created_at || '', ...n }))
+          const noticeItems = unreadNoticeItems.map(n => ({ _type: 'notice', _at: n.created_at || '', ...n }))
           const chatItems = unreadChatItems.map(m => ({ _type: 'chat', _at: m.created_at || '', ...m }))
           const merged = [...noticeItems, ...chatItems].sort((a, b) => (a._at < b._at ? 1 : a._at > b._at ? -1 : 0))
           return (
