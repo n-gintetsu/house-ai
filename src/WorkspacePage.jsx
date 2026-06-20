@@ -1583,7 +1583,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         }
                         const senderLabel = ((workspaceMembers.find(w => w.user_id === item.user_id) || {}).display_name) || 'メンバー'
                         return (
-                          <div key={'c_' + (item.id || idx)} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.22)', marginBottom: idx < merged.length - 1 ? 8 : 0 }}>
+                          <div key={'c_' + (item.id || idx)} onClick={(e) => { e.stopPropagation(); setShowNotices(false); setSecretaryOpen(true); setActiveChatTab('member') }} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.22)', marginBottom: idx < merged.length - 1 ? 8 : 0, cursor: 'pointer' }}>
                             <div style={{ flexShrink: 0, marginTop: 1 }}><MessageCircle size={13} color="#60A5FA" /></div>
                             <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400, lineHeight: 1.5, flex: 1 }}>{senderLabel}: {item.body || ''}</span>
                           </div>
