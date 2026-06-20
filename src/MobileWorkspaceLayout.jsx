@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send, AlertCircle } from 'lucide-react'
+import JSZip from 'jszip'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 
@@ -167,6 +168,12 @@ export default function MobileWorkspaceLayout() {
   // 資料タブ アップロード state
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
   const [uploadError, setUploadError] = useState('')
+  const [zipping, setZipping] = useState(false)
+  const [zipMsg, setZipMsg] = useState('')
+  const [galleryFiles, setGalleryFiles] = useState(null)
+  const [galleryIndex, setGalleryIndex] = useState(0)
+  const [galleryUrls, setGalleryUrls] = useState({})
+  const [galleryLoading, setGalleryLoading] = useState(false)
 
   // チャットタブ state
   const [memberMessages, setMemberMessages] = useState([])
@@ -368,6 +375,127 @@ export default function MobileWorkspaceLayout() {
     }
     return (await res.json()).url
   }
+
+  function safeName(s) {
+    return String(s || '').replace(/[/\\:*?"<>|]/g, '_').slice(0, 80)
+  }
+
+  async function fetchFileBlob(file) {
+    const url = await getSignedFileUrl(file.id, 'download')
+    if (!url) return null
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return await res.blob()
+  }
+
+  async function downloadFolderZip(folder, fileList) {
+    if (zipping) return
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      const used = {}
+      let done = 0
+      for (const f of fileList) {
+        setZipMsg('準備中 ' + (done + 1) + '/' + fileList.length)
+        const blob = await fetchFileBlob(f)
+        done++
+        if (!blob) continue
+        const origName = f.file_name || ('file_' + f.id)
+        if (!used[origName]) used[origName] = 0
+        const count = used[origName]
+        used[origName]++
+        let nm
+        if (count === 0) {
+          nm = origName
+        } else {
+          const d = origName.lastIndexOf('.')
+          const b = d > 0 ? origName.slice(0, d) : origName
+          const e = d > 0 ? origName.slice(d) : ''
+          nm = b + '_' + count + e
+        }
+        zip.file(nm, blob)
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const u = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = u
+      a.download = (safeName(getFolderDisplayName(folder)) || 'files') + '.zip'
+      a.click()
+      URL.revokeObjectURL(u)
+    } catch (e) {
+      console.error('zip error', e)
+      alert('一括ダウンロードに失敗しました')
+    } finally {
+      setZipping(false)
+      setZipMsg('')
+    }
+  }
+
+  async function downloadAllZip() {
+    if (zipping) return
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      let total = 0
+      folders.forEach(fl => { total += getFolderFiles(fl.id).length })
+      let done = 0
+      for (const fl of folders) {
+        const dir = safeName(getFolderDisplayName(fl)) || ('folder_' + fl.id)
+        for (const f of getFolderFiles(fl.id)) {
+          setZipMsg('準備中 ' + (done + 1) + '/' + total)
+          const blob = await fetchFileBlob(f)
+          done++
+          if (!blob) continue
+          zip.file(dir + '/' + (f.file_name || ('file_' + f.id)), blob)
+        }
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const u = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = u
+      const cname = (workspace && workspace.customer_name) || ''
+      a.download = (cname ? safeName(cname) + '_' : '') + '資料一括.zip'
+      a.click()
+      URL.revokeObjectURL(u)
+    } catch (e) {
+      console.error('zipall error', e)
+      alert('一括ダウンロードに失敗しました')
+    } finally {
+      setZipping(false)
+      setZipMsg('')
+    }
+  }
+
+  function openGallery(fileList) {
+    const imgs = (fileList || []).filter(f => (f.mime_type || '').startsWith('image/'))
+    if (imgs.length === 0) return
+    setGalleryUrls({}); setGalleryIndex(0); setGalleryFiles(imgs)
+  }
+
+  useEffect(() => {
+    if (!galleryFiles) return
+    const f = galleryFiles[galleryIndex]
+    if (!f || galleryUrls[f.id]) return
+    let cancelled = false
+    setGalleryLoading(true)
+    getSignedFileUrl(f.id, 'view').then(url => {
+      if (cancelled) return
+      if (url) setGalleryUrls(prev => ({ ...prev, [f.id]: url }))
+      setGalleryLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [galleryFiles, galleryIndex])
+
+  useEffect(() => {
+    if (!galleryFiles) return
+    function handleKey(e) {
+      if (e.key === 'Escape') { setGalleryFiles(null); return }
+      if (e.key === 'ArrowLeft') setGalleryIndex(i => (i - 1 + galleryFiles.length) % galleryFiles.length)
+      if (e.key === 'ArrowRight') setGalleryIndex(i => (i + 1) % galleryFiles.length)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [galleryFiles])
 
   async function handleUpload(folderId, file) {
     if (!file) return
@@ -801,6 +929,16 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
           /* ===== 資料タブ ===== */
           <div>
+            {isFullAccess && folders.reduce((acc, fl) => acc + getFolderFiles(fl.id).length, 0) >= 2 ? (
+              <button
+                onClick={downloadAllZip}
+                disabled={zipping}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', marginBottom: 12 }}
+              >
+                <Download size={13} />
+                {zipping ? (zipMsg || '準備中...') : '資料一括DL'}
+              </button>
+            ) : null}
             {folders.length === 0 ? (
               <div style={{ ...CARD_STYLE, textAlign: 'center' }}>
                 <span style={{ fontSize: 13, fontWeight: 400, color: '#475569' }}>フォルダがありません</span>
@@ -871,6 +1009,29 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                           ) : null}
                           </>
                         )}
+                        {folderFiles.length >= 2 || folderFiles.filter(f => (f.mime_type || '').startsWith('image/')).length >= 2 ? (
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                            {folderFiles.length >= 2 ? (
+                              <button
+                                onClick={() => downloadFolderZip(folder, folderFiles)}
+                                disabled={zipping}
+                                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '4px 10px', fontSize: 12, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+                              >
+                                <Download size={12} />
+                                {zipping ? (zipMsg || '準備中...') : '全部DL'}
+                              </button>
+                            ) : null}
+                            {folderFiles.filter(f => (f.mime_type || '').startsWith('image/')).length >= 2 ? (
+                              <button
+                                onClick={() => openGallery(folderFiles)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '4px 10px', fontSize: 12, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
+                              >
+                                <Eye size={12} />
+                                全表示
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
 
                         {canUpload ? (
                           <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
@@ -1583,6 +1744,61 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 ありがとう
               </button>
             </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {galleryFiles ? (
+          <motion.div
+            key="mob-gallery"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setGalleryFiles(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 100002, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}
+          >
+            <button
+              onClick={e => { e.stopPropagation(); setGalleryFiles(null) }}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#E2E8F0', cursor: 'pointer', padding: 4 }}
+            >
+              <X size={24} />
+            </button>
+            <div style={{ position: 'absolute', top: 20, left: 20, fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>
+              {(galleryIndex + 1) + ' / ' + galleryFiles.length}
+            </div>
+            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, width: '100%' }}>
+              {galleryUrls[galleryFiles[galleryIndex].id] ? (
+                <img
+                  src={galleryUrls[galleryFiles[galleryIndex].id]}
+                  alt={galleryFiles[galleryIndex].file_name || ''}
+                  style={{ maxWidth: '92%', maxHeight: '78vh', objectFit: 'contain', borderRadius: 8 }}
+                />
+              ) : galleryLoading ? (
+                <Loader size={32} color="#c9a84c" />
+              ) : (
+                <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>読み込めません</div>
+              )}
+              <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', maxWidth: '92%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {galleryFiles[galleryIndex].file_name || ''}
+              </div>
+            </div>
+            {galleryFiles.length > 1 ? (
+              <button
+                onClick={e => { e.stopPropagation(); setGalleryIndex(i => (i - 1 + galleryFiles.length) % galleryFiles.length) }}
+                style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#E2E8F0', cursor: 'pointer', borderRadius: 6, padding: 8 }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+            ) : null}
+            {galleryFiles.length > 1 ? (
+              <button
+                onClick={e => { e.stopPropagation(); setGalleryIndex(i => (i + 1) % galleryFiles.length) }}
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#E2E8F0', cursor: 'pointer', borderRadius: 6, padding: 8 }}
+              >
+                <ChevronRight size={24} />
+              </button>
+            ) : null}
           </motion.div>
         ) : null}
       </AnimatePresence>
