@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { heicTo } from 'heic-to'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
@@ -2462,7 +2463,20 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
 
   async function handleUpload(folderId, file) {
     if (!file) return
-    const ext = (file.name.split('.').pop() || '').toLowerCase()
+    let ext = (file.name.split('.').pop() || '').toLowerCase()
+    if (ext === 'heic' || ext === 'heif') {
+      try {
+        setUploadingFolderId(folderId)
+        const jpegBlob = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.9 })
+        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg')
+        file = new File([jpegBlob], newName, { type: 'image/jpeg' })
+        ext = 'jpeg'
+      } catch (err) {
+        setUploadError('HEICの変換に失敗しました')
+        setUploadingFolderId(null)
+        return
+      }
+    }
     if (!ALLOWED_EXTS.includes(ext)) {
       setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
       return
@@ -2766,7 +2780,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
               <input
                 id={inputId}
                 type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
                 style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
                 onChange={e => {
                   const f = e.target.files ? e.target.files[0] : null
@@ -2846,8 +2860,9 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                         (() => {
                           const logs = (accessLogs || []).filter(l => l.file_id === wf.id)
                           return logs.length > 0 ? (
-                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 2 }}>
-                              {'最終アクセス：' + nameForUser(logs[0].user_id) + '・' + formatJst(logs[0].created_at) + '・' + actionLabel(logs[0].action)}
+                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 2, display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{nameForUser(logs[0].user_id)}</span>
+                              <span style={{ flexShrink: 0 }}>{'・' + formatJst(logs[0].created_at) + '・' + actionLabel(logs[0].action)}</span>
                             </div>
                           ) : null
                         })()

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { heicTo } from 'heic-to'
 import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, Eye, Send, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
@@ -369,7 +370,20 @@ export default function MobileWorkspaceLayout() {
 
   async function handleUpload(folderId, file) {
     if (!file) return
-    const ext = (file.name.split('.').pop() || '').toLowerCase()
+    let ext = (file.name.split('.').pop() || '').toLowerCase()
+    if (ext === 'heic' || ext === 'heif') {
+      try {
+        setUploadingFolderId(folderId)
+        const jpegBlob = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.9 })
+        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg')
+        file = new File([jpegBlob], newName, { type: 'image/jpeg' })
+        ext = 'jpeg'
+      } catch (err) {
+        setUploadError('HEICの変換に失敗しました')
+        setUploadingFolderId(null)
+        return
+      }
+    }
     if (!ALLOWED_EXTS.includes(ext)) {
       setUploadError('PDF / PNG / JPG / JPEG / WEBP のみ対応しています。')
       return
@@ -852,7 +866,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                             <input
                               type="file"
                               id={`upload-${folder.id}`}
-                              accept=".pdf,.png,.jpg,.jpeg,.webp"
+                              accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
                               style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
                               onChange={e => {
                                 const f = e.target.files ? e.target.files[0] : null
