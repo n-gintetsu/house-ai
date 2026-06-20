@@ -2798,7 +2798,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 const datalistId = `doc-type-list-${wf.id}`
 
                 return (
-                  <div key={wf.id} style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div key={wf.id} style={{ padding: '6px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                     {/* ファイルアイコン */}
                     <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 5, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2810,8 +2810,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     </div>
                     {/* ファイル情報 */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{wf.file_name || ''}</div>
-                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginBottom: 4 }}>{formatFileSize(wf.size_bytes)}</div>
+                      <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 1 }}>{wf.file_name || ''}</div>
+                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginBottom: 2 }}>{formatFileSize(wf.size_bytes)}</div>
                       {/* 種別タグ */}
                       {isEditingDocType ? (
                         <div>
@@ -2840,13 +2840,13 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                         >{wf.doc_type || '種別を設定'}</span>
                       )}
                       {wf.uploaded_by ? (
-                        <div style={{ fontSize: 9, color: '#334155', fontWeight: 400, marginTop: 2 }}>{wf.uploaded_by}</div>
+                        <div style={{ fontSize: 9, color: '#334155', fontWeight: 400, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{'投稿: ' + nameForUser(wf.uploaded_by)}</div>
                       ) : null}
                       {isFullAccess ? (
                         (() => {
                           const logs = (accessLogs || []).filter(l => l.file_id === wf.id)
                           return logs.length > 0 ? (
-                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 3 }}>
+                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 2 }}>
                               {'最終アクセス：' + nameForUser(logs[0].user_id) + '・' + formatJst(logs[0].created_at) + '・' + actionLabel(logs[0].action)}
                             </div>
                           ) : null

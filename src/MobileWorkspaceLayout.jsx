@@ -815,7 +815,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                           <div style={{ fontSize: 13, fontWeight: 400, color: '#475569', textAlign: 'center', padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>ファイルがありません</div>
                         ) : (
                           folderFiles.map((wf, idx) => (
-                            <div key={wf.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div key={wf.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                               <FileText size={16} color="#c9a84c" style={{ flexShrink: 0 }} />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wf.file_name || ''}</div>
