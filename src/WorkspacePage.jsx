@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
+import JSZip from 'jszip'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
@@ -2399,6 +2400,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [newFolderLabel, setNewFolderLabel] = useState('')
   const [dragOverFolderId, setDragOverFolderId] = useState(null)
   const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
+  const [zipping, setZipping] = useState(false)
+  const [zipMsg, setZipMsg] = useState('')
 
   useEffect(() => {
     loadAll()
@@ -2584,6 +2587,101 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     }
   }
 
+  function getFolderLabel(folder) {
+    if (folder.is_fixed && folder.role_label === '自社（不動産）') return orgName || '会社'
+    if (folder.is_fixed && folder.role_label === '顧客') return customerName ? customerName + ' 様' : 'お客様'
+    return folder.role_label || ''
+  }
+
+  function safeName(s) {
+    return String(s || '').replace(/[/\\:*?"<>|]/g, '_').slice(0, 80)
+  }
+
+  async function fetchFileBlob(file) {
+    const url = await getSignedFileUrl(file.id, 'download')
+    if (!url) return null
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return await res.blob()
+  }
+
+  async function downloadFolderZip(folder, fileList) {
+    if (zipping) return
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      const used = {}
+      let done = 0
+      for (const f of fileList) {
+        setZipMsg('準備中 ' + (done + 1) + '/' + fileList.length)
+        const blob = await fetchFileBlob(f)
+        done++
+        if (!blob) continue
+        const origName = f.file_name || ('file_' + f.id)
+        if (!used[origName]) used[origName] = 0
+        const count = used[origName]
+        used[origName]++
+        let nm
+        if (count === 0) {
+          nm = origName
+        } else {
+          const d = origName.lastIndexOf('.')
+          const b = d > 0 ? origName.slice(0, d) : origName
+          const e = d > 0 ? origName.slice(d) : ''
+          nm = b + '_' + count + e
+        }
+        zip.file(nm, blob)
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const u = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = u
+      a.download = (safeName(getFolderLabel(folder)) || 'files') + '.zip'
+      a.click()
+      URL.revokeObjectURL(u)
+    } catch (e) {
+      console.error('zip error', e)
+      alert('一括ダウンロードに失敗しました')
+    } finally {
+      setZipping(false)
+      setZipMsg('')
+    }
+  }
+
+  async function downloadAllZip() {
+    if (zipping) return
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      let total = 0
+      folders.forEach(fl => { total += getFolderFiles(fl.id).length })
+      let done = 0
+      for (const fl of folders) {
+        const dir = safeName(getFolderLabel(fl)) || ('folder_' + fl.id)
+        for (const f of getFolderFiles(fl.id)) {
+          setZipMsg('準備中 ' + (done + 1) + '/' + total)
+          const blob = await fetchFileBlob(f)
+          done++
+          if (!blob) continue
+          zip.file(dir + '/' + (f.file_name || ('file_' + f.id)), blob)
+        }
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const u = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = u
+      a.download = (customerName ? safeName(customerName) + '_' : '') + '資料一括.zip'
+      a.click()
+      URL.revokeObjectURL(u)
+    } catch (e) {
+      console.error('zipall error', e)
+      alert('一括ダウンロードに失敗しました')
+    } finally {
+      setZipping(false)
+      setZipMsg('')
+    }
+  }
+
   async function handleUpdateDocType(fileId, newDocType) {
     try {
       const val = (newDocType || '').trim() || null
@@ -2703,6 +2801,17 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         {uploadError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400, marginTop: 8 }}>{uploadError}</div> : null}
       </div>
 
+      {isFullAccess && folders.reduce((acc, fl) => acc + getFolderFiles(fl.id).length, 0) >= 2 ? (
+        <button
+          onClick={downloadAllZip}
+          disabled={zipping}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', marginBottom: 10 }}
+        >
+          <Download size={12} />
+          {zipping ? (zipMsg || '準備中...') : '資料一括DL'}
+        </button>
+      ) : null}
+
       {/* フォルダ一覧 */}
       {folders.map(folder => {
         const folderFiles = getFolderFiles(folder.id)
@@ -2801,6 +2910,16 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                   {isUploading ? <Loader size={11} /> : <Plus size={11} />}
                   アップロード
                 </label>
+              ) : null}
+              {folderFiles.length >= 2 ? (
+                <button
+                  onClick={() => downloadFolderZip(folder, folderFiles)}
+                  disabled={zipping}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: zipping ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+                >
+                  <Download size={11} />
+                  {zipping ? (zipMsg || '準備中...') : '全部DL'}
+                </button>
               ) : null}
             </div>
 
