@@ -2398,6 +2398,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [addingFolder, setAddingFolder] = useState(false)
   const [newFolderLabel, setNewFolderLabel] = useState('')
   const [dragOverFolderId, setDragOverFolderId] = useState(null)
+  const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
 
   useEffect(() => {
     loadAll()
@@ -2710,6 +2711,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         if (!isFullAccess && (myMemberId === null || folder.owner_member_id !== myMemberId) && folderFiles.length === 0) return null
 
         const isUploading = uploadingFolderId === folder.id
+        const showAll = showAllFilesByFolder[folder.id] || false
+        const visibleFiles = showAll ? folderFiles : folderFiles.slice(0, 2)
         const inputId = `ws-folder-input-${folder.id}`
 
         return (
@@ -2725,11 +2728,11 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
             }}
             onDragOver={e => { e.preventDefault(); setDragOverFolderId(folder.id) }}
             onDragLeave={() => setDragOverFolderId(null)}
-            onDrop={e => {
+            onDrop={async e => {
               e.preventDefault()
               setDragOverFolderId(null)
-              const f = e.dataTransfer.files ? e.dataTransfer.files[0] : null
-              if (f) handleUpload(folder.id, f)
+              const files = Array.from(e.dataTransfer.files || [])
+              for (const f of files) { await handleUpload(folder.id, f) }
             }}
           >
             {/* フォルダヘッダー */}
@@ -2781,11 +2784,12 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 id={inputId}
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
+                multiple
                 style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
-                onChange={e => {
-                  const f = e.target.files ? e.target.files[0] : null
+                onChange={async e => {
+                  const files = Array.from(e.target.files || [])
                   e.target.value = ''
-                  if (f) handleUpload(folder.id, f)
+                  for (const f of files) { await handleUpload(folder.id, f) }
                 }}
               />
               {isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId) ? (
@@ -2806,7 +2810,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 {docTypeFilter === 'all' ? 'ファイルがありません' : 'この種別のファイルなし'}
               </div>
             ) : (
-              folderFiles.map((wf, idx) => {
+              <>
+              {visibleFiles.map((wf, idx) => {
                 const isImage = (wf.mime_type || '').startsWith('image/')
                 const isEditingDocType = editingFileDocId === wf.id
                 const datalistId = `doc-type-list-${wf.id}`
@@ -2957,7 +2962,14 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     ) : null}
                   </div>
                 )
-              })
+              })}
+              {folderFiles.length > 2 ? (
+                <button onClick={() => setShowAllFilesByFolder(prev => ({ ...prev, [folder.id]: !showAll }))}
+                  style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: 11, fontWeight: 400, cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}>
+                  {showAll ? '閉じる' : 'もっと見る（残り' + (folderFiles.length - 2) + '件）'}
+                </button>
+              ) : null}
+              </>
             )}
           </div>
         )

@@ -155,6 +155,7 @@ export default function MobileWorkspaceLayout() {
   const [currentUserId, setCurrentUserId] = useState(null)
   const [currentRole, setCurrentRole] = useState(null)
   const [expandedFolders, setExpandedFolders] = useState({})
+  const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
 
@@ -811,6 +812,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 const displayName = getFolderDisplayName(folder)
                 const canUpload = isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId)
                 const isUploading = uploadingFolderId === folder.id
+                const showAll = showAllFilesByFolder[folder.id] || false
+                const visibleFiles = showAll ? folderFiles : folderFiles.slice(0, 2)
                 return (
                   <div key={folder.id} style={{ ...CARD_STYLE, marginBottom: 12 }}>
 
@@ -828,7 +831,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         {folderFiles.length === 0 ? (
                           <div style={{ fontSize: 13, fontWeight: 400, color: '#475569', textAlign: 'center', padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>ファイルがありません</div>
                         ) : (
-                          folderFiles.map((wf, idx) => (
+                          <>
+                          {visibleFiles.map((wf, idx) => (
                             <div key={wf.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                               <FileText size={16} color="#c9a84c" style={{ flexShrink: 0 }} />
                               <div style={{ flex: 1, minWidth: 0 }}>
@@ -858,7 +862,14 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                                 </button>
                               ) : null}
                             </div>
-                          ))
+                          ))}
+                          {folderFiles.length > 2 ? (
+                            <button onClick={() => setShowAllFilesByFolder(prev => ({ ...prev, [folder.id]: !showAll }))}
+                              style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: 11, fontWeight: 400, cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}>
+                              {showAll ? '閉じる' : 'もっと見る（残り' + (folderFiles.length - 2) + '件）'}
+                            </button>
+                          ) : null}
+                          </>
                         )}
 
                         {canUpload ? (
@@ -867,11 +878,12 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                               type="file"
                               id={`upload-${folder.id}`}
                               accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,image/heic,image/heif"
+                              multiple
                               style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
-                              onChange={e => {
-                                const f = e.target.files ? e.target.files[0] : null
+                              onChange={async e => {
+                                const files = Array.from(e.target.files || [])
                                 e.target.value = ''
-                                if (f) handleUpload(folder.id, f)
+                                for (const f of files) { await handleUpload(folder.id, f) }
                               }}
                             />
                             {isUploading ? (
