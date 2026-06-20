@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare,
-  Plus, ChevronLeft, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings
+  Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -2402,6 +2402,10 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
   const [zipping, setZipping] = useState(false)
   const [zipMsg, setZipMsg] = useState('')
+  const [galleryFiles, setGalleryFiles] = useState(null)
+  const [galleryIndex, setGalleryIndex] = useState(0)
+  const [galleryUrls, setGalleryUrls] = useState({})
+  const [galleryLoading, setGalleryLoading] = useState(false)
 
   useEffect(() => {
     loadAll()
@@ -2682,6 +2686,37 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
     }
   }
 
+  function openGallery(fileList) {
+    const imgs = (fileList || []).filter(f => (f.mime_type || '').startsWith('image/'))
+    if (imgs.length === 0) return
+    setGalleryUrls({}); setGalleryIndex(0); setGalleryFiles(imgs)
+  }
+
+  useEffect(() => {
+    if (!galleryFiles) return
+    const f = galleryFiles[galleryIndex]
+    if (!f || galleryUrls[f.id]) return
+    let cancelled = false
+    setGalleryLoading(true)
+    getSignedFileUrl(f.id, 'view').then(url => {
+      if (cancelled) return
+      if (url) setGalleryUrls(prev => ({ ...prev, [f.id]: url }))
+      setGalleryLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [galleryFiles, galleryIndex])
+
+  useEffect(() => {
+    if (!galleryFiles) return
+    function handleKey(e) {
+      if (e.key === 'Escape') { setGalleryFiles(null); return }
+      if (e.key === 'ArrowLeft') setGalleryIndex(i => (i - 1 + galleryFiles.length) % galleryFiles.length)
+      if (e.key === 'ArrowRight') setGalleryIndex(i => (i + 1) % galleryFiles.length)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [galleryFiles])
+
   async function handleUpdateDocType(fileId, newDocType) {
     try {
       const val = (newDocType || '').trim() || null
@@ -2926,6 +2961,15 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     {zipping ? (zipMsg || '準備中...') : '全部DL'}
                   </button>
                 ) : null}
+                {folderFiles.filter(f => (f.mime_type || '').startsWith('image/')).length >= 2 ? (
+                  <button
+                    onClick={() => openGallery(folderFiles)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    <Eye size={11} />
+                    全表示
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -3137,6 +3181,61 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
           </button>
         )
       ) : null}
+
+      <AnimatePresence>
+        {galleryFiles ? (
+          <motion.div
+            key="gallery"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setGalleryFiles(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 100002, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}
+          >
+            <button
+              onClick={e => { e.stopPropagation(); setGalleryFiles(null) }}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#E2E8F0', cursor: 'pointer', padding: 4 }}
+            >
+              <X size={24} />
+            </button>
+            <div style={{ position: 'absolute', top: 20, left: 20, fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>
+              {(galleryIndex + 1) + ' / ' + galleryFiles.length}
+            </div>
+            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, width: '100%' }}>
+              {galleryUrls[galleryFiles[galleryIndex].id] ? (
+                <img
+                  src={galleryUrls[galleryFiles[galleryIndex].id]}
+                  alt={galleryFiles[galleryIndex].file_name || ''}
+                  style={{ maxWidth: '90%', maxHeight: '82vh', objectFit: 'contain', borderRadius: 8 }}
+                />
+              ) : galleryLoading ? (
+                <Loader size={32} color="#c9a84c" />
+              ) : (
+                <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>読み込めません</div>
+              )}
+              <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', maxWidth: '90%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {galleryFiles[galleryIndex].file_name || ''}
+              </div>
+            </div>
+            {galleryFiles.length > 1 ? (
+              <button
+                onClick={e => { e.stopPropagation(); setGalleryIndex(i => (i - 1 + galleryFiles.length) % galleryFiles.length) }}
+                style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#E2E8F0', cursor: 'pointer', borderRadius: 6, padding: 8 }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+            ) : null}
+            {galleryFiles.length > 1 ? (
+              <button
+                onClick={e => { e.stopPropagation(); setGalleryIndex(i => (i + 1) % galleryFiles.length) }}
+                style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#E2E8F0', cursor: 'pointer', borderRadius: 6, padding: 8 }}
+              >
+                <ChevronRight size={24} />
+              </button>
+            ) : null}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
