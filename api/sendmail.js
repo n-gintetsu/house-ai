@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: 'House AI <onboarding@resend.dev>',
+      from: 'House-AI <noreply@house-ai.co.jp>',
       to: ['info@gintetsu-fudosan.co.jp'],
       subject: subject,
       text: `新しい依頼が届きました。\n\n${body}\n\n--\nHouse AI プラットフォーム`,
