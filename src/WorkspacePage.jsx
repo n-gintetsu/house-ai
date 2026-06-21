@@ -763,8 +763,14 @@ function DashboardView({ id }) {
       if (nreads) setBellNoticeReads(nreads)
     }
     fetchBellChat()
-    const timer = setInterval(fetchBellChat, 30000)
-    return () => { active = false; clearInterval(timer) }
+    const bellChannel = supabase
+      .channel(`ws-bell-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workspace_messages', filter: `workspace_id=eq.${id}` }, () => { fetchBellChat() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workspace_chat_reads', filter: `workspace_id=eq.${id}` }, () => { fetchBellChat() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ws_notice_reads', filter: `workspace_id=eq.${id}` }, () => { fetchBellChat() })
+      .subscribe()
+    const timer = setInterval(fetchBellChat, 120000)
+    return () => { active = false; clearInterval(timer); supabase.removeChannel(bellChannel) }
   }, [id, currentUserId])
 
   useEffect(() => {
