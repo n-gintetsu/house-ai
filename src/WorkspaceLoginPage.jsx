@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import { Mail, Loader, Lock, KeyRound } from 'lucide-react'
+import { Mail, Loader, Lock, KeyRound, HelpCircle } from 'lucide-react'
+import LoginHelpModal from './LoginHelpModal'
 
 export default function WorkspaceLoginPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,8 @@ export default function WorkspaceLoginPage() {
   const [mode, setMode] = useState('login') // 'login' | 'forgot' | 'forgot_sent' | 'reset'
   const [newPassword, setNewPassword] = useState('')
   const [newPassword2, setNewPassword2] = useState('')
+  const [showHelp, setShowHelp] = useState(false)
+  const [helpHover, setHelpHover] = useState(false)
 
   useEffect(() => {
     if (window.location.hash.includes('type=recovery')) {
@@ -345,6 +348,43 @@ export default function WorkspaceLoginPage() {
           House-AI Workspace
         </div>
       </div>
+
+      {/* 初めての方へ 固定ボタン */}
+      <button
+        onClick={() => setShowHelp(true)}
+        onMouseEnter={() => setHelpHover(true)}
+        onMouseLeave={() => setHelpHover(false)}
+        style={{
+          position: 'fixed',
+          right: 20,
+          bottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
+          zIndex: 200,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 16px',
+          background: 'rgba(15,23,42,0.92)',
+          border: '1px solid #c9a84c',
+          borderRadius: 12,
+          cursor: 'pointer',
+          boxShadow: helpHover
+            ? '0 8px 28px rgba(201,168,76,0.35), 0 0 0 1px rgba(201,168,76,0.2)'
+            : '0 4px 16px rgba(201,168,76,0.18), 0 0 0 1px rgba(201,168,76,0.08)',
+          transform: helpHover ? 'translateY(-2px)' : 'translateY(0)',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          fontFamily: 'inherit',
+        }}
+      >
+        <HelpCircle size={16} color="#c9a84c" />
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', lineHeight: 1.2 }}>初めての方へ</div>
+          <div style={{ fontSize: 10, fontWeight: 400, color: '#64748B', marginTop: 2 }}>ログイン・使い方ガイド</div>
+        </div>
+      </button>
+
+      {showHelp ? (
+        <LoginHelpModal onClose={() => setShowHelp(false)} />
+      ) : null}
     </div>
   )
 }
