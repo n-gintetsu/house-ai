@@ -59,9 +59,9 @@ export default function WorkspaceSignupPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* ロゴ */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 64, display: 'block', margin: '0 auto', objectFit: 'contain', filter: 'drop-shadow(0 0 14px rgba(201,168,76,0.7))' }} />
-          <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginTop: 8, letterSpacing: 3 }}>WORKSPACE</div>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 80, display: 'block', margin: '0 auto', objectFit: 'contain', filter: 'drop-shadow(0 0 14px rgba(201,168,76,0.7))' }} />
+          <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginTop: 6, letterSpacing: 3 }}>WORKSPACE</div>
         </div>
 
         {/* カード */}

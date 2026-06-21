@@ -9,7 +9,7 @@ export default function LoginHelpModal({ onClose }) {
   triggerCloseRef.current = () => {
     if (phase === 'closing') return
     setPhase('closing')
-    setTimeout(() => onClose(), 180)
+    setTimeout(() => onClose(), 480)
   }
 
   useEffect(() => {
@@ -25,15 +25,15 @@ export default function LoginHelpModal({ onClose }) {
 
   const overlayOpacity  = phase === 'visible' ? 1 : 0
   const overlayTrans    = phase === 'closing'
-    ? 'opacity 180ms ease'
+    ? 'opacity 480ms ease'
     : 'opacity 240ms cubic-bezier(0.22,1,0.36,1)'
 
   const cardOpacity   = phase === 'visible' ? 1 : 0
   const cardTransform = phase === 'closing'
-    ? 'translateY(28px) scale(0.96)'
+    ? 'translateY(200px) scale(0.86) rotate(20deg)'
     : (phase === 'entering' ? 'translateY(18px) scale(0.98)' : 'translateY(0) scale(1)')
   const cardTrans     = phase === 'closing'
-    ? 'opacity 180ms ease, transform 180ms ease'
+    ? 'opacity 480ms cubic-bezier(0.4,0,1,1), transform 480ms cubic-bezier(0.4,0,1,1)'
     : 'opacity 240ms cubic-bezier(0.22,1,0.36,1), transform 240ms cubic-bezier(0.22,1,0.36,1)'
 
   return (
@@ -96,6 +96,7 @@ export default function LoginHelpModal({ onClose }) {
             'ログインをクリック',
           ]} />
           <HelpNote>パスワードを忘れた場合は、ログインフォーム内の「パスワードをお忘れですか？」から再設定できます。</HelpNote>
+          <HelpNote>Googleアカウントをお持ちの方は「Googleでログイン」からワンタップでログインできます。</HelpNote>
         </HelpSection>
 
         <HelpDivider />
@@ -103,9 +104,8 @@ export default function LoginHelpModal({ onClose }) {
         <HelpSection title="新規登録方法" Icon={UserPlus}>
           <StepList steps={[
             '「新規登録（会社アカウント作成）」をクリック',
-            'メールアドレス・パスワードを登録',
-            '会社情報を入力',
-            'Workspaceを開始',
+            'メールアドレス・パスワードを入力',
+            '利用規約・プライバシーポリシーに同意して「登録」',
           ]} />
           <HelpNote>Googleログインも利用できます。</HelpNote>
           <div style={{ marginTop: 10, fontSize: 12, color: '#94A3B8', lineHeight: 1.7, padding: '10px 12px', background: 'rgba(255,255,255,.04)', borderRadius: 8, borderLeft: '2px solid rgba(201,168,76,.4)' }}>
