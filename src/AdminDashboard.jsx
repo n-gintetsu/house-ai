@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
+import { ExternalLink } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { ADMIN_EMAIL } from './adminEmail'
 
@@ -1284,6 +1285,9 @@ export default function AdminDashboard() {
           <div style={{ fontSize: 12, opacity: 0.7, marginTop: 2 }}>GINTETSU不動産株式会社</div>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <a href="https://hq.house-ai.co.jp" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#c9a84c', fontSize: 13, fontWeight: 500, textDecoration: 'none', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 8, padding: '7px 14px' }}>
+            統合本部 HQ<ExternalLink size={12} style={{ flexShrink: 0 }} />
+          </a>
           <button onClick={loadAll} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
             🔄 更新
           </button>
