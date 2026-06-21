@@ -12,6 +12,7 @@ import WorkspaceNav from './WorkspaceNav'
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 import MobileWorkspaceLayout from './MobileWorkspaceLayout'
 import MobileHeader from './MobileHeader'
+import FeedbackModal from './FeedbackModal'
 
 function normalizeLabel(s) {
   return (s || '').trim().replace(/\s+/g, ' ')
@@ -606,6 +607,7 @@ function DashboardView({ id }) {
   const [showLogoMenu, setShowLogoMenu] = useState(false)
   const [legalModal, setLegalModal] = useState(null)
   const [showAvatarModal, setShowAvatarModal] = useState(false)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [myAvatarUrl, setMyAvatarUrl] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -1485,6 +1487,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アイコン編集</div>
                 <div onClick={() => { window.open('/ws-legal', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>利用規約</div>
                 <div onClick={() => { window.open('/ws-legal?tab=privacy', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>プライバシーポリシー</div>
+                <div onClick={() => { setShowFeedbackModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>ご意見・不具合報告</div>
               </div>
             </>
           ) : null}
@@ -2408,6 +2411,14 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             </div>
           </div>
         </div>
+      ) : null}
+
+      {showFeedbackModal ? (
+        <FeedbackModal
+          onClose={() => setShowFeedbackModal(false)}
+          currentUserId={currentUserId}
+          orgId={workspace ? workspace.org_id : null}
+        />
       ) : null}
 
       {legalModal !== null ? (
