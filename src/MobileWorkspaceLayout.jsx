@@ -441,12 +441,26 @@ export default function MobileWorkspaceLayout() {
       let done = 0
       for (const fl of folders) {
         const dir = safeName(getFolderDisplayName(fl)) || ('folder_' + fl.id)
+        const used = {}
         for (const f of getFolderFiles(fl.id)) {
           setZipMsg('準備中 ' + (done + 1) + '/' + total)
           const blob = await fetchFileBlob(f)
           done++
           if (!blob) continue
-          zip.file(dir + '/' + (f.file_name || ('file_' + f.id)), blob)
+          const origName = f.file_name || ('file_' + f.id)
+          if (!used[origName]) used[origName] = 0
+          const count = used[origName]
+          used[origName]++
+          let nm
+          if (count === 0) {
+            nm = origName
+          } else {
+            const d = origName.lastIndexOf('.')
+            const b = d > 0 ? origName.slice(0, d) : origName
+            const e = d > 0 ? origName.slice(d) : ''
+            nm = b + '_' + count + e
+          }
+          zip.file(dir + '/' + nm, blob)
         }
       }
       const content = await zip.generateAsync({ type: 'blob' })
