@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { Mail, Loader, Lock, KeyRound, HelpCircle } from 'lucide-react'
 import LoginHelpModal from './LoginHelpModal'
@@ -14,6 +14,26 @@ export default function WorkspaceLoginPage() {
   const [newPassword2, setNewPassword2] = useState('')
   const [showHelp, setShowHelp] = useState(false)
   const [helpHover, setHelpHover] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  const [helpExpanded, setHelpExpanded] = useState(false)
+  const fabRef = useRef(null)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    if (!helpExpanded) return
+    const handleDocClick = (e) => {
+      if (fabRef.current && !fabRef.current.contains(e.target)) {
+        setHelpExpanded(false)
+      }
+    }
+    document.addEventListener('click', handleDocClick)
+    return () => document.removeEventListener('click', handleDocClick)
+  }, [helpExpanded])
 
   useEffect(() => {
     if (window.location.hash.includes('type=recovery')) {
@@ -350,37 +370,102 @@ export default function WorkspaceLoginPage() {
       </div>
 
       {/* 初めての方へ 固定ボタン */}
-      <button
-        onClick={() => setShowHelp(true)}
-        onMouseEnter={() => setHelpHover(true)}
-        onMouseLeave={() => setHelpHover(false)}
-        style={{
-          position: 'fixed',
-          right: 20,
-          bottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
-          zIndex: 200,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '10px 16px',
-          background: 'rgba(15,23,42,0.92)',
-          border: '1px solid #c9a84c',
-          borderRadius: 12,
-          cursor: 'pointer',
-          boxShadow: helpHover
-            ? '0 8px 28px rgba(201,168,76,0.35), 0 0 0 1px rgba(201,168,76,0.2)'
-            : '0 4px 16px rgba(201,168,76,0.18), 0 0 0 1px rgba(201,168,76,0.08)',
-          transform: helpHover ? 'translateY(-2px)' : 'translateY(0)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-          fontFamily: 'inherit',
-        }}
-      >
-        <HelpCircle size={16} color="#c9a84c" />
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', lineHeight: 1.2 }}>初めての方へ</div>
-          <div style={{ fontSize: 10, fontWeight: 400, color: '#64748B', marginTop: 2 }}>ログイン・使い方ガイド</div>
+      {isMobile ? (
+        /* ── モバイル: 開閉式FAB ── */
+        <div
+          ref={fabRef}
+          style={{
+            position: 'fixed',
+            right: 16,
+            bottom: 'max(20px, env(safe-area-inset-bottom, 0px))',
+            zIndex: 200,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {/* ピル（FABの左から展開） */}
+          <div
+            style={{
+              overflow: 'hidden',
+              maxWidth: helpExpanded ? 220 : 0,
+              opacity: helpExpanded ? 1 : 0,
+              transition: 'max-width 260ms cubic-bezier(0.22,1,0.36,1), opacity 260ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          >
+            <div
+              onClick={() => { setShowHelp(true); setHelpExpanded(false) }}
+              style={{
+                whiteSpace: 'nowrap',
+                background: 'rgba(10,15,30,0.95)',
+                border: '1px solid #c9a84c',
+                borderRadius: 10,
+                cursor: 'pointer',
+                padding: '8px 14px',
+                boxSizing: 'border-box',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', lineHeight: 1.2 }}>初めての方へ</div>
+              <div style={{ fontSize: 10, fontWeight: 400, color: '#64748B', marginTop: 2 }}>ログイン・使い方ガイド</div>
+            </div>
+          </div>
+          {/* 丸FAB */}
+          <button
+            onClick={() => setHelpExpanded(function(v) { return !v })}
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: '50%',
+              background: 'rgba(10,15,30,0.95)',
+              border: '1px solid #c9a84c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+              flexShrink: 0,
+              boxShadow: '0 4px 16px rgba(201,168,76,0.18)',
+              fontFamily: 'inherit',
+            }}
+          >
+            <HelpCircle size={20} color="#c9a84c" />
+          </button>
         </div>
-      </button>
+      ) : (
+        /* ── PC: 横長ラベルカード（変更なし） ── */
+        <button
+          onClick={() => setShowHelp(true)}
+          onMouseEnter={() => setHelpHover(true)}
+          onMouseLeave={() => setHelpHover(false)}
+          style={{
+            position: 'fixed',
+            right: 20,
+            bottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
+            zIndex: 200,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 16px',
+            background: 'rgba(15,23,42,0.92)',
+            border: '1px solid #c9a84c',
+            borderRadius: 12,
+            cursor: 'pointer',
+            boxShadow: helpHover
+              ? '0 8px 28px rgba(201,168,76,0.35), 0 0 0 1px rgba(201,168,76,0.2)'
+              : '0 4px 16px rgba(201,168,76,0.18), 0 0 0 1px rgba(201,168,76,0.08)',
+            transform: helpHover ? 'translateY(-2px)' : 'translateY(0)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            fontFamily: 'inherit',
+          }}
+        >
+          <HelpCircle size={16} color="#c9a84c" />
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', lineHeight: 1.2 }}>初めての方へ</div>
+            <div style={{ fontSize: 10, fontWeight: 400, color: '#64748B', marginTop: 2 }}>ログイン・使い方ガイド</div>
+          </div>
+        </button>
+      )}
 
       {showHelp ? (
         <LoginHelpModal onClose={() => setShowHelp(false)} />
