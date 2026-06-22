@@ -670,6 +670,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           system: buildAiSystemPrompt(),
           messages: history,
           max_tokens: 900,
+          source_tool: 'workspace',
+          feature: 'workspace_chat',
         }),
       })
       const data = await res.json()
