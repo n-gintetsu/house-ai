@@ -1,3 +1,11 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
+
 /**
  * Vercel Serverless Function: POST /api/claude
  * ANTHROPIC_API_KEY はサーバー環境変数のみで参照（クライアントに露出しない）
@@ -35,6 +43,8 @@ export default async function handler(req, res) {
     max_tokens: maxTokensBody,
     maxTokens: maxTokensAlt,
     tools,
+    source_tool,
+    feature,
   } = body
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -80,6 +90,21 @@ export default async function handler(req, res) {
     .filter((c) => c?.type === 'text' && typeof c?.text === 'string')
     .map((c) => c.text)
     .join('')
+
+  const usage = (data && data.usage) || {}
+  try {
+    await supabaseAdmin.from('ai_usage_events').insert({
+      source_tool: source_tool || 'main',
+      feature: feature || 'unknown',
+      model: anthropicBody.model,
+      input_tokens: 'input_tokens' in usage ? usage.input_tokens : null,
+      output_tokens: 'output_tokens' in usage ? usage.output_tokens : null,
+      cache_creation_input_tokens: 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null,
+      cache_read_input_tokens: 'cache_read_input_tokens' in usage ? usage.cache_read_input_tokens : null,
+    })
+  } catch (e) {
+    console.error('[ai_usage_events] insert failed:', e)
+  }
 
   return res.status(200).json({ text })
 }
