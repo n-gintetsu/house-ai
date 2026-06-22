@@ -1,4 +1,11 @@
 import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -46,6 +53,21 @@ export default async function handler(req, res) {
 
       const claudeData = await claudeResponse.json();
       const replyText = claudeData.content[0].text;
+
+      const usage = (claudeData && claudeData.usage) || {}
+      try {
+        await supabaseAdmin.from('ai_usage_events').insert({
+          source_tool: 'main',
+          feature: 'linebot',
+          model: 'claude-sonnet-4-20250514',
+          input_tokens: 'input_tokens' in usage ? usage.input_tokens : null,
+          output_tokens: 'output_tokens' in usage ? usage.output_tokens : null,
+          cache_creation_input_tokens: 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null,
+          cache_read_input_tokens: 'cache_read_input_tokens' in usage ? usage.cache_read_input_tokens : null,
+        })
+      } catch (e) {
+        console.error('[ai_usage_events] insert failed:', e)
+      }
 
       await fetch('https://api.line.me/v2/bot/message/reply', {
         method: 'POST',

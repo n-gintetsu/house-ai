@@ -1,3 +1,11 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -68,6 +76,20 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error?.message || 'API error');
+    const usage = (data && data.usage) || {}
+    try {
+      await supabaseAdmin.from('ai_usage_events').insert({
+        source_tool: 'main',
+        feature: 'property_chat',
+        model: 'claude-haiku-4-5-20251001',
+        input_tokens: 'input_tokens' in usage ? usage.input_tokens : null,
+        output_tokens: 'output_tokens' in usage ? usage.output_tokens : null,
+        cache_creation_input_tokens: 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null,
+        cache_read_input_tokens: 'cache_read_input_tokens' in usage ? usage.cache_read_input_tokens : null,
+      })
+    } catch (e) {
+      console.error('[ai_usage_events] insert failed:', e)
+    }
     res.json({ reply: data.content[0].text });
   } catch (err) {
     res.status(500).json({ error: err.message });
