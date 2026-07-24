@@ -1646,11 +1646,21 @@ export default function AdminDashboard() {
           {tab === 'reports' && (
             <div>
               <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🚨 通報・トラブル管理</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+                {[{ id: 'main', label: '🏠 本体通報' }, { id: 'area', label: '📍 Area通報' }, { id: 'feedback', label: '💬 ご意見・不具合' }].map(t => (
+                  <button key={t.id} onClick={() => setReportsSubTab(t.id)}
+                    style={{ padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      background: reportsSubTab === t.id ? '#1a3a5c' : '#f0f0f0',
+                      color: reportsSubTab === t.id ? '#fff' : '#555' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
               {reportLoading && <p style={{ color: '#777' }}>読み込み中...</p>}
-              {!reportLoading && reports.length === 0 && (
+              {reportsSubTab === 'main' && !reportLoading && reports.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在通報はありません ✅</div>
               )}
-              {reports.map(r => {
+              {reportsSubTab === 'main' && reports.map(r => {
                 const statusMap = { new: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未対応' }, investigating: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, resolved: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, rejected: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
                 const s = statusMap[r.status] || statusMap['new']
                 return (
