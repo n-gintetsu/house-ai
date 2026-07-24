@@ -927,6 +927,9 @@ export default function AdminDashboard() {
   const [vendorSubTab, setVendorSubTab] = useState('agency')
   const [reports, setReports] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
+  const [reportsSubTab, setReportsSubTab] = useState('main')
+  const [areaReports, setAreaReports] = useState([])
+  const [areaFeedback, setAreaFeedback] = useState([])
   const [casesSubTab, setCasesSubTab] = useState('valuations')
   const [billingSubTab, setBillingSubTab] = useState('agency')
   const [expertRegs, setExpertRegs] = useState([])
@@ -1016,9 +1019,11 @@ export default function AdminDashboard() {
   }, [tab, vendorSubTab])
 
   useEffect(() => {
-    if (tab === 'reports') fetchReports()
+    if (tab === 'reports' && reportsSubTab === 'main') fetchReports()
+    if (tab === 'reports' && reportsSubTab === 'area') fetchAreaReports()
+    if (tab === 'reports' && reportsSubTab === 'feedback') fetchAreaFeedback()
     if (tab === 'billing' && billingSubTab === 'expert') fetchExpertRegs()
-  }, [tab, billingSubTab])
+  }, [tab, billingSubTab, reportsSubTab])
 
   useEffect(() => {
     if (selectedAgency) { fetchAgencyNotes(selectedAgency.id); setAgencyNoteInput('') }
@@ -1129,6 +1134,30 @@ export default function AdminDashboard() {
     const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false })
     setReports(data || [])
     setReportLoading(false)
+  }
+
+  async function fetchAreaReports() {
+    setReportLoading(true)
+    const { data } = await supabase.from('area_reports').select('*').is('deleted_at', null).order('created_at', { ascending: false })
+    setAreaReports(data || [])
+    setReportLoading(false)
+  }
+
+  async function fetchAreaFeedback() {
+    setReportLoading(true)
+    const { data } = await supabase.from('area_feedback').select('*').is('deleted_at', null).order('created_at', { ascending: false })
+    setAreaFeedback(data || [])
+    setReportLoading(false)
+  }
+
+  async function updateAreaReportStatus(id, status) {
+    await supabase.from('area_reports').update({ status }).eq('id', id)
+    setAreaReports(list => list.map(r => r.id === id ? { ...r, status } : r))
+  }
+
+  async function updateAreaFeedbackStatus(id, status) {
+    await supabase.from('area_feedback').update({ status }).eq('id', id)
+    setAreaFeedback(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function updateReportStatus(id, status) {
