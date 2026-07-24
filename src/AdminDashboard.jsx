@@ -1660,6 +1660,63 @@ export default function AdminDashboard() {
               {reportsSubTab === 'main' && !reportLoading && reports.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在通報はありません ✅</div>
               )}
+              {reportsSubTab === 'area' && !reportLoading && areaReports.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在Areaの通報はありません ✅</div>
+              )}
+              {reportsSubTab === 'area' && areaReports.map(r => {
+                const statusMap = { new: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未対応' }, investigating: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, resolved: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, rejected: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
+                const s = statusMap[r.status] || statusMap['new']
+                return (
+                  <div key={r.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{r.reason || '（理由未記入）'}</div>
+                        <div style={{ fontSize: 13, color: '#333', marginTop: 6, whiteSpace: 'pre-wrap' }}>{r.body}</div>
+                        {r.target_type && <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>対象種別：{r.target_type}</div>}
+                        {r.contact_email && <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>返信先：{r.contact_email}</div>}
+                        {r.page_url && <div style={{ fontSize: 11, color: '#888', marginTop: 4, wordBreak: 'break-all' }}>{r.page_url}</div>}
+                        <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : ''}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>{s.label}</span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {r.status !== 'investigating' && <button onClick={() => updateAreaReportStatus(r.id, 'investigating')} style={{ padding: '4px 10px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>調査中にする</button>}
+                          {r.status !== 'resolved' && <button onClick={() => updateAreaReportStatus(r.id, 'resolved')} style={{ padding: '4px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>対応済み</button>}
+                          {r.status !== 'rejected' && <button onClick={() => updateAreaReportStatus(r.id, 'rejected')} style={{ padding: '4px 10px', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>却下</button>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {reportsSubTab === 'feedback' && !reportLoading && areaFeedback.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在ご意見・不具合の報告はありません ✅</div>
+              )}
+              {reportsSubTab === 'feedback' && areaFeedback.map(r => {
+                const statusMap = { new: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未対応' }, investigating: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, resolved: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, rejected: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
+                const s = statusMap[r.status] || statusMap['new']
+                return (
+                  <div key={r.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{r.category || '（種別未設定）'}</div>
+                        <div style={{ fontSize: 13, color: '#333', marginTop: 6, whiteSpace: 'pre-wrap' }}>{r.body}</div>
+                        {r.contact_email && <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>返信先：{r.contact_email}</div>}
+                        {r.page_url && <div style={{ fontSize: 11, color: '#888', marginTop: 4, wordBreak: 'break-all' }}>{r.page_url}</div>}
+                        <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : ''}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>{s.label}</span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {r.status !== 'investigating' && <button onClick={() => updateAreaFeedbackStatus(r.id, 'investigating')} style={{ padding: '4px 10px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>調査中にする</button>}
+                          {r.status !== 'resolved' && <button onClick={() => updateAreaFeedbackStatus(r.id, 'resolved')} style={{ padding: '4px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>対応済み</button>}
+                          {r.status !== 'rejected' && <button onClick={() => updateAreaFeedbackStatus(r.id, 'rejected')} style={{ padding: '4px 10px', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>却下</button>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
               {reportsSubTab === 'main' && reports.map(r => {
                 const statusMap = { new: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未対応' }, investigating: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, resolved: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, rejected: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
                 const s = statusMap[r.status] || statusMap['new']
