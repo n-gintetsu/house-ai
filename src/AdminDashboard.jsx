@@ -1622,8 +1622,8 @@ export default function AdminDashboard() {
                 <div style={{ textAlign: 'center', padding: '40px 0', color: '#16a34a', fontSize: 15, fontWeight: 700 }}>現在通報はありません ✅</div>
               )}
               {reports.map(r => {
-                const statusMap = { 未確認: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未確認' }, 調査中: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, 対応済み: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, 却下: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
-                const s = statusMap[r.status] || statusMap['未確認']
+                const statusMap = { new: { bg: '#fef9c3', color: '#92400e', label: '⏳ 未対応' }, investigating: { bg: '#fff7ed', color: '#c2410c', label: '🔍 調査中' }, resolved: { bg: '#dcfce7', color: '#16a34a', label: '✅ 対応済み' }, rejected: { bg: '#f1f5f9', color: '#94a3b8', label: '— 却下' } }
+                const s = statusMap[r.status] || statusMap['new']
                 return (
                   <div key={r.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
@@ -1635,9 +1635,9 @@ export default function AdminDashboard() {
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                         <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>{s.label}</span>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          {r.status !== '調査中' && <button onClick={() => updateReportStatus(r.id, '調査中')} style={{ padding: '4px 10px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>調査中にする</button>}
-                          {r.status !== '対応済み' && <button onClick={() => updateReportStatus(r.id, '対応済み')} style={{ padding: '4px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>対応済み</button>}
-                          {r.status !== '却下' && <button onClick={() => updateReportStatus(r.id, '却下')} style={{ padding: '4px 10px', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>却下</button>}
+                          {r.status !== 'investigating' && <button onClick={() => updateReportStatus(r.id, 'investigating')} style={{ padding: '4px 10px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>調査中にする</button>}
+                          {r.status !== 'resolved' && <button onClick={() => updateReportStatus(r.id, 'resolved')} style={{ padding: '4px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>対応済み</button>}
+                          {r.status !== 'rejected' && <button onClick={() => updateReportStatus(r.id, 'rejected')} style={{ padding: '4px 10px', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>却下</button>}
                         </div>
                       </div>
                     </div>
