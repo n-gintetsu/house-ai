@@ -1019,9 +1019,7 @@ export default function AdminDashboard() {
   }, [tab, vendorSubTab])
 
   useEffect(() => {
-    if (tab === 'reports' && reportsSubTab === 'main') fetchReports()
-    if (tab === 'reports' && reportsSubTab === 'area') fetchAreaReports()
-    if (tab === 'reports' && reportsSubTab === 'feedback') fetchAreaFeedback()
+    if (tab === 'reports') fetchAllReports()
     if (tab === 'billing' && billingSubTab === 'expert') fetchExpertRegs()
   }, [tab, billingSubTab, reportsSubTab])
 
@@ -1136,6 +1134,29 @@ export default function AdminDashboard() {
     setReportLoading(false)
   }
 
+  async function callReportsApi(body) {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = (sessionData && sessionData.session && sessionData.session.access_token) || ''
+    const res = await fetch('/api/admin-area-reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  }
+
+  async function fetchAllReports() {
+    setReportLoading(true)
+    const json = await callReportsApi({ action: 'list' })
+    if (json) {
+      setReports(json.reports || [])
+      setAreaReports(json.areaReports || [])
+      setAreaFeedback(json.areaFeedback || [])
+    }
+    setReportLoading(false)
+  }
+
   async function fetchAreaReports() {
     setReportLoading(true)
     const { data } = await supabase.from('area_reports').select('*').is('deleted_at', null).order('created_at', { ascending: false })
@@ -1151,17 +1172,17 @@ export default function AdminDashboard() {
   }
 
   async function updateAreaReportStatus(id, status) {
-    await supabase.from('area_reports').update({ status }).eq('id', id)
+    await callReportsApi({ action: 'update', table: 'area_reports', id, status })
     setAreaReports(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function updateAreaFeedbackStatus(id, status) {
-    await supabase.from('area_feedback').update({ status }).eq('id', id)
+    await callReportsApi({ action: 'update', table: 'area_feedback', id, status })
     setAreaFeedback(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function updateReportStatus(id, status) {
-    await supabase.from('reports').update({ status }).eq('id', id)
+    await callReportsApi({ action: 'update', table: 'reports', id, status })
     setReports(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
