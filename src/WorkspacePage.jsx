@@ -59,7 +59,7 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
-const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン', '不動産担保ローン', 'その他（アジェンダ/汎用）']
+const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン', '不動産担保ローン', 'アジェンダ']
 const ROLE_OPTIONS = ['お客様', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
 const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
 const PERMISSION_LABEL = {
