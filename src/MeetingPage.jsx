@@ -78,6 +78,7 @@ export default function MeetingPage() {
       })
       callRef.current = call
 
+      call.on('joined-meeting', () => { if (destroyed) return; setPhase('joined') })
       call.on('left-meeting', () => { if (destroyed) return; setPhase('left') })
       call.on('error', (e) => {
         if (destroyed) return
@@ -144,7 +145,7 @@ export default function MeetingPage() {
 
   return (
     <div style={page}>
-      {phase === 'loading' || phase === 'joining' ? (
+      {phase === 'loading' ? (
         <div style={{ ...center, flexDirection: 'row', gap: 12 }}>
           <Loader size={22} color="#c9a84c" />
           <span style={{ fontSize: 14, color: '#64748B', fontWeight: 400 }}>接続しています...</span>
@@ -173,7 +174,7 @@ export default function MeetingPage() {
       <div
         ref={containerRef}
         style={{
-          display: phase === 'joined' ? 'block' : 'none',
+          display: (phase === 'joined' || phase === 'joining') ? 'block' : 'none',
           width: '100%',
           height: '100vh',
         }}
