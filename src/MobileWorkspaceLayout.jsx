@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
 import JSZip from 'jszip'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 
@@ -1332,12 +1332,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                     style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', opacity: 0, margin: 0, padding: 0, border: 'none', background: 'transparent', fontSize: 16 }}
                   />
                 </div>
-                <input
-                  type="time"
-                  value={meetingTime}
-                  onChange={e => setMeetingTime(e.target.value)}
-                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40 }}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '8px 10px', minHeight: 40, boxSizing: 'border-box', color: meetingTime ? '#E2E8F0' : '#94A3B8' }}>
+                    <Clock size={18} color="#c9a84c" />
+                    <span>{meetingTime ? meetingTime : '時刻を選択（任意）'}</span>
+                  </div>
+                  <input
+                    type="time"
+                    value={meetingTime}
+                    onChange={e => setMeetingTime(e.target.value)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', opacity: 0, margin: 0, padding: 0, border: 'none', background: 'transparent', fontSize: 16 }}
+                  />
+                </div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 400, color: '#94A3B8', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
