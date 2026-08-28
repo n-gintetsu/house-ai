@@ -1701,7 +1701,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} />
 
           {/* 中央カラム */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
 
             {/* ROADMAP */}
             <div style={{ ...glass, borderRadius: 14, padding: 24, overflow: 'visible' }}>
@@ -1953,18 +1953,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                       value={meetingTitle}
                       onChange={e => setMeetingTitle(e.target.value)}
                       placeholder="例: 鈴木様 オンライン内見"
-                      style={{ ...fi, flex: 1 }}
+                      style={{ ...fi, flex: 1, minWidth: 0 }}
                     />
-                    <select value={meetingType} onChange={e => setMeetingType(e.target.value)} style={{ ...fiSel, width: 150, flexShrink: 0 }}>
+                    <select value={meetingType} onChange={e => setMeetingType(e.target.value)} style={{ ...fiSel, width: 130, flexShrink: 0 }}>
                       <option value="internal_meeting" style={{ background: '#0F172A' }}>社内MTG</option>
                       <option value="customer_meeting" style={{ background: '#0F172A' }}>顧客面談</option>
                       <option value="online_viewing" style={{ background: '#0F172A' }}>オンライン内見</option>
                     </select>
-                    <input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} style={{ ...fi, width: 160, flexShrink: 0 }} />
-                    <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} style={{ ...fi, width: 120, flexShrink: 0 }} />
+                    <input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} style={{ ...fi, width: 150, flexShrink: 0 }} />
+                    <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} style={{ ...fi, width: 110, flexShrink: 0 }} />
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94A3B8', fontWeight: 400, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
                       <input type="checkbox" checked={meetingGuest} onChange={e => setMeetingGuest(e.target.checked)} style={{ width: 14, height: 14, accentColor: '#c9a84c', cursor: 'pointer' }} />
-                      外部ゲストを招待する
+                      ゲスト招待
                     </label>
                     <button
                       onClick={() => { setShowMeetingForm(false); setMeetingTitle(''); setMeetingDate(''); setMeetingTime(''); setMeetingType('internal_meeting'); setMeetingGuest(false); setMeetingError('') }}
