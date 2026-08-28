@@ -74,6 +74,7 @@ export default function MeetingPage() {
 
       const call = DailyIframe.createFrame(containerRef.current, {
         showLeaveButton: true,
+        lang: 'jp',
         iframeStyle: { width: '100%', height: '100%', border: '0' },
       })
       callRef.current = call
