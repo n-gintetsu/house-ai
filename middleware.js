@@ -21,7 +21,8 @@ export default function middleware(request) {
     pathname === '/houses/' ||
     pathname === '/clients' ||
     pathname === '/clients/' ||
-    pathname.startsWith('/house/')
+    pathname.startsWith('/house/') ||
+    pathname.startsWith('/meeting/')
   ) return
 
   const authHeader = request.headers.get('authorization')

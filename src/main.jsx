@@ -39,6 +39,7 @@ import WorkspaceSignupPage from './WorkspaceSignupPage'
 import WorkspaceAuthGuard from './WorkspaceAuthGuard'
 import LegalPage from './LegalPage'
 import WorkspaceLegalPage from './WorkspaceLegalPage'
+import MeetingPage from './MeetingPage'
 
 function ExperienceApp() {
   return (
@@ -150,6 +151,7 @@ const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/w
 const _isWsPath =
   _WS_ALLOW.some(p => pathname === p || pathname === p + '/') ||
   pathname.startsWith('/house/') ||
+  pathname.startsWith('/meeting/') ||
   pathname.startsWith('/auth/')
 
 // 認証コールバック（本体ルートに着地した access_token/recovery）→ /workspace へ転送（変更なし）
@@ -204,6 +206,8 @@ if (!HONTAI_PUBLIC && !_isWsPath && (window.location.hash.includes('access_token
     Component = () => <WorkspaceAuthGuard><ClientsListPage /></WorkspaceAuthGuard>
   } else if (pathname.startsWith('/house/')) {
     Component = () => <WorkspaceAuthGuard><HouseRecordPage /></WorkspaceAuthGuard>
+  } else if (pathname.startsWith('/meeting/')) {
+    Component = MeetingPage
   } else if (pathname.startsWith('/experiences')) {
     Component = ExperienceApp
   }
