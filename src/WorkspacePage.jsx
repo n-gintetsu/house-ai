@@ -1947,21 +1947,21 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               )}
               {showMeetingForm ? (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
                     <input
                       type="text"
                       value={meetingTitle}
                       onChange={e => setMeetingTitle(e.target.value)}
-                      placeholder="例: 鈴木様 オンライン内見"
-                      style={{ ...fi, flex: 1, minWidth: 0 }}
+                      placeholder="会議のタイトル"
+                      style={{ ...fi, flex: 1, minWidth: 180 }}
                     />
-                    <select value={meetingType} onChange={e => setMeetingType(e.target.value)} style={{ ...fiSel, width: 130, flexShrink: 0 }}>
+                    <select value={meetingType} onChange={e => setMeetingType(e.target.value)} style={{ ...fiSel, width: 120, flexShrink: 0 }}>
                       <option value="internal_meeting" style={{ background: '#0F172A' }}>社内MTG</option>
                       <option value="customer_meeting" style={{ background: '#0F172A' }}>顧客面談</option>
                       <option value="online_viewing" style={{ background: '#0F172A' }}>オンライン内見</option>
                     </select>
-                    <input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} style={{ ...fi, width: 150, flexShrink: 0 }} />
-                    <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} style={{ ...fi, width: 110, flexShrink: 0 }} />
+                    <input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} style={{ ...fi, width: 140, flexShrink: 0 }} />
+                    <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} style={{ ...fi, width: 100, flexShrink: 0 }} />
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94A3B8', fontWeight: 400, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
                       <input type="checkbox" checked={meetingGuest} onChange={e => setMeetingGuest(e.target.checked)} style={{ width: 14, height: 14, accentColor: '#c9a84c', cursor: 'pointer' }} />
                       ゲスト招待
