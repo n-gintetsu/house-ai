@@ -625,6 +625,7 @@ function DashboardView({ id }) {
   const [meetingError, setMeetingError] = useState('')
   const [guestUrl, setGuestUrl] = useState('')
   const [guestUrlCopied, setGuestUrlCopied] = useState(false)
+  const [cancelingId, setCancelingId] = useState('')
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
   const [showLogoMenu, setShowLogoMenu] = useState(false)
@@ -1228,6 +1229,32 @@ function DashboardView({ id }) {
       setShowMeetingForm(false)
     } finally {
       setMeetingBusy(false)
+    }
+  }
+
+  const handleCancelMeeting = async (meetingId) => {
+    const ok = window.confirm('この会議を中止します。よろしいですか？')
+    if (!ok) return
+    setCancelingId(meetingId)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = (data && data.session && data.session.access_token) || ''
+      const res = await fetch('/api/meeting-cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ meetingId: meetingId }),
+      })
+      if (!res.ok) {
+        setMeetingError('会議の中止に失敗しました')
+        return
+      }
+      const json = await res.json()
+      setMeetings(prev => prev.map(m => (m.id === meetingId ? json.meeting : m)))
+    } catch (e) {
+      console.error('meeting cancel error', e)
+      setMeetingError('会議の中止に失敗しました')
+    } finally {
+      setCancelingId('')
     }
   }
 
@@ -1944,6 +1971,15 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         <Video size={12} />参加する
                       </button>
                     )}
+                    {canManage && !MEETING_CLOSED_STATUSES.includes(m.status) ? (
+                      <button
+                        onClick={() => handleCancelMeeting(m.id)}
+                        disabled={cancelingId === m.id}
+                        style={{ ...cancelBtn, flexShrink: 0, whiteSpace: 'nowrap' }}
+                      >
+                        {cancelingId === m.id ? '中止中...' : '中止'}
+                      </button>
+                    ) : null}
                   </div>
                 ))
               )}
