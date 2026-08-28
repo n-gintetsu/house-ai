@@ -169,10 +169,6 @@ export default function MeetingPage() {
         </div>
       ) : null}
 
-      {phase === 'joined' && meetingTitle ? (
-        <div style={{ padding: '8px 16px', fontSize: 12, color: '#64748B', fontWeight: 400, position: 'absolute', top: 0, left: 0, zIndex: 2, pointerEvents: 'none' }}>{meetingTitle}</div>
-      ) : null}
-
       {/* 通話コンテナは createFrame の時点で DOM が必要なので常に描画し、未参加時は非表示にする */}
       <div
         ref={containerRef}
