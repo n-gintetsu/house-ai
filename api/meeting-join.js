@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     // ワークスペースメンバーシップ確認
     const { data: member, error: memberErr } = await supabaseAdmin
       .from('workspace_members')
-      .select('id, role')
+      .select('id, role, display_name, email')
       .eq('workspace_id', meeting.workspace_id)
       .eq('user_id', user.id)
       .eq('status', 'active')
@@ -77,8 +77,26 @@ export default async function handler(req, res) {
 
     const role = normRole(member.role)
     isOwner = role === 'Owner' || role === 'Manager'
-    // 表示名はこの時点では取得しない（プロフィール参照は今後の対応）
-    userName = 'メンバー'
+
+    // 表示名（取得に失敗しても参加は妨げない。値そのものはログに出さない）
+    let profile = null
+    try {
+      const { data: profileData, error: profileErr } = await supabaseAdmin
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (profileErr) console.error('meeting-join: profile fetch failed', profileErr.message || '')
+      profile = profileData || null
+    } catch (e) {
+      console.error('meeting-join: profile fetch error')
+    }
+
+    // 優先順は WorkspacePage の既存実装に合わせる
+    const profileName = (profile && profile.display_name) || ''
+    const memberName = member.display_name || ''
+    const emailName = (member.email || '').split('@')[0] || ''
+    userName = profileName || memberName || emailName || 'メンバー'
   } else {
     // B) ゲスト
     if (!guestToken) return res.status(401).json({ error: 'no_token' })
