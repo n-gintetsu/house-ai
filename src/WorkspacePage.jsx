@@ -624,6 +624,7 @@ function DashboardView({ id }) {
   const [meetingBusy, setMeetingBusy] = useState(false)
   const [meetingError, setMeetingError] = useState('')
   const [guestUrl, setGuestUrl] = useState('')
+  const [guestUrlCopied, setGuestUrlCopied] = useState(false)
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [noticeForm, setNoticeForm] = useState({ level: 'info', message: '' })
   const [showLogoMenu, setShowLogoMenu] = useState(false)
@@ -1197,6 +1198,7 @@ function DashboardView({ id }) {
     setMeetingBusy(true)
     setMeetingError('')
     setGuestUrl('')
+    setGuestUrlCopied(false)
     try {
       if (!meetingTitle) { setMeetingError('タイトルを入力してください'); return }
       let scheduledAt = null
@@ -1992,7 +1994,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   <div style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>ゲスト招待URL</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{guestUrl}</span>
-                    <button onClick={() => { navigator.clipboard.writeText(guestUrl) }} style={{ ...cancelBtn, color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)', whiteSpace: 'nowrap', flexShrink: 0 }}>コピー</button>
+                    <button onClick={() => { navigator.clipboard.writeText(guestUrl); setGuestUrlCopied(true); setTimeout(() => setGuestUrlCopied(false), 2000) }} style={{ ...cancelBtn, color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)', whiteSpace: 'nowrap', flexShrink: 0, minWidth: 96, textAlign: 'center' }}>{guestUrlCopied ? 'コピーしました' : 'コピー'}</button>
                   </div>
                   <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>このURLは一度しか表示されません。閉じる前にコピーしてください。</div>
                 </div>

@@ -30,6 +30,7 @@ export default function MeetingPage() {
 
   useEffect(() => {
     let mounted = true
+    let destroyed = false
 
     async function start() {
       const meetingId = readMeetingId()
@@ -77,8 +78,9 @@ export default function MeetingPage() {
       })
       callRef.current = call
 
-      call.on('left-meeting', () => { setPhase('left') })
+      call.on('left-meeting', () => { if (destroyed) return; setPhase('left') })
       call.on('error', (e) => {
+        if (destroyed) return
         console.error('daily error', e)
         setErrorMsg('接続エラーが発生しました')
         setPhase('error')
@@ -100,6 +102,7 @@ export default function MeetingPage() {
 
     return () => {
       mounted = false
+      destroyed = true
       if (callRef.current) {
         try {
           callRef.current.destroy()
