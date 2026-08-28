@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
 import JSZip from 'jszip'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 
@@ -138,6 +138,19 @@ const CARD_STYLE = {
   padding: 16,
 }
 
+const MEETING_TYPE_LABEL = { internal_meeting: '社内MTG', customer_meeting: '顧客面談', online_viewing: 'オンライン内見' }
+const MEETING_STATUS_LABEL = { scheduled: '予定', live: '進行中', ended: '終了', cancelled: '中止' }
+const MEETING_CLOSED_STATUSES = ['cancelled', 'ended']
+
+function formatMeetingAt(iso) {
+  if (!iso) return '日時未定'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '日時未定'
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  return `${d.getMonth() + 1}/${d.getDate()} ${hh}:${mi}`
+}
+
 export default function MobileWorkspaceLayout() {
   const id = new URLSearchParams(window.location.search).get('id')
   const [workspace, setWorkspace] = useState(null)
@@ -164,6 +177,20 @@ export default function MobileWorkspaceLayout() {
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [scheduleForm, setScheduleForm] = useState({ scheduled_date: '', label: '' })
   const [scheduleError, setScheduleError] = useState('')
+
+  // 会議 state
+  const [meetings, setMeetings] = useState([])
+  const [showMeetingForm, setShowMeetingForm] = useState(false)
+  const [meetingTitle, setMeetingTitle] = useState('')
+  const [meetingType, setMeetingType] = useState('internal_meeting')
+  const [meetingDate, setMeetingDate] = useState('')
+  const [meetingTime, setMeetingTime] = useState('')
+  const [meetingGuest, setMeetingGuest] = useState(false)
+  const [meetingBusy, setMeetingBusy] = useState(false)
+  const [meetingError, setMeetingError] = useState('')
+  const [guestUrl, setGuestUrl] = useState('')
+  const [guestUrlCopied, setGuestUrlCopied] = useState(false)
+  const [cancelingId, setCancelingId] = useState('')
 
   // 資料タブ アップロード state
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
@@ -256,7 +283,7 @@ export default function MobileWorkspaceLayout() {
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
     async function fetchAll() {
-      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: loginMembersData }, { data: noticesData }, { data: contactsData }] = await Promise.all([
+      const [{ data: wsData, error: wsError }, { data: stepsData }, { data: scheduleData }, { data: timelineData }, { data: foldersData }, { data: filesData }, { data: fileGrantsData }, { data: loginMembersData }, { data: noticesData }, { data: contactsData }, { data: meetingsData }] = await Promise.all([
         supabase.from('workspaces').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
         supabase.from('roadmap_steps').select('id, label, state, step_order').eq('workspace_id', id).order('step_order', { ascending: true }),
         supabase.from('ws_schedule').select('id, scheduled_date, label').eq('workspace_id', id).order('scheduled_date', { ascending: true }),
@@ -267,6 +294,7 @@ export default function MobileWorkspaceLayout() {
         supabase.from('workspace_members').select('id, role, display_name, email, user_id, status').eq('workspace_id', id),
         supabase.from('ws_notices').select('*').eq('workspace_id', id),
         supabase.from('ws_members').select('*').eq('workspace_id', id),
+        supabase.from('workspace_meetings').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
       ])
       if (wsError || !wsData) { setFailed(true); setLoading(false); return }
       setWorkspace(wsData)
@@ -279,6 +307,7 @@ export default function MobileWorkspaceLayout() {
       setWorkspaceMembers(loginMembersData || [])
       setNotices(noticesData || [])
       setMembers(contactsData || [])
+      setMeetings(meetingsData || [])
       const { data: orgNameData } = await supabase.rpc('workspace_org_name', { p_workspace_id: id })
       setOrgName(orgNameData || null)
       const { data: { session } } = await supabase.auth.getSession()
@@ -702,6 +731,69 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     setSchedule(prev => prev.filter(s => s.id !== itemId))
   }
 
+  // --- MEETING ---
+  const handleCreateMeeting = async () => {
+    setMeetingBusy(true)
+    setMeetingError('')
+    setGuestUrl('')
+    setGuestUrlCopied(false)
+    try {
+      if (!meetingTitle) { setMeetingError('タイトルを入力してください'); return }
+      let scheduledAt = null
+      if (meetingDate && meetingTime) scheduledAt = new Date(`${meetingDate}T${meetingTime}`).toISOString()
+      else if (meetingDate) scheduledAt = new Date(`${meetingDate}T00:00`).toISOString()
+      const { data } = await supabase.auth.getSession()
+      const token = (data && data.session && data.session.access_token) || ''
+      const res = await fetch('/api/meeting-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ workspaceId: id, title: meetingTitle, meetingType: meetingType, scheduledAt: scheduledAt, guestEnabled: meetingGuest }),
+      })
+      if (!res.ok) {
+        setMeetingError('会議の作成に失敗しました')
+        return
+      }
+      const json = await res.json()
+      setMeetings(prev => [json.meeting, ...prev])
+      // 招待URLはこのレスポンスでしか受け取れない（サーバはハッシュのみ保存）
+      if (json.guestToken) setGuestUrl(`${window.location.origin}/meeting/${json.meeting.id}?g=${json.guestToken}`)
+      setMeetingTitle('')
+      setMeetingDate('')
+      setMeetingTime('')
+      setMeetingType('internal_meeting')
+      setMeetingGuest(false)
+      setShowMeetingForm(false)
+    } finally {
+      setMeetingBusy(false)
+    }
+  }
+
+  const handleCancelMeeting = async (meetingId) => {
+    const ok = window.confirm('この会議を中止します。よろしいですか？')
+    if (!ok) return
+    setCancelingId(meetingId)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = (data && data.session && data.session.access_token) || ''
+      const res = await fetch('/api/meeting-cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ meetingId: meetingId }),
+      })
+      if (!res.ok) {
+        setMeetingError('会議の中止に失敗しました')
+        return
+      }
+      const json = await res.json()
+      setMeetings(prev => prev.map(m => (m.id === meetingId ? json.meeting : m)))
+    } catch (e) {
+      console.error('meeting cancel error', e)
+      setMeetingError('会議の中止に失敗しました')
+    } finally {
+      setCancelingId('')
+    }
+  }
+
   // --- ws_members（連絡先）---
   const handleAddMember = async () => {
     if (!memberForm.name) { setMemberError('氏名は必須です'); return }
@@ -1093,6 +1185,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         ) : activeTab === 3 ? (
 
           /* ===== 予定タブ ===== */
+          <>
           <div style={CARD_STYLE}>
 
             <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', marginBottom: 14, letterSpacing: 0.5 }}>予定</div>
@@ -1164,6 +1257,138 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             ) : null}
 
           </div>
+
+          {/* ===== 会議カード ===== */}
+          <div style={{ ...CARD_STYLE, marginTop: 16 }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+              <Video size={14} color="#c9a84c" />
+              <span style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c', letterSpacing: 0.5 }}>オンライン会議</span>
+            </div>
+
+            {meetings.length === 0 ? (
+              <div style={{ fontSize: 13, fontWeight: 400, color: '#475569', marginBottom: 14 }}>会議はまだありません</div>
+            ) : (
+              <div style={{ marginBottom: 14 }}>
+                {meetings.map((m, idx) => (
+                  <div key={m.id || idx} style={{ padding: '12px 0', borderBottom: idx < meetings.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    <div style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1' }}>{m.title || ''}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, fontSize: 11, fontWeight: 400, color: '#64748B' }}>
+                      <span>{MEETING_TYPE_LABEL[m.meeting_type] || m.meeting_type || ''}</span>
+                      <span>{formatMeetingAt(m.scheduled_at)}</span>
+                      <span>{MEETING_STATUS_LABEL[m.status] || m.status || ''}</span>
+                    </div>
+                    {MEETING_CLOSED_STATUSES.includes(m.status) ? null : (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button
+                          onClick={() => { window.location.href = '/meeting/' + m.id }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}
+                        >
+                          <Video size={13} />参加する
+                        </button>
+                        {canManage ? (
+                          <button
+                            onClick={() => handleCancelMeeting(m.id)}
+                            disabled={cancelingId === m.id}
+                            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}
+                          >
+                            {cancelingId === m.id ? '中止中...' : '中止'}
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showMeetingForm ? (
+              <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  type="text"
+                  value={meetingTitle}
+                  onChange={e => setMeetingTitle(e.target.value)}
+                  placeholder="会議のタイトル"
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40 }}
+                />
+                <select
+                  value={meetingType}
+                  onChange={e => setMeetingType(e.target.value)}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40, appearance: 'none', WebkitAppearance: 'none' }}
+                >
+                  <option value="internal_meeting" style={{ background: '#0F172A' }}>社内MTG</option>
+                  <option value="customer_meeting" style={{ background: '#0F172A' }}>顧客面談</option>
+                  <option value="online_viewing" style={{ background: '#0F172A' }}>オンライン内見</option>
+                </select>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '8px 10px', minHeight: 40, boxSizing: 'border-box', color: meetingDate ? '#E2E8F0' : '#94A3B8' }}>
+                    <Calendar size={18} color="#c9a84c" />
+                    <span>{meetingDate ? fmtWsDate(meetingDate) : '日付を選択（任意）'}</span>
+                  </div>
+                  <input
+                    type="date"
+                    value={meetingDate}
+                    onChange={e => setMeetingDate(e.target.value)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', opacity: 0, margin: 0, padding: 0, border: 'none', background: 'transparent', fontSize: 16 }}
+                  />
+                </div>
+                <input
+                  type="time"
+                  value={meetingTime}
+                  onChange={e => setMeetingTime(e.target.value)}
+                  style={{ fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '8px 10px', borderRadius: 6, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', maxWidth: '100%', minWidth: 0, minHeight: 40 }}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 400, color: '#94A3B8', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={meetingGuest}
+                    onChange={e => setMeetingGuest(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: '#c9a84c', cursor: 'pointer' }}
+                  />
+                  外部ゲストを招待する
+                </label>
+                {meetingError ? (
+                  <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171' }}>{meetingError}</div>
+                ) : null}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => { setShowMeetingForm(false); setMeetingTitle(''); setMeetingDate(''); setMeetingTime(''); setMeetingType('internal_meeting'); setMeetingGuest(false); setMeetingError('') }}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#64748B', borderRadius: 6, padding: '8px 14px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}
+                  >キャンセル</button>
+                  <button
+                    onClick={handleCreateMeeting}
+                    disabled={meetingBusy}
+                    style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: meetingBusy ? 'not-allowed' : 'pointer', opacity: meetingBusy ? 0.5 : 1 }}
+                  >作成</button>
+                </div>
+              </div>
+            ) : (
+              canManage ? (
+                <button
+                  onClick={() => setShowMeetingForm(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+                >
+                  <Plus size={14} />会議を作成
+                </button>
+              ) : null
+            )}
+
+            {guestUrl ? (
+              <div style={{ marginTop: 10, padding: '12px 14px', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#c9a84c' }}>ゲスト招待URL</div>
+                <div style={{ fontSize: 12, fontWeight: 400, color: '#CBD5E1', wordBreak: 'break-all' }}>{guestUrl}</div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(guestUrl); setGuestUrlCopied(true); setTimeout(() => setGuestUrlCopied(false), 2000) }}
+                  style={{ background: 'transparent', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 14px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%' }}
+                >
+                  {guestUrlCopied ? 'コピーしました' : 'コピー'}
+                </button>
+                <div style={{ fontSize: 11, fontWeight: 400, color: '#64748B' }}>このURLは一度しか表示されません。閉じる前にコピーしてください。</div>
+              </div>
+            ) : null}
+
+          </div>
+          </>
 
         ) : activeTab !== 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80 }}>
