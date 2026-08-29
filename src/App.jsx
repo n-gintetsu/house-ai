@@ -253,23 +253,28 @@ const MenuSVGs = {
 export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const [user, setUser] = useState(null)
+  // 別タブから戻った際の SIGNED_IN 再発火で誤リダイレクトしないよう、直前のユーザーIDを保持する
+  const prevUserIdRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
+        prevUserIdRef.current = data.session.user.id
         setUser(data.session.user)
         window.__houseAiUser = data.session.user
       }
     })
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      const u = session?.user ?? null
+      const u = session?.user || null
       setUser(u)
       window.__houseAiUser = u
-      if (event === 'SIGNED_IN' && u) {
+      // 実際にユーザーが切り替わったときだけリダイレクトする
+      if (event === 'SIGNED_IN' && u && prevUserIdRef.current !== u.id) {
         const userType = u.user_metadata?.user_type
         if (userType === 'agency') setTab('agency')
         else if (userType === 'partner') window.location.href = '/partner'
       }
+      prevUserIdRef.current = u ? u.id : null
     })
     // MemberDashboard からのナビゲーションイベント
     const handleNav = (e) => setTab(e.detail.tab)
