@@ -54,7 +54,11 @@ export default function ProDocsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemPrompt: `あなたは不動産取引の重要事項説明書作成を支援するAIアシスタントです。
+          model: 'claude-sonnet-4-5',
+          max_tokens: 3000,
+          source_tool: 'main',
+          feature: 'pro_docs_draft',
+          system: `あなたは不動産取引の重要事項説明書作成を支援するAIアシスタントです。
 プロの宅建士・不動産業者向けに重要事項説明書のドラフトを生成してください。
 以下の情報を元に分析し、必ず以下のJSON形式のみで返答してください。前後に説明文は不要です。
 
@@ -142,7 +146,11 @@ JSON形式:
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemPrompt: 'あなたは重要事項説明書の専門家です。宅建士・不動産業者の質問に簡潔に答えてください。',
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        source_tool: 'main',
+        feature: 'pro_docs_chat',
+        system: 'あなたは重要事項説明書の専門家です。宅建士・不動産業者の質問に簡潔に答えてください。',
         messages: [
           ...chatMessages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: userMsg }

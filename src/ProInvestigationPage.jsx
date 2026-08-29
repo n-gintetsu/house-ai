@@ -138,7 +138,11 @@ export default function ProInvestigationPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemPrompt: `あなたは不動産の現地調査AIアシスタントです。
+        model: 'claude-sonnet-4-5',
+        max_tokens: 3000,
+        source_tool: 'main',
+        feature: 'pro_investigation_report',
+        system: `あなたは不動産の現地調査AIアシスタントです。
 プロの不動産業者・買取業者・投資家向けに物件の現地調査レポートを生成してください。
 以下の情報を元に分析し、必ず以下のJSON形式のみで返答してください。前後に説明文は不要です。
 
@@ -235,7 +239,11 @@ JSON形式:
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemPrompt: `あなたは不動産現地調査AIです。以下のレポートデータを参考に質問に答えてください。\n物件所在地: ${address}\n調査目的: ${purpose}`,
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        source_tool: 'main',
+        feature: 'pro_investigation_chat',
+        system: `あなたは不動産現地調査AIです。以下のレポートデータを参考に質問に答えてください。\n物件所在地: ${address}\n調査目的: ${purpose}`,
         messages: [
           ...chatMessages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: userMsg }
