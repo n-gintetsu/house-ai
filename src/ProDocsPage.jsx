@@ -364,14 +364,34 @@ export default function ProDocsPage() {
     )
   }
 
+  // 値は自由テキスト（文字列）か、選択肢フィールドの { value, note } のどちらか
+  const renderFieldValue = (value) => {
+    if (value !== null && value !== undefined && typeof value === 'object') {
+      const selected = value.value
+      const note = value.note
+      return (
+        <div>
+          {typeof selected === 'string' && selected !== '' ? (
+            <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{selected}</div>
+          ) : (
+            <div style={{ fontSize: '14px', color: '#64748B' }}>判定不可</div>
+          )}
+          {typeof note === 'string' && note !== '' ? (
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>{note}</div>
+          ) : null}
+        </div>
+      )
+    }
+    if (value !== null && value !== undefined && value !== '') {
+      return <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{value}</div>
+    }
+    return <div style={{ fontSize: '14px', color: '#475569' }}>生成中...</div>
+  }
+
   const renderField = (label, value) => (
     <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
       <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>{label}</div>
-      {value !== null && value !== undefined && value !== '' ? (
-        <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{value}</div>
-      ) : (
-        <div style={{ fontSize: '14px', color: '#475569' }}>生成中...</div>
-      )}
+      {renderFieldValue(value)}
     </div>
   )
 
