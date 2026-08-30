@@ -6,6 +6,19 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
+// 無認証の公開エンドポイントのため、リクエスト値は拒否せずサーバー側で安全な値に矯正する
+const ALLOWED_MODELS = [
+  'claude-sonnet-4-6',
+  'claude-sonnet-4-5',
+  'claude-sonnet-4-20250514',
+  'claude-haiku-4-5-20251001',
+  'claude-haiku-4-5',
+]
+const DEFAULT_MODEL = 'claude-sonnet-4-5'
+const MAX_TOKENS_CAP = 4000
+const DEFAULT_MAX_TOKENS = 900
+const ALLOWED_TOOL_TYPES = ['web_search_20250305']
+
 /**
  * Vercel Serverless Function: POST /api/claude
  * ANTHROPIC_API_KEY はサーバー環境変数のみで参照（クライアントに露出しない）
@@ -51,18 +64,36 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'messages must be a non-empty array' })
   }
 
-  const max_tokens =
-    maxTokensBody ?? maxTokensAlt ?? 900
+  const safeModel =
+    typeof model === 'string' && ALLOWED_MODELS.indexOf(model) !== -1
+      ? model
+      : DEFAULT_MODEL
+
+  const rawMaxTokens = maxTokensBody != null ? maxTokensBody : maxTokensAlt
+  const numMaxTokens = Number(rawMaxTokens)
+  let max_tokens = Number.isFinite(numMaxTokens)
+    ? Math.round(numMaxTokens)
+    : DEFAULT_MAX_TOKENS
+  if (max_tokens < 1) max_tokens = 1
+  if (max_tokens > MAX_TOKENS_CAP) max_tokens = MAX_TOKENS_CAP
+
+  const numTemperature = Number(temperature)
+  let safeTemperature = Number.isFinite(numTemperature) ? numTemperature : 0.4
+  if (safeTemperature < 0) safeTemperature = 0
+  if (safeTemperature > 1) safeTemperature = 1
 
   const anthropicBody = {
-    model: model || 'claude-sonnet-4-5',
+    model: safeModel,
     max_tokens,
-    temperature,
+    temperature: safeTemperature,
     system: typeof system === 'string' ? system : '',
     messages,
   }
-  if (Array.isArray(tools) && tools.length > 0) {
-    anthropicBody.tools = tools
+  const safeTools = Array.isArray(tools)
+    ? tools.filter((t) => t && ALLOWED_TOOL_TYPES.indexOf(t.type) !== -1)
+    : []
+  if (safeTools.length > 0) {
+    anthropicBody.tools = safeTools
   }
 
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
