@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
 
 const MAX_TOTAL_FILE_BYTES = 2500000
 
@@ -18,6 +18,10 @@ function fileToBase64(file) {
     reader.onerror = () => reject(new Error('PDFの読み込みに失敗しました'))
     reader.readAsDataURL(file)
   })
+}
+
+function formatMb(bytes) {
+  return (bytes / 1000000).toFixed(1) + 'MB'
 }
 
 function formatChatText(text) {
@@ -43,9 +47,12 @@ export default function ProDocsPage() {
   const [menuCollapsed, setMenuCollapsed] = useState(false)
   const [fileError, setFileError] = useState('')
   const [apiError, setApiError] = useState('')
+  const [regenLoading, setRegenLoading] = useState(false)
+  const [regenError, setRegenError] = useState('')
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
+  const regenFileInputRef = useRef(null)
   const chatEndRef = useRef(null)
   const apiCalledRef = useRef(false)
 
@@ -62,6 +69,43 @@ export default function ProDocsPage() {
     { key: 'transaction', label: '取引条件' },
   ]
 
+  // 初回生成とドラフト画面からの再生成で共通利用する
+  const generateDraft = () => {
+    return Promise.all(
+      pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
+    )
+    .then(encoded => fetch('/api/pro-docs-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded })
+    }))
+    .then(r => r.json().catch(() => ({})).then(data => {
+      if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
+      return data
+    }))
+    .then(data => {
+      try {
+        const text = data.text || ''
+        const clean = text.replace(/```json|```/g, '').trim()
+        const parsed = JSON.parse(clean)
+        setDraft(parsed)
+      } catch (e) {
+        setDraft({
+          meta: { confidence: 60, warnings: ['書類が不足しているため推定値が多くなっています'] },
+          property_info: { address: address, structure: '確認推奨', floor_area: '確認推奨', built_year: ageYears || '不明', status: 'requires_check', caution: '登記簿をアップロードすると精度が上がります' },
+          rights: { owner: '確認推奨', mortgage: '確認推奨', status: 'attorney_required', caution: '登記簿の確認が必要です' },
+          zoning: { use_district: '確認推奨', building_coverage: '確認推奨', floor_area_ratio: '確認推奨', status: 'requires_check', caution: '行政窓口での確認を推奨します' },
+          hazard: { flood: '確認推奨', landslide: '確認推奨', tsunami: '確認推奨', status: 'requires_check', caution: 'ハザードマップ原本を確認してください' },
+          road_access: { frontage: '確認推奨', road_type: '確認推奨', setback: '確認推奨', status: 'requires_check', caution: '現地または行政窓口で確認してください' },
+          management: { fee: '確認推奨', repair_fund: '確認推奨', arrears: '確認推奨', manager: '確認推奨', status: 'attorney_required', caution: '管理組合への直接照会が必要です' },
+          restrictions: { pet: '確認推奨', renovation: '確認推奨', other: '確認推奨', status: 'requires_check', caution: '管理規約をアップロードすると自動抽出できます' },
+          transaction: { price: '未入力', deposit: '未入力', payment: '未入力', status: 'attorney_required', caution: '取引当事者間で決定してください。AIは入力できません。' },
+          attorney_note: '宅建士による最終確認・署名・押印が必ず必要です。本ドラフトは参考資料であり、法的効力はありません。'
+        })
+      }
+    })
+  }
+
   useEffect(() => {
     if (screen !== 'analyzing') return
     if (logIndex < logs.length - 1) {
@@ -71,40 +115,8 @@ export default function ProDocsPage() {
     if (apiCalledRef.current) return
     apiCalledRef.current = true
     const timer = setTimeout(() => {
-      Promise.all(
-        pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
-      )
-      .then(encoded => fetch('/api/pro-docs-draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded })
-      }))
-      .then(r => r.json().catch(() => ({})).then(data => {
-        if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
-        return data
-      }))
-      .then(data => {
-        try {
-          const text = data.text || ''
-          const clean = text.replace(/```json|```/g, '').trim()
-          const parsed = JSON.parse(clean)
-          setDraft(parsed)
-        } catch (e) {
-          setDraft({
-            meta: { confidence: 60, warnings: ['書類が不足しているため推定値が多くなっています'] },
-            property_info: { address: address, structure: '確認推奨', floor_area: '確認推奨', built_year: ageYears || '不明', status: 'requires_check', caution: '登記簿をアップロードすると精度が上がります' },
-            rights: { owner: '確認推奨', mortgage: '確認推奨', status: 'attorney_required', caution: '登記簿の確認が必要です' },
-            zoning: { use_district: '確認推奨', building_coverage: '確認推奨', floor_area_ratio: '確認推奨', status: 'requires_check', caution: '行政窓口での確認を推奨します' },
-            hazard: { flood: '確認推奨', landslide: '確認推奨', tsunami: '確認推奨', status: 'requires_check', caution: 'ハザードマップ原本を確認してください' },
-            road_access: { frontage: '確認推奨', road_type: '確認推奨', setback: '確認推奨', status: 'requires_check', caution: '現地または行政窓口で確認してください' },
-            management: { fee: '確認推奨', repair_fund: '確認推奨', arrears: '確認推奨', manager: '確認推奨', status: 'attorney_required', caution: '管理組合への直接照会が必要です' },
-            restrictions: { pet: '確認推奨', renovation: '確認推奨', other: '確認推奨', status: 'requires_check', caution: '管理規約をアップロードすると自動抽出できます' },
-            transaction: { price: '未入力', deposit: '未入力', payment: '未入力', status: 'attorney_required', caution: '取引当事者間で決定してください。AIは入力できません。' },
-            attorney_note: '宅建士による最終確認・署名・押印が必ず必要です。本ドラフトは参考資料であり、法的効力はありません。'
-          })
-        }
-        setScreen('draft')
-      })
+      generateDraft()
+      .then(() => { setScreen('draft') })
       .catch(err => {
         setApiError((err && err.message) || 'ドラフト生成に失敗しました')
         apiCalledRef.current = false
@@ -138,7 +150,20 @@ export default function ProDocsPage() {
   }
 
   const removeFile = (index) => {
+    setFileError('')
     setPdfs(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleRegenerate = () => {
+    if (regenLoading) return
+    setRegenLoading(true)
+    setRegenError('')
+    generateDraft()
+      .then(() => { setRegenLoading(false) })
+      .catch(err => {
+        setRegenError((err && err.message) || 'ドラフト生成に失敗しました')
+        setRegenLoading(false)
+      })
   }
 
   const handleChatSubmit = () => {
@@ -485,14 +510,20 @@ export default function ProDocsPage() {
     )
   }
 
+  let totalPdfBytes = 0
+  for (const f of pdfs) {
+    totalPdfBytes = totalPdfBytes + f.size
+  }
+  const isOverLimit = pdfs.length > 5 || totalPdfBytes > MAX_TOTAL_FILE_BYTES
+
   if (screen === 'draft') {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', background: '#0A0F1E' }}>
         <button
-          onClick={() => { window.location.href = '/pro' }}
+          onClick={() => setScreen('input')}
           style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 100, background: 'transparent', border: '1px solid #1E293B', color: '#E2E8F0', fontSize: '18px', cursor: 'pointer', borderRadius: '6px', padding: '4px 10px', lineHeight: '1', fontWeight: '400' }}
         >
-          ×
+          <ArrowLeft size={18} color="#E2E8F0" />
         </button>
 
         <div style={{ width: '30%', minWidth: '260px', background: '#0D1117', borderRight: '1px solid #1E293B', display: 'flex', flexDirection: 'column' }}>
@@ -583,6 +614,61 @@ export default function ProDocsPage() {
                 <div ref={chatEndRef} />
               </div>
             ) : null}
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '6px' }}>参考書類</div>
+              <input
+                ref={regenFileInputRef}
+                type="file"
+                accept=".pdf"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              {pdfs.length > 0 ? (
+                <div>
+                  {pdfs.map((file, index) => (
+                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#111827', borderRadius: '6px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{file.name}</span>
+                      <button
+                        onClick={() => removeFile(index)}
+                        style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11px', color: '#475569', marginBottom: '4px' }}>まだ書類はありません</div>
+              )}
+              <div style={{ fontSize: '11px', color: isOverLimit ? '#EF4444' : '#64748B', marginTop: '4px' }}>
+                合計 {formatMb(totalPdfBytes)} / 2.5MB（{pdfs.length}/5ファイル）
+              </div>
+              {fileError ? (
+                <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>{fileError}</div>
+              ) : null}
+              {regenError ? (
+                <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>{regenError}</div>
+              ) : null}
+              <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                <button
+                  onClick={() => regenFileInputRef.current ? regenFileInputRef.current.click() : null}
+                  disabled={pdfs.length >= 5}
+                  style={{ flex: 1, background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', borderRadius: '6px', cursor: pdfs.length >= 5 ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: '400', opacity: pdfs.length >= 5 ? 0.5 : 1 }}
+                >
+                  書類を追加
+                </button>
+                <button
+                  onClick={handleRegenerate}
+                  disabled={regenLoading || isOverLimit}
+                  style={{ flex: 1, background: regenLoading || isOverLimit ? '#1E293B' : '#c9a84c', color: regenLoading || isOverLimit ? '#64748B' : '#0A0F1E', border: 'none', borderRadius: '6px', padding: '8px', fontSize: '13px', fontWeight: '500', cursor: regenLoading || isOverLimit ? 'not-allowed' : 'pointer' }}
+                >
+                  {regenLoading ? '解析中...' : 'この内容で作り直す'}
+                </button>
+              </div>
+              <div style={{ fontSize: '11px', color: '#475569', marginTop: '6px' }}>作り直すたびに全ての書類を再解析します</div>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <textarea
                 value={chatInput}
