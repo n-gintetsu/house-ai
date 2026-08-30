@@ -21,6 +21,15 @@ const ALLOWED_MEDIA_TYPES = [
 ]
 const MAX_TOTAL_BASE64_CHARS = 3400000
 
+// 無料枠。1回の生成は g1〜g5 の5回呼び出しになるため、runId 単位で数える。
+const FREE_LIMIT = Number.isFinite(Number(process.env.JUUSETSU_FREE_LIMIT))
+  ? Number(process.env.JUUSETSU_FREE_LIMIT)
+  : 1
+const UNLIMITED_EMAILS = (process.env.JUUSETSU_UNLIMITED_EMAILS || '')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter((e) => e !== '')
+
 // PDF解析は30〜60秒かかるため既定タイムアウトを延長する
 export const config = { maxDuration: 60 }
 
@@ -91,10 +100,81 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Request body is required' })
   }
 
-  const { address, propertyType, ageYears, pdfs, group } = body
+  const { address, propertyType, ageYears, pdfs, group, runId } = body
+
+  // 認証ゲート（admin系APIと同じ流儀）
+  const authHeader = req.headers.authorization || ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!token) {
+    return res.status(401).json({ error: 'ログインが必要です', code: 'no_token' })
+  }
+
+  const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token)
+  if (userErr || !userData || !userData.user) {
+    return res.status(401).json({ error: 'ログインの有効期限が切れています', code: 'invalid_token' })
+  }
+
+  const userId = userData.user.id
+  const userEmail = (userData.user.email || '').toLowerCase()
+
+  if (typeof runId !== 'string' || runId === '') {
+    return res.status(400).json({ error: 'runIdが必要です' })
+  }
 
   if (typeof address !== 'string' || address.trim() === '') {
     return res.status(400).json({ error: '物件所在地は必須です' })
+  }
+
+  // 5) 回数チェック。同一 runId の2回目以降（g2〜g5）は継続中の生成として通す。
+  const { data: runRows, error: runErr } = await supabaseAdmin
+    .from('juusetsu_runs')
+    .select('id, user_id')
+    .eq('id', runId)
+    .limit(1)
+
+  if (runErr) {
+    return res.status(500).json({ error: '生成回数の確認に失敗しました' })
+  }
+
+  const existingRun = runRows && runRows.length > 0 ? runRows[0] : null
+
+  if (existingRun) {
+    if (existingRun.user_id !== userId) {
+      return res.status(403).json({ error: '不正なリクエストです' })
+    }
+  } else {
+    // 新規生成
+    if (UNLIMITED_EMAILS.indexOf(userEmail) === -1) {
+      const { count, error: countErr } = await supabaseAdmin
+        .from('juusetsu_runs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+
+      if (countErr) {
+        return res.status(500).json({ error: '生成回数の確認に失敗しました' })
+      }
+
+      const used = count || 0
+      if (used >= FREE_LIMIT) {
+        return res.status(403).json({
+          error: '無料でお試しいただける回数の上限に達しました',
+          code: 'limit_reached',
+          used: used,
+          limit: FREE_LIMIT,
+        })
+      }
+    }
+
+    const { error: insertErr } = await supabaseAdmin.from('juusetsu_runs').insert({
+      id: runId,
+      user_id: userId,
+      address: address,
+      property_type: propertyType,
+    })
+    // 23505 = ユニーク制約違反。同時実行で既に入っている場合はそのまま続行する。
+    if (insertErr && insertErr.code !== '23505') {
+      return res.status(500).json({ error: '生成の記録に失敗しました' })
+    }
   }
 
   const rawPdfs = Array.isArray(pdfs) ? pdfs : []

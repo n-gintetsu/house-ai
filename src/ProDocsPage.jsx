@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
 import { GROUPS } from '../lib/juusetsu-schema.js'
+import { supabase } from './supabaseClient'
 
 const MAX_TOTAL_FILE_BYTES = 2500000
 const MAX_FILE_COUNT = 8
@@ -99,6 +100,26 @@ function processFile(file) {
   return Promise.reject(new Error('対応していない形式のファイルです。PDFまたは画像（JPEG・PNG・WebP）を選択してください'))
 }
 
+// サーバーが返す code に応じてメッセージと再ログイン要否を決める
+function describeApiError(data) {
+  const code = data ? data.code : ''
+  if (code === 'no_token' || code === 'invalid_token') {
+    const e = new Error('ログインの有効期限が切れました。再度ログインしてください')
+    e.needLogin = true
+    return e
+  }
+  if (code === 'limit_reached') {
+    const used = data ? data.used : null
+    const limit = data ? data.limit : null
+    const suffix =
+      typeof used === 'number' && typeof limit === 'number'
+        ? `（${used}/${limit}回）`
+        : ''
+    return new Error('無料でお試しいただける回数の上限に達しました' + suffix)
+  }
+  return new Error((data && data.error) || 'ドラフト生成に失敗しました')
+}
+
 function formatMb(bytes) {
   return (bytes / 1000000).toFixed(1) + 'MB'
 }
@@ -132,6 +153,11 @@ export default function ProDocsPage() {
   const [progressTotal, setProgressTotal] = useState(0)
   const [failedGroups, setFailedGroups] = useState([])
   const [fileProcessing, setFileProcessing] = useState(false)
+  const [user, setUser] = useState(null)
+  const [authChecking, setAuthChecking] = useState(true)
+  const [runId, setRunId] = useState('')
+  const [apiNeedLogin, setApiNeedLogin] = useState(false)
+  const [regenNeedLogin, setRegenNeedLogin] = useState(false)
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -151,22 +177,59 @@ export default function ProDocsPage() {
     }
   }
 
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return
+      const session = data ? data.session : null
+      setUser(session ? session.user : null)
+      setAuthChecking(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      setUser(session ? session.user : null)
+      setAuthChecking(false)
+    })
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   // 初回生成とドラフト画面からの再生成で共通利用する。
   // g1 から g5 まで必ず直列で呼ぶ（並列にするとプロンプトキャッシュが効かずコストが跳ねる）。
   const generateDraft = (onFirstGroupDone) => {
+    // 1回の生成（g1〜g5）は同じ runId を使い、無料枠の消費を1回分にする
+    const currentRunId = runId || crypto.randomUUID()
+    if (currentRunId !== runId) setRunId(currentRunId)
+
     setProgressTotal(GROUPS.length)
     setProgressDone(0)
     setFailedGroups([])
     const confidences = []
 
     const runGroup = (groupId, encoded) => {
-      return fetch('/api/pro-docs-draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded, group: groupId })
+      // 有効期限切れを避けるため、呼び出し直前に毎回セッションを取り直す
+      return supabase.auth.getSession()
+      .then(({ data }) => {
+        const session = data ? data.session : null
+        const token = session ? session.access_token : ''
+        if (!token) {
+          const e = new Error('ログインの有効期限が切れました。再度ログインしてください')
+          e.needLogin = true
+          throw e
+        }
+        return fetch('/api/pro-docs-draft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded, group: groupId, runId: currentRunId })
+        })
       })
       .then(r => r.json().catch(() => ({})).then(data => {
-        if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
+        if (!r.ok) throw describeApiError(data)
         return data
       }))
       .then(data => {
@@ -234,6 +297,7 @@ export default function ProDocsPage() {
       generateDraft(() => { setScreen('draft') })
       .catch(err => {
         setApiError((err && err.message) || 'ドラフト生成に失敗しました')
+        setApiNeedLogin(err && err.needLogin === true)
         apiCalledRef.current = false
         setScreen('input')
       })
@@ -302,10 +366,12 @@ export default function ProDocsPage() {
     if (regenLoading) return
     setRegenLoading(true)
     setRegenError('')
+    setRegenNeedLogin(false)
     generateDraft()
       .then(() => { setRegenLoading(false) })
       .catch(err => {
         setRegenError((err && err.message) || 'ドラフト生成に失敗しました')
+        setRegenNeedLogin(err && err.needLogin === true)
         setRegenLoading(false)
       })
   }
@@ -420,6 +486,31 @@ export default function ProDocsPage() {
           ))}
         </div>
         {section ? renderCaution(section.caution) : null}
+      </div>
+    )
+  }
+
+  // セッション確認中は入力画面もログイン案内も出さない（ちらつき防止）
+  if (screen === 'input' && authChecking) return null
+
+  if (screen === 'input' && !user) {
+    return (
+      <div style={{ background: '#0A0F1E', minHeight: '100vh', color: '#E2E8F0' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', padding: '40px 20px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <img src="/logo.png" alt="logo" style={{ width: '140px', marginBottom: '16px' }} />
+            <div style={{ fontSize: '28px', fontWeight: '500', color: '#E2E8F0' }}>AI重説ドラフト支援</div>
+            <div style={{ fontSize: '13px', color: '#64748B', marginTop: '24px', lineHeight: '1.8' }}>
+              ご利用にはHouse-AIへのログインが必要です。無料でお試しいただけます。
+            </div>
+            <button
+              onClick={() => { window.location.href = '/login' }}
+              style={{ background: '#c9a84c', color: '#0A0F1E', fontSize: '15px', fontWeight: '500', padding: '14px 32px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '32px' }}
+            >
+              ログインする
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -546,7 +637,17 @@ export default function ProDocsPage() {
           </div>
 
           {apiError ? (
-            <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '16px' }}>{apiError}</div>
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '12px', color: '#EF4444' }}>{apiError}</div>
+              {apiNeedLogin ? (
+                <button
+                  onClick={() => { window.location.href = '/login' }}
+                  style={{ background: '#c9a84c', color: '#0A0F1E', fontSize: '13px', fontWeight: '500', padding: '8px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', marginTop: '8px' }}
+                >
+                  ログインする
+                </button>
+              ) : null}
+            </div>
           ) : null}
 
           <button
@@ -554,6 +655,9 @@ export default function ProDocsPage() {
               if (address && propertyType) {
                 apiCalledRef.current = false
                 setApiError('')
+                setApiNeedLogin(false)
+                // 入力画面からの生成は毎回新しい runId を発行する
+                setRunId(crypto.randomUUID())
                 setLogIndex(0)
                 setScreen('analyzing')
               }
@@ -767,7 +871,17 @@ export default function ProDocsPage() {
                 <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>{fileError}</div>
               ) : null}
               {regenError ? (
-                <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>{regenError}</div>
+                <div style={{ marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: '#EF4444' }}>{regenError}</div>
+                  {regenNeedLogin ? (
+                    <button
+                      onClick={() => { window.location.href = '/login' }}
+                      style={{ background: '#c9a84c', color: '#0A0F1E', fontSize: '13px', fontWeight: '500', padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', marginTop: '6px' }}
+                    >
+                      ログインする
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
               <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
                 <button
