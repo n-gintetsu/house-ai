@@ -1,6 +1,25 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
+const MAX_TOTAL_FILE_BYTES = 2500000
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      const commaIndex = result.indexOf(',')
+      if (commaIndex === -1) {
+        reject(new Error('PDFの読み込みに失敗しました'))
+        return
+      }
+      resolve(result.slice(commaIndex + 1))
+    }
+    reader.onerror = () => reject(new Error('PDFの読み込みに失敗しました'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function formatChatText(text) {
   return text
     .replace(/^#{1,3}\s+/gm, '')
@@ -22,6 +41,8 @@ export default function ProDocsPage() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [menuCollapsed, setMenuCollapsed] = useState(false)
+  const [fileError, setFileError] = useState('')
+  const [apiError, setApiError] = useState('')
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -50,46 +71,18 @@ export default function ProDocsPage() {
     if (apiCalledRef.current) return
     apiCalledRef.current = true
     const timer = setTimeout(() => {
-      fetch('/api/claude', {
+      Promise.all(
+        pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
+      )
+      .then(encoded => fetch('/api/pro-docs-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 3000,
-          source_tool: 'main',
-          feature: 'pro_docs_draft',
-          system: `あなたは不動産取引の重要事項説明書作成を支援するAIアシスタントです。
-プロの宅建士・不動産業者向けに重要事項説明書のドラフトを生成してください。
-以下の情報を元に分析し、必ず以下のJSON形式のみで返答してください。前後に説明文は不要です。
-
-物件所在地: ${address}
-物件種別: ${propertyType}
-築年数: ${ageYears || '不明'}
-アップロード書類数: ${pdfs.length}件
-
-重要：
-- 確認できた項目はstatusを"ai_filled"に設定
-- 推定・参考値の項目はstatusを"requires_check"に設定
-- AIで判断不可の項目はstatusを"attorney_required"に設定
-- cautionがある場合のみ文字列、ない場合はnull
-
-JSON形式:
-{
-  "meta": { "confidence": 数値0-100, "warnings": [文字列配列] },
-  "property_info": { "address": "文字列", "structure": "文字列", "floor_area": "文字列", "built_year": "文字列", "status": "ai_filled|requires_check", "caution": null或いは文字列 },
-  "rights": { "owner": "文字列", "mortgage": "文字列", "status": "requires_check|attorney_required", "caution": null或いは文字列 },
-  "zoning": { "use_district": "文字列", "building_coverage": "文字列", "floor_area_ratio": "文字列", "status": "ai_filled|requires_check", "caution": null或いは文字列 },
-  "hazard": { "flood": "文字列", "landslide": "文字列", "tsunami": "文字列", "status": "requires_check", "caution": null或いは文字列 },
-  "road_access": { "frontage": "文字列", "road_type": "文字列", "setback": "文字列", "status": "requires_check", "caution": null或いは文字列 },
-  "management": { "fee": "文字列", "repair_fund": "文字列", "arrears": "文字列", "manager": "文字列", "status": "requires_check|attorney_required", "caution": null或いは文字列 },
-  "restrictions": { "pet": "文字列", "renovation": "文字列", "other": "文字列", "status": "requires_check", "caution": null或いは文字列 },
-  "transaction": { "price": "文字列", "deposit": "文字列", "payment": "文字列", "status": "attorney_required", "caution": "取引当事者間で決定してください。AIは入力できません。" },
-  "attorney_note": "宅建士による最終確認・署名・押印が必ず必要です。本ドラフトは参考資料であり、法的効力はありません。"
-}`,
-          messages: [{ role: 'user', content: `物件所在地: ${address}\n物件種別: ${propertyType}\n築年数: ${ageYears || '不明'}\nアップロード書類: ${pdfs.length}件` }]
-        })
-      })
-      .then(r => r.json())
+        body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded })
+      }))
+      .then(r => r.json().catch(() => ({})).then(data => {
+        if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
+        return data
+      }))
       .then(data => {
         try {
           const text = data.text || ''
@@ -112,7 +105,11 @@ JSON形式:
         }
         setScreen('draft')
       })
-      .catch(() => { setScreen('draft') })
+      .catch(err => {
+        setApiError((err && err.message) || 'ドラフト生成に失敗しました')
+        apiCalledRef.current = false
+        setScreen('input')
+      })
     }, 1000)
     return () => clearTimeout(timer)
   }, [screen, logIndex])
@@ -125,10 +122,18 @@ JSON形式:
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
-    setPdfs(prev => {
-      const combined = [...prev, ...files]
-      return combined.slice(0, 10)
-    })
+    const combined = [...pdfs, ...files].slice(0, 5)
+    let totalSize = 0
+    for (const f of combined) {
+      totalSize = totalSize + f.size
+    }
+    if (totalSize > MAX_TOTAL_FILE_BYTES) {
+      setFileError('PDFの合計サイズが上限（2.5MB）を超えています')
+      e.target.value = ''
+      return
+    }
+    setFileError('')
+    setPdfs(combined)
     e.target.value = ''
   }
 
@@ -346,7 +351,7 @@ JSON形式:
           </div>
 
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '4px' }}>書類PDFアップロード（最大10ファイル）</div>
+            <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '4px' }}>書類PDFアップロード（最大5ファイル）</div>
             <div style={{ fontSize: '11px', color: '#475569', marginBottom: '8px' }}>登記簿・管理規約・修繕積立金明細・公図・測量図など</div>
             <input
               ref={fileInputRef}
@@ -384,16 +389,19 @@ JSON形式:
                     </button>
                   </div>
                 ))}
-                {pdfs.length < 10 ? (
+                {pdfs.length < 5 ? (
                   <button
                     onClick={() => addFileInputRef.current ? addFileInputRef.current.click() : null}
                     style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', width: '100%', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '8px' }}
                   >
-                    + PDFを追加（{pdfs.length}/10）
+                    + PDFを追加（{pdfs.length}/5）
                   </button>
                 ) : null}
               </div>
             )}
+            {fileError ? (
+              <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '8px' }}>{fileError}</div>
+            ) : null}
           </div>
 
           <div style={{ background: '#0D1117', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px', marginTop: '24px' }}>
@@ -401,10 +409,15 @@ JSON形式:
             <div style={{ fontSize: '12px', color: '#92400E', marginTop: '4px' }}>宅建士による最終確認・署名は必ず行ってください。</div>
           </div>
 
+          {apiError ? (
+            <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '16px' }}>{apiError}</div>
+          ) : null}
+
           <button
             onClick={() => {
               if (address && propertyType) {
                 apiCalledRef.current = false
+                setApiError('')
                 setLogIndex(0)
                 setScreen('analyzing')
               }
