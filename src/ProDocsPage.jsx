@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
+import { GROUPS } from '../lib/juusetsu-schema.js'
 
 const MAX_TOTAL_FILE_BYTES = 2500000
 
@@ -49,6 +50,9 @@ export default function ProDocsPage() {
   const [apiError, setApiError] = useState('')
   const [regenLoading, setRegenLoading] = useState(false)
   const [regenError, setRegenError] = useState('')
+  const [progressDone, setProgressDone] = useState(0)
+  const [progressTotal, setProgressTotal] = useState(0)
+  const [failedGroups, setFailedGroups] = useState([])
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -58,51 +62,83 @@ export default function ProDocsPage() {
 
   const logs = ['書類受付中...', '登記簿解析中...', '管理規約解析中...', '用途地域確認中...', 'ハザード情報取得中...', 'ドラフト生成中...']
 
-  const menuItems = [
-    { key: 'property_info', label: '物件表示' },
-    { key: 'rights', label: '権利関係' },
-    { key: 'zoning', label: '用途地域・法令制限' },
-    { key: 'hazard', label: 'ハザード' },
-    { key: 'road_access', label: '接道・道路' },
-    { key: 'management', label: '管理・修繕積立金' },
-    { key: 'restrictions', label: '利用制限' },
-    { key: 'transaction', label: '取引条件' },
-  ]
+  // 物件種別に該当するカテゴリだけを GROUPS の定義順に並べる
+  const menuItems = []
+  for (const g of GROUPS) {
+    for (const c of g.categories) {
+      if (c.appliesTo.indexOf(propertyType) !== -1) {
+        menuItems.push(c)
+      }
+    }
+  }
 
-  // 初回生成とドラフト画面からの再生成で共通利用する
-  const generateDraft = () => {
-    return Promise.all(
-      pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
-    )
-    .then(encoded => fetch('/api/pro-docs-draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded })
-    }))
-    .then(r => r.json().catch(() => ({})).then(data => {
-      if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
-      return data
-    }))
-    .then(data => {
-      try {
+  // 初回生成とドラフト画面からの再生成で共通利用する。
+  // g1 から g5 まで必ず直列で呼ぶ（並列にするとプロンプトキャッシュが効かずコストが跳ねる）。
+  const generateDraft = (onFirstGroupDone) => {
+    setProgressTotal(GROUPS.length)
+    setProgressDone(0)
+    setFailedGroups([])
+    const confidences = []
+
+    const runGroup = (groupId, encoded) => {
+      return fetch('/api/pro-docs-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, propertyType, ageYears, pdfs: encoded, group: groupId })
+      })
+      .then(r => r.json().catch(() => ({})).then(data => {
+        if (!r.ok) throw new Error(data.error || 'ドラフト生成に失敗しました')
+        return data
+      }))
+      .then(data => {
+        // 対象カテゴリが無いグループはサーバーがスキップを返す
+        if (data.skipped === true) return
         const text = data.text || ''
         const clean = text.replace(/```json|```/g, '').trim()
         const parsed = JSON.parse(clean)
-        setDraft(parsed)
-      } catch (e) {
-        setDraft({
-          meta: { confidence: 60, warnings: ['書類が不足しているため推定値が多くなっています'] },
-          property_info: { address: address, structure: '確認推奨', floor_area: '確認推奨', built_year: ageYears || '不明', status: 'requires_check', caution: '登記簿をアップロードすると精度が上がります' },
-          rights: { owner: '確認推奨', mortgage: '確認推奨', status: 'attorney_required', caution: '登記簿の確認が必要です' },
-          zoning: { use_district: '確認推奨', building_coverage: '確認推奨', floor_area_ratio: '確認推奨', status: 'requires_check', caution: '行政窓口での確認を推奨します' },
-          hazard: { flood: '確認推奨', landslide: '確認推奨', tsunami: '確認推奨', status: 'requires_check', caution: 'ハザードマップ原本を確認してください' },
-          road_access: { frontage: '確認推奨', road_type: '確認推奨', setback: '確認推奨', status: 'requires_check', caution: '現地または行政窓口で確認してください' },
-          management: { fee: '確認推奨', repair_fund: '確認推奨', arrears: '確認推奨', manager: '確認推奨', status: 'attorney_required', caution: '管理組合への直接照会が必要です' },
-          restrictions: { pet: '確認推奨', renovation: '確認推奨', other: '確認推奨', status: 'requires_check', caution: '管理規約をアップロードすると自動抽出できます' },
-          transaction: { price: '未入力', deposit: '未入力', payment: '未入力', status: 'attorney_required', caution: '取引当事者間で決定してください。AIは入力できません。' },
-          attorney_note: '宅建士による最終確認・署名・押印が必ず必要です。本ドラフトは参考資料であり、法的効力はありません。'
-        })
-      }
+        if (parsed.meta && typeof parsed.meta.confidence === 'number') {
+          confidences.push(parsed.meta.confidence)
+        }
+        const merged = {}
+        for (const k of Object.keys(parsed)) {
+          if (k !== 'meta') merged[k] = parsed[k]
+        }
+        let avg = 0
+        if (confidences.length > 0) {
+          let sum = 0
+          for (const c of confidences) {
+            sum = sum + c
+          }
+          avg = Math.round(sum / confidences.length)
+        }
+        const warnings = (parsed.meta && parsed.meta.warnings) || []
+        // 返ってきたキーだけを上書きし、既に埋まったカテゴリは保持する
+        setDraft(prev => Object.assign({}, prev || {}, merged, {
+          meta: { confidence: avg, warnings: warnings },
+        }))
+      })
+    }
+
+    return Promise.all(
+      pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
+    ).then(encoded => {
+      let chain = Promise.resolve()
+      GROUPS.forEach((g, index) => {
+        chain = chain.then(() =>
+          runGroup(g.id, encoded)
+            .then(() => {
+              setProgressDone(index + 1)
+              if (index === 0 && onFirstGroupDone) onFirstGroupDone()
+            })
+            .catch(err => {
+              // 先頭グループの失敗は全体の失敗として扱う（画面遷移の判断に使う）
+              if (index === 0) throw err
+              setFailedGroups(prev => prev.concat([g.id]))
+              setProgressDone(index + 1)
+            })
+        )
+      })
+      return chain
     })
   }
 
@@ -115,8 +151,7 @@ export default function ProDocsPage() {
     if (apiCalledRef.current) return
     apiCalledRef.current = true
     const timer = setTimeout(() => {
-      generateDraft()
-      .then(() => { setScreen('draft') })
+      generateDraft(() => { setScreen('draft') })
       .catch(err => {
         setApiError((err && err.message) || 'ドラフト生成に失敗しました')
         apiCalledRef.current = false
@@ -223,7 +258,11 @@ export default function ProDocsPage() {
   const renderField = (label, value) => (
     <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
       <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>{label}</div>
-      <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{value}</div>
+      {value !== null && value !== undefined && value !== '' ? (
+        <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{value}</div>
+      ) : (
+        <div style={{ fontSize: '14px', color: '#475569' }}>生成中...</div>
+      )}
     </div>
   )
 
@@ -236,85 +275,22 @@ export default function ProDocsPage() {
   }
 
   const renderSection = () => {
-    if (!draft) return null
     const item = menuItems[activeItem]
-    const key = item.key
-    const section = draft[key]
-    if (!section) return null
-
-    if (key === 'transaction') {
-      return (
-        <div>
-          <div style={{ fontSize: '20px', fontWeight: '500', marginBottom: '16px', color: '#E2E8F0' }}>取引条件</div>
-          <div style={{ background: '#1f0000', border: '1px solid #dc2626', color: '#f87171', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', marginBottom: '16px' }}>
-            このセクションはAIでは入力できません
-          </div>
-          <div style={{ fontSize: '13px', color: '#94A3B8', lineHeight: '1.8' }}>
-            手付金・売買代金・清算金などの取引条件は、売主・買主・仲介業者間の合意に基づくものです。AIが自動入力することは法的・倫理的に不適切であるため、本システムでは対応しておりません。宅建士が取引当事者の意向を確認の上、ご記入ください。
-          </div>
-        </div>
-      )
-    }
-
-    const fieldMap = {
-      property_info: [
-        { label: '所在地', field: 'address' },
-        { label: '構造', field: 'structure' },
-        { label: '床面積', field: 'floor_area' },
-        { label: '築年', field: 'built_year' },
-      ],
-      rights: [
-        { label: '所有者', field: 'owner' },
-        { label: '抵当権等', field: 'mortgage' },
-      ],
-      zoning: [
-        { label: '用途地域', field: 'use_district' },
-        { label: '建蔽率', field: 'building_coverage' },
-        { label: '容積率', field: 'floor_area_ratio' },
-      ],
-      hazard: [
-        { label: '洪水', field: 'flood' },
-        { label: '土砂災害', field: 'landslide' },
-        { label: '津波', field: 'tsunami' },
-      ],
-      road_access: [
-        { label: '接道幅員', field: 'frontage' },
-        { label: '道路種別', field: 'road_type' },
-        { label: 'セットバック', field: 'setback' },
-      ],
-      management: [
-        { label: '管理費', field: 'fee' },
-        { label: '修繕積立金', field: 'repair_fund' },
-        { label: '滞納状況', field: 'arrears' },
-        { label: '管理会社', field: 'manager' },
-      ],
-      restrictions: [
-        { label: 'ペット', field: 'pet' },
-        { label: 'リフォーム', field: 'renovation' },
-        { label: 'その他制限', field: 'other' },
-      ],
-    }
-
-    const titleMap = {
-      property_info: '物件表示',
-      rights: '権利関係',
-      zoning: '用途地域・法令制限',
-      hazard: 'ハザード',
-      road_access: '接道・道路',
-      management: '管理・修繕積立金',
-      restrictions: '利用制限',
-    }
-
-    const fields = fieldMap[key] || []
+    if (!item) return null
+    const section = draft ? draft[item.key] : null
 
     return (
       <div>
-        <div style={{ fontSize: '20px', fontWeight: '500', marginBottom: '16px', color: '#E2E8F0' }}>{titleMap[key]}</div>
-        {renderStatusBanner(section.status)}
+        <div style={{ fontSize: '20px', fontWeight: '500', marginBottom: '16px', color: '#E2E8F0' }}>{item.label}</div>
+        {section ? renderStatusBanner(section.status) : null}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          {fields.map(f => renderField(f.label, section[f.field]))}
+          {item.fields.map(f => (
+            <div key={f.key}>
+              {renderField(f.label, section ? section[f.key] : null)}
+            </div>
+          ))}
         </div>
-        {renderCaution(section.caution)}
+        {section ? renderCaution(section.caution) : null}
       </div>
     )
   }
@@ -538,6 +514,9 @@ export default function ProDocsPage() {
               <div style={{ background: '#1E293B', height: '4px', borderRadius: '2px', marginTop: '6px' }}>
                 <div style={{ background: '#D4AF37', width: `${draft.meta.confidence}%`, height: '100%', borderRadius: '2px' }} />
               </div>
+              {progressTotal > 0 && progressDone < progressTotal ? (
+                <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>生成中 {progressDone}/{progressTotal}</div>
+              ) : null}
             </div>
           ) : null}
 
@@ -568,7 +547,7 @@ export default function ProDocsPage() {
             <div style={{ overflowY: 'auto' }}>
               {menuItems.map((item, i) => {
                 const sectionData = draft ? draft[item.key] : null
-                const status = sectionData ? sectionData.status : 'requires_check'
+                const status = sectionData ? sectionData.status : null
                 return (
                   <div
                     key={item.key}
