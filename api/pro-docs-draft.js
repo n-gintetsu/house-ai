@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { buildGroupSchema, COMMON_SYSTEM_PROMPT } from '../lib/juusetsu-schema.js'
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
@@ -9,6 +10,7 @@ const supabaseAdmin = createClient(
 // 後から1行で変更できるようにここへ集約する
 const MODEL = 'claude-sonnet-4-5'
 const MAX_TOKENS = 3000
+const MAX_TOKENS_GROUP = 4000
 const MAX_FILES = 5
 const MAX_TOTAL_BASE64_CHARS = 3400000
 
@@ -82,7 +84,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Request body is required' })
   }
 
-  const { address, propertyType, ageYears, pdfs } = body
+  const { address, propertyType, ageYears, pdfs, group } = body
 
   if (typeof address !== 'string' || address.trim() === '') {
     return res.status(400).json({ error: '物件所在地は必須です' })
@@ -116,6 +118,17 @@ export default async function handler(req, res) {
       ? ageYears
       : ''
 
+  // group 指定時はグループ単位の生成。未指定なら従来どおり全体を1回で生成する。
+  const isGroupMode = typeof group === 'string' && group !== ''
+  let groupSchema = null
+  if (isGroupMode) {
+    groupSchema = buildGroupSchema(group, safePropertyType)
+    if (!groupSchema) {
+      // その物件種別に該当カテゴリが無いグループはAIを呼ばずにスキップする
+      return res.status(200).json({ text: null, skipped: true })
+    }
+  }
+
   // 公式ドキュメントの推奨どおり、PDFブロックをテキストより前に置く
   const content = []
   for (const f of validPdfs) {
@@ -128,31 +141,46 @@ export default async function handler(req, res) {
       },
     })
   }
+  // グループ生成時は最後のPDFにキャッシュの区切りを置き、2回目以降の解析コストを下げる
+  if (isGroupMode && content.length > 0) {
+    content[content.length - 1].cache_control = { type: 'ephemeral' }
+  }
 
   const fileNames = validPdfs
     .map((f) => (typeof f.name === 'string' && f.name !== '' ? f.name : '名称不明'))
     .join('、')
 
-  content.push({
-    type: 'text',
-    text: `物件所在地: ${address}
+  const propertyLines = `物件所在地: ${address}
 物件種別: ${safePropertyType}
 築年数: ${safeAgeYears || '不明'}
-添付書類: ${validPdfs.length}件${fileNames ? `（${fileNames}）` : ''}
+添付書類: ${validPdfs.length}件${fileNames ? `（${fileNames}）` : ''}`
+
+  content.push({
+    type: 'text',
+    text: isGroupMode
+      ? `${propertyLines}
+
+添付のPDFを読み取り、以下のカテゴリについて重要事項説明書のドラフトをJSON形式で生成してください。
+
+${groupSchema}`
+      : `${propertyLines}
 
 添付のPDFを読み取り、重要事項説明書のドラフトをJSON形式で生成してください。`,
   })
 
   const anthropicBody = {
     model: MODEL,
-    max_tokens: MAX_TOKENS,
+    max_tokens: isGroupMode ? MAX_TOKENS_GROUP : MAX_TOKENS,
     temperature: 0.2,
-    system: buildSystemPrompt(
-      address,
-      safePropertyType,
-      safeAgeYears,
-      validPdfs.length
-    ),
+    // グループ生成時はキャッシュを効かせるため可変情報を含まない共通プロンプトを使う
+    system: isGroupMode
+      ? COMMON_SYSTEM_PROMPT
+      : buildSystemPrompt(
+          address,
+          safePropertyType,
+          safeAgeYears,
+          validPdfs.length
+        ),
     messages: [{ role: 'user', content }],
   }
 
@@ -183,19 +211,32 @@ export default async function handler(req, res) {
     .join('')
 
   const usage = (data && data.usage) || {}
+  const inputTokens = 'input_tokens' in usage ? usage.input_tokens : null
+  const outputTokens = 'output_tokens' in usage ? usage.output_tokens : null
+  const cacheCreationInputTokens = 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null
+  const cacheReadInputTokens = 'cache_read_input_tokens' in usage ? usage.cache_read_input_tokens : null
+
   try {
     await supabaseAdmin.from('ai_usage_events').insert({
       source_tool: 'main',
-      feature: 'pro_docs_draft',
+      feature: isGroupMode ? 'pro_docs_draft_' + group : 'pro_docs_draft',
       model: MODEL,
-      input_tokens: 'input_tokens' in usage ? usage.input_tokens : null,
-      output_tokens: 'output_tokens' in usage ? usage.output_tokens : null,
-      cache_creation_input_tokens: 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null,
-      cache_read_input_tokens: 'cache_read_input_tokens' in usage ? usage.cache_read_input_tokens : null,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      cache_creation_input_tokens: cacheCreationInputTokens,
+      cache_read_input_tokens: cacheReadInputTokens,
     })
   } catch (e) {
     console.error('[ai_usage_events] insert failed:', e)
   }
 
-  return res.status(200).json({ text })
+  return res.status(200).json({
+    text,
+    usage: {
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      cache_creation_input_tokens: cacheCreationInputTokens,
+      cache_read_input_tokens: cacheReadInputTokens,
+    },
+  })
 }
