@@ -11,7 +11,14 @@ const supabaseAdmin = createClient(
 const MODEL = 'claude-sonnet-4-5'
 const MAX_TOKENS = 3000
 const MAX_TOKENS_GROUP = 4000
-const MAX_FILES = 5
+const MAX_FILES = 8
+const ALLOWED_MEDIA_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]
 const MAX_TOTAL_BASE64_CHARS = 3400000
 
 // PDF解析は30〜60秒かかるため既定タイムアウトを延長する
@@ -93,13 +100,21 @@ export default async function handler(req, res) {
   const rawPdfs = Array.isArray(pdfs) ? pdfs : []
 
   if (rawPdfs.length > MAX_FILES) {
-    return res.status(400).json({ error: 'アップロードできるPDFは最大5件です' })
+    return res.status(400).json({ error: 'アップロードできる書類は最大8件です' })
   }
 
-  // data が文字列でない要素は無視する
-  const validPdfs = rawPdfs.filter(
-    (f) => f && typeof f.data === 'string' && f.data.length > 0
-  )
+  // data が文字列でない要素、および許可されていない形式の要素は無視する
+  const validPdfs = rawPdfs
+    .filter((f) => f && typeof f.data === 'string' && f.data.length > 0)
+    .map((f) => {
+      // mediaType 未指定は従来どおり PDF として扱う（後方互換）
+      const mediaType =
+        typeof f.mediaType === 'string' && f.mediaType !== ''
+          ? f.mediaType
+          : 'application/pdf'
+      return { name: f.name, data: f.data, mediaType: mediaType }
+    })
+    .filter((f) => ALLOWED_MEDIA_TYPES.indexOf(f.mediaType) !== -1)
 
   let totalChars = 0
   for (const f of validPdfs) {
@@ -129,25 +144,40 @@ export default async function handler(req, res) {
     }
   }
 
-  // 公式ドキュメントの推奨どおり、PDFブロックをテキストより前に置く
+  // 公式ドキュメントの推奨どおり、添付ブロックをテキストより前に置く
   const content = []
   for (const f of validPdfs) {
-    content.push({
-      type: 'document',
-      source: {
-        type: 'base64',
-        media_type: 'application/pdf',
-        data: f.data,
-      },
-    })
+    if (f.mediaType === 'application/pdf') {
+      content.push({
+        type: 'document',
+        source: {
+          type: 'base64',
+          media_type: 'application/pdf',
+          data: f.data,
+        },
+      })
+    } else {
+      content.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: f.mediaType,
+          data: f.data,
+        },
+      })
+    }
   }
-  // グループ生成時は最後のPDFにキャッシュの区切りを置き、2回目以降の解析コストを下げる
+  // グループ生成時は最後の添付ブロック（PDF・画像を問わない）にキャッシュの区切りを置く。
+  // ここを間違えるとプロンプトキャッシュが効かずコストが跳ねる。
   if (isGroupMode && content.length > 0) {
     content[content.length - 1].cache_control = { type: 'ephemeral' }
   }
 
   const fileNames = validPdfs
-    .map((f) => (typeof f.name === 'string' && f.name !== '' ? f.name : '名称不明'))
+    .map((f) => {
+      const name = typeof f.name === 'string' && f.name !== '' ? f.name : '名称不明'
+      return f.mediaType === 'application/pdf' ? name : name + '（画像）'
+    })
     .join('、')
 
   const propertyLines = `物件所在地: ${address}

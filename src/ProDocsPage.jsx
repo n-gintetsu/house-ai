@@ -3,22 +3,100 @@ import { ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
 import { GROUPS } from '../lib/juusetsu-schema.js'
 
 const MAX_TOTAL_FILE_BYTES = 2500000
+const MAX_FILE_COUNT = 8
+const MAX_IMAGE_EDGE = 2000
 
-function fileToBase64(file) {
+function readAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
-      const commaIndex = result.indexOf(',')
-      if (commaIndex === -1) {
-        reject(new Error('PDFの読み込みに失敗しました'))
+      if (result.indexOf(',') === -1) {
+        reject(new Error('書類の読み込みに失敗しました'))
         return
       }
-      resolve(result.slice(commaIndex + 1))
+      resolve(result)
     }
-    reader.onerror = () => reject(new Error('PDFの読み込みに失敗しました'))
+    reader.onerror = () => reject(new Error('書類の読み込みに失敗しました'))
     reader.readAsDataURL(file)
   })
+}
+
+function base64Part(dataUrl) {
+  return dataUrl.slice(dataUrl.indexOf(',') + 1)
+}
+
+function isHeic(file) {
+  const type = (file.type || '').toLowerCase()
+  const name = (file.name || '').toLowerCase()
+  return (
+    type === 'image/heic' ||
+    type === 'image/heif' ||
+    name.endsWith('.heic') ||
+    name.endsWith('.heif')
+  )
+}
+
+// 画像は長辺2000pxまで縮小したうえでJPEGに変換する
+function processImage(file) {
+  return readAsDataUrl(file).then(dataUrl => new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      let width = img.width
+      let height = img.height
+      const longEdge = width > height ? width : height
+      if (longEdge > MAX_IMAGE_EDGE) {
+        const scale = MAX_IMAGE_EDGE / longEdge
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+      const out = canvas.toDataURL('image/jpeg', 0.92)
+      const data = base64Part(out)
+      resolve({
+        name: file.name,
+        data: data,
+        mediaType: 'image/jpeg',
+        bytes: Math.round(data.length * 0.75),
+      })
+    }
+    img.onerror = () => reject(new Error('画像の読み込みに失敗しました'))
+    img.src = dataUrl
+  }))
+}
+
+function processPdf(file) {
+  return readAsDataUrl(file).then(dataUrl => {
+    const data = base64Part(dataUrl)
+    return {
+      name: file.name,
+      data: data,
+      mediaType: 'application/pdf',
+      bytes: Math.round(data.length * 0.75),
+    }
+  })
+}
+
+function processFile(file) {
+  const type = (file.type || '').toLowerCase()
+  const name = (file.name || '').toLowerCase()
+  if (isHeic(file)) {
+    return Promise.reject(new Error('HEIC形式は対応していません。PNGまたはJPEGで保存し直してください'))
+  }
+  if (type === 'application/pdf' || name.endsWith('.pdf')) {
+    return processPdf(file)
+  }
+  if (type === 'image/jpeg' || type === 'image/png' || type === 'image/webp') {
+    return processImage(file)
+  }
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp')) {
+    return processImage(file)
+  }
+  return Promise.reject(new Error('対応していない形式のファイルです。PDFまたは画像（JPEG・PNG・WebP）を選択してください'))
 }
 
 function formatMb(bytes) {
@@ -53,6 +131,7 @@ export default function ProDocsPage() {
   const [progressDone, setProgressDone] = useState(0)
   const [progressTotal, setProgressTotal] = useState(0)
   const [failedGroups, setFailedGroups] = useState([])
+  const [fileProcessing, setFileProcessing] = useState(false)
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -119,9 +198,10 @@ export default function ProDocsPage() {
       })
     }
 
-    return Promise.all(
-      pdfs.map(file => fileToBase64(file).then(data => ({ name: file.name, data })))
-    ).then(encoded => {
+    // 選択時に変換済みなのでそのまま送る（bytes は送らない）
+    const encoded = pdfs.map(f => ({ name: f.name, data: f.data, mediaType: f.mediaType }))
+
+    return Promise.resolve().then(() => {
       let chain = Promise.resolve()
       GROUPS.forEach((g, index) => {
         chain = chain.then(() =>
@@ -169,19 +249,48 @@ export default function ProDocsPage() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
-    const combined = [...pdfs, ...files].slice(0, 5)
-    let totalSize = 0
-    for (const f of combined) {
-      totalSize = totalSize + f.size
-    }
-    if (totalSize > MAX_TOTAL_FILE_BYTES) {
-      setFileError('PDFの合計サイズが上限（2.5MB）を超えています')
-      e.target.value = ''
-      return
-    }
-    setFileError('')
-    setPdfs(combined)
     e.target.value = ''
+    if (files.length === 0) return
+
+    setFileError('')
+    setFileProcessing(true)
+
+    // 1件ずつ変換し、上限に達したらそこで打ち切る
+    let accepted = pdfs.slice()
+    let errorMessage = ''
+    let chain = Promise.resolve()
+
+    files.forEach(file => {
+      chain = chain.then(() => {
+        if (accepted.length >= MAX_FILE_COUNT) {
+          errorMessage = '書類は最大8件までです'
+          return null
+        }
+        return processFile(file)
+          .then(processed => {
+            let totalSize = processed.bytes
+            for (const f of accepted) {
+              totalSize = totalSize + f.bytes
+            }
+            if (totalSize > MAX_TOTAL_FILE_BYTES) {
+              errorMessage = '書類の合計サイズが上限（2.5MB）を超えています'
+              return null
+            }
+            accepted = accepted.concat([processed])
+            return null
+          })
+          .catch(err => {
+            errorMessage = (err && err.message) || '書類の読み込みに失敗しました'
+            return null
+          })
+      })
+    })
+
+    chain.then(() => {
+      setPdfs(accepted)
+      setFileError(errorMessage)
+      setFileProcessing(false)
+    })
   }
 
   const removeFile = (index) => {
@@ -352,12 +461,12 @@ export default function ProDocsPage() {
           </div>
 
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '4px' }}>書類PDFアップロード（最大5ファイル）</div>
-            <div style={{ fontSize: '11px', color: '#475569', marginBottom: '8px' }}>登記簿・管理規約・修繕積立金明細・公図・測量図など</div>
+            <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '4px' }}>書類アップロード（最大8ファイル）</div>
+            <div style={{ fontSize: '11px', color: '#475569', marginBottom: '8px' }}>登記簿・公図・測量図・ハザードマップ・都市計画情報など（PDF・画像に対応）</div>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,image/jpeg,image/png,image/webp"
               multiple
               style={{ display: 'none' }}
               onChange={handleFileChange}
@@ -365,7 +474,7 @@ export default function ProDocsPage() {
             <input
               ref={addFileInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,image/jpeg,image/png,image/webp"
               multiple
               style={{ display: 'none' }}
               onChange={handleFileChange}
@@ -375,13 +484,18 @@ export default function ProDocsPage() {
                 onClick={() => fileInputRef.current ? fileInputRef.current.click() : null}
                 style={{ border: '2px dashed #1E293B', borderRadius: '12px', padding: '32px', textAlign: 'center', cursor: 'pointer' }}
               >
-                <div style={{ fontSize: '14px', color: '#475569' }}>PDFをアップロード</div>
+                <div style={{ fontSize: '14px', color: '#475569' }}>{fileProcessing ? '処理中...' : 'PDF・画像をアップロード'}</div>
               </div>
             ) : (
               <div>
                 {pdfs.map((file, index) => (
                   <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#111827', borderRadius: '6px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{file.name}</span>
+                    <span style={{ fontSize: '13px', color: '#E2E8F0' }}>
+                      {file.name}
+                      <span style={{ fontSize: '11px', color: '#64748B', marginLeft: '6px' }}>
+                        {file.mediaType === 'application/pdf' ? 'PDF' : '画像'}
+                      </span>
+                    </span>
                     <button
                       onClick={() => removeFile(index)}
                       style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }}
@@ -390,12 +504,13 @@ export default function ProDocsPage() {
                     </button>
                   </div>
                 ))}
-                {pdfs.length < 5 ? (
+                {pdfs.length < MAX_FILE_COUNT ? (
                   <button
                     onClick={() => addFileInputRef.current ? addFileInputRef.current.click() : null}
-                    style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', width: '100%', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '8px' }}
+                    disabled={fileProcessing}
+                    style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', width: '100%', borderRadius: '6px', cursor: fileProcessing ? 'not-allowed' : 'pointer', fontSize: '13px', marginTop: '8px', opacity: fileProcessing ? 0.5 : 1 }}
                   >
-                    + PDFを追加（{pdfs.length}/5）
+                    {fileProcessing ? '処理中...' : `+ 書類を追加（${pdfs.length}/${MAX_FILE_COUNT}）`}
                   </button>
                 ) : null}
               </div>
@@ -488,9 +603,9 @@ export default function ProDocsPage() {
 
   let totalPdfBytes = 0
   for (const f of pdfs) {
-    totalPdfBytes = totalPdfBytes + f.size
+    totalPdfBytes = totalPdfBytes + f.bytes
   }
-  const isOverLimit = pdfs.length > 5 || totalPdfBytes > MAX_TOTAL_FILE_BYTES
+  const isOverLimit = pdfs.length > MAX_FILE_COUNT || totalPdfBytes > MAX_TOTAL_FILE_BYTES
 
   if (screen === 'draft') {
     return (
@@ -598,7 +713,7 @@ export default function ProDocsPage() {
               <input
                 ref={regenFileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,image/jpeg,image/png,image/webp"
                 multiple
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
@@ -607,7 +722,12 @@ export default function ProDocsPage() {
                 <div>
                   {pdfs.map((file, index) => (
                     <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#111827', borderRadius: '6px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{file.name}</span>
+                      <span style={{ fontSize: '13px', color: '#E2E8F0' }}>
+                        {file.name}
+                        <span style={{ fontSize: '11px', color: '#64748B', marginLeft: '6px' }}>
+                          {file.mediaType === 'application/pdf' ? 'PDF' : '画像'}
+                        </span>
+                      </span>
                       <button
                         onClick={() => removeFile(index)}
                         style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }}
@@ -621,7 +741,7 @@ export default function ProDocsPage() {
                 <div style={{ fontSize: '11px', color: '#475569', marginBottom: '4px' }}>まだ書類はありません</div>
               )}
               <div style={{ fontSize: '11px', color: isOverLimit ? '#EF4444' : '#64748B', marginTop: '4px' }}>
-                合計 {formatMb(totalPdfBytes)} / 2.5MB（{pdfs.length}/5ファイル）
+                合計 {formatMb(totalPdfBytes)} / 2.5MB（{pdfs.length}/{MAX_FILE_COUNT}ファイル）
               </div>
               {fileError ? (
                 <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>{fileError}</div>
@@ -632,10 +752,10 @@ export default function ProDocsPage() {
               <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
                 <button
                   onClick={() => regenFileInputRef.current ? regenFileInputRef.current.click() : null}
-                  disabled={pdfs.length >= 5}
-                  style={{ flex: 1, background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', borderRadius: '6px', cursor: pdfs.length >= 5 ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: '400', opacity: pdfs.length >= 5 ? 0.5 : 1 }}
+                  disabled={pdfs.length >= MAX_FILE_COUNT || fileProcessing}
+                  style={{ flex: 1, background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '8px', borderRadius: '6px', cursor: pdfs.length >= MAX_FILE_COUNT || fileProcessing ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: '400', opacity: pdfs.length >= MAX_FILE_COUNT || fileProcessing ? 0.5 : 1 }}
                 >
-                  書類を追加
+                  {fileProcessing ? '処理中...' : '書類を追加'}
                 </button>
                 <button
                   onClick={handleRegenerate}
