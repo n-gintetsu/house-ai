@@ -100,6 +100,20 @@ function processFile(file) {
   return Promise.reject(new Error('対応していない形式のファイルです。PDFまたは画像（JPEG・PNG・WebP）を選択してください'))
 }
 
+// AIが返す value（'外' 'ア' 等）を画面表示用の label に読み替える。
+// 一致する選択肢が無ければ value をそのまま返す。
+function optionLabel(options, value) {
+  if (!Array.isArray(options)) return value
+  for (const o of options) {
+    if (typeof o === 'string') {
+      if (o === value) return o
+    } else if (o && o.value === value) {
+      return o.label || o.value
+    }
+  }
+  return value
+}
+
 // サーバーが返す code に応じてメッセージと再ログイン要否を決める
 function describeApiError(data) {
   const code = data ? data.code : ''
@@ -430,15 +444,16 @@ export default function ProDocsPage() {
     )
   }
 
-  // 値は自由テキスト（文字列）か、選択肢フィールドの { value, note } のどちらか
-  const renderFieldValue = (value) => {
+  // 値は自由テキスト（文字列）か、選択肢フィールドの { value, note } のどちらか。
+  // 表示だけ label に読み替え、draft が持つ値は value のまま（Excel転記で使うため）。
+  const renderFieldValue = (value, options) => {
     if (value !== null && value !== undefined && typeof value === 'object') {
       const selected = value.value
       const note = value.note
       return (
         <div>
           {typeof selected === 'string' && selected !== '' ? (
-            <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{selected}</div>
+            <div style={{ fontSize: '14px', color: '#E2E8F0' }}>{optionLabel(options, selected)}</div>
           ) : (
             <div style={{ fontSize: '14px', color: '#64748B' }}>判定不可</div>
           )}
@@ -454,10 +469,10 @@ export default function ProDocsPage() {
     return <div style={{ fontSize: '14px', color: '#475569' }}>生成中...</div>
   }
 
-  const renderField = (label, value) => (
+  const renderField = (label, value, options) => (
     <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
       <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>{label}</div>
-      {renderFieldValue(value)}
+      {renderFieldValue(value, options)}
     </div>
   )
 
@@ -481,7 +496,7 @@ export default function ProDocsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           {item.fields.map(f => (
             <div key={f.key}>
-              {renderField(f.label, section ? section[f.key] : null)}
+              {renderField(f.label, section ? section[f.key] : null, f.options)}
             </div>
           ))}
         </div>
