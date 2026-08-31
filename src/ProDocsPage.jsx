@@ -172,10 +172,16 @@ export default function ProDocsPage() {
   const [runId, setRunId] = useState('')
   const [apiNeedLogin, setApiNeedLogin] = useState(false)
   const [regenNeedLogin, setRegenNeedLogin] = useState(false)
+  const [templateFile, setTemplateFile] = useState(null)
+  const [exportLoading, setExportLoading] = useState(false)
+  const [exportError, setExportError] = useState('')
+  const [exportNeedLogin, setExportNeedLogin] = useState(false)
+  const [exportResult, setExportResult] = useState(null)
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
   const regenFileInputRef = useRef(null)
+  const templateInputRef = useRef(null)
   const chatEndRef = useRef(null)
   const apiCalledRef = useRef(false)
 
@@ -387,6 +393,78 @@ export default function ProDocsPage() {
         setRegenError((err && err.message) || 'ドラフト生成に失敗しました')
         setRegenNeedLogin(err && err.needLogin === true)
         setRegenLoading(false)
+      })
+  }
+
+  const handleTemplateChange = (e) => {
+    const files = Array.from(e.target.files)
+    e.target.value = ''
+    if (files.length === 0) return
+    setExportError('')
+    setExportNeedLogin(false)
+    setExportResult(null)
+    setTemplateFile(files[0])
+  }
+
+  const handleExport = () => {
+    if (!templateFile || exportLoading) return
+    setExportLoading(true)
+    setExportError('')
+    setExportNeedLogin(false)
+    setExportResult(null)
+
+    readAsDataUrl(templateFile)
+      .then(dataUrl => {
+        const template = base64Part(dataUrl)
+        return supabase.auth.getSession().then(({ data }) => {
+          const session = data ? data.session : null
+          const token = session ? session.access_token : ''
+          if (!token) {
+            const e = new Error('ログインの有効期限が切れました。再度ログインしてください')
+            e.needLogin = true
+            throw e
+          }
+          return fetch('/api/juusetsu-export', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token,
+            },
+            body: JSON.stringify({ template: template, draft: draft }),
+          })
+        })
+      })
+      .then(r => r.json().catch(() => ({})).then(data => {
+        if (!r.ok) throw describeApiError(data)
+        return data
+      }))
+      .then(data => {
+        const binary = atob(data.file || '')
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = data.filename || '重要事項説明書_下書き.xlsx'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        setExportResult({
+          written: data.written || 0,
+          skipped: Array.isArray(data.skipped) ? data.skipped.length : 0,
+        })
+        setExportLoading(false)
+      })
+      .catch(err => {
+        setExportError((err && err.message) || '転記に失敗しました')
+        setExportNeedLogin(err && err.needLogin === true)
+        setExportLoading(false)
       })
   }
 
@@ -943,12 +1021,84 @@ export default function ProDocsPage() {
           <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #1E293B' }}>
             <div style={{ fontSize: '16px', fontWeight: '500', color: '#E2E8F0', marginBottom: '16px' }}>次のステップ</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button
-                disabled
-                style={{ background: '#1E293B', color: '#64748B', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'not-allowed', fontSize: '14px', fontWeight: '400', opacity: 0.5, textAlign: 'left' }}
-              >
-                PDF出力（準備中）
-              </button>
+              <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#E2E8F0', marginBottom: '8px' }}>重説フォーマットに転記</div>
+                {propertyType !== '土地' ? (
+                  <div style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.8' }}>
+                    現在この機能は『土地の売買・交換用』の書式のみに対応しています。戸建・マンションの書式は準備中です。
+                  </div>
+                ) : (
+                <div>
+                <div style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.8', marginBottom: '12px' }}>
+                  全宅連の『重要事項説明書（土地の売買・交換用）』のExcelファイルをアップロードすると、AIが読み取った内容を転記します。書式は全宅連の会員ページからダウンロードしてください。
+                </div>
+
+                <input
+                  ref={templateInputRef}
+                  type="file"
+                  accept=".xlsx"
+                  style={{ display: 'none' }}
+                  onChange={handleTemplateChange}
+                />
+
+                {templateFile ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#0D1117', borderRadius: '6px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{templateFile.name}</span>
+                    <button
+                      onClick={() => { setTemplateFile(null); setExportResult(null); setExportError('') }}
+                      style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => templateInputRef.current ? templateInputRef.current.click() : null}
+                    style={{ background: 'transparent', border: '1px dashed #475569', color: '#64748B', padding: '10px', width: '100%', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '400', marginBottom: '8px' }}
+                  >
+                    Excelファイルを選択
+                  </button>
+                )}
+
+                <button
+                  onClick={handleExport}
+                  disabled={!templateFile || exportLoading}
+                  style={{ background: !templateFile || exportLoading ? '#1E293B' : '#c9a84c', color: !templateFile || exportLoading ? '#64748B' : '#0A0F1E', padding: '10px 24px', width: '100%', borderRadius: '6px', border: 'none', cursor: !templateFile || exportLoading ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}
+                >
+                  {exportLoading ? '転記中...' : '転記してダウンロード'}
+                </button>
+
+                {exportResult ? (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ fontSize: '13px', color: '#4ade80' }}>{exportResult.written}項目を転記しました</div>
+                    {exportResult.skipped > 0 ? (
+                      <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                        {exportResult.skipped}項目は書類から判定できなかったため空欄のままです
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {exportError ? (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ fontSize: '12px', color: '#EF4444' }}>{exportError}</div>
+                    {exportNeedLogin ? (
+                      <button
+                        onClick={() => { window.location.href = '/login' }}
+                        style={{ background: '#c9a84c', color: '#0A0F1E', fontSize: '13px', fontWeight: '500', padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', marginTop: '6px' }}
+                      >
+                        ログインする
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div style={{ fontSize: '11px', color: '#475569', marginTop: '10px' }}>
+                  転記後のファイルは必ず宅建士が全項目を確認してください。
+                </div>
+                </div>
+                )}
+              </div>
               <button
                 onClick={() => { window.location.href = '/pro/investigation' }}
                 style={{ background: '#D4AF37', color: '#0A0F1E', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left' }}
