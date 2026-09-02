@@ -177,6 +177,9 @@ export default function ProDocsPage() {
   const [exportError, setExportError] = useState('')
   const [exportNeedLogin, setExportNeedLogin] = useState(false)
   const [exportResult, setExportResult] = useState(null)
+  // 宅建士の手入力。draft とは別に持ち、作り直しで消えないようにする
+  // 形式: { カテゴリkey: { フィールドkey: 文字列 } }
+  const [manualEdits, setManualEdits] = useState({})
 
   const fileInputRef = useRef(null)
   const addFileInputRef = useRef(null)
@@ -430,7 +433,7 @@ export default function ProDocsPage() {
               'Content-Type': 'application/json',
               Authorization: 'Bearer ' + token,
             },
-            body: JSON.stringify({ template: template, draft: draft }),
+            body: JSON.stringify({ template: template, draft: buildMergedDraft() }),
           })
         })
       })
@@ -500,6 +503,86 @@ export default function ProDocsPage() {
     })
   }
 
+  // 手入力を最優先し、無ければ draft の値を返す。
+  // draft の値は文字列か { value, note } のどちらか。
+  const getFieldValue = (categoryKey, fieldKey) => {
+    const edits = manualEdits[categoryKey]
+    if (edits && typeof edits[fieldKey] === 'string' && edits[fieldKey] !== '') {
+      return edits[fieldKey]
+    }
+    const section = draft ? draft[categoryKey] : null
+    const raw = section && typeof section === 'object' ? section[fieldKey] : null
+    if (raw === null || raw === undefined) return null
+    if (typeof raw === 'object') {
+      const v = raw.value
+      return v === null || v === undefined || v === '' ? null : v
+    }
+    return raw === '' ? null : raw
+  }
+
+  const isManualField = (categoryKey, fieldKey) => {
+    const edits = manualEdits[categoryKey]
+    return edits && typeof edits[fieldKey] === 'string' && edits[fieldKey] !== '' ? true : false
+  }
+
+  const hasManualInCategory = (categoryKey) => {
+    const edits = manualEdits[categoryKey]
+    if (!edits) return false
+    for (const k of Object.keys(edits)) {
+      if (typeof edits[k] === 'string' && edits[k] !== '') return true
+    }
+    return false
+  }
+
+  // 空文字はキーごと削除し、AIの値に戻す
+  const updateManualEdit = (categoryKey, fieldKey, text) => {
+    setManualEdits(prev => {
+      const next = Object.assign({}, prev)
+      const section = Object.assign({}, next[categoryKey] || {})
+      if (text === '') {
+        delete section[fieldKey]
+      } else {
+        section[fieldKey] = text
+      }
+      if (Object.keys(section).length === 0) {
+        delete next[categoryKey]
+      } else {
+        next[categoryKey] = section
+      }
+      return next
+    })
+  }
+
+  // 転記用。draft のディープコピーに手入力を重ねる（draft state は書き換えない）
+  const buildMergedDraft = () => {
+    const base = draft ? JSON.parse(JSON.stringify(draft)) : {}
+    for (const categoryKey of Object.keys(manualEdits)) {
+      const edits = manualEdits[categoryKey] || {}
+      const section =
+        base[categoryKey] && typeof base[categoryKey] === 'object' ? base[categoryKey] : {}
+      for (const fieldKey of Object.keys(edits)) {
+        const text = edits[fieldKey]
+        if (typeof text !== 'string' || text === '') continue
+        const original = section[fieldKey]
+        if (original !== null && original !== undefined && typeof original === 'object') {
+          section[fieldKey] = Object.assign({}, original, { value: text })
+        } else {
+          section[fieldKey] = { value: text, note: null }
+        }
+      }
+      base[categoryKey] = section
+    }
+    return base
+  }
+
+  let manualEditCount = 0
+  for (const categoryKey of Object.keys(manualEdits)) {
+    const edits = manualEdits[categoryKey] || {}
+    for (const fieldKey of Object.keys(edits)) {
+      if (typeof edits[fieldKey] === 'string' && edits[fieldKey] !== '') manualEditCount++
+    }
+  }
+
   const getStatusColor = (status) => {
     if (status === 'ai_filled') return '#10B981'
     if (status === 'requires_check') return '#F59E0B'
@@ -547,12 +630,73 @@ export default function ProDocsPage() {
     return <div style={{ fontSize: '14px', color: '#475569' }}>生成中...</div>
   }
 
-  const renderField = (label, value, options) => (
-    <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
-      <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>{label}</div>
-      {renderFieldValue(value, options)}
-    </div>
-  )
+  // 既存の入力欄（チャット欄）と同じ見た目に揃える
+  const fieldInputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    fontSize: '16px',
+    fontWeight: 400,
+    background: '#111827',
+    border: '1px solid #1E293B',
+    color: '#E2E8F0',
+    padding: '8px 10px',
+    borderRadius: '6px',
+    outline: 'none',
+    marginTop: '10px',
+  }
+
+  // 宅建士が一覧しながら埋められるよう、入力欄は常時表示する（編集モードは作らない）
+  const renderFieldInput = (categoryKey, field) => {
+    const resolved = getFieldValue(categoryKey, field.key)
+    const current = resolved === null || resolved === undefined ? '' : String(resolved)
+    const hasOptions = Array.isArray(field.options) && field.options.length > 0
+
+    return hasOptions ? (
+      <select
+        value={current}
+        onChange={e => updateManualEdit(categoryKey, field.key, e.target.value)}
+        style={fieldInputStyle}
+      >
+        <option value="">未入力</option>
+        {field.options.map(o => {
+          const optValue = typeof o === 'string' ? o : o.value
+          const optLabel = typeof o === 'string' ? o : (o.label || o.value)
+          return (
+            <option key={optValue} value={optValue}>{optLabel}</option>
+          )
+        })}
+      </select>
+    ) : (
+      <input
+        type="text"
+        value={current}
+        onChange={e => updateManualEdit(categoryKey, field.key, e.target.value)}
+        style={fieldInputStyle}
+      />
+    )
+  }
+
+  const renderField = (categoryKey, field) => {
+    const section = draft ? draft[categoryKey] : null
+    const rawValue = section && typeof section === 'object' ? section[field.key] : null
+    const manual = isManualField(categoryKey, field.key)
+    const manualText = manual ? manualEdits[categoryKey][field.key] : ''
+
+    return (
+      <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>{field.label}</div>
+        {manual ? (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '14px', color: '#E2E8F0' }}>{optionLabel(field.options, manualText)}</span>
+            <span style={{ fontSize: '11px', color: '#6B7280' }}>宅建士入力</span>
+          </div>
+        ) : (
+          renderFieldValue(rawValue, field.options)
+        )}
+        {renderFieldInput(categoryKey, field)}
+      </div>
+    )
+  }
 
   const renderCaution = (caution) => {
     return caution !== null && caution !== undefined ? (
@@ -574,7 +718,7 @@ export default function ProDocsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           {item.fields.map(f => (
             <div key={f.key}>
-              {renderField(f.label, section ? section[f.key] : null, f.options)}
+              {renderField(item.key, f)}
             </div>
           ))}
         </div>
@@ -751,6 +895,8 @@ export default function ProDocsPage() {
                 setApiNeedLogin(false)
                 // 入力画面からの生成は毎回新しい runId を発行する
                 setRunId(crypto.randomUUID())
+                // 新規生成なので手入力もリセットする（作り直しでは保持する）
+                setManualEdits({})
                 setLogIndex(0)
                 setScreen('analyzing')
               }
@@ -880,6 +1026,8 @@ export default function ProDocsPage() {
               {menuItems.map((item, i) => {
                 const sectionData = draft ? draft[item.key] : null
                 const status = sectionData ? sectionData.status : null
+                // 手入力が1つでもあれば「宅建士記入」の色を優先する
+                const dotColor = hasManualInCategory(item.key) ? '#6B7280' : getStatusColor(status)
                 return (
                   <div
                     key={item.key}
@@ -896,7 +1044,7 @@ export default function ProDocsPage() {
                     }}
                   >
                     <span style={{ fontSize: '13px', color: '#E2E8F0' }}>{item.label}</span>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(status), display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, display: 'inline-block', flexShrink: 0 }} />
                   </div>
                 )
               })}
@@ -926,6 +1074,9 @@ export default function ProDocsPage() {
               </div>
             ) : null}
             <div style={{ marginBottom: '12px' }}>
+              {manualEditCount > 0 ? (
+                <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '6px' }}>宅建士入力 {manualEditCount}件</div>
+              ) : null}
               <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '6px' }}>参考書類</div>
               <input
                 ref={regenFileInputRef}
