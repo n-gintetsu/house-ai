@@ -437,7 +437,11 @@ function SellersPanel() {
 
   async function fetchSellers() {
     setLoading(true)
-    const res = await fetch('/api/admin-sellers')
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    const res = await fetch('/api/admin-sellers', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
     const data = await res.json()
     setSellers(data.sellers || [])
     setLoading(false)
@@ -449,9 +453,11 @@ function SellersPanel() {
     setSubmitting(true)
     try {
       // 1. 登録
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
       const res = await fetch('/api/admin-sellers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify(form),
       })
       if (!res.ok) throw new Error('登録に失敗しました')
@@ -1113,9 +1119,11 @@ export default function AdminDashboard() {
 
   async function deletePartner(userId, companyName) {
     if (!window.confirm(`「${companyName || 'このユーザー'}」を削除しますか？この操作は取り消せません。`)) return
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
     const res = await fetch('/api/delete-partner', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId }),
     })
     if (!res.ok) {
@@ -2288,9 +2296,11 @@ function AdManagement() {
 
   const deletePartner = async (userId, companyName) => {
     if (!window.confirm(`「${companyName || 'このユーザー'}」を削除しますか？この操作は取り消せません。`)) return
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
     const res = await fetch('/api/delete-partner', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId }),
     })
     if (!res.ok) {
