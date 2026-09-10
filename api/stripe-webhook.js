@@ -36,13 +36,11 @@ export default async function handler(req, res) {
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object
-    const userId = session.metadata?.userId
-    if (userId) {
-      await supabase
-        .from('profiles')
-        .upsert({ id: userId, is_premium: true, stripe_customer_id: session.customer })
-    }
+    // [Phase S0] 一時停止：metadata.userId はクライアントが自由に設定できる値であり、
+    // これを信用した権限付与は他人アカウントの有料化を許してしまう。
+    // Phase 2 で organization_subscriptions（組織単位の契約テーブル）を導入し、
+    // サーバー側の対応表から契約先を特定する方式に置き換えるまで書き込みを停止する。
+    console.warn('[stripe-webhook] checkout.session.completed received but skipped (Phase S0):', event.id)
   }
 
   if (event.type === 'customer.subscription.deleted') {

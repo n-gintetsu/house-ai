@@ -3,6 +3,13 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export default async function handler(req, res) {
+  // [Phase S0] 一時停止：クライアント由来の userId / priceId を検証せず Stripe に渡す
+  // 実装のため、権限昇格の経路になっていた。Phase 2 で organization 単位の
+  // 契約として再設計するまで新規 Checkout Session の作成を停止する。
+  // 再開する場合は、Bearer 認証で本人 ID をサーバー側で取得し、
+  // priceId を allowlist で検証したうえで有効化すること。
+  return res.status(503).json({ error: 'checkout_disabled' })
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
