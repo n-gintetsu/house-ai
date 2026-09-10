@@ -1,6 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
+  // [Phase S0] 一時停止：access_token は有効期限・失効手段・回数制限が無く、
+  // メールで平文配布されるため、1通の漏洩で売主の全情報へ永久にアクセスできる。
+  // さらに select('*') により access_token 自体が応答に含まれる。
+  // Phase 2 で有効期限つきトークンまたはログイン方式へ再設計するまで停止する。
+  return res.status(503).json({ error: 'seller_portal_disabled' })
+
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   const { token } = req.query

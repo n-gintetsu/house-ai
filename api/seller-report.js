@@ -13,6 +13,11 @@ function aggregatePortals(activities) {
 }
 
 export default async function handler(req, res) {
+  // [Phase S0] 一時停止：seller.js と同じ access_token 方式のため同様の問題を持つ。
+  // 加えて回数制限が無く、token を知る者が Anthropic API を無制限に呼び出せる
+  // （AI 原価が直接発生する）。Phase 2 で再設計するまで停止する。
+  return res.status(503).json({ error: 'seller_report_disabled' })
+
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   const { token } = req.query
