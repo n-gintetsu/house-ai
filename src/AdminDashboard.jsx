@@ -17,6 +17,24 @@ async function fetchAdminUsers() {
   return (json && json.users) || []
 }
 
+// 管理者メモ（admin_notes）は /api/admin/notes 経由。MembersPanel と AdminDashboard の両方から使うためモジュールスコープに置く
+async function callNotesApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -610,13 +628,17 @@ function MembersPanel() {
   }, [selectedMember])
 
   async function fetchNotes(targetId) {
-    const { data } = await supabase.from('admin_notes').select('*').eq('target_id', targetId).order('created_at', { ascending: true })
-    setNotes(data || [])
+    const r = await callNotesApi({ action: 'list', targetType: 'member', targetId })
+    setNotes(r.ok ? (r.data.items || []) : [])
   }
 
   async function addNote(targetId) {
     if (!noteInput.trim()) return
-    await supabase.from('admin_notes').insert({ target_type: 'member', target_id: targetId, content: noteInput, admin_name: '管理者' })
+    const r = await callNotesApi({ action: 'create', targetType: 'member', targetId, content: noteInput })
+    if (!r.ok) {
+      alert('メモの保存に失敗しました: ' + (r.data.error || r.status))
+      return
+    }
     setNoteInput('')
     fetchNotes(targetId)
   }
@@ -1224,13 +1246,17 @@ export default function AdminDashboard() {
   }
 
   async function fetchAgencyNotes(targetId) {
-    const { data } = await supabase.from('admin_notes').select('*').eq('target_id', targetId).order('created_at', { ascending: true })
-    setAgencyNotes(data || [])
+    const r = await callNotesApi({ action: 'list', targetType: 'agency', targetId })
+    setAgencyNotes(r.ok ? (r.data.items || []) : [])
   }
 
   async function addAgencyNote(targetId, targetType) {
     if (!agencyNoteInput.trim()) return
-    await supabase.from('admin_notes').insert({ target_type: targetType, target_id: targetId, content: agencyNoteInput, admin_name: '管理者' })
+    const r = await callNotesApi({ action: 'create', targetType, targetId, content: agencyNoteInput })
+    if (!r.ok) {
+      alert('メモの保存に失敗しました: ' + (r.data.error || r.status))
+      return
+    }
     setAgencyNoteInput('')
     fetchAgencyNotes(targetId)
   }

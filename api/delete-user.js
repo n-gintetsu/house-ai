@@ -62,7 +62,9 @@ export default async function handler(req, res) {
 
     // 完全削除（物理削除）
     if (action === 'hard') {
-      await supabaseAdmin.from('admin_notes').delete().eq('admin_id', userId);
+      // 削除対象ユーザー「について」書かれたメモを削除する。
+      // admin_id（メモを書いた管理者）ではなく target_id で絞ること。
+      await supabaseAdmin.from('admin_notes').delete().eq('target_id', userId);
       await supabaseAdmin.from('reports').delete().eq('reporter_id', userId);
       await supabaseAdmin.from('reports').delete().eq('handled_by', userId);
       await supabaseAdmin.from('community_posts').delete().eq('user_id', userId);
