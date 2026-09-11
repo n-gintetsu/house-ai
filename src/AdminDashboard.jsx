@@ -35,6 +35,24 @@ async function callNotesApi(body) {
   }
 }
 
+// コミュニティ投稿の管理は /api/admin/moderation 経由（service_role はサーバー側のみ）
+async function callModerationApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/moderation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -964,7 +982,6 @@ export default function AdminDashboard() {
   const [agencyNotes, setAgencyNotes] = useState([])
   const [agencyNoteInput, setAgencyNoteInput] = useState('')
   const [allMembers, setAllMembers] = useState([])
-  const [communityFilter, setCommunityFilter] = useState('all')
   const [communitySearch, setCommunitySearch] = useState('')
   const [mortgageRates, setMortgageRates] = useState([])
   const [aiCollecting, setAiCollecting] = useState(false)
@@ -1025,13 +1042,13 @@ export default function AdminDashboard() {
         callRegistrationsApi({ action: 'list', type: 'agency', limit: 100 }),
         supabase.from('valuations').select('*').order('created_at', { ascending: false }),
         supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
-        supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
+        callModerationApi({ action: 'list', limit: 100 }),
         supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
         ])
       setAgencies(a.ok ? (a.data.items || []) : [])
       setValuations(v.data || [])
       setExperts(e.data || [])
-      setCommunity(c.data || [])
+      setCommunity(c.ok ? (c.data.items || []) : [])
       setOwners(o.data || [])
     } finally {
       setLoading(false)
@@ -1064,16 +1081,13 @@ export default function AdminDashboard() {
   }, [tab])
 
   async function deletePost(id) {
-    if (!window.confirm('この投稿を削除しますか？')) return
-    const { error } = await supabase.from('community_posts').delete().eq('id', id)
-    if (error) { alert('削除失敗: ' + error.message); return }
+    if (!window.confirm('この投稿を完全に削除しますか？\n\n※ この操作は取り消せません。')) return
+    const r = await callModerationApi({ action: 'delete', id })
+    if (!r.ok) {
+      alert('削除に失敗しました: ' + (r.data.error || r.status))
+      return
+    }
     setCommunity(list => list.filter(p => p.id !== id))
-  }
-
-  async function hidePost(id) {
-    const { error } = await supabase.from('community_posts').update({ is_public: false }).eq('id', id)
-    if (error) { alert('このカラムはまだ設定されていません'); return }
-    setCommunity(list => list.map(p => p.id === id ? { ...p, is_public: false } : p))
   }
 
   async function updateAgencyStatus(id, status) {
@@ -1854,10 +1868,7 @@ export default function AdminDashboard() {
 
           {/* コミュニティ管理 */}
           {tab === 'community' && (() => {
-            const hasReported = p => p.is_reported || (p.report_count != null && p.report_count > 0)
             const filtered = community.filter(p => {
-              if (communityFilter === 'reported' && !hasReported(p)) return false
-              if (communityFilter === 'hidden' && p.is_public !== false) return false
               const q = communitySearch.toLowerCase()
               if (q && !(p.title?.toLowerCase().includes(q) || p.author_name?.toLowerCase().includes(q))) return false
               return true
@@ -1866,16 +1877,8 @@ export default function AdminDashboard() {
               <div>
                 <h2 style={{ margin: '0 0 16px', color: '#1a3a5c', fontSize: 20 }}>🏘️ コミュニティ管理（{community.length}件）</h2>
 
-                {/* フィルターバー */}
+                {/* 検索バー */}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-                  {[{ id: 'all', label: '全て' }, { id: 'reported', label: '⚠️ 通報あり' }, { id: 'hidden', label: '🚫 非公開' }].map(f => (
-                    <button key={f.id} onClick={() => setCommunityFilter(f.id)}
-                      style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-                        background: communityFilter === f.id ? '#1a3a5c' : '#f0f0f0',
-                        color: communityFilter === f.id ? '#fff' : '#555' }}>
-                      {f.label}
-                    </button>
-                  ))}
                   <input
                     value={communitySearch}
                     onChange={e => setCommunitySearch(e.target.value)}
@@ -1888,13 +1891,11 @@ export default function AdminDashboard() {
                 {/* 投稿カード */}
                 {filtered.length === 0 && <p style={{ color: '#777' }}>投稿はありません</p>}
                 {filtered.map(p => (
-                  <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: hasReported(p) ? '1px solid #fca5a5' : '1px solid transparent' }}>
+                  <div key={p.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid transparent' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                           <span style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{p.title}</span>
-                          {p.is_public === false && <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#e5e7eb', color: '#6b7280' }}>非公開</span>}
-                          {hasReported(p) && <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fee2e2', color: '#dc2626' }}>⚠️ 通報あり</span>}
                           {p.category && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#eff6ff', color: '#2563eb' }}>{p.category}</span>}
                         </div>
                         <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>{p.body?.slice(0, 100)}{p.body?.length > 100 ? '...' : ''}</div>
@@ -1905,11 +1906,6 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                        {p.is_public !== false && (
-                          <button onClick={() => hidePost(p.id)} style={{ padding: '6px 12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            🚫 非公開
-                          </button>
-                        )}
                         <button onClick={() => deletePost(p.id)} style={{ padding: '6px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                           🗑️ 削除
                         </button>
