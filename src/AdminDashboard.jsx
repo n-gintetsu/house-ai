@@ -969,7 +969,7 @@ export default function AdminDashboard() {
     const since1d = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: events } = await supabase.from('analytics_events').select('*').gte('created_at', since7d);
-    const { data: experts } = await supabase.from('expert_registrations').select('*');
+    const expertsRes = await callRegistrationsApi({ action: 'list', type: 'expert', limit: 100 });
 
     if (!events) return;
 
@@ -981,7 +981,7 @@ export default function AdminDashboard() {
     const uniqueSessions = new Set(pageViews.map(e => e.session_id)).size;
     const clickRate = uniqueSessions > 0 ? Math.round((registerClicks.length / uniqueSessions) * 100) : 0;
     const registerRate = registerClicks.length > 0 ? Math.round((registerCompletes.length / registerClicks.length) * 100) : 0;
-    const totalExperts = experts?.length || 0;
+    const totalExperts = expertsRes.ok ? (expertsRes.data.total || 0) : 0;
 
     setGrowthData({
       uniqueSessions,
@@ -1000,13 +1000,13 @@ export default function AdminDashboard() {
     try {
       const [m, a, v, e, c, o] = await Promise.all([
         { data: [] },
-        supabase.from('agency_registrations').select('*').order('created_at', { ascending: false }),
+        callRegistrationsApi({ action: 'list', type: 'agency', limit: 100 }),
         supabase.from('valuations').select('*').order('created_at', { ascending: false }),
         supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
         supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
         ])
-      setAgencies(a.data || [])
+      setAgencies(a.ok ? (a.data.items || []) : [])
       setValuations(v.data || [])
       setExperts(e.data || [])
       setCommunity(c.data || [])
@@ -1055,23 +1055,22 @@ export default function AdminDashboard() {
   }
 
   async function updateAgencyStatus(id, status) {
-    await supabase.from('agency_registrations').update({ status }).eq('id', id)
+    const r = await callRegistrationsApi({ action: 'updateStatus', type: 'agency', id, status })
+    if (!r.ok) {
+      alert('ステータスの更新に失敗しました: ' + (r.data.error || r.status))
+      return
+    }
     setAgencies(list => list.map(a => a.id === id ? { ...a, status } : a))
   }
 
   async function deleteAgency(id) {
     const target = agencies.find(a => a.id === id)
-    if (!window.confirm(`「${target?.company_name || ''}」を削除しますか？この操作は取り消せません。`)) return
-    if (target?.agency_user_id) {
-      const { data: sess } = await supabase.auth.getSession()
-      const token = (sess && sess.session && sess.session.access_token) || ''
-      await fetch('/api/delete-user', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ userId: target.agency_user_id, action: 'hard' }),
-      })
+    if (!window.confirm(`「${target?.company_name || ''}」の業者登録を削除しますか？\n\n※ ユーザーアカウント自体は削除されません。`)) return
+    const r = await callRegistrationsApi({ action: 'delete', type: 'agency', id })
+    if (!r.ok) {
+      alert('削除に失敗しました: ' + (r.data.error || r.status))
+      return
     }
-    await supabase.from('agency_registrations').delete().eq('id', id)
     setAgencies(list => list.filter(a => a.id !== id))
     setSelectedAgency(null)
   }
@@ -1154,6 +1153,24 @@ export default function AdminDashboard() {
     return await res.json()
   }
 
+  // 業者・専門家の登録データは /api/admin/registrations 経由（service_role はサーバー側のみ）
+  async function callRegistrationsApi(body) {
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    try {
+      const res = await fetch('/api/admin/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json().catch(() => ({}))
+      return { ok: res.ok, status: res.status, data: data || {} }
+    } catch (e) {
+      console.error(e)
+      return { ok: false, status: 0, data: {} }
+    }
+  }
+
   async function fetchAllReports() {
     setReportLoading(true)
     const json = await callReportsApi({ action: 'list' })
@@ -1195,8 +1212,8 @@ export default function AdminDashboard() {
   }
 
   async function fetchExpertRegs() {
-    const { data } = await supabase.from('expert_registrations').select('*').order('created_at', { ascending: false })
-    setExpertRegs(data || [])
+    const r = await callRegistrationsApi({ action: 'list', type: 'expert', limit: 100 })
+    setExpertRegs(r.ok ? (r.data.items || []) : [])
   }
 
   async function fetchAllMembers() {
