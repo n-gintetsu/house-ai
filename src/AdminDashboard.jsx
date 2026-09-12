@@ -1178,15 +1178,20 @@ export default function AdminDashboard() {
   }
 
   async function callReportsApi(body) {
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = (sessionData && sessionData.session && sessionData.session.access_token) || ''
-    const res = await fetch('/api/admin-area-reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) return null
-    return await res.json()
+    const { data: sess } = await supabase.auth.getSession()
+    const token = (sess && sess.session && sess.session.access_token) || ''
+    try {
+      const res = await fetch('/api/admin/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json().catch(() => ({}))
+      return { ok: res.ok, status: res.status, data: data || {} }
+    } catch (e) {
+      console.error(e)
+      return { ok: false, status: 0, data: {} }
+    }
   }
 
   // 業者・専門家の登録データは /api/admin/registrations 経由（service_role はサーバー側のみ）
@@ -1209,41 +1214,39 @@ export default function AdminDashboard() {
 
   async function fetchAllReports() {
     setReportLoading(true)
-    const json = await callReportsApi({ action: 'list' })
-    if (json) {
-      setReports(json.reports || [])
-      setAreaReports(json.areaReports || [])
-      setAreaFeedback(json.areaFeedback || [])
+    const r = await callReportsApi({ action: 'list' })
+    if (r.ok) {
+      setReports(r.data.reports || [])
+      setAreaReports(r.data.areaReports || [])
+      setAreaFeedback(r.data.areaFeedback || [])
     }
     setReportLoading(false)
   }
 
-  async function fetchAreaReports() {
-    setReportLoading(true)
-    const { data } = await supabase.from('area_reports').select('*').is('deleted_at', null).order('created_at', { ascending: false })
-    setAreaReports(data || [])
-    setReportLoading(false)
-  }
-
-  async function fetchAreaFeedback() {
-    setReportLoading(true)
-    const { data } = await supabase.from('area_feedback').select('*').is('deleted_at', null).order('created_at', { ascending: false })
-    setAreaFeedback(data || [])
-    setReportLoading(false)
-  }
-
   async function updateAreaReportStatus(id, status) {
-    await callReportsApi({ action: 'update', table: 'area_reports', id, status })
+    const res = await callReportsApi({ action: 'updateStatus', type: 'area_report', id, status })
+    if (!res.ok) {
+      alert('ステータスの更新に失敗しました: ' + (res.data.error || res.status))
+      return
+    }
     setAreaReports(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function updateAreaFeedbackStatus(id, status) {
-    await callReportsApi({ action: 'update', table: 'area_feedback', id, status })
+    const res = await callReportsApi({ action: 'updateStatus', type: 'feedback', id, status })
+    if (!res.ok) {
+      alert('ステータスの更新に失敗しました: ' + (res.data.error || res.status))
+      return
+    }
     setAreaFeedback(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
   async function updateReportStatus(id, status) {
-    await callReportsApi({ action: 'update', table: 'reports', id, status })
+    const res = await callReportsApi({ action: 'updateStatus', type: 'report', id, status })
+    if (!res.ok) {
+      alert('ステータスの更新に失敗しました: ' + (res.data.error || res.status))
+      return
+    }
     setReports(list => list.map(r => r.id === id ? { ...r, status } : r))
   }
 
@@ -1810,7 +1813,7 @@ export default function AdminDashboard() {
                   <div key={r.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{r.reason || r.report_reason || '（理由未記入）'}</div>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{r.reason || '（理由未記入）'}</div>
                         {r.target_type && <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>対象種別：{r.target_type}</div>}
                         <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : ''}</div>
                       </div>
