@@ -10,7 +10,6 @@ const supabaseAdmin = createClient(
 const ALLOWED_MODELS = [
   'claude-sonnet-4-6',
   'claude-sonnet-4-5',
-  'claude-sonnet-4-20250514',
   'claude-haiku-4-5-20251001',
   'claude-haiku-4-5',
 ]

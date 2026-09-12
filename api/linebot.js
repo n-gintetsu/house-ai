@@ -44,7 +44,7 @@ export default async function handler(req, res) {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5',
           max_tokens: 500,
           system: 'あなたはGINTETSU不動産の不動産AIコンシェルジュです。不動産に関する質問に丁寧に答えてください。回答は200文字以内でお願いします。',
           messages: [{ role: 'user', content: userMessage }],
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
         await supabaseAdmin.from('ai_usage_events').insert({
           source_tool: 'main',
           feature: 'linebot',
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5',
           input_tokens: 'input_tokens' in usage ? usage.input_tokens : null,
           output_tokens: 'output_tokens' in usage ? usage.output_tokens : null,
           cache_creation_input_tokens: 'cache_creation_input_tokens' in usage ? usage.cache_creation_input_tokens : null,
