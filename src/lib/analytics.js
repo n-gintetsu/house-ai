@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 const SESSION_KEY = 'ha_session_id';
 
 function getSessionId() {
@@ -12,18 +10,16 @@ function getSessionId() {
 }
 
 export async function trackEvent(eventType, metadata = {}) {
-  try {
-    const safeMetadata = JSON.parse(JSON.stringify(metadata, (key, value) => {
-      if (value instanceof Element || value instanceof HTMLElement || value instanceof Node) return undefined;
-      if (typeof value === 'function') return undefined;
-      return value;
-    }));
-    await supabase.from('analytics_events').insert([{
-      event_type: eventType,
-      session_id: getSessionId(),
-      metadata: safeMetadata,
-    }]);
-  } catch (e) {
-    console.warn('track error', e);
-  }
+  // [Phase S0] 計測を一時停止している。
+  // analytics_events は RLS 有効で anon からの insert ができず、
+  // ブラウザから直接書き込むと 403 が発生していた。
+  // 本体（HONTAI_PUBLIC=false）は未公開のため、匿名書き込みの
+  // 公開APIは今回作らず、no-op とする。
+  //
+  // TODO（本体公開Phase / Analytics Phase で再設計）:
+  //   - 公開 analytics API（insert-only・service_role はサーバー側のみ）
+  //   - body サイズ制限 / event_name allowlist / params schema
+  //   - rate limit / 重複防止
+  //   - DB の読み取り権限や任意テーブル操作は一切渡さない
+  return
 }

@@ -107,6 +107,24 @@ async function callPropertiesApi(body) {
   }
 }
 
+// 計測イベントの読み取りは /api/admin/analytics 経由（service_role はサーバー側のみ）
+async function callAnalyticsApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -957,10 +975,11 @@ export default function AdminDashboard() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const since1d = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: events } = await supabase.from('analytics_events').select('*').gte('created_at', since7d);
+    const r = await callAnalyticsApi({ action: 'list', days: 7 });
     const expertsRes = await callRegistrationsApi({ action: 'list', type: 'expert', limit: 100 });
 
-    if (!events) return;
+    if (!r.ok) return;
+    const events = r.data.items || [];
 
     const pageViews = events.filter(e => e.event_type === 'page_view' && e.metadata?.page === 'home');
     const registerClicks = events.filter(e => e.event_type === 'expert_register_click');
