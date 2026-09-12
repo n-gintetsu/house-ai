@@ -53,6 +53,24 @@ async function callModerationApi(body) {
   }
 }
 
+// 金利・ティッカー・広告バナーの管理は /api/admin/content 経由（service_role はサーバー側のみ）
+async function callContentApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -1075,8 +1093,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (tab === 'rates') {
-      supabase.from('mortgage_rates').select('*').order('bank_name')
-        .then(({ data }) => setMortgageRates(data || []))
+      callContentApi({ action: 'listRates' })
+        .then(r => setMortgageRates(r.ok ? (r.data.items || []) : []))
     }
   }, [tab])
 
@@ -1284,14 +1302,9 @@ export default function AdminDashboard() {
 
   async function handleSaveRates() {
     setSaving(true)
-    for (const r of mortgageRates) {
-      await supabase.from('mortgage_rates').update({
-        bank_name: r.bank_name,
-        variable_rate: r.variable_rate,
-        fixed10_rate: r.fixed10_rate,
-        fixed35_rate: r.fixed35_rate,
-        tag: r.tag,
-      }).eq('id', r.id)
+    const r = await callContentApi({ action: 'saveRates', rows: mortgageRates })
+    if (!r.ok) {
+      alert('金利の保存に失敗しました: ' + (r.data.error || r.status))
     }
     setSaving(false)
   }
@@ -1301,10 +1314,13 @@ export default function AdminDashboard() {
     setAiResult(null)
     setReflectDone(false)
     try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
@@ -1341,29 +1357,14 @@ export default function AdminDashboard() {
     if (!aiResult) return
     const selected = aiResult.filter((_, i) => adoptedRows[i])
     if (selected.length === 0) return
-    const now = new Date().toISOString()
-    let hasError = false
-    for (const r of selected) {
-      const { error } = await supabase.from('mortgage_rates').upsert({
-        bank_name: r.bank_name,
-        variable_rate: r.variable_rate,
-        fixed10_rate: r.fixed10_rate,
-        fixed35_rate: r.fixed35_rate,
-        last_updated: now,
-        is_active: true,
-      }, { onConflict: 'bank_name' })
-      if (error) {
-        console.log('upsert失敗:', r.bank_name, error.message)
-        hasError = true
-      } else {
-        console.log('upsert成功:', r.bank_name)
-      }
+    const r = await callContentApi({ action: 'upsertRates', rows: selected })
+    if (!r.ok) {
+      alert('金利の反映に失敗しました: ' + (r.data.error || r.status))
+      return
     }
-    if (!hasError) {
-      setReflectDone(true)
-    }
-    const { data } = await supabase.from('mortgage_rates').select('*').order('bank_name')
-    setMortgageRates(data || [])
+    setReflectDone(true)
+    const list = await callContentApi({ action: 'listRates' })
+    setMortgageRates(list.ok ? (list.data.items || []) : [])
   }
 
   // 管理者未認証画面
@@ -2355,38 +2356,44 @@ function AdManagement() {
   }
 
   const fetchTicker = async () => {
-    const { data } = await supabase.from('ticker_items').select('*').order('sort_order')
-    if (data) setTickerItems(data)
+    const r = await callContentApi({ action: 'listTicker' })
+    if (r.ok) setTickerItems(r.data.items || [])
+    else setMsg('❌ エラー: ' + (r.data.error || r.status))
   }
 
   const fetchAds = async () => {
-    const { data } = await supabase.from('ad_items').select('*').order('sort_order')
-    if (data) setAdItems(data)
+    const r = await callContentApi({ action: 'listAds' })
+    if (r.ok) setAdItems(r.data.items || [])
+    else setMsg('❌ エラー: ' + (r.data.error || r.status))
   }
 
   const saveTicker = async () => {
     setSaving(true)
-    const { error } = await supabase.from('ticker_items').insert([{ ...form, sort_order: Number(form.sort_order) }])
-    if (!error) { setMsg('✅ 追加しました'); fetchTicker(); setForm({ label: 'PR', text: '', url: '', active: true, sort_order: 0 }) }
-    else setMsg('❌ エラー: ' + error.message)
+    const r = await callContentApi({ action: 'createTicker', label: form.label, text: form.text, url: form.url, sort_order: form.sort_order })
+    if (r.ok) { setMsg('✅ 追加しました'); fetchTicker(); setForm({ label: 'PR', text: '', url: '', active: true, sort_order: 0 }) }
+    else setMsg('❌ エラー: ' + (r.data.error || r.status))
     setSaving(false)
   }
 
   const deleteTicker = async (id) => {
-    await supabase.from('ticker_items').delete().eq('id', id)
+    if (!window.confirm('この項目を削除しますか？\n\n※ この操作は取り消せません。')) return
+    const r = await callContentApi({ action: 'deleteTicker', id })
+    if (!r.ok) { setMsg('❌ エラー: ' + (r.data.error || r.status)); return }
     fetchTicker()
   }
 
   const saveAd = async () => {
     setSaving(true)
-    const { error } = await supabase.from('ad_items').insert([{ ...adForm }])
-    if (!error) { setMsg('✅ 追加しました'); fetchAds(); setAdForm({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' }) }
-    else setMsg('❌ エラー: ' + error.message)
+    const r = await callContentApi({ action: 'createAd', label: adForm.label, title: adForm.title, description: adForm.description, url: adForm.url, color: adForm.color })
+    if (r.ok) { setMsg('✅ 追加しました'); fetchAds(); setAdForm({ label: '広告', title: '', description: '', url: '', active: true, color: '#1a3a5c' }) }
+    else setMsg('❌ エラー: ' + (r.data.error || r.status))
     setSaving(false)
   }
 
   const deleteAd = async (id) => {
-    await supabase.from('ad_items').delete().eq('id', id)
+    if (!window.confirm('この項目を削除しますか？\n\n※ この操作は取り消せません。')) return
+    const r = await callContentApi({ action: 'deleteAd', id })
+    if (!r.ok) { setMsg('❌ エラー: ' + (r.data.error || r.status)); return }
     fetchAds()
   }
 
