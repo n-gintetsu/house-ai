@@ -89,6 +89,24 @@ async function callRequestsApi(body) {
   }
 }
 
+// 物件は /api/admin/properties 経由（service_role はサーバー側のみ）
+async function callPropertiesApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/properties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -145,19 +163,13 @@ const DEAL_LABEL = { rent: '賃貸', sale: '売買', investment: '投資用', bo
 const PREFECTURES = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
 
 function PropertiesPanel({ supabase }) {
+  // properties の実在列に対応する項目のみ。prefecture / city / street_address は address の生成にだけ使う
   const EMPTY_FORM = {
     deal_type: 'rent', status: 'active', title: '', property_type: '',
-    catchcopy: '', prefecture: '', city: '', street_address: '',
-    nearest_station_line: '', nearest_station_name: '', nearest_station_walk: '',
-    layout: '', area: '', built_year: '', structure: '',
-    total_floors: '', floor_number: '', direction: '', parking: '',
+    prefecture: '', city: '', street_address: '',
+    layout: '', area: '', built_year: '',
     description: '', features: '', image_url: '',
-    rent: '', management_fee: '', security_deposit: '', key_money: '',
-    available_date: '', contract_type: '', pet: '',
-    price: '', monthly_fee: '', repair_fund: '', land_area: '',
-    land_right: '', delivery_date: '', current_status: '',
-    gross_yield: '', rental_income: '', total_rooms: '',
-    occupancy_status: '', management_company: '',
+    rent: '', price: '',
   }
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
@@ -165,18 +177,13 @@ function PropertiesPanel({ supabase }) {
   const [submitting, setSubmitting] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [isFeatured, setIsFeatured] = useState({})
   const [form, setForm] = useState(EMPTY_FORM)
   useEffect(() => { loadProperties() }, [])
 
   async function loadProperties() {
     setLoading(true)
-    const { data } = await supabase.from('properties').select('*').order('created_at', { ascending: false })
-    const list = data || []
-    setProperties(list)
-    const featuredMap = {}
-    list.forEach(p => { featuredMap[p.id] = p.is_featured || false })
-    setIsFeatured(featuredMap)
+    const r = await callPropertiesApi({ action: 'list', limit: 100 })
+    setProperties(r.ok ? (r.data.items || []) : [])
     setLoading(false)
   }
 
@@ -184,50 +191,23 @@ function PropertiesPanel({ supabase }) {
     if (!form.title.trim()) { alert('物件名は必須です'); return }
     setSubmitting(true)
     const address = [form.prefecture, form.city, form.street_address].filter(Boolean).join(' ')
-    const payload = {
-      title: form.title, deal_type: form.deal_type, status: form.status,
-      property_type: form.property_type || null,
-      catchcopy: form.catchcopy || null,
-      address: address || null,
-      prefecture: form.prefecture || null,
-      city: form.city || null,
-      street_address: form.street_address || null,
-      nearest_station_line: form.nearest_station_line || null,
-      nearest_station_name: form.nearest_station_name || null,
-      nearest_station_walk: form.nearest_station_walk ? parseInt(form.nearest_station_walk) : null,
-      layout: form.layout || null,
-      area: form.area ? parseFloat(form.area) : null,
-      built_year: form.built_year ? parseInt(form.built_year) : null,
-      structure: form.structure || null,
-      total_floors: form.total_floors ? parseInt(form.total_floors) : null,
-      floor_number: form.floor_number ? parseInt(form.floor_number) : null,
-      direction: form.direction || null,
-      parking: form.parking || null,
-      description: form.description || null,
-      features: form.features || null,
-      image_url: form.image_url || null,
-      rent: form.rent ? parseFloat(form.rent) * 10000 : null,
-      management_fee: form.management_fee ? parseInt(form.management_fee) : null,
-      security_deposit: form.security_deposit ? parseFloat(form.security_deposit) : null,
-      key_money: form.key_money ? parseFloat(form.key_money) : null,
-      available_date: form.available_date || null,
-      contract_type: form.contract_type || null,
-      pet: form.pet || null,
-      price: form.price ? parseInt(form.price) * 10000 : null,
-      monthly_fee: form.monthly_fee ? parseInt(form.monthly_fee) : null,
-      repair_fund: form.repair_fund ? parseInt(form.repair_fund) : null,
-      land_area: form.land_area ? parseFloat(form.land_area) : null,
-      land_right: form.land_right || null,
-      delivery_date: form.delivery_date || null,
-      current_status: form.current_status || null,
-      gross_yield: form.gross_yield ? parseFloat(form.gross_yield) : null,
-      rental_income: form.rental_income ? parseInt(form.rental_income) : null,
-      total_rooms: form.total_rooms ? parseInt(form.total_rooms) : null,
-      occupancy_status: form.occupancy_status || null,
-      management_company: form.management_company || null,
-    }
-    const { error } = await supabase.from('properties').insert(payload)
-    if (error) { alert('登録に失敗しました: ' + error.message); setSubmitting(false); return }
+    const r = await callPropertiesApi({
+      action: 'create',
+      title: form.title,
+      deal_type: form.deal_type,
+      status: form.status,
+      property_type: form.property_type,
+      address: address,
+      layout: form.layout,
+      area: form.area,
+      built_year: form.built_year,
+      description: form.description,
+      features: form.features,
+      image_url: form.image_url,
+      rent: form.rent ? Number(form.rent) * 10000 : '',
+      price: form.price ? Number(form.price) * 10000 : '',
+    })
+    if (!r.ok) { alert('登録に失敗しました: ' + (r.data.error || r.status)); setSubmitting(false); return }
     setForm(EMPTY_FORM)
     setShowForm(false)
     setSubmitting(false)
@@ -235,22 +215,36 @@ function PropertiesPanel({ supabase }) {
   }
 
   async function toggleStatus(id, currentStatus) {
+    const target = properties.find(p => p.id === id)
+    if (!target) return
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
-    await supabase.from('properties').update({ status: newStatus }).eq('id', id)
+    // update は全項目を受け取る設計のため、現在の行の値をそのまま渡して status だけ差し替える
+    const r = await callPropertiesApi({
+      action: 'update',
+      id: id,
+      title: target.title,
+      deal_type: target.deal_type,
+      status: newStatus,
+      property_type: target.property_type,
+      address: target.address,
+      layout: target.layout,
+      area: target.area,
+      built_year: target.built_year,
+      description: target.description,
+      features: target.features,
+      image_url: target.image_url,
+      rent: target.rent,
+      price: target.price,
+    })
+    if (!r.ok) { alert('ステータスの更新に失敗しました: ' + (r.data.error || r.status)); return }
     setProperties(list => list.map(p => p.id === id ? { ...p, status: newStatus } : p))
   }
 
   async function deleteProperty(id) {
-    if (!window.confirm('この物件を削除しますか？')) return
-    await supabase.from('properties').delete().eq('id', id)
+    if (!window.confirm('この物件を削除しますか？\n\n※ この物件をお気に入り登録しているユーザーのお気に入りも削除されます。\n※ この操作は取り消せません。')) return
+    const r = await callPropertiesApi({ action: 'delete', id })
+    if (!r.ok) { alert('削除に失敗しました: ' + (r.data.error || r.status)); return }
     setProperties(list => list.filter(p => p.id !== id))
-  }
-
-  async function toggleFeatured(id) {
-    const current = isFeatured[id] || false
-    const { error } = await supabase.from('properties').update({ is_featured: !current }).eq('id', id)
-    if (error) { alert('おすすめ設定に失敗しました: ' + error.message); return }
-    setIsFeatured(prev => ({ ...prev, [id]: !current }))
   }
 
   const F = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(26,58,92,0.15)', background: '#fff', color: '#222', fontSize: 16, outline: 'none', fontFamily: 'inherit' }
@@ -297,8 +291,6 @@ function PropertiesPanel({ supabase }) {
                 <option value="">選択</option>
                 {['マンション','アパート','一戸建て','土地','店舗・事務所','その他'].map(t => <option key={t} value={t}>{t}</option>)}
               </select></div>
-            <div><label style={L}>キャッチコピー</label>
-              <input style={F} value={form.catchcopy} onChange={sf('catchcopy')} placeholder="例：駅徒歩3分！リノベ済み物件" /></div>
 
             <Sep label="所在地" />
             <div><label style={L}>都道府県</label>
@@ -311,14 +303,6 @@ function PropertiesPanel({ supabase }) {
             <div style={{ gridColumn: '1 / -1' }}><label style={L}>番地以降</label>
               <input style={F} value={form.street_address} onChange={sf('street_address')} placeholder="例：桜木町1-1-1" /></div>
 
-            <Sep label="交通" />
-            <div><label style={L}>最寄駅①路線名</label>
-              <input style={F} value={form.nearest_station_line} onChange={sf('nearest_station_line')} placeholder="例：JR京浜東北線" /></div>
-            <div><label style={L}>最寄駅①駅名</label>
-              <input style={F} value={form.nearest_station_name} onChange={sf('nearest_station_name')} placeholder="例：大宮駅" /></div>
-            <div><label style={L}>最寄駅①徒歩（分）</label>
-              <input style={F} value={form.nearest_station_walk} onChange={sf('nearest_station_walk')} placeholder="例：5" inputMode="numeric" /></div>
-
             <Sep label="物件詳細" />
             <div><label style={L}>間取り</label>
               <select style={F} value={form.layout} onChange={sf('layout')}>
@@ -329,81 +313,18 @@ function PropertiesPanel({ supabase }) {
               <input style={F} value={form.area} onChange={sf('area')} placeholder="例：65.5" inputMode="decimal" /></div>
             <div><label style={L}>築年数（年）</label>
               <input style={F} value={form.built_year} onChange={sf('built_year')} placeholder="例：10" inputMode="numeric" /></div>
-            <div><label style={L}>建物構造</label>
-              <select style={F} value={form.structure} onChange={sf('structure')}>
-                <option value="">選択</option>
-                {['RC造','SRC造','鉄骨造','木造','軽量鉄骨造'].map(s => <option key={s} value={s}>{s}</option>)}
-              </select></div>
-            <div><label style={L}>総階数</label>
-              <input style={F} value={form.total_floors} onChange={sf('total_floors')} placeholder="例：10" inputMode="numeric" /></div>
-            <div><label style={L}>所在階</label>
-              <input style={F} value={form.floor_number} onChange={sf('floor_number')} placeholder="例：3" inputMode="numeric" /></div>
-            <div><label style={L}>方角</label>
-              <select style={F} value={form.direction} onChange={sf('direction')}>
-                <option value="">選択</option>
-                {['南','南東','東','南西','西','北西','北','北東'].map(d => <option key={d} value={d}>{d}</option>)}
-              </select></div>
-            <div><label style={L}>駐車場</label>
-              <select style={F} value={form.parking} onChange={sf('parking')}>
-                <option value="">選択</option>
-                {['あり','なし','近隣あり'].map(p => <option key={p} value={p}>{p}</option>)}
-              </select></div>
 
-            {isRent && <Sep label="賃貸条件" />}
-            {isRent && <div><label style={L}>賃料（万円/月）*</label>
-              <input style={F} value={form.rent} onChange={sf('rent')} placeholder="例：8" inputMode="decimal" /></div>}
-            {isRent && <div><label style={L}>管理費・共益費（円/月）</label>
-              <input style={F} value={form.management_fee} onChange={sf('management_fee')} placeholder="例：5000" inputMode="numeric" /></div>}
-            {isRent && <div><label style={L}>敷金（ヶ月）</label>
-              <input style={F} value={form.security_deposit} onChange={sf('security_deposit')} placeholder="例：1" inputMode="decimal" /></div>}
-            {isRent && <div><label style={L}>礼金（ヶ月）</label>
-              <input style={F} value={form.key_money} onChange={sf('key_money')} placeholder="例：1" inputMode="decimal" /></div>}
-            {isRent && <div><label style={L}>入居可能日</label>
-              <input style={F} type="date" value={form.available_date} onChange={sf('available_date')} /></div>}
-            {isRent && <div><label style={L}>契約種別</label>
-              <select style={F} value={form.contract_type} onChange={sf('contract_type')}>
-                <option value="">選択</option><option value="普通借家">普通借家</option><option value="定期借家">定期借家</option>
-              </select></div>}
-            {isRent && <div><label style={L}>ペット</label>
-              <select style={F} value={form.pet} onChange={sf('pet')}>
-                <option value="">選択</option><option value="可">可</option><option value="不可">不可</option><option value="相談">相談</option>
-              </select></div>}
+            {isRent ? <Sep label="賃貸条件" /> : null}
+            {isRent ? (
+              <div><label style={L}>賃料（万円/月）*</label>
+                <input style={F} value={form.rent} onChange={sf('rent')} placeholder="例：8" inputMode="decimal" /></div>
+            ) : null}
 
-            {isSale && <Sep label="売買条件" />}
-            {isSale && <div><label style={L}>販売価格（万円）*</label>
-              <input style={F} value={form.price} onChange={sf('price')} placeholder="例：3000" inputMode="numeric" /></div>}
-            {isSale && <div><label style={L}>管理費（円/月）</label>
-              <input style={F} value={form.monthly_fee} onChange={sf('monthly_fee')} placeholder="例：10000" inputMode="numeric" /></div>}
-            {isSale && <div><label style={L}>修繕積立金（円/月）</label>
-              <input style={F} value={form.repair_fund} onChange={sf('repair_fund')} placeholder="例：8000" inputMode="numeric" /></div>}
-            {isSale && <div><label style={L}>土地面積（㎡）</label>
-              <input style={F} value={form.land_area} onChange={sf('land_area')} placeholder="例：100.5" inputMode="decimal" /></div>}
-            {isSale && <div><label style={L}>土地権利</label>
-              <select style={F} value={form.land_right} onChange={sf('land_right')}>
-                <option value="">選択</option><option value="所有権">所有権</option><option value="借地権">借地権</option>
-              </select></div>}
-            {isSale && <div><label style={L}>引渡し時期</label>
-              <input style={F} value={form.delivery_date} onChange={sf('delivery_date')} placeholder="例：2025年4月" /></div>}
-            {isSale && <div><label style={L}>現況</label>
-              <select style={F} value={form.current_status} onChange={sf('current_status')}>
-                <option value="">選択</option><option value="居住中">居住中</option><option value="空室">空室</option><option value="賃貸中">賃貸中</option>
-              </select></div>}
-
-            {isInv && <Sep label="投資用条件" />}
-            {isInv && <div><label style={L}>販売価格（万円）*</label>
-              <input style={F} value={form.price} onChange={sf('price')} placeholder="例：5000" inputMode="numeric" /></div>}
-            {isInv && <div><label style={L}>表面利回り（%）</label>
-              <input style={F} value={form.gross_yield} onChange={sf('gross_yield')} placeholder="例：7.5" inputMode="decimal" /></div>}
-            {isInv && <div><label style={L}>現在の賃料収入（円/月）</label>
-              <input style={F} value={form.rental_income} onChange={sf('rental_income')} placeholder="例：300000" inputMode="numeric" /></div>}
-            {isInv && <div><label style={L}>総収益室数</label>
-              <input style={F} value={form.total_rooms} onChange={sf('total_rooms')} placeholder="例：8" inputMode="numeric" /></div>}
-            {isInv && <div><label style={L}>入居状況</label>
-              <select style={F} value={form.occupancy_status} onChange={sf('occupancy_status')}>
-                <option value="">選択</option><option value="満室">満室</option><option value="一部空室">一部空室</option><option value="空室">空室</option>
-              </select></div>}
-            {isInv && <div><label style={L}>管理会社名</label>
-              <input style={F} value={form.management_company} onChange={sf('management_company')} placeholder="例：○○管理株式会社" /></div>}
+            {isSale || isInv ? <Sep label="売買・投資用条件" /> : null}
+            {isSale || isInv ? (
+              <div><label style={L}>販売価格（万円）*</label>
+                <input style={F} value={form.price} onChange={sf('price')} placeholder="例：3000" inputMode="numeric" /></div>
+            ) : null}
 
             <Sep label="物件説明・写真" />
             <div style={{ gridColumn: '1 / -1' }}><label style={L}>物件説明文</label>
@@ -475,12 +396,6 @@ function PropertiesPanel({ supabase }) {
                 </span>
                 <button onClick={() => toggleStatus(p.id, p.status)} style={{ padding: '4px 12px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                   {p.status === 'active' ? '非公開に' : '公開する'}
-                </button>
-                <button onClick={() => toggleFeatured(p.id)}
-                  style={{ padding: '4px 12px', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer',
-                    background: isFeatured[p.id] ? '#f59e0b' : '#e5e7eb',
-                    color: isFeatured[p.id] ? '#fff' : '#555' }}>
-                  {isFeatured[p.id] ? '⭐ おすすめ中' : '☆ おすすめ'}
                 </button>
                 <button onClick={() => deleteProperty(p.id)} style={{ padding: '4px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>削除</button>
               </div>
