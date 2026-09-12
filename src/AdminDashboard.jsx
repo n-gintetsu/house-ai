@@ -71,6 +71,24 @@ async function callContentApi(body) {
   }
 }
 
+// 査定依頼・専門家依頼は /api/admin/requests 経由（service_role はサーバー側のみ）
+async function callRequestsApi(body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  try {
+    const res = await fetch('/api/admin/requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const TABS = [
   { id: 'summary', label: '📊 サマリー' },
   { id: 'members', label: '👤 会員管理' },
@@ -982,7 +1000,6 @@ export default function AdminDashboard() {
   const [valuations, setValuations] = useState([])
   const [experts, setExperts] = useState([])
   const [community, setCommunity] = useState([])
-  const [owners, setOwners] = useState([])
   const [loading, setLoading] = useState(false)
   const [growthData, setGrowthData] = useState(null)
   const [partners, setPartners] = useState([])
@@ -1055,26 +1072,22 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true)
     try {
-      const [m, a, v, e, c, o] = await Promise.all([
-        { data: [] },
+      const [a, req, c] = await Promise.all([
         callRegistrationsApi({ action: 'list', type: 'agency', limit: 100 }),
-        supabase.from('valuations').select('*').order('created_at', { ascending: false }),
-        supabase.from('expert_requests').select('*').order('created_at', { ascending: false }),
+        callRequestsApi({ action: 'list', limit: 100 }),
         callModerationApi({ action: 'list', limit: 100 }),
-        supabase.from('owner_requests').select('*').order('created_at', { ascending: false }),
-        ])
+      ])
       setAgencies(a.ok ? (a.data.items || []) : [])
-      setValuations(v.data || [])
-      setExperts(e.data || [])
+      setValuations(req.ok ? (req.data.valuations || []) : [])
+      setExperts(req.ok ? (req.data.expertRequests || []) : [])
       setCommunity(c.ok ? (c.data.items || []) : [])
-      setOwners(o.data || [])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (authed) { loadAll(); fetchGrowthData(); fetchAllMembers(); fetchReports(); }
+    if (authed) { loadAll(); fetchGrowthData(); fetchAllMembers(); fetchAllReports(); }
   }, [authed])
 
   useEffect(() => {
@@ -1130,7 +1143,11 @@ export default function AdminDashboard() {
   }
 
   async function updateValuationStatus(id, status) {
-    await supabase.from('valuations').update({ status }).eq('id', id)
+    const r = await callRequestsApi({ action: 'updateStatus', id, status })
+    if (!r.ok) {
+      alert('ステータスの更新に失敗しました: ' + (r.data.error || r.status))
+      return
+    }
     setValuations(list => list.map(v => v.id === id ? { ...v, status } : v))
   }
 
@@ -1186,13 +1203,6 @@ export default function AdminDashboard() {
     }
     setPartners(list => list.filter(p => p.id !== userId))
     setSelectedPartner(null)
-  }
-
-  async function fetchReports() {
-    setReportLoading(true)
-    const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false })
-    setReports(data || [])
-    setReportLoading(false)
   }
 
   async function callReportsApi(body) {
@@ -1392,7 +1402,6 @@ export default function AdminDashboard() {
     { label: '査定依頼', value: valuations.length, color: '#f59e0b' },
     { label: '専門家依頼', value: experts.length, color: '#8b5cf6' },
     { label: 'コミュニティ投稿', value: community.length, color: '#10b981' },
-    { label: 'オーナー依頼', value: owners.length, color: '#ef4444' },
   ]
 
   return (
@@ -1920,22 +1929,6 @@ export default function AdminDashboard() {
               </div>
             )
           })()}
-
-          {/* オーナー依頼 */}
-          {tab === 'owners' && (
-            <div>
-              <h2 style={{ margin: '0 0 20px', color: '#1a3a5c', fontSize: 20 }}>🔑 オーナー依頼管理（{owners.length}件）</h2>
-              {owners.length === 0 ? <p style={{ color: '#777' }}>依頼はありません</p> : owners.map(o => (
-                <div key={o.id} style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1a3a5c' }}>{o.name}</div>
-                  <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>サービス：{o.service_type} / {o.property_type}</div>
-                  <div style={{ fontSize: 13, color: '#555' }}>住所：{o.address}</div>
-                  <div style={{ fontSize: 13, color: '#555' }}>📞 {o.phone} / ✉️ {o.email}</div>
-                  <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{o.created_at ? new Date(o.created_at).toLocaleString('ja-JP') : ''}</div>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* 物件管理 */}
           {tab === 'properties' && (
