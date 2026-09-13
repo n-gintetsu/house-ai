@@ -61,6 +61,10 @@ export default function SettingsPage() {
   const [showFeedback, setShowFeedback] = useState(false)
   const headerRef = useRef(null)
   const [headerHeight, setHeaderHeight] = useState(110)
+  // 行が無いユーザーは ON 扱いのため、初期値も ON にしておく
+  const [reminderOn, setReminderOn] = useState(true)
+  const [reminderLoading, setReminderLoading] = useState(true)
+  const [reminderSaving, setReminderSaving] = useState(false)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -111,6 +115,58 @@ export default function SettingsPage() {
     load()
     return () => { mounted = false }
   }, [])
+
+  // 通知タブを開いたときだけ読み込む
+  useEffect(() => {
+    if (tab !== 'notifications') return
+    if (!currentUserId) return
+    let mounted = true
+    async function loadReminderSetting() {
+      setReminderLoading(true)
+      const { data, error } = await supabase
+        .from('workspace_notification_settings')
+        .select('unread_reminder_email')
+        .eq('user_id', currentUserId)
+        .maybeSingle()
+      if (!mounted) return
+      if (error) {
+        // 取得に失敗した場合は ON に倒す（通知が黙って止まるより安全）
+        console.error('[settings] 通知設定の取得に失敗しました:', error)
+        setReminderOn(true)
+      } else if (data === null) {
+        // 行が無いユーザーは ON とみなす（ここで行は作らない）
+        setReminderOn(true)
+      } else {
+        setReminderOn(data.unread_reminder_email ? true : false)
+      }
+      setReminderLoading(false)
+    }
+    loadReminderSetting()
+    return () => { mounted = false }
+  }, [tab, currentUserId])
+
+  // 楽観的更新はせず、upsert の成功を確認してから state を反映する
+  const toggleReminder = async () => {
+    if (reminderSaving) return
+    if (reminderLoading) return
+    if (!currentUserId) return
+    const next = !reminderOn
+    setReminderSaving(true)
+    const { error } = await supabase
+      .from('workspace_notification_settings')
+      .upsert({
+        user_id: currentUserId,
+        unread_reminder_email: next,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+    setReminderSaving(false)
+    if (error) {
+      console.error('[settings] 通知設定の保存に失敗しました:', error)
+      window.alert('設定を保存できませんでした。通信状況をご確認のうえ、もう一度お試しください。')
+      return
+    }
+    setReminderOn(next)
+  }
 
   const selectTab = (key) => {
     setTab(key)
@@ -269,7 +325,54 @@ export default function SettingsPage() {
             {/* ===== 通知 ===== */}
             {tab === 'notifications' ? (
               <SectionCard title="通知設定">
-                <PendingRow label="未読メッセージのリマインドメール" isLast={true} />
+                {loading ? (
+                  <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', padding: '14px 0' }}>読み込み中...</div>
+                ) : !currentUserId ? (
+                  <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', padding: '14px 0' }}>ログイン情報を取得できませんでした。再度ログインしてください。</div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '14px 0' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0', wordBreak: 'break-all', overflowWrap: 'anywhere' }}>未読メッセージのリマインドメール</div>
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4 }}>一定時間未読のメッセージがある場合にメールでお知らせします。</div>
+                      {reminderSaving ? (
+                        <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 6 }}>保存中...</div>
+                      ) : null}
+                    </div>
+                    <button
+                      onClick={toggleReminder}
+                      disabled={reminderLoading ? true : reminderSaving}
+                      title={reminderOn ? 'オンになっています' : 'オフになっています'}
+                      style={{
+                        position: 'relative',
+                        flexShrink: 0,
+                        width: 46,
+                        height: 26,
+                        borderRadius: 13,
+                        padding: 0,
+                        border: reminderOn ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                        background: reminderOn ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.12)',
+                        cursor: (reminderLoading ? true : reminderSaving) ? 'default' : 'pointer',
+                        opacity: (reminderLoading ? true : reminderSaving) ? 0.5 : 1,
+                        transition: 'background 0.15s, opacity 0.15s',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 3,
+                          left: reminderOn ? 23 : 3,
+                          width: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          background: reminderOn ? '#0A0F1E' : '#94A3B8',
+                          transition: 'left 0.15s',
+                          display: 'block',
+                        }}
+                      />
+                    </button>
+                  </div>
+                )}
                 <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 12 }}>
                   案件の重要なお知らせ・招待・本人確認のメールは停止できません。
                 </div>
