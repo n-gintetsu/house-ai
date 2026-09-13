@@ -253,11 +253,9 @@ function ListView() {
           pageTitle="案件一覧"
           actions={(
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {org !== null ? (
-                <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
-                  <Settings size={12} />
-                </button>
-              ) : null}
+              <button onClick={() => { window.location.href = '/settings' }} title="設定" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
+                <Settings size={12} />
+              </button>
               <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
                 <Plus size={13} />
                 新規
@@ -272,12 +270,10 @@ function ListView() {
           <div style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', flexShrink: 0 }}>House-AI Workspace</div>
           <WorkspaceNav current="/workspace" />
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-            {org !== null ? (
-              <button onClick={() => setShowOrgSettings(true)} title="組織設定" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
-                <Settings size={13} />
-                組織設定
-              </button>
-            ) : null}
+            <button onClick={() => { window.location.href = '/settings' }} title="設定" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
+              <Settings size={13} />
+              設定
+            </button>
             <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
               <Plus size={15} />
               新規案件作成
@@ -1576,10 +1572,13 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             <>
               <div onClick={(e) => { e.stopPropagation(); setShowLogoMenu(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
               <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 48, left: 0, width: 210, background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 6 }}>
-                <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アイコン編集</div>
-                <div onClick={() => { window.open('/ws-legal', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>利用規約</div>
+                <div onClick={() => { window.location.href = '/settings?tab=account' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アカウント設定</div>
+                <div onClick={() => { window.location.href = '/settings?tab=notifications' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>通知設定</div>
+                <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>アイコン編集</div>
+                <div onClick={() => { window.open('/ws-legal', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>利用規約</div>
                 <div onClick={() => { window.open('/ws-legal?tab=privacy', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>プライバシーポリシー</div>
                 <div onClick={() => { setShowFeedbackModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>ご意見・不具合報告</div>
+                <div onClick={async () => { setShowLogoMenu(false); await supabase.auth.signOut(); window.location.replace('/login') }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>ログアウト</div>
               </div>
             </>
           ) : null}

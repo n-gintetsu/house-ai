@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
 import JSZip from 'jszip'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock, Settings } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 
@@ -1021,6 +1021,20 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0F1E', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+
+      {/* 上部ヘッダー（通常フロー・固定しない。スクロールで隠れる） */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: 48, padding: '0 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', boxSizing: 'border-box', flexShrink: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+          {workspace ? (workspace.title || '') : ''}
+        </div>
+        <button
+          onClick={() => { window.location.href = '/settings?tab=account' }}
+          title="設定"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#94A3B8', fontFamily: 'inherit' }}
+        >
+          <Settings size={14} />
+        </button>
+      </div>
 
       <div style={{ flex: 1, padding: '24px 16px 80px', boxSizing: 'border-box' }}>
 

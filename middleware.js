@@ -21,6 +21,8 @@ export default function middleware(request) {
     pathname === '/houses/' ||
     pathname === '/clients' ||
     pathname === '/clients/' ||
+    pathname === '/settings' ||
+    pathname === '/settings/' ||
     pathname.startsWith('/house/') ||
     pathname.startsWith('/meeting/')
   ) return

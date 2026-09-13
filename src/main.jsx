@@ -37,6 +37,7 @@ import ClientsListPage from './ClientsListPage'
 import WorkspaceLoginPage from './WorkspaceLoginPage'
 import WorkspaceSignupPage from './WorkspaceSignupPage'
 import WorkspaceAuthGuard from './WorkspaceAuthGuard'
+import SettingsPage from './SettingsPage'
 import LegalPage from './LegalPage'
 import WorkspaceLegalPage from './WorkspaceLegalPage'
 import MeetingPage from './MeetingPage'
@@ -147,7 +148,7 @@ const HONTAI_PUBLIC = false
 const pathname = window.location.pathname
 
 // Workspace系 + 認証系は常に通す
-const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/ws-legal', '/admin', '/pro/docs']
+const _WS_ALLOW = ['/login', '/signup', '/workspace', '/houses', '/clients', '/ws-legal', '/admin', '/pro/docs', '/settings']
 const _isWsPath =
   _WS_ALLOW.some(p => pathname === p || pathname === p + '/') ||
   pathname.startsWith('/house/') ||
@@ -204,6 +205,8 @@ if (!HONTAI_PUBLIC && !_isWsPath && (window.location.hash.includes('access_token
     Component = () => <WorkspaceAuthGuard><HousesListPage /></WorkspaceAuthGuard>
   } else if (pathname === '/clients' || pathname === '/clients/') {
     Component = () => <WorkspaceAuthGuard><ClientsListPage /></WorkspaceAuthGuard>
+  } else if (pathname === '/settings' || pathname === '/settings/') {
+    Component = () => <WorkspaceAuthGuard><SettingsPage /></WorkspaceAuthGuard>
   } else if (pathname.startsWith('/house/')) {
     Component = () => <WorkspaceAuthGuard><HouseRecordPage /></WorkspaceAuthGuard>
   } else if (pathname.startsWith('/meeting/')) {
