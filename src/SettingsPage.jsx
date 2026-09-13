@@ -24,11 +24,11 @@ function readTabFromUrl() {
 }
 
 /* 準備中の項目。操作できないことが分かるよう、ボタンは置かずラベルのみ表示する */
-function PendingRow({ label, note }) {
+function PendingRow({ label, note, isLast = false }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 400, color: '#94A3B8' }}>{label}</div>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '14px 0', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 400, color: '#94A3B8', wordBreak: 'break-all', overflowWrap: 'anywhere' }}>{label}</div>
         {note ? (
           <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4 }}>{note}</div>
         ) : null}
@@ -183,7 +183,7 @@ export default function SettingsPage() {
               <div>
                 <SectionCard title="プロフィール" description="表示名とアイコンの変更は次のリリースで対応します。">
                   <PendingRow label="プロフィール画像" />
-                  <PendingRow label="表示名" />
+                  <PendingRow label="表示名" isLast={true} />
                 </SectionCard>
 
                 <SectionCard title="ログイン情報">
@@ -191,7 +191,7 @@ export default function SettingsPage() {
                     label={loading ? 'メールアドレス' : (email || 'メールアドレス')}
                     note="※変更機能は準備中"
                   />
-                  <PendingRow label="パスワード変更" />
+                  <PendingRow label="パスワード変更" isLast={true} />
                 </SectionCard>
 
                 <SectionCard title="セッション">
@@ -205,7 +205,7 @@ export default function SettingsPage() {
                 </SectionCard>
 
                 <SectionCard title="退会" description="退会の手続きは、引き継ぎと保存義務の確認を含めて設計中です。">
-                  <PendingRow label="退会手続き" />
+                  <PendingRow label="退会手続き" isLast={true} />
                 </SectionCard>
               </div>
             ) : null}
@@ -240,7 +240,7 @@ export default function SettingsPage() {
             {/* ===== 通知 ===== */}
             {tab === 'notifications' ? (
               <SectionCard title="通知設定">
-                <PendingRow label="未読メッセージのリマインドメール" />
+                <PendingRow label="未読メッセージのリマインドメール" isLast={true} />
                 <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 12 }}>
                   案件の重要なお知らせ・招待・本人確認のメールは停止できません。
                 </div>
