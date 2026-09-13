@@ -65,6 +65,10 @@ export default function SettingsPage() {
   const [reminderOn, setReminderOn] = useState(true)
   const [reminderLoading, setReminderLoading] = useState(true)
   const [reminderSaving, setReminderSaving] = useState(false)
+  const [orgName, setOrgName] = useState('')
+  const [orgSaving, setOrgSaving] = useState(false)
+  const [orgError, setOrgError] = useState('')
+  const [orgSaved, setOrgSaved] = useState(false)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -109,6 +113,7 @@ export default function SettingsPage() {
       const { data: orgData } = await supabase.from('organizations').select('id, name, owner_id').maybeSingle()
       if (!mounted) return
       setOrg(orgData || null)
+      setOrgName(orgData ? (orgData.name || '') : '')
       setIsOrgOwner(orgData ? (uid ? orgData.owner_id === uid : false) : false)
       setLoading(false)
     }
@@ -166,6 +171,32 @@ export default function SettingsPage() {
       return
     }
     setReminderOn(next)
+  }
+
+  // 楽観的更新はせず、update の成功を確認してから state を反映する
+  const handleSaveOrgName = async () => {
+    if (orgSaving) return
+    if (!org) return
+    if (!isOrgOwner) return
+    const trimmed = orgName.trim()
+    if (!trimmed) {
+      setOrgError('会社名を入力してください。')
+      setOrgSaved(false)
+      return
+    }
+    setOrgSaving(true)
+    setOrgError('')
+    setOrgSaved(false)
+    const { error: updErr } = await supabase.from('organizations').update({ name: trimmed }).eq('id', org.id)
+    setOrgSaving(false)
+    if (updErr) {
+      console.error('[settings] 会社名の保存に失敗しました:', updErr)
+      setOrgError('保存に失敗しました。' + (updErr.message || ''))
+      return
+    }
+    setOrg(prev => (prev ? { ...prev, name: trimmed } : prev))
+    setOrgName(trimmed)
+    setOrgSaved(true)
   }
 
   const selectTab = (key) => {
@@ -302,21 +333,40 @@ export default function SettingsPage() {
                   <SectionCard title="組織設定">
                     <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>読み込み中...</div>
                   </SectionCard>
-                ) : !isOrgOwner ? (
+                ) : !org ? (
                   <SectionCard title="組織設定">
-                    <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>組織のオーナーのみ利用できます。</div>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>準備中</div>
                   </SectionCard>
                 ) : (
-                  <SectionCard title="会社情報" description="会社名の保存は次のリリースで対応します。">
+                  <SectionCard title="会社情報">
                     <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginBottom: 8 }}>会社名</div>
                     <input
                       type="text"
-                      value={org ? (org.name || '') : ''}
-                      readOnly
-                      disabled
-                      style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#64748B', fontSize: 16, fontWeight: 400, padding: '10px 12px', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
+                      value={orgName}
+                      onChange={(e) => { setOrgName(e.target.value); setOrgError(''); setOrgSaved(false) }}
+                      disabled={isOrgOwner ? orgSaving : true}
+                      placeholder="例：〇〇不動産株式会社"
+                      style={{ width: '100%', boxSizing: 'border-box', background: isOrgOwner ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)', border: isOrgOwner ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: isOrgOwner ? '#E2E8F0' : '#64748B', fontSize: 16, fontWeight: 400, padding: '10px 12px', outline: 'none', fontFamily: 'inherit', cursor: isOrgOwner ? 'text' : 'not-allowed' }}
                     />
-                    <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 8 }}>準備中</div>
+                    {orgError ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{orgError}</div>
+                    ) : null}
+                    {orgSaved ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 8 }}>保存しました</div>
+                    ) : null}
+                    {isOrgOwner ? (
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          onClick={handleSaveOrgName}
+                          disabled={orgSaving}
+                          style={{ background: orgSaving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: orgSaving ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                        >
+                          {orgSaving ? '保存中...' : '保存'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 8 }}>組織のオーナーのみ変更できます</div>
+                    )}
                   </SectionCard>
                 )}
               </div>
