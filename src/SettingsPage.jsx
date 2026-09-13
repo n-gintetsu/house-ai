@@ -11,6 +11,9 @@ const glass = {
   boxShadow: '0 0 30px rgba(201,168,76,0.15)',
 }
 
+// 利用規約「お問い合わせ窓口」と同じ連絡先
+const SUPPORT_EMAIL = 'info@gintetsu-fudosan.co.jp'
+
 const TABS = [
   { key: 'account',       label: 'アカウント',     Icon: User },
   { key: 'org',           label: '組織',           Icon: Building2 },
@@ -69,6 +72,17 @@ export default function SettingsPage() {
   const [orgSaving, setOrgSaving] = useState(false)
   const [orgError, setOrgError] = useState('')
   const [orgSaved, setOrgSaved] = useState(false)
+  // profiles.display_name（本人が管理するグローバルなプロフィール名）
+  // workspace_members.display_name（案件内の表示ラベル）とは別物なので混ぜない
+  const [displayName, setDisplayName] = useState('')
+  const [displayNameSaving, setDisplayNameSaving] = useState(false)
+  const [displayNameError, setDisplayNameError] = useState('')
+  const [displayNameSaved, setDisplayNameSaved] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSaved, setPasswordSaved] = useState(false)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -109,6 +123,19 @@ export default function SettingsPage() {
       const uid = user ? user.id : null
       setCurrentUserId(uid)
       setEmail(user ? (user.email || '') : '')
+      if (uid) {
+        // 行が無いユーザーもいるため maybeSingle。取得できなければ未設定として扱う
+        const { data: profileData, error: profileErr } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .eq('id', uid)
+          .maybeSingle()
+        if (!mounted) return
+        if (profileErr) {
+          console.error('[settings] プロフィールの取得に失敗しました:', profileErr)
+        }
+        setDisplayName(profileData ? (profileData.display_name || '') : '')
+      }
       // WorkspacePage と同じ読み取り（新規のDBアクセスではない）
       const { data: orgData } = await supabase.from('organizations').select('id, name, owner_id').maybeSingle()
       if (!mounted) return
@@ -198,6 +225,57 @@ export default function SettingsPage() {
     setOrgName(trimmed)
     setOrgSaved(true)
   }
+
+  // 楽観的更新はせず、upsert の成功を確認してから state を反映する
+  // 空文字は未設定に戻す操作として扱い、null を保存する
+  const handleSaveDisplayName = async () => {
+    if (displayNameSaving) return
+    if (!currentUserId) return
+    const trimmed = displayName.trim()
+    setDisplayNameSaving(true)
+    setDisplayNameError('')
+    setDisplayNameSaved(false)
+    const { error: upErr } = await supabase
+      .from('profiles')
+      .upsert({ id: currentUserId, display_name: trimmed === '' ? null : trimmed }, { onConflict: 'id' })
+    setDisplayNameSaving(false)
+    if (upErr) {
+      console.error('[settings] 表示名の保存に失敗しました:', upErr)
+      setDisplayNameError('保存に失敗しました。' + (upErr.message || ''))
+      return
+    }
+    setDisplayName(trimmed)
+    setDisplayNameSaved(true)
+  }
+
+  const handleChangePassword = async () => {
+    if (passwordSaving) return
+    if (newPassword.length < 8) {
+      setPasswordError('パスワードは8文字以上で入力してください。')
+      setPasswordSaved(false)
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('確認用のパスワードが一致しません。')
+      setPasswordSaved(false)
+      return
+    }
+    setPasswordSaving(true)
+    setPasswordError('')
+    setPasswordSaved(false)
+    const { error: pwErr } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordSaving(false)
+    if (pwErr) {
+      console.error('[settings] パスワードの変更に失敗しました:', pwErr)
+      setPasswordError(pwErr.message || 'パスワードを変更できませんでした。')
+      return
+    }
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordSaved(true)
+  }
+
+  const fieldStyle = { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: '#E2E8F0', fontSize: 16, fontWeight: 400, padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }
 
   const selectTab = (key) => {
     setTab(key)
@@ -297,9 +375,35 @@ export default function SettingsPage() {
             {/* ===== アカウント ===== */}
             {tab === 'account' ? (
               <div>
-                <SectionCard title="プロフィール" description="表示名とアイコンの変更は次のリリースで対応します。">
+                <SectionCard title="プロフィール" description="プロフィール画像の変更は次のリリースで対応します。">
                   <PendingRow label="プロフィール画像" />
-                  <PendingRow label="表示名" isLast={true} />
+                  <div style={{ padding: '14px 0' }}>
+                    <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>表示名</div>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4, marginBottom: 8 }}>House-AI 全体で使われる、あなた自身のプロフィール名です。</div>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => { setDisplayName(e.target.value); setDisplayNameError(''); setDisplayNameSaved(false) }}
+                      disabled={displayNameSaving}
+                      placeholder="未設定（案件では招待時の表示名またはメールアドレスが使われます）"
+                      style={fieldStyle}
+                    />
+                    {displayNameError ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{displayNameError}</div>
+                    ) : null}
+                    {displayNameSaved ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 8 }}>保存しました</div>
+                    ) : null}
+                    <div style={{ marginTop: 12 }}>
+                      <button
+                        onClick={handleSaveDisplayName}
+                        disabled={displayNameSaving}
+                        style={{ background: displayNameSaving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: displayNameSaving ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                      >
+                        {displayNameSaving ? '保存中...' : '保存'}
+                      </button>
+                    </div>
+                  </div>
                 </SectionCard>
 
                 <SectionCard title="ログイン情報">
@@ -307,7 +411,43 @@ export default function SettingsPage() {
                     label={loading ? 'メールアドレス' : (email || 'メールアドレス')}
                     note="※変更機能は準備中"
                   />
-                  <PendingRow label="パスワード変更" isLast={true} />
+                  <div style={{ padding: '14px 0' }}>
+                    <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>パスワード変更</div>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4, marginBottom: 8 }}>8文字以上で設定してください。</div>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
+                      disabled={passwordSaving}
+                      placeholder="新しいパスワード"
+                      autoComplete="new-password"
+                      style={{ ...fieldStyle, marginBottom: 8 }}
+                    />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
+                      disabled={passwordSaving}
+                      placeholder="新しいパスワード（確認用）"
+                      autoComplete="new-password"
+                      style={fieldStyle}
+                    />
+                    {passwordError ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{passwordError}</div>
+                    ) : null}
+                    {passwordSaved ? (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 8 }}>パスワードを変更しました</div>
+                    ) : null}
+                    <div style={{ marginTop: 12 }}>
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={passwordSaving}
+                        style={{ background: passwordSaving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: passwordSaving ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                      >
+                        {passwordSaving ? '変更中...' : 'パスワードを変更'}
+                      </button>
+                    </div>
+                  </div>
                 </SectionCard>
 
                 <SectionCard title="セッション">
@@ -320,8 +460,16 @@ export default function SettingsPage() {
                   </button>
                 </SectionCard>
 
-                <SectionCard title="退会" description="退会の手続きは、引き継ぎと保存義務の確認を含めて設計中です。">
-                  <PendingRow label="退会手続き" isLast={true} />
+                <SectionCard title="退会">
+                  <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', lineHeight: 1.8 }}>
+                    退会をご希望の場合は、サポートまでご連絡ください。お客様がオーナーとなっている組織・案件の引き継ぎが必要な場合があります。
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <a
+                      href={'mailto:' + SUPPORT_EMAIL}
+                      style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c', textDecoration: 'none' }}
+                    >{SUPPORT_EMAIL}</a>
+                  </div>
                 </SectionCard>
               </div>
             ) : null}
