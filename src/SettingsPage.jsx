@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import MobileHeader from './MobileHeader'
@@ -59,12 +59,39 @@ export default function SettingsPage() {
   const [org, setOrg] = useState(null)
   const [isOrgOwner, setIsOrgOwner] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  const headerRef = useRef(null)
+  const [headerHeight, setHeaderHeight] = useState(110)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  // モバイル時のみ、MobileHeader の実高さを測って main の paddingTop に反映する
+  useEffect(() => {
+    if (!isNarrow) return
+    const wrap = headerRef.current
+    if (!wrap) return
+    // MobileHeader のルートは position: fixed のため、包んだ div 自体の高さは 0 になる。
+    // 実際の高さは中の固定ヘッダー要素から測る。
+    const target = wrap.firstElementChild || wrap
+    const measure = () => {
+      const h = target.offsetHeight
+      if (h > 0) setHeaderHeight(h)
+    }
+    measure()
+    let observer = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(measure)
+      observer.observe(target)
+    }
+    window.addEventListener('resize', measure)
+    return () => {
+      if (observer) observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [isNarrow])
 
   useEffect(() => {
     let mounted = true
@@ -101,7 +128,9 @@ export default function SettingsPage() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
 
       {isNarrow ? (
-        <MobileHeader current="/settings" pageTitle="設定" />
+        <div ref={headerRef}>
+          <MobileHeader current="/settings" pageTitle="設定" />
+        </div>
       ) : (
         <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', boxSizing: 'border-box', overflowX: 'auto' }}>
           <img src="/logo.png" alt="HOUSE-AI" style={{ height: 34, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
@@ -111,7 +140,7 @@ export default function SettingsPage() {
         </header>
       )}
 
-      <main style={{ paddingTop: isNarrow ? 110 : 80, paddingBottom: 40, paddingLeft: 24, paddingRight: 24, maxWidth: 1000, margin: '0 auto', boxSizing: 'border-box' }}>
+      <main style={{ paddingTop: isNarrow ? headerHeight + 8 : 80, paddingBottom: 40, paddingLeft: 24, paddingRight: 24, maxWidth: 1000, margin: '0 auto', boxSizing: 'border-box' }}>
 
         {isNarrow ? (
           /* モバイル: 上部に横並びタブ */
