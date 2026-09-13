@@ -107,6 +107,10 @@ export default function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   // null または { kind: 'success' | 'error', text: '...' }
   const [passwordModal, setPasswordModal] = useState(null)
+  // identities に 'email' が無ければパスワードログインを持たない（Google のみ等）
+  const [hasPasswordLogin, setHasPasswordLogin] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [resetSending, setResetSending] = useState(false)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -147,6 +151,9 @@ export default function SettingsPage() {
       const uid = user ? user.id : null
       setCurrentUserId(uid)
       setEmail(user ? (user.email || '') : '')
+      // identities が取得できない場合は false（＝変更欄を出さない安全側）に倒す
+      const identities = user ? (user.identities || []) : []
+      setHasPasswordLogin(identities.some(i => i.provider === 'email'))
       if (uid) {
         // 行が無いユーザーもいるため maybeSingle。取得できなければ未設定として扱う
         const { data: profileData, error: profileErr } = await supabase
@@ -274,6 +281,12 @@ export default function SettingsPage() {
 
   const handleChangePassword = async () => {
     if (passwordSaving) return
+    if (currentPassword === '') {
+      setPasswordError('現在のパスワードを入力してください。')
+      setPasswordSaved(false)
+      setPasswordModal({ kind: 'error', text: '現在のパスワードを入力してください。' })
+      return
+    }
     if (newPassword.length < 8) {
       setPasswordError('パスワードは8文字以上で入力してください。')
       setPasswordSaved(false)
@@ -289,6 +302,19 @@ export default function SettingsPage() {
     setPasswordSaving(true)
     setPasswordError('')
     setPasswordSaved(false)
+    // 本人確認：現在のパスワードで再認証する。
+    // 失敗理由は固定文言に統一し、アカウントの存在有無を推測させない。
+    const { error: authErr } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: currentPassword,
+    })
+    if (authErr) {
+      console.error('[settings] 再認証に失敗しました:', authErr)
+      setPasswordSaving(false)
+      setPasswordError('現在のパスワードが正しくありません。')
+      setPasswordModal({ kind: 'error', text: '現在のパスワードが正しくありません。' })
+      return
+    }
     const { error: pwErr } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordSaving(false)
     if (pwErr) {
@@ -299,10 +325,28 @@ export default function SettingsPage() {
       setPasswordModal({ kind: 'error', text: translated })
       return
     }
+    setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
     setPasswordSaved(true)
     setPasswordModal({ kind: 'success', text: 'パスワードを変更しました。' })
+  }
+
+  // パスワードを設定していない（マジックリンクのみの）ユーザー向けの導線。
+  // redirectTo は WorkspaceLoginPage.jsx:114 の既存実装に揃える。
+  const handleSendResetEmail = async () => {
+    if (resetSending) return
+    setResetSending(true)
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login',
+    })
+    setResetSending(false)
+    if (resetErr) {
+      console.error('[settings] パスワード設定メールの送信に失敗しました:', resetErr)
+      setPasswordModal({ kind: 'error', text: 'メールを送信できませんでした。時間をおいて再度お試しください。' })
+      return
+    }
+    setPasswordModal({ kind: 'success', text: 'パスワード設定用のメールを送信しました。メールをご確認ください。' })
   }
 
   const fieldStyle = { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: '#E2E8F0', fontSize: 16, fontWeight: 400, padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }
@@ -468,40 +512,64 @@ export default function SettingsPage() {
                   />
                   <div style={{ padding: '14px 0' }}>
                     <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>パスワード変更</div>
-                    <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4, marginBottom: 8 }}>8文字以上で設定してください。</div>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
-                      disabled={passwordSaving}
-                      placeholder="新しいパスワード"
-                      autoComplete="new-password"
-                      style={{ ...fieldStyle, marginBottom: 8 }}
-                    />
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
-                      disabled={passwordSaving}
-                      placeholder="新しいパスワード（確認用）"
-                      autoComplete="new-password"
-                      style={fieldStyle}
-                    />
-                    {passwordError ? (
-                      <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{passwordError}</div>
-                    ) : null}
-                    {passwordSaved ? (
-                      <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 8 }}>パスワードを変更しました</div>
-                    ) : null}
-                    <div style={{ marginTop: 12 }}>
-                      <button
-                        onClick={handleChangePassword}
-                        disabled={passwordSaving}
-                        style={{ background: passwordSaving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: passwordSaving ? 'default' : 'pointer', fontFamily: 'inherit' }}
-                      >
-                        {passwordSaving ? '変更中...' : 'パスワードを変更'}
-                      </button>
-                    </div>
+                    {hasPasswordLogin ? (
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4, marginBottom: 8 }}>本人確認のため、現在のパスワードもご入力ください。新しいパスワードは8文字以上で設定してください。</div>
+                        <input
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
+                          disabled={passwordSaving}
+                          placeholder="現在のパスワード"
+                          autoComplete="current-password"
+                          style={{ ...fieldStyle, marginBottom: 8 }}
+                        />
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
+                          disabled={passwordSaving}
+                          placeholder="新しいパスワード"
+                          autoComplete="new-password"
+                          style={{ ...fieldStyle, marginBottom: 8 }}
+                        />
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSaved(false) }}
+                          disabled={passwordSaving}
+                          placeholder="新しいパスワード（確認用）"
+                          autoComplete="new-password"
+                          style={fieldStyle}
+                        />
+                        {passwordError ? (
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{passwordError}</div>
+                        ) : null}
+                        {passwordSaved ? (
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 8 }}>パスワードを変更しました</div>
+                        ) : null}
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            onClick={handleChangePassword}
+                            disabled={passwordSaving}
+                            style={{ background: passwordSaving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: passwordSaving ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                          >
+                            {passwordSaving ? '変更中...' : 'パスワードを変更'}
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            onClick={handleSendResetEmail}
+                            disabled={resetSending}
+                            style={{ background: 'transparent', border: 'none', padding: 0, marginTop: 12, fontSize: 12, fontWeight: 400, color: '#c9a84c', cursor: resetSending ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                          >
+                            {resetSending ? '送信中...' : 'パスワードをお忘れの方・未設定の方'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 4, lineHeight: 1.8 }}>Googleアカウントでログインしています。パスワードの変更はGoogleアカウント側で行ってください。</div>
+                    )}
                   </div>
                 </SectionCard>
 
