@@ -14,6 +14,28 @@ const glass = {
 // 利用規約「お問い合わせ窓口」と同じ連絡先
 const SUPPORT_EMAIL = 'info@gintetsu-fudosan.co.jp'
 
+// Supabase Auth が返す英語メッセージを画面表示用の日本語に変換する。
+// 原文は console.error 側に残すこと（ここでは表示用の文面のみを返す）。
+const translateAuthError = (raw) => {
+  const msg = String(raw || '')
+  if (msg.indexOf('should be different from the old password') >= 0) {
+    return '新しいパスワードは、現在のパスワードと異なるものを入力してください。'
+  }
+  if (msg.indexOf('Password should be at least') >= 0) {
+    return 'パスワードが短すぎます。8文字以上で入力してください。'
+  }
+  if (msg.indexOf('For security purposes') >= 0) {
+    return '短時間に複数回試行されました。しばらく時間をおいてからお試しください。'
+  }
+  if (msg.indexOf('Auth session missing') >= 0 || msg.indexOf('session') >= 0) {
+    return 'ログイン状態が確認できませんでした。再度ログインしてからお試しください。'
+  }
+  if (msg.indexOf('same_password') >= 0) {
+    return '新しいパスワードは、現在のパスワードと異なるものを入力してください。'
+  }
+  return 'パスワードを変更できませんでした。時間をおいて再度お試しください。'
+}
+
 const TABS = [
   { key: 'account',       label: 'アカウント',     Icon: User },
   { key: 'org',           label: '組織',           Icon: Building2 },
@@ -83,6 +105,8 @@ export default function SettingsPage() {
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [passwordSaved, setPasswordSaved] = useState(false)
+  // null または { kind: 'success' | 'error', text: '...' }
+  const [passwordModal, setPasswordModal] = useState(null)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -253,11 +277,13 @@ export default function SettingsPage() {
     if (newPassword.length < 8) {
       setPasswordError('パスワードは8文字以上で入力してください。')
       setPasswordSaved(false)
+      setPasswordModal({ kind: 'error', text: 'パスワードは8文字以上で入力してください。' })
       return
     }
     if (newPassword !== confirmPassword) {
       setPasswordError('確認用のパスワードが一致しません。')
       setPasswordSaved(false)
+      setPasswordModal({ kind: 'error', text: '確認用のパスワードが一致しません。' })
       return
     }
     setPasswordSaving(true)
@@ -266,13 +292,17 @@ export default function SettingsPage() {
     const { error: pwErr } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordSaving(false)
     if (pwErr) {
+      // 原文を失わないよう、コンソールにはエラーオブジェクトをそのまま出す
       console.error('[settings] パスワードの変更に失敗しました:', pwErr)
-      setPasswordError(pwErr.message || 'パスワードを変更できませんでした。')
+      const translated = translateAuthError(pwErr.message)
+      setPasswordError(translated)
+      setPasswordModal({ kind: 'error', text: translated })
       return
     }
     setNewPassword('')
     setConfirmPassword('')
     setPasswordSaved(true)
+    setPasswordModal({ kind: 'success', text: 'パスワードを変更しました。' })
   }
 
   const fieldStyle = { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: '#E2E8F0', fontSize: 16, fontWeight: 400, padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }
@@ -291,6 +321,31 @@ export default function SettingsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
+
+      {passwordModal ? (
+        <div
+          onClick={() => setPasswordModal(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ ...glass, maxWidth: 420, width: '100%', padding: 24, boxSizing: 'border-box' }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 500, color: passwordModal.kind === 'success' ? '#c9a84c' : '#F87171', marginBottom: 12 }}>
+              {passwordModal.kind === 'success' ? '完了' : 'エラー'}
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0', lineHeight: 1.8 }}>
+              {passwordModal.text}
+            </div>
+            <div style={{ marginTop: 20, textAlign: 'right' }}>
+              <button
+                onClick={() => setPasswordModal(null)}
+                style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >閉じる</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isNarrow ? (
         <div ref={headerRef}>
