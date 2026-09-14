@@ -268,7 +268,8 @@ export default function SettingsPage() {
     setDisplayNameSaved(false)
     const { error: upErr } = await supabase
       .from('profiles')
-      .upsert({ id: currentUserId, display_name: trimmed === '' ? null : trimmed }, { onConflict: 'id' })
+      .update({ display_name: trimmed === '' ? null : trimmed })
+      .eq('id', currentUserId)
     setDisplayNameSaving(false)
     if (upErr) {
       console.error('[settings] 表示名の保存に失敗しました:', upErr)
