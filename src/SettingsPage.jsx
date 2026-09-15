@@ -266,14 +266,20 @@ export default function SettingsPage() {
     setDisplayNameSaving(true)
     setDisplayNameError('')
     setDisplayNameSaved(false)
-    const { error: upErr } = await supabase
+    const { data: updated, error: upErr } = await supabase
       .from('profiles')
       .update({ display_name: trimmed === '' ? null : trimmed })
       .eq('id', currentUserId)
+      .select('id')
     setDisplayNameSaving(false)
     if (upErr) {
       console.error('[settings] 表示名の保存に失敗しました:', upErr)
       setDisplayNameError('保存に失敗しました。' + (upErr.message || ''))
+      return
+    }
+    if (!updated || updated.length === 0) {
+      console.error('[settings] 表示名の保存対象が見つかりませんでした')
+      setDisplayNameError('保存できませんでした。時間をおいて再度お試しください。')
       return
     }
     setDisplayName(trimmed)
