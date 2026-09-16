@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import MobileHeader from './MobileHeader'
 import FeedbackModal from './FeedbackModal'
-import { User, Building2, Bell, FileText, LogOut } from 'lucide-react'
+import { User, Building2, Bell, FileText, LogOut, CreditCard } from 'lucide-react'
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
@@ -39,9 +39,43 @@ const translateAuthError = (raw) => {
 const TABS = [
   { key: 'account',       label: 'アカウント',     Icon: User },
   { key: 'org',           label: '組織',           Icon: Building2 },
+  { key: 'billing',       label: 'プラン',         Icon: CreditCard },
   { key: 'notifications', label: '通知',           Icon: Bell },
   { key: 'legal',         label: '法務・サポート', Icon: FileText },
 ]
+
+// 契約状態の表示名。未知の値は「不明」にフォールバックする（billing_exempt は UI に出さない）
+const BILLING_STATUS_LABEL = {
+  active: '利用中',
+  trialing: '無料期間中',
+  trial_expired: '無料期間が終了しました',
+  past_due: 'お支払いを確認できませんでした',
+  canceled: '解約済み',
+}
+
+function formatJpDate(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日'
+}
+
+// GET なので method と Content-Type は付けない
+async function fetchBillingStatus() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/billing/status', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
 
 function readTabFromUrl() {
   const t = new URLSearchParams(window.location.search).get('tab')
@@ -111,6 +145,9 @@ export default function SettingsPage() {
   const [hasPasswordLogin, setHasPasswordLogin] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [resetSending, setResetSending] = useState(false)
+  const [billingLoading, setBillingLoading] = useState(true)
+  const [billingError, setBillingError] = useState('')
+  const [billing, setBilling] = useState(null)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -207,6 +244,25 @@ export default function SettingsPage() {
     loadReminderSetting()
     return () => { mounted = false }
   }, [tab, currentUserId])
+
+  // プランタブを開いたときだけ読み込む。読み込み済みなら再取得しない
+  useEffect(() => {
+    if (tab !== 'billing') return
+    if (billing !== null) return
+    let mounted = true
+    async function loadBilling() {
+      const r = await fetchBillingStatus()
+      if (!mounted) return
+      if (r.ok) {
+        setBilling(r.data)
+      } else {
+        setBillingError('契約状態を取得できませんでした')
+      }
+      setBillingLoading(false)
+    }
+    loadBilling()
+    return () => { mounted = false }
+  }, [tab, billing])
 
   // 楽観的更新はせず、upsert の成功を確認してから state を反映する
   const toggleReminder = async () => {
@@ -645,6 +701,45 @@ export default function SettingsPage() {
                     ) : (
                       <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 8 }}>組織のオーナーのみ変更できます</div>
                     )}
+                  </SectionCard>
+                )}
+              </div>
+            ) : null}
+
+            {/* ===== プラン ===== */}
+            {tab === 'billing' ? (
+              <div>
+                {billingLoading ? (
+                  <SectionCard title="プラン">
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B' }}>読み込み中...</div>
+                  </SectionCard>
+                ) : (billingError !== '' || !billing) ? (
+                  <SectionCard title="プラン">
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#F87171' }}>{billingError}</div>
+                  </SectionCard>
+                ) : !billing.isOwner ? (
+                  <SectionCard title="プラン">
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>契約はWorkspaceのオーナーが管理します。</div>
+                  </SectionCard>
+                ) : !billing.hasSubscriptionRecord ? (
+                  <SectionCard title="プラン">
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>Workspaceは未開設です。</div>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>自社のWorkspaceを開設すると、最初の3か月は無料でご利用いただけます。</div>
+                  </SectionCard>
+                ) : (
+                  <SectionCard title="プラン">
+                    <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginBottom: 6 }}>現在の状態</div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>{BILLING_STATUS_LABEL[billing.status] || '不明'}</div>
+                    {billing.status === 'trialing' ? (
+                      billing.trialEndsAt ? (
+                        <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>無料期間は{formatJpDate(billing.trialEndsAt)}まで</div>
+                      ) : null
+                    ) : null}
+                    {billing.cancelAtPeriodEnd ? (
+                      billing.currentPeriodEnd ? (
+                        <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>{formatJpDate(billing.currentPeriodEnd)}に解約予定</div>
+                      ) : null
+                    ) : null}
                   </SectionCard>
                 )}
               </div>
