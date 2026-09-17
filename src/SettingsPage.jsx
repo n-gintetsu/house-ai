@@ -77,6 +77,32 @@ async function fetchBillingStatus() {
   }
 }
 
+// body は送らない。サーバーはリクエストから org_id / price を一切受け取らない設計
+async function startBillingCheckout() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
+const CHECKOUT_ERROR_LABEL = {
+  not_owner: '契約はWorkspaceのオーナーのみ手続きできます。',
+  billing_exempt: 'このWorkspaceは課金の対象外です。',
+  already_active: 'すでにご契約いただいています。',
+  subscription_exists: 'すでに手続き済みのご契約があります。',
+  no_subscription_record: 'Workspaceが未開設です。',
+}
+
 function readTabFromUrl() {
   const t = new URLSearchParams(window.location.search).get('tab')
   return TABS.some(x => x.key === t) ? t : 'account'
@@ -148,6 +174,8 @@ export default function SettingsPage() {
   const [billingLoading, setBillingLoading] = useState(true)
   const [billingError, setBillingError] = useState('')
   const [billing, setBilling] = useState(null)
+  const [checkoutStarting, setCheckoutStarting] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -263,6 +291,20 @@ export default function SettingsPage() {
     loadBilling()
     return () => { mounted = false }
   }, [tab, billing])
+
+  // 成功時は Stripe の決済画面へ遷移するため、遷移後の状態は戻さない
+  const handleStartCheckout = async () => {
+    if (checkoutStarting) return
+    setCheckoutStarting(true)
+    setCheckoutError('')
+    const r = await startBillingCheckout()
+    if (r.ok && r.data && r.data.url) {
+      window.location.href = r.data.url
+      return
+    }
+    setCheckoutError(CHECKOUT_ERROR_LABEL[r.data && r.data.error] || '手続きを開始できませんでした。時間をおいて再度お試しください。')
+    setCheckoutStarting(false)
+  }
 
   // 楽観的更新はせず、upsert の成功を確認してから state を反映する
   const toggleReminder = async () => {
@@ -739,6 +781,21 @@ export default function SettingsPage() {
                       billing.currentPeriodEnd ? (
                         <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>{formatJpDate(billing.currentPeriodEnd)}に解約予定</div>
                       ) : null
+                    ) : null}
+                    {(billing.status === 'trial_expired' || billing.status === 'past_due' || billing.status === 'canceled') ? (
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>月額9,800円（税別）でご利用いただけます。</div>
+                        <button
+                          onClick={handleStartCheckout}
+                          disabled={checkoutStarting}
+                          style={{ background: checkoutStarting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: checkoutStarting ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                        >
+                          {checkoutStarting ? '手続き中...' : 'お支払いに進む'}
+                        </button>
+                        {checkoutError !== '' ? (
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{checkoutError}</div>
+                        ) : null}
+                      </div>
                     ) : null}
                   </SectionCard>
                 )}
