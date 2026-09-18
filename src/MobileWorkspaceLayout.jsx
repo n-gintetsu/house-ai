@@ -37,6 +37,40 @@ function permissionStyle(p) {
 const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', customer: 'Customer', broker: 'Broker', judicialscrivener: 'JudicialScrivener', bank: 'Bank', reformcompany: 'ReformCompany', guest: 'Guest', member: 'Member' }
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
+
+// 権限に関わる workspace_members の書き込みはサーバー側のAPIに委譲する
+async function callWorkspaceApi(path, body) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body || {}),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
+const MEMBER_API_ERROR = {
+  not_a_member: 'この案件のメンバーではありません。',
+  insufficient_permission: '権限を変更できるのはオーナーまたはマネージャーのみです。',
+  manager_cannot_change_admin: 'マネージャーはオーナー・マネージャーの権限を変更できません。',
+  manager_cannot_grant_admin: 'マネージャーはオーナー・マネージャー権限を付与できません。',
+  cannot_change_self: '自分自身の権限は変更できません。',
+  last_owner: 'この案件の最後のオーナーは変更できません。',
+  member_not_found: '対象のメンバーが見つかりません。',
+  workspace_mismatch: '対象のメンバーがこの案件に属していません。',
+  already_member: 'このメールアドレスは既にメンバーとして参加しています。',
+  invalid_role: '権限の指定が正しくありません。',
+  invalid_email: 'メールアドレスの形式が正しくありません。',
+}
+
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
 const ROLE_OPTIONS = ['お客様', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
 const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
@@ -817,7 +851,17 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
   // --- workspace_members（ログインメンバー）---
   const handleUpdateMemberRole = async (memberId, newRole) => {
-    await supabase.from('workspace_members').update({ role: newRole }).eq('id', memberId)
+    const r = await callWorkspaceApi('/api/workspace/member-role', {
+      workspaceId: id,
+      memberId: memberId,
+      newRole: newRole,
+    })
+    if (!r.ok) {
+      const msg = MEMBER_API_ERROR[r.data && r.data.error] || '権限を変更できませんでした。'
+      window.alert(msg)
+      return
+    }
+    // 成功を確認してから画面の状態を更新する
     setWorkspaceMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m))
   }
 
@@ -853,38 +897,19 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     if ((inviteForm.companyName || '').trim() === '') { setInviteError('名称（表示名）を入力してください'); return }
     setInviteLoading(true); setInviteError(''); setInviteStatus('')
     try {
-      let newMemberId = null
-
-      const { data: existingPending } = await supabase
-        .from('workspace_members')
-        .select('id')
-        .eq('workspace_id', id)
-        .eq('email', email)
-        .eq('status', 'pending')
-        .maybeSingle()
-
-      if (existingPending) {
-        await supabase
-          .from('workspace_members')
-          .update({ role: inviteForm.role, display_name: (inviteForm.companyName || '').trim() })
-          .eq('id', existingPending.id)
-        newMemberId = existingPending.id
-      } else {
-        const { data: { session } } = await supabase.auth.getSession()
-        const invitedBy = session ? session.user.id : null
-        const newId = crypto.randomUUID()
-        const { error: insErr } = await supabase.from('workspace_members').insert({
-          id: newId,
-          workspace_id: id,
-          email,
-          role: inviteForm.role,
-          status: 'pending',
-          invited_by: invitedBy,
-          display_name: (inviteForm.companyName || '').trim(),
-        })
-        if (insErr) throw insErr
-        newMemberId = newId
+      // 既存 pending の検索・update・insert はサーバー側でまとめて行う
+      const inviteRes = await callWorkspaceApi('/api/workspace/member-invite', {
+        workspaceId: id,
+        email: email,
+        role: inviteForm.role,
+        displayName: (inviteForm.companyName || '').trim(),
+      })
+      if (!inviteRes.ok) {
+        const msg = MEMBER_API_ERROR[inviteRes.data && inviteRes.data.error] || '招待できませんでした。'
+        setInviteError(msg)
+        return
       }
+      const newMemberId = inviteRes.data.memberId || null
 
       const isVendorRole = !FULL_ACCESS_ROLES.includes(normRole(inviteForm.role))
       if (isVendorRole && newMemberId) {

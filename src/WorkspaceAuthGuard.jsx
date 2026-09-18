@@ -2,77 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { Loader } from 'lucide-react'
 
-const CLAIM_ROLE_LABEL = {
-  owner: 'Owner', manager: 'Manager', staff: '担当', customer: 'お客様',
-  broker: '仲介業者', judicialscrivener: '司法書士', bank: '銀行',
-  reformcompany: 'リフォーム', guest: 'Guest',
-}
-
+// 招待の受諾はサーバー側で行う（対象は必ずセッションのメールアドレスから決まる）
 async function claimPendingInvitations(session) {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return []
   try {
-    const userId = session.user.id
-    const email = (session.user.email || '').toLowerCase()
-    if (!email) return []
-
-    const { data: pending } = await supabase
-      .from('workspace_members')
-      .select('id, workspace_id, role, display_name')
-      .is('user_id', null)
-      .eq('email', email)
-
-    if (!pending || pending.length === 0) return []
-
-    const claimed = []
-    for (const row of pending) {
-      const { data: existing } = await supabase
-        .from('workspace_members')
-        .select('id')
-        .eq('workspace_id', row.workspace_id)
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .maybeSingle()
-
-      if (!existing) {
-        const { error } = await supabase
-          .from('workspace_members')
-          .update({ user_id: userId, status: 'active' })
-          .eq('id', row.id)
-        if (!error) {
-          claimed.push(row)
-          // claim 成功行に通知 + 関係者を追加（失敗してもログインを止めない）
-          try {
-            const joinName = row.display_name || ''
-            const noticeMessage = joinName ? (joinName + '様が参加されました。') : '新しいメンバーが参加されました。'
-            await supabase.from('ws_notices').insert({
-              workspace_id: row.workspace_id,
-              level: 'info',
-              message: noticeMessage,
-            })
-            const { data: existingMember } = await supabase
-              .from('ws_members')
-              .select('id')
-              .eq('workspace_id', row.workspace_id)
-              .eq('name', joinName)
-              .maybeSingle()
-            if (!existingMember) {
-              const roleKey = String(row.role || '').toLowerCase()
-              const roleLabel = CLAIM_ROLE_LABEL[roleKey] || row.role || ''
-              await supabase.from('ws_members').insert({
-                workspace_id: row.workspace_id,
-                name: joinName,
-                role_label: roleLabel,
-                permission: row.role,
-              })
-            }
-          } catch (notifyErr) {
-            console.error('claimPendingInvitations notify error', notifyErr)
-          }
-        }
-      }
-    }
-    return claimed
+    const res = await fetch('/api/workspace/claim-invite', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    if (!res.ok) return []
+    const data = await res.json().catch(() => ({}))
+    const ids = (data && data.workspaceIds) || []
+    // 呼び出し側は claimed[0].workspace_id を読むため、その形に揃えて返す
+    return ids.map(wid => ({ workspace_id: wid }))
   } catch (e) {
-    console.error('claimPendingInvitations error', e)
+    console.error(e)
     return []
   }
 }
