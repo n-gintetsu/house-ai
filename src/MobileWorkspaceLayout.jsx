@@ -69,6 +69,8 @@ const MEMBER_API_ERROR = {
   already_member: 'このメールアドレスは既にメンバーとして参加しています。',
   invalid_role: '権限の指定が正しくありません。',
   invalid_email: 'メールアドレスの形式が正しくありません。',
+  manager_cannot_remove_admin: 'マネージャーはオーナー・マネージャーを削除できません。',
+  cannot_remove_self: '自分自身を削除することはできません。',
 }
 
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
@@ -865,8 +867,19 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     setWorkspaceMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m))
   }
 
-  const handleDeleteWorkspaceMember = async (memberId) => {
-    await supabase.from('workspace_members').delete().eq('id', memberId)
+  const handleDeleteWorkspaceMember = async (memberId, memberName) => {
+    const label = memberName || 'このメンバー'
+    if (!window.confirm(label + ' をこの案件から削除しますか？\nこの操作は取り消せません。')) return
+    const r = await callWorkspaceApi('/api/workspace/member-remove', {
+      workspaceId: id,
+      memberId: memberId,
+    })
+    if (!r.ok) {
+      const msg = MEMBER_API_ERROR[r.data && r.data.error] || 'メンバーを削除できませんでした。'
+      window.alert(msg)
+      return
+    }
+    // 成功を確認してから画面の状態を更新する
     setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
@@ -1712,7 +1725,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                             {displayName}
                           </div>
                           {canManage && m.user_id !== currentUserId ? (
-                            <button onClick={() => handleDeleteWorkspaceMember(m.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                            <button onClick={() => handleDeleteWorkspaceMember(m.id, displayName)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                               <Trash2 size={14} color="#475569" />
                             </button>
                           ) : null}
