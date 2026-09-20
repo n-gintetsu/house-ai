@@ -82,9 +82,23 @@ function PrefillCreateModal({ house, onClose }) {
       }
 
       // 1) ws_code 採番 + workspaces insert
-      const { count } = await supabase.from('workspaces').select('*', { count: 'exact', head: true })
-      const wsCode = `WS-2026-${String((count || 0) + 1).padStart(6, '0')}`
-      const { data: wsData, error: wsErr } = await supabase.from('workspaces').insert({
+      // ★★.select() / .single() を付けない（RETURNING を使わない）。★★
+      //   workspaces の SELECT ポリシーは USING can_access_workspace(id) で、この関数は
+      //   ws_id をキーに workspaces 自身と workspace_members を引き直す実装。
+      //   INSERT ... RETURNING の最中は、挿入中の行が同一コマンド内の関数から不可視のため、
+      //   org_id が正しくても必ず RLS 違反になる。
+      //   通常の新規作成（WorkspacePage.jsx の CreateModal）が成功しているのは
+      //   RETURNING を使っていないため。ここも同じ形に揃える。
+      //
+      // ★id はクライアントで先に決める。戻り値に頼らなくなるので RETURNING が不要になる。
+      const newId = crypto.randomUUID()
+      // ★ws_code は next_workspace_code() に採番させる。件数から組み立てない
+      //   （count 方式は他org の行が見えない前提に依存し、同時実行でも重複する）。
+      const codeRes = await supabase.rpc('next_workspace_code')
+      if (codeRes.error) { setError('案件番号の採番に失敗しました。' + (codeRes.error.message || '')); setSubmitting(false); return }
+      const wsCode = codeRes.data
+      const { error: wsErr } = await supabase.from('workspaces').insert({
+        id: newId,
         ws_code: wsCode,
         title: form.title,
         customer_name: form.customer_name,
@@ -93,12 +107,12 @@ function PrefillCreateModal({ house, onClose }) {
         property_address: form.property_address,
         status: '進行中',
         progress: 0,
-      }).select().single()
+      })
       if (wsErr) throw wsErr
 
       // 1-2) 作成者を Owner として登録する（これが無いと作成者自身がメンバーにならない）
       await supabase.from('workspace_members').insert({
-        workspace_id: wsData.id,
+        workspace_id: newId,
         user_id: userData.user.id,
         email: userData.user.email || '',
         role: 'Owner',
@@ -110,7 +124,7 @@ function PrefillCreateModal({ house, onClose }) {
       const labels = getRoadmapLabels(form.contract_type)
       await supabase.from('roadmap_steps').insert(
         labels.map((label, i) => ({
-          workspace_id: wsData.id, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手'
+          workspace_id: newId, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手'
         }))
       )
 
@@ -118,7 +132,7 @@ function PrefillCreateModal({ house, onClose }) {
       if (inheritedMembers.length > 0) {
         await supabase.from('ws_members').insert(
           inheritedMembers.map(m => ({
-            workspace_id: wsData.id,
+            workspace_id: newId,
             name: m.name,
             role_label: m.role_label,
             permission: m.permission,
@@ -127,7 +141,7 @@ function PrefillCreateModal({ house, onClose }) {
       }
 
       // 4) 新しい案件ダッシュボードへ遷移
-      window.location.href = `/workspace?id=${wsData.id}`
+      window.location.href = `/workspace?id=${newId}`
     } catch (e) {
       console.error('PrefillCreate error', e)
       setError('作成に失敗しました: ' + (e.message || ''))
