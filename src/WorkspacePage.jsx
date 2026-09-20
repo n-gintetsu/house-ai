@@ -13,6 +13,7 @@ import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 import MobileWorkspaceLayout from './MobileWorkspaceLayout'
 import MobileHeader from './MobileHeader'
 import FeedbackModal from './FeedbackModal'
+import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
 
 function normalizeLabel(s) {
   return (s || '').trim().replace(/\s+/g, ' ')
@@ -206,6 +207,8 @@ function ListView() {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [gateChecking, setGateChecking] = useState(false)
+  const [gateModal, setGateModal] = useState('')   // '' | 'trial' | 'contract'
   const [currentUserId, setCurrentUserId] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [ownedOrgId, setOwnedOrgId] = useState(null)
@@ -265,6 +268,18 @@ function ListView() {
     fetchUnread()
   }, [])
 
+  // 契約可否の判定は BillingGate に集約する。ここでは結果の state だけを見る。
+  const handleCreateClick = async () => {
+    if (gateChecking) return
+    setGateChecking(true)
+    const g = await checkWorkspaceCreateGate()
+    setGateChecking(false)
+    if (g.state === 'allow') { setShowCreate(true); return }
+    if (g.state === 'trial') { setGateModal('trial'); return }
+    if (g.state === 'contract') { setGateModal('contract'); return }
+    window.alert(g.message || '契約状態を確認できませんでした。')
+  }
+
   const isOrgOwnerOf = (row) => Boolean(ownedOrgId) && row.org_id === ownedOrgId
   const canDelete = (ws) => isOrgOwnerOf(ws) || (ws.created_by ? (ws.created_by === currentUserId && ws.status !== '完了') : false)
 
@@ -291,7 +306,7 @@ function ListView() {
               <button onClick={() => { window.location.href = '/settings' }} title="設定" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 400, cursor: 'pointer', color: '#94A3B8' }}>
                 <Settings size={12} />
               </button>
-              <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+              <button onClick={handleCreateClick} disabled={gateChecking} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
                 <Plus size={13} />
                 新規
               </button>
@@ -309,7 +324,7 @@ function ListView() {
               <Settings size={13} />
               設定
             </button>
-            <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+            <button onClick={handleCreateClick} disabled={gateChecking} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
               <Plus size={15} />
               新規案件作成
             </button>
@@ -325,7 +340,7 @@ function ListView() {
         ) : workspaces.length === 0 ? (
           <div style={{ textAlign: 'center', paddingTop: 80 }}>
             <div style={{ fontSize: 14, color: '#64748B', fontWeight: 400, marginBottom: 24 }}>表示できる案件がありません。</div>
-            <button onClick={() => setShowCreate(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            <button onClick={handleCreateClick} disabled={gateChecking} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
               <Plus size={16} />新規案件作成
             </button>
           </div>
@@ -384,6 +399,16 @@ function ListView() {
         )}
       </main>
       {showCreate ? <CreateModal onClose={() => setShowCreate(false)} onCreated={(id) => { window.location.href = `/workspace?id=${id}` }} /> : null}
+      {gateModal === 'trial' ? (
+        <TrialStartModal
+          onAllowed={() => { setGateModal(''); setShowCreate(true) }}
+          onContract={() => setGateModal('contract')}
+          onClose={() => setGateModal('')}
+        />
+      ) : null}
+      {gateModal === 'contract' ? (
+        <ContractRequiredModal onClose={() => setGateModal('')} />
+      ) : null}
       {showOrgSettings && org ? <OrgSettingsModal org={org} onClose={() => setShowOrgSettings(false)} onSaved={(newName) => { setOrg(prev => ({ ...prev, name: newName })); setShowOrgSettings(false) }} /> : null}
       {org && org.name === '個人ワークスペース' && !orgOnboardingDismissed ? (
         <OrgOnboardingModal

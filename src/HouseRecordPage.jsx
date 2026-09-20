@@ -3,6 +3,7 @@ import { ChevronLeft, X, Loader, Plus } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import MobileHeader from './MobileHeader'
+import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
@@ -65,6 +66,21 @@ function PrefillCreateModal({ house, onClose }) {
     }
     setSubmitting(true); setError('')
     try {
+      // 0) 本人確認（user_id / email は必ず getUser の結果から取る）
+      const { data: userData, error: userErr } = await supabase.auth.getUser()
+      if (userErr || !userData || !userData.user) {
+        setError('ログインの有効期限が切れています。ログアウトして入り直してください。')
+        setSubmitting(false); return
+      }
+
+      // 0-2) org を持たないユーザーは、案件作成の前に自分専用の org を発行
+      // （workspaces の INSERT RLS が current_org_id() IS NOT NULL を要求するため）
+      const { error: ensureOrgError } = await supabase.rpc('ensure_org_for_current_user')
+      if (ensureOrgError) {
+        setError('組織の準備に失敗しました。' + (ensureOrgError.message || ''))
+        setSubmitting(false); return
+      }
+
       // 1) ws_code 採番 + workspaces insert
       const { count } = await supabase.from('workspaces').select('*', { count: 'exact', head: true })
       const wsCode = `WS-2026-${String((count || 0) + 1).padStart(6, '0')}`
@@ -79,6 +95,16 @@ function PrefillCreateModal({ house, onClose }) {
         progress: 0,
       }).select().single()
       if (wsErr) throw wsErr
+
+      // 1-2) 作成者を Owner として登録する（これが無いと作成者自身がメンバーにならない）
+      await supabase.from('workspace_members').insert({
+        workspace_id: wsData.id,
+        user_id: userData.user.id,
+        email: userData.user.email || '',
+        role: 'Owner',
+        status: 'active',
+        invited_by: userData.user.id,
+      })
 
       // 2) 契約種別に応じたロードマップ雛形を roadmap_steps に一括 insert（新規・全未着手）
       const labels = getRoadmapLabels(form.contract_type)
@@ -194,6 +220,20 @@ export default function HouseRecordPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [showPrefillModal, setShowPrefillModal] = useState(false)
+  const [gateChecking, setGateChecking] = useState(false)
+  const [gateModal, setGateModal] = useState('')   // '' | 'trial' | 'contract'
+
+  // 契約可否の判定は BillingGate に集約する。ここでは結果の state だけを見る。
+  const handleCreateClick = async () => {
+    if (gateChecking) return
+    setGateChecking(true)
+    const g = await checkWorkspaceCreateGate()
+    setGateChecking(false)
+    if (g.state === 'allow') { setShowPrefillModal(true); return }
+    if (g.state === 'trial') { setGateModal('trial'); return }
+    if (g.state === 'contract') { setGateModal('contract'); return }
+    window.alert(g.message || '契約状態を確認できませんでした。')
+  }
   const [isNarrow, setIsNarrow] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
@@ -271,7 +311,8 @@ export default function HouseRecordPage() {
             </div>
             {/* プリフィル新規案件作成ボタン */}
             <button
-              onClick={() => setShowPrefillModal(true)}
+              onClick={handleCreateClick}
+              disabled={gateChecking}
               style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 7, padding: '5px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
             >
               <Plus size={13} />
@@ -390,6 +431,16 @@ export default function HouseRecordPage() {
       {/* プリフィル作成モーダル */}
       {showPrefillModal ? (
         <PrefillCreateModal house={record} onClose={() => setShowPrefillModal(false)} />
+      ) : null}
+      {gateModal === 'trial' ? (
+        <TrialStartModal
+          onAllowed={() => { setGateModal(''); setShowPrefillModal(true) }}
+          onContract={() => setGateModal('contract')}
+          onClose={() => setGateModal('')}
+        />
+      ) : null}
+      {gateModal === 'contract' ? (
+        <ContractRequiredModal onClose={() => setGateModal('')} />
       ) : null}
 
     </div>
