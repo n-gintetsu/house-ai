@@ -80,18 +80,32 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'not_a_member' })
   }
 
+  // 5. 課金判定。判定するのは案件を所有する組織（host org）で、
+  //    操作者の profiles.org_id では判定しない。
+  //    メンバーでない相手には直前の not_a_member で既に返しているため、
+  //    ここに到達するのはこの案件の active メンバーだけ（他組織の契約状態を推測できない）。
+  const { data: billable, error: billErr } =
+    await supabaseAdmin.rpc('workspace_org_is_billable', { p_workspace_id: workspaceId })
+  if (billErr) {
+    console.error('[workspace/member-invite] billing check error:', JSON.stringify(billErr))
+    return res.status(500).json({ error: 'billing_check_failed' })
+  }
+  if (billable !== true) {
+    return res.status(402).json({ error: 'billing_required' })
+  }
+
   const actorRole = String(actor.role || '').toLowerCase()
   if (actorRole !== 'owner' && actorRole !== 'manager') {
     return res.status(403).json({ error: 'insufficient_permission' })
   }
 
-  // 5. Manager は Owner / Manager を付与できない
+  // 6. Manager は Owner / Manager を付与できない
   const targetRole = role.toLowerCase()
   if (actorRole === 'manager' && (targetRole === 'owner' || targetRole === 'manager')) {
     return res.status(403).json({ error: 'manager_cannot_grant_admin' })
   }
 
-  // 6. 既存行の確認（DB 側の ilike に頼らず、取得後に JS で小文字比較する）
+  // 7. 既存行の確認（DB 側の ilike に頼らず、取得後に JS で小文字比較する）
   const { data: rows, error: rowsErr } = await supabaseAdmin
     .from('workspace_members')
     .select('id, email, status')
@@ -126,7 +140,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, memberId: pendingRow.id, reused: true })
   }
 
-  // 7. 新規招待
+  // 8. 新規招待
   const newId = randomUUID()
   const { data: inserted, error: insErr } = await supabaseAdmin
     .from('workspace_members')

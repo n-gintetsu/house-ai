@@ -67,7 +67,38 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'invalid_role' })
   }
 
-  // 4. 権限判定と更新は DB 関数に任せる。操作者はセッション由来の値のみ渡す。
+  // 4. 呼び出し者がこの案件の active メンバーかを先に確認する。
+  //    課金判定をこの後に置くことで、無関係な案件の契約状態を探れないようにする。
+  //    返すエラーは新設せず、既存の not_a_member（RESULT_STATUS と同じ 403）を再利用する。
+  const { data: actor, error: actorErr } = await supabaseAdmin
+    .from('workspace_members')
+    .select('id')
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', ctx.userId)
+    .eq('status', 'active')
+    .limit(1)
+    .maybeSingle()
+  if (actorErr) {
+    console.error('[workspace/member-role] actor lookup error:', JSON.stringify(actorErr))
+    return res.status(500).json({ error: 'db_error' })
+  }
+  if (!actor) {
+    return res.status(403).json({ error: 'not_a_member' })
+  }
+
+  // 5. 課金判定。判定するのは案件を所有する組織（host org）で、
+  //    操作者の profiles.org_id では判定しない。RPC より前に置く。
+  const { data: billable, error: billErr } =
+    await supabaseAdmin.rpc('workspace_org_is_billable', { p_workspace_id: workspaceId })
+  if (billErr) {
+    console.error('[workspace/member-role] billing check error:', JSON.stringify(billErr))
+    return res.status(500).json({ error: 'billing_check_failed' })
+  }
+  if (billable !== true) {
+    return res.status(402).json({ error: 'billing_required' })
+  }
+
+  // 6. 権限判定と更新は DB 関数に任せる。操作者はセッション由来の値のみ渡す。
   const { data, error } = await supabaseAdmin.rpc('change_member_role', {
     p_workspace_id: workspaceId,
     p_member_id: memberId,
@@ -75,13 +106,13 @@ export default async function handler(req, res) {
     p_actor_user_id: ctx.userId,
   })
 
-  // 5. RPC 自体の失敗
+  // 7. RPC 自体の失敗
   if (error) {
     console.error('[workspace/member-role] rpc error:', JSON.stringify(error))
     return res.status(500).json({ error: 'db_error' })
   }
 
-  // 6. 戻り値で分岐
+  // 8. 戻り値で分岐
   if (data === 'ok') {
     return res.status(200).json({ ok: true })
   }

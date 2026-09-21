@@ -99,10 +99,11 @@ export default async function handler(req, res) {
 
   const mine = (pending || []).filter(r => String(r.email || '').toLowerCase() === myEmail)
   if (mine.length === 0) {
-    return res.status(200).json({ ok: true, claimed: 0, workspaceIds: [] })
+    return res.status(200).json({ ok: true, claimed: 0, workspaceIds: [], billingBlocked: 0 })
   }
 
   let claimed = 0
+  let billingBlocked = 0
   const workspaceIds = []
   for (let i = 0; i < mine.length; i++) {
     const row = mine[i]
@@ -122,7 +123,23 @@ export default async function handler(req, res) {
     }
     if (existing) continue
 
-    // 6. 競合防止のため pending かつ user_id が null のままの行だけを更新する
+    // 6. 課金判定。判定するのはこの招待が属する案件の所有組織（host org）。
+    //    契約切れと判定エラーの行はここで continue するので、
+    //    下の UPDATE と notifyJoined には到達しない（pending のまま残る）。
+    //    リクエスト全体はエラーにせず、スキップ件数だけを返す。
+    const { data: billable, error: billErr } =
+      await supabaseAdmin.rpc('workspace_org_is_billable', { p_workspace_id: row.workspace_id })
+    if (billErr) {
+      console.error('[workspace/claim-invite] billing check error:', JSON.stringify(billErr))
+      billingBlocked = billingBlocked + 1
+      continue
+    }
+    if (billable !== true) {
+      billingBlocked = billingBlocked + 1
+      continue
+    }
+
+    // 7. 競合防止のため pending かつ user_id が null のままの行だけを更新する
     const { data: updated, error: updErr } = await supabaseAdmin
       .from('workspace_members')
       .update({ user_id: ctx.userId, status: 'active' })
@@ -143,6 +160,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // 7. 実際に更新できた件数と、その案件IDを返す
-  return res.status(200).json({ ok: true, claimed: claimed, workspaceIds: workspaceIds })
+  // 8. 実際に更新できた件数と、その案件IDを返す
+  return res.status(200).json({ ok: true, claimed: claimed, workspaceIds: workspaceIds, billingBlocked: billingBlocked })
 }

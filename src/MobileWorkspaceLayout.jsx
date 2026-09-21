@@ -71,6 +71,8 @@ const MEMBER_API_ERROR = {
   invalid_email: 'メールアドレスの形式が正しくありません。',
   manager_cannot_remove_admin: 'マネージャーはオーナー・マネージャーを削除できません。',
   cannot_remove_self: '自分自身を削除することはできません。',
+  billing_required: 'ご契約が必要なため、この操作はできません。',
+  billing_check_failed: '契約状態を確認できませんでした。時間をおいて再度お試しください。',
 }
 
 const ALLOWED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'webp']
