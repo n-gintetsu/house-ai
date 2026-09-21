@@ -1,4 +1,8 @@
 export default async function handler(req, res) {
+  // [Phase S0] 一時停止：無認証で任意の宛先に House-AI ドメインのメールを送信できるため。
+  // 案内先の売主ポータル（api/seller.js）も 503 停止中。売主ポータル再設計時に招待フローごと作り直す。
+  return res.status(503).json({ error: 'seller_invite_disabled' })
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { seller_name, email, access_token } = req.body
