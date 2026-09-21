@@ -955,11 +955,13 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         }
       }
 
+      // 招待メールであることをメールひな形側で判別するための印。名前などの本文用データは載せない。
       await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: 'https://house-ai.co.jp/workspace',
           shouldCreateUser: true,
+          data: { invited: true },
         },
       })
 

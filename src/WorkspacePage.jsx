@@ -477,7 +477,8 @@ function CreateModal({ onClose, onCreated }) {
             role: 'Customer',
             displayName: form.customer_name || '',
           })
-          await supabase.auth.signInWithOtp({ email: custEmail, options: { emailRedirectTo: 'https://house-ai.co.jp/workspace', shouldCreateUser: true } })
+          // 招待メールであることをメールひな形側で判別するための印。名前などの本文用データは載せない。
+          await supabase.auth.signInWithOtp({ email: custEmail, options: { emailRedirectTo: 'https://house-ai.co.jp/workspace', shouldCreateUser: true, data: { invited: true } } })
           onCreated(newId)
         } catch (_inviteErr) {
           setCreatedWsId(newId)
@@ -1156,11 +1157,13 @@ function DashboardView({ id }) {
         }
       }
 
+      // 招待メールであることをメールひな形側で判別するための印。名前などの本文用データは載せない。
       await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: 'https://house-ai.co.jp/workspace',
           shouldCreateUser: true,
+          data: { invited: true },
         },
       })
 
