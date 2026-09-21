@@ -38,6 +38,25 @@ const ROLE_CANON = { owner: 'Owner', manager: 'Manager', staff: 'Staff', custome
 const normRole = (r) => ROLE_CANON[String(r || '').toLowerCase()] || r
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 
+// 契約切れで書き込みできないときの案内。文面はこの案件での役割で分ける。
+// Owner / Manager には契約の入口を出し、それ以外には担当者への連絡を促す。
+function BillingWriteNotice({ role }) {
+  const r = normRole(role)
+  const isBillingManager = r === 'Owner' || r === 'Manager'
+  return (
+    <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 8, padding: '10px 12px', marginBottom: 8, fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6 }}>
+      {isBillingManager ? (
+        <span>
+          ご契約が必要なため、この案件では新しい書き込みができません。
+          <a href="/settings" style={{ color: '#c9a84c', fontWeight: 500, textDecoration: 'none', marginLeft: 6, borderBottom: '1px solid rgba(201,168,76,0.5)' }}>プランを確認する</a>
+        </span>
+      ) : (
+        <span>この案件は現在、新しい書き込みができません。詳しくは担当者にお問い合わせください。</span>
+      )}
+    </div>
+  )
+}
+
 // 権限に関わる workspace_members の書き込みはサーバー側のAPIに委譲する
 async function callWorkspaceApi(path, body) {
   const { data: sess } = await supabase.auth.getSession()
@@ -206,6 +225,9 @@ export default function MobileWorkspaceLayout() {
   const [activeTab, setActiveTab] = useState(0)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [currentRole, setCurrentRole] = useState(null)
+  // 書き込み可否（案件を所有する組織の契約状態）。
+  // null = 判定中（画面は止めない）、true = 可、false = 不可。
+  const [canWrite, setCanWrite] = useState(null)
   const [expandedFolders, setExpandedFolders] = useState({})
   const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
   const [promoting, setPromoting] = useState(false)
@@ -359,6 +381,23 @@ export default function MobileWorkspaceLayout() {
       setLoading(false)
     }
     fetchAll()
+  }, [id])
+
+  // 契約状態の判定は案件詳細を開いたときに1回だけ。
+  // true 以外（false / null / エラー）はすべて書き込み不可に倒す（fail closed）。
+  useEffect(() => {
+    if (!id) return
+    let mounted = true
+    supabase.rpc('workspace_org_is_billable', { p_workspace_id: id }).then(({ data, error }) => {
+      if (!mounted) return
+      if (error) {
+        console.error('[workspace/mobile] billing check error:', JSON.stringify(error))
+        setCanWrite(false)
+        return
+      }
+      setCanWrite(data === true)
+    })
+    return () => { mounted = false }
   }, [id])
 
   // チャットポーリング (activeTab === 2 のときだけ)
@@ -580,6 +619,8 @@ export default function MobileWorkspaceLayout() {
 
   async function handleUpload(folderId, file) {
     if (!file) return
+    // 契約切れのときはストレージに上げる前に止める（孤立したファイルを残さない）
+    if (canWrite === false) return
     let ext = (file.name.split('.').pop() || '').toLowerCase()
     if (ext === 'heic' || ext === 'heif') {
       try {
@@ -614,6 +655,12 @@ export default function MobileWorkspaceLayout() {
         doc_type: null,
         uploaded_by: currentUserId,
       }).select().single()
+      // 42501 = RLS で弾かれた。黙って終わらず、契約の案内に切り替える
+      if (dbErr && dbErr.code === '42501') {
+        setUploadError('')
+        setCanWrite(false)
+        return
+      }
       if (dbErr) throw dbErr
       setFiles(prev => [dbRow, ...prev])
     } catch (e) {
@@ -637,7 +684,7 @@ export default function MobileWorkspaceLayout() {
 
   const handleMemberSend = async () => {
     const body = memberInput.trim()
-    if (!body || isMemberSending) return
+    if (!body || isMemberSending || canWrite === false) return
     const senderName = myDisplayName
     const newId = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -646,13 +693,19 @@ export default function MobileWorkspaceLayout() {
     setMemberMessages(prev => [...prev, newMsg])
     setIsMemberSending(true)
     try {
-      await supabase.from('workspace_messages').insert({
+      const { error } = await supabase.from('workspace_messages').insert({
         id: newId,
         workspace_id: id,
         user_id: currentUserId,
         sender_name: senderName,
         body,
       })
+      // 42501 = RLS で弾かれた。送信できていないので楽観更新を取り消し、契約の案内に切り替える
+      if (error && error.code === '42501') {
+        setMemberMessages(prev => prev.filter(m => m.id !== newId))
+        setMemberInput(body)
+        setCanWrite(false)
+      }
     } catch (e) {
       // 楽観更新済み
     } finally {
@@ -1199,6 +1252,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
                         {canUpload ? (
                           <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+                            {canWrite === false ? <BillingWriteNotice role={currentRole} /> : null}
                             <input
                               type="file"
                               id={`upload-${folder.id}`}
@@ -1218,7 +1272,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                             ) : (
                               <label
                                 htmlFor={`upload-${folder.id}`}
-                                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box' }}
+                                onClick={e => { if (canWrite === false) e.preventDefault() }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px dashed rgba(201,168,76,0.4)', color: '#c9a84c', borderRadius: 6, padding: '8px 12px', fontSize: 14, fontWeight: 400, cursor: canWrite === false ? 'not-allowed' : 'pointer', width: '100%', justifyContent: 'center', boxSizing: 'border-box', opacity: canWrite === false ? 0.5 : 1 }}
                               >
                                 <Plus size={14} color="#c9a84c" />ファイルを追加
                               </label>
@@ -1874,6 +1929,9 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </div>
 
           {/* 入力エリア */}
+          {canWrite === false ? (
+            <div style={{ flexShrink: 0, padding: '8px 16px 0' }}><BillingWriteNotice role={currentRole} /></div>
+          ) : null}
           <div style={{ flexShrink: 0, padding: '8px 16px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#0A0F1E', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <textarea
               value={memberInput}
@@ -1892,8 +1950,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             />
             <button
               onClick={handleMemberSend}
-              disabled={isMemberSending || !memberInput.trim()}
-              style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}
+              disabled={isMemberSending || !memberInput.trim() || canWrite === false}
+              style={{ background: (isMemberSending || !memberInput.trim() || canWrite === false) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 14, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim() || canWrite === false) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}
             >
               <Send size={15} />送信
             </button>

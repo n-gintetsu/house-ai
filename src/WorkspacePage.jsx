@@ -172,6 +172,25 @@ function noticeStyle(level) {
   return { bg: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', iconColor: '#64748B', textColor: '#94A3B8' }
 }
 
+// 契約切れで書き込みできないときの案内。文面はこの案件での役割で分ける。
+// Owner / Manager には契約の入口を出し、それ以外には担当者への連絡を促す。
+function BillingWriteNotice({ role }) {
+  const r = normRole(role)
+  const isBillingManager = r === 'Owner' || r === 'Manager'
+  return (
+    <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.32)', borderRadius: 8, padding: '9px 11px', marginBottom: 8, fontSize: 12, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.6 }}>
+      {isBillingManager ? (
+        <span>
+          ご契約が必要なため、この案件では新しい書き込みができません。
+          <a href="/settings" style={{ color: '#c9a84c', fontWeight: 500, textDecoration: 'none', marginLeft: 6, borderBottom: '1px solid rgba(201,168,76,0.5)' }}>プランを確認する</a>
+        </span>
+      ) : (
+        <span>この案件は現在、新しい書き込みができません。詳しくは担当者にお問い合わせください。</span>
+      )}
+    </div>
+  )
+}
+
 function permissionStyle(p) {
   const n = normRole(p)
   if (n === 'Owner')             return { bg: 'rgba(201,168,76,0.14)',  color: '#c9a84c',  border: '1px solid rgba(201,168,76,0.25)' }
@@ -713,6 +732,9 @@ function DashboardView({ id }) {
   const [currentRole, setCurrentRole] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [orgName, setOrgName] = useState(null)
+  // 書き込み可否（案件を所有する組織の契約状態）。
+  // null = 判定中（画面は止めない）、true = 可、false = 不可。
+  const [canWrite, setCanWrite] = useState(null)
   // ロードマップ編集モード
   const [editingRoadmap, setEditingRoadmap] = useState(false)
   const [renamingStepId, setRenamingStepId] = useState(null)
@@ -814,6 +836,23 @@ function DashboardView({ id }) {
       setLoading(false)
     }
     fetchAll()
+  }, [id])
+
+  // 契約状態の判定は案件詳細を開いたときに1回だけ。
+  // true 以外（false / null / エラー）はすべて書き込み不可に倒す（fail closed）。
+  useEffect(() => {
+    if (!id) return
+    let mounted = true
+    supabase.rpc('workspace_org_is_billable', { p_workspace_id: id }).then(({ data, error }) => {
+      if (!mounted) return
+      if (error) {
+        console.error('[workspace] billing check error:', JSON.stringify(error))
+        setCanWrite(false)
+        return
+      }
+      setCanWrite(data === true)
+    })
+    return () => { mounted = false }
   }, [id])
 
   useEffect(() => {
@@ -1327,6 +1366,8 @@ function DashboardView({ id }) {
       const newId = crypto.randomUUID()
       const newItem = { id: newId, workspace_id: id, level: noticeForm.level, message: noticeForm.message }
       const { error } = await supabase.from('ws_notices').insert(newItem)
+      // 42501 = RLS で弾かれた。黙って終わらず、契約の案内に切り替える
+      if (error && error.code === '42501') { setNoticeError(''); setCanWrite(false); return }
       if (error) throw error
       setNotices(prev => [...prev, newItem])
       setNoticeForm({ level: 'info', message: '' })
@@ -1575,7 +1616,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
   const handleMemberSend = async () => {
     const body = memberInput.trim()
-    if (!body || isMemberSending) return
+    if (!body || isMemberSending || canWrite === false) return
     const myWm = workspaceMembers.find(m => m.user_id === currentUserId)
     const senderName = myWm
       ? ((myWm.profiles && myWm.profiles.display_name) || myWm.display_name || myWm.email || '')
@@ -1587,13 +1628,19 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     setMemberMessages(prev => [...prev, newMsg])
     setIsMemberSending(true)
     try {
-      await supabase.from('workspace_messages').insert({
+      const { error } = await supabase.from('workspace_messages').insert({
         id: newId,
         workspace_id: id,
         user_id: currentUserId,
         sender_name: senderName,
         body,
       })
+      // 42501 = RLS で弾かれた。送信できていないので楽観更新を取り消し、契約の案内に切り替える
+      if (error && error.code === '42501') {
+        setMemberMessages(prev => prev.filter(m => m.id !== newId))
+        setMemberInput(body)
+        setCanWrite(false)
+      }
     } catch (e) {
       // 楽観更新済み
     }
@@ -1790,7 +1837,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         <div className="ws-grid">
 
           {/* 左カラム：役割フォルダ */}
-          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} />
+          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} canWrite={canWrite} onWriteBlocked={() => setCanWrite(false)} />
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
@@ -2170,6 +2217,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   )
                 })
               )}
+              {canWrite === false ? <div style={{ marginTop: 12 }}><BillingWriteNotice role={currentRole} /></div> : null}
               {showNoticeForm ? (
                 <div style={{ marginTop: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <select value={noticeForm.level} onChange={e => setNoticeForm(prev => ({ ...prev, level: e.target.value }))} style={fiSel}>
@@ -2181,11 +2229,11 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   {noticeError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400 }}>{noticeError}</div> : null}
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                     <button onClick={() => { setShowNoticeForm(false); setNoticeForm({ level: 'info', message: '' }); setNoticeError('') }} style={cancelBtn}>キャンセル</button>
-                    <button onClick={handleAddNotice} style={saveBtn}>追加</button>
+                    <button onClick={handleAddNotice} disabled={canWrite === false} style={{ ...saveBtn, cursor: canWrite === false ? 'not-allowed' : 'pointer', opacity: canWrite === false ? 0.5 : 1 }}>追加</button>
                   </div>
                 </div>
               ) : (
-                isInternal ? <button onClick={() => setShowNoticeForm(true)} style={addBtn}><Plus size={12} />通知を追加</button> : null
+                isInternal ? <button onClick={() => setShowNoticeForm(true)} disabled={canWrite === false} style={{ ...addBtn, cursor: canWrite === false ? 'not-allowed' : 'pointer', opacity: canWrite === false ? 0.5 : 1 }}><Plus size={12} />通知を追加</button> : null
               )}
             </div>
 
@@ -2517,6 +2565,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                {canWrite === false ? <BillingWriteNotice role={currentRole} /> : null}
                 <textarea
                   value={memberInput}
                   onChange={e => setMemberInput(e.target.value)}
@@ -2535,8 +2584,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleMemberSend()}
-                    disabled={isMemberSending || !memberInput.trim()}
-                    style={{ background: (isMemberSending || !memberInput.trim()) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    disabled={isMemberSending || !memberInput.trim() || canWrite === false}
+                    style={{ background: (isMemberSending || !memberInput.trim() || canWrite === false) ? 'rgba(59,130,246,0.3)' : '#3b82f6', color: '#ffffff', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: (isMemberSending || !memberInput.trim() || canWrite === false) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                   ><Send size={11} />関係者に送信</button>
                 </div>
               </div>
@@ -2690,7 +2739,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 // 社内・顧客は全ファイル閲覧可。それ以外（業者系）はgrantされたファイルのみ。
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 
-function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId, customerName, orgName }) {
+function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId, customerName, orgName, canWrite, onWriteBlocked }) {
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const fpIsInternal = ['Owner', 'Manager', 'Staff'].includes(normRole(currentRole))
@@ -2789,6 +2838,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
 
   async function handleUpload(folderId, file) {
     if (!file) return
+    // 契約切れのときはストレージに上げる前に止める（孤立したファイルを残さない）
+    if (canWrite === false) return
     let ext = (file.name.split('.').pop() || '').toLowerCase()
     if (ext === 'heic' || ext === 'heif') {
       try {
@@ -2823,6 +2874,12 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         doc_type: null,
         uploaded_by: currentUserId,
       }).select().single()
+      // 42501 = RLS で弾かれた。黙って終わらず、契約の案内に切り替える
+      if (dbErr && dbErr.code === '42501') {
+        setUploadError('')
+        if (onWriteBlocked) onWriteBlocked()
+        return
+      }
       if (dbErr) throw dbErr
       setFiles(prev => [dbRow, ...prev])
     } catch (e) {
@@ -3176,6 +3233,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
           ))}
         </select>
         {uploadError ? <div style={{ fontSize: 11, color: '#F87171', fontWeight: 400, marginTop: 8 }}>{uploadError}</div> : null}
+        {canWrite === false ? <div style={{ marginTop: 10 }}><BillingWriteNotice role={currentRole} /></div> : null}
       </div>
 
       {isFullAccess && folders.reduce((acc, fl) => acc + getFolderFiles(fl.id).length, 0) >= 2 ? (
@@ -3286,8 +3344,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 {isFullAccess || (myMemberId !== null && folder.owner_member_id === myMemberId) ? (
                   <label
                     htmlFor={inputId}
-                    onClick={e => { if (isUploading) e.preventDefault() }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: isUploading ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none' }}
+                    onClick={e => { if (isUploading || canWrite === false) e.preventDefault() }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', color: '#c9a84c', borderRadius: 5, padding: '3px 8px', fontSize: 11, fontWeight: 400, cursor: (isUploading || canWrite === false) ? 'not-allowed' : 'pointer', flexShrink: 0, userSelect: 'none', opacity: canWrite === false ? 0.5 : 1 }}
                   >
                     {isUploading ? <Loader size={11} /> : <Plus size={11} />}
                     アップロード
