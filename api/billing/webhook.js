@@ -66,9 +66,9 @@ function extractCustomerId(obj) {
 
 // 紐付けが見つからないとき、それが Workspace のイベントかどうかを判定する。
 // Stripe はイベント順序を保証しないため、紐付け完成前に届くことがある。
+// client_reference_id は Workspace 固有ではない（同一Stripeアカウントの他プロダクトも使い得る）ため判定に使わない。
 function looksLikeWorkspaceEvent(event, obj, priceId) {
   if (obj && obj.metadata && obj.metadata.product === 'workspace') return true
-  if (event.type === 'checkout.session.completed' && obj && obj.client_reference_id) return true
   if (obj && obj.items && obj.items.data) {
     for (let i = 0; i < obj.items.data.length; i++) {
       const item = obj.items.data[i]

@@ -103,6 +103,7 @@ export default async function handler(req, res) {
       mode: 'subscription',
       customer: customerId,
       client_reference_id: ctx.org.id,
+      metadata: { workspace_org_id: ctx.org.id, product: 'workspace' },
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         default_tax_rates: [taxRateId],
