@@ -19,6 +19,10 @@ async function getRawBody(req) {
 }
 
 export default async function handler(req, res) {
+  // [Phase S0] 一時停止：旧課金フロー（api/stripe-checkout.js も 503 停止中）の受け口。
+  // 現行の課金 Webhook は api/billing/webhook.js。Stripe 側にこのエンドポイントの登録は無い（Test/Live とも確認済み）。
+  return res.status(503).json({ error: 'legacy_webhook_disabled' })
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
