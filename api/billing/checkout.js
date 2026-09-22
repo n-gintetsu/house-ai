@@ -5,6 +5,9 @@ import { requireOrgOwner } from '../_userAuth.js'
 // 契約に必要な列のみ。Stripe の識別子はここでの判定に使うだけでクライアントには返さない。
 const COLUMNS = 'status, billing_exempt, stripe_customer_id, stripe_subscription_id'
 const DEFAULT_ORIGIN = 'https://house-ai.co.jp'
+// 「終了済み」とみなす Subscription の status。
+// これ以外（active / trialing / past_due / unpaid / incomplete / paused / 未知の値）はすべて生きているとみなす。
+const ENDED_SUB_STATUSES = ['canceled', 'incomplete_expired']
 
 /**
  * Vercel Serverless Function: POST /api/billing/checkout
@@ -57,9 +60,6 @@ export default async function handler(req, res) {
   if (row.status === 'active') {
     return res.status(409).json({ error: 'already_active' })
   }
-  if (row.stripe_subscription_id !== null) {
-    return res.status(409).json({ error: 'subscription_exists' })
-  }
 
   const stripe = new Stripe(secretKey)
 
@@ -96,7 +96,32 @@ export default async function handler(req, res) {
     customerId = created.id
   }
 
-  // 7. Checkout Session の作成
+  // 7. 二重契約の判定は Stripe を正本にする。
+  //    DB の stripe_subscription_id は遅れることがあるため判定に使わない。
+  let subs
+  try {
+    subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 })
+  } catch (e) {
+    console.error('[billing/checkout] subscriptions.list error:', e)
+    return res.status(500).json({ error: 'stripe_error' })
+  }
+  // 全件を確認できないときは通さない（fail closed）
+  if (subs && subs.has_more === true) {
+    console.error('[billing/checkout] subscriptions.list has_more for customer:', customerId)
+    return res.status(500).json({ error: 'stripe_error' })
+  }
+  const liveSubs = ((subs && subs.data) || []).filter(s => ENDED_SUB_STATUSES.indexOf(s.status) === -1)
+  if (liveSubs.length > 0) {
+    console.error(
+      '[billing/checkout] live subscription exists:',
+      'customer=' + customerId,
+      'sub=' + liveSubs[0].id,
+      'status=' + liveSubs[0].status
+    )
+    return res.status(409).json({ error: 'subscription_exists' })
+  }
+
+  // 8. Checkout Session の作成
   const origin = req.headers.origin || DEFAULT_ORIGIN
   try {
     const session = await stripe.checkout.sessions.create({
@@ -113,7 +138,7 @@ export default async function handler(req, res) {
       cancel_url: origin + '/settings?tab=billing&checkout=cancel',
     })
 
-    // 8. 成功
+    // 9. 成功
     return res.status(200).json({ url: session.url })
   } catch (e) {
     console.error('[billing/checkout] checkout.sessions.create error:', e)

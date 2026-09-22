@@ -14,6 +14,10 @@ const STRIPE_STATUS_MAP = {
   incomplete_expired: 'canceled',
 }
 
+// 「終了済み」とみなす Subscription の status。
+// これ以外（active / trialing / past_due / unpaid / incomplete / paused / 未知の値）はすべて生きているとみなす。
+const ENDED_SUB_STATUSES = ['canceled', 'incomplete_expired']
+
 const STALE_MINUTES = 5
 
 // Vercel の自動パースを無効化し、署名検証用の生バイト列を保つ
@@ -195,7 +199,7 @@ export default async function handler(req, res) {
     if (customerId) {
       const { data: found, error: findErr } = await supabaseAdmin
         .from('organization_subscriptions')
-        .select('org_id')
+        .select('org_id, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .limit(1)
         .maybeSingle()
@@ -244,6 +248,62 @@ export default async function handler(req, res) {
     }
 
     const sub = await stripe.subscriptions.retrieve(subId)
+
+    // 6-2. DB の現在契約（X）とイベント由来（Y）が違う場合の扱い。
+    //      org の特定は customer だけで行っているため、古い契約のイベントで
+    //      新しい契約を上書きしないようにする。
+    const currentSubId = orgRow.stripe_subscription_id || ''
+    if (currentSubId !== '' && currentSubId !== sub.id) {
+      if (ENDED_SUB_STATUSES.indexOf(sub.status) !== -1) {
+        // イベント側が終了済みの別契約。古い通知として無視する
+        console.log(
+          '[billing/webhook] skipped ended other subscription:',
+          'id=' + event.id,
+          'org=' + orgRow.org_id,
+          'current=' + currentSubId,
+          'event_sub=' + sub.id,
+          'event_sub_status=' + sub.status
+        )
+        await markEventDone(event.id)
+        return res.status(200).json({ received: true })
+      }
+
+      // イベント側は生きている。現在契約の状態を確かめてから切り替えを判断する
+      let currentSub = null
+      try {
+        currentSub = await stripe.subscriptions.retrieve(currentSubId)
+      } catch (e) {
+        const code = (e && e.code) || (e && e.raw && e.raw.code) || ''
+        if (code !== 'resource_missing') {
+          // 取得できないときは DB を書き換えず、Stripe に再送させる
+          console.error(
+            '[billing/webhook] current subscription retrieve error:',
+            'id=' + event.id,
+            'org=' + orgRow.org_id,
+            'current=' + currentSubId,
+            (e && e.message) || String(e)
+          )
+          await markEventFailed(event.id, 'current subscription retrieve error: ' + ((e && e.message) || String(e)))
+          return res.status(500).json({ error: 'stripe_error' })
+        }
+        // Stripe 上に存在しない。イベント側を新しい契約として同期する
+      }
+
+      if (currentSub && ENDED_SUB_STATUSES.indexOf(currentSub.status) === -1) {
+        // どちらも生きている。契約ID を自動で切り替えず、運用で確認する
+        console.error(
+          '[billing/webhook] subscription conflict:',
+          'id=' + event.id,
+          'org=' + orgRow.org_id,
+          'current=' + currentSubId,
+          'current_status=' + currentSub.status,
+          'event_sub=' + sub.id,
+          'event_sub_status=' + sub.status
+        )
+        await markEventDone(event.id)
+        return res.status(200).json({ received: true })
+      }
+    }
 
     // current_period_end は subscription 直下ではなく items.data[0] にある（確認済み）
     let currentPeriodEnd = null
