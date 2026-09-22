@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare, MessageCircle,
-  Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings, Video
+  Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings, Video,
+  Menu, User, Shield, LogOut
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -1668,6 +1669,9 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         @keyframes statusDotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
         @keyframes stepGlow { 0% { box-shadow: none; } 50% { box-shadow: 0 0 12px 4px rgba(201,168,76,0.7); } 100% { box-shadow: none; } }
         @keyframes stepBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+        @keyframes wsLogoSwap { 0%, 42% { opacity: 1; } 50%, 92% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes wsMenuSwap { 0%, 42% { opacity: 0; } 50%, 92% { opacity: 1; } 100% { opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) { .ws-logo-img { animation: none !important; opacity: 1 !important; } .ws-logo-menu { animation: none !important; opacity: 0 !important; } }
       `}</style>
 
       {/* ポップオーバー用バックドロップ */}
@@ -1677,19 +1681,22 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
       {/* ヘッダー - 本物ガラス */}
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64, background: 'rgba(10,15,30,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px', boxSizing: 'border-box' }}>
-        <div style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }} onClick={() => setShowLogoMenu(prev => !prev)}>
-          <img src="/logo.png" alt="HOUSE-AI" style={{ height: 42, objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))' }} />
+        <div role="button" aria-label="メニュー" style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }} onClick={() => setShowLogoMenu(prev => !prev)}>
+          <img className="ws-logo-img" src="/logo.png" alt="HOUSE-AI" style={{ height: 42, objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.6))', animation: showLogoMenu ? 'none' : 'wsLogoSwap 6s ease-in-out infinite', opacity: showLogoMenu ? 1 : undefined }} />
+          <div className="ws-logo-menu" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: showLogoMenu ? 'none' : 'wsMenuSwap 6s ease-in-out infinite', opacity: showLogoMenu ? 0 : undefined, pointerEvents: 'none' }}>
+            <Menu size={22} color="#c9a84c" />
+          </div>
           {showLogoMenu ? (
             <>
               <div onClick={(e) => { e.stopPropagation(); setShowLogoMenu(false) }} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
               <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 48, left: 0, width: 210, background: 'rgba(15,23,42,.97)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,.5)', zIndex: 50, padding: 6 }}>
-                <div onClick={() => { window.location.href = '/settings?tab=account' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>アカウント設定</div>
-                <div onClick={() => { window.location.href = '/settings?tab=notifications' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>通知設定</div>
-                <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>アイコン編集</div>
-                <div onClick={() => { window.open('/ws-legal', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>利用規約</div>
-                <div onClick={() => { window.open('/ws-legal?tab=privacy', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>プライバシーポリシー</div>
-                <div onClick={() => { setShowFeedbackModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8 }}>ご意見・不具合報告</div>
-                <div onClick={async () => { setShowLogoMenu(false); await supabase.auth.signOut(); window.location.replace('/login') }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12 }}>ログアウト</div>
+                <div onClick={() => { window.location.href = '/settings?tab=account' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}><User size={15} color="#94A3B8" style={{ flexShrink: 0 }} />アカウント設定</div>
+                <div onClick={() => { window.location.href = '/settings?tab=notifications' }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}><Bell size={15} color="#94A3B8" style={{ flexShrink: 0 }} />通知設定</div>
+                <div onClick={() => { setShowAvatarModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}><Image size={15} color="#94A3B8" style={{ flexShrink: 0 }} />アイコン編集</div>
+                <div onClick={() => { window.open('/ws-legal', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}><FileText size={15} color="#94A3B8" style={{ flexShrink: 0 }} />利用規約</div>
+                <div onClick={() => { window.open('/ws-legal?tab=privacy', '_blank'); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}><Shield size={15} color="#94A3B8" style={{ flexShrink: 0 }} />プライバシーポリシー</div>
+                <div onClick={() => { setShowFeedbackModal(true); setShowLogoMenu(false) }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}><MessageSquare size={15} color="#94A3B8" style={{ flexShrink: 0 }} />ご意見・不具合報告</div>
+                <div onClick={async () => { setShowLogoMenu(false); await supabase.auth.signOut(); window.location.replace('/login') }} style={{ padding: '10px 12px', fontSize: 13, color: '#CBD5E1', cursor: 'pointer', borderRadius: 8, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4, paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}><LogOut size={15} color="#94A3B8" style={{ flexShrink: 0 }} />ログアウト</div>
               </div>
             </>
           ) : null}
