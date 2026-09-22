@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../_adminAuth.js'
 import { requireOrgOwner } from '../_userAuth.js'
 
 // 契約に必要な列のみ。Stripe の識別子はここでの判定に使うだけでクライアントには返さない。
-const COLUMNS = 'status, billing_exempt, stripe_customer_id'
+const COLUMNS = 'status, billing_exempt, stripe_customer_id, trial_ends_at'
 const DEFAULT_ORIGIN = 'https://house-ai.co.jp'
 // 「終了済み」とみなす Subscription の status。
 // これ以外（active / trialing / past_due / unpaid / incomplete / paused / 未知の値）はすべて生きているとみなす。
@@ -59,6 +59,15 @@ export default async function handler(req, res) {
   }
   if (row.status === 'active') {
     return res.status(409).json({ error: 'already_active' })
+  }
+  // Trial 中は Checkout させない。課金導線は trial_expired からの1本に絞る。
+  // 判定式は api/billing/status.js の computeEffectiveStatus と同じものを使う。
+  // billing_exempt は直前の 403 で除外済み。trial_ends_at が無い/不正なら期限切れ扱い。
+  if (row.status === 'trialing') {
+    const ends = row.trial_ends_at ? new Date(row.trial_ends_at).getTime() : NaN
+    if (!isNaN(ends) && ends > Date.now()) {
+      return res.status(409).json({ error: 'trial_in_progress' })
+    }
   }
 
   const stripe = new Stripe(secretKey)
