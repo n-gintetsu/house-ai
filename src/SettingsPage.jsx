@@ -48,7 +48,7 @@ const TABS = [
 const BILLING_STATUS_LABEL = {
   active: '利用中',
   trialing: '無料期間中',
-  trial_expired: '無料期間が終了しました',
+  trial_expired: '無料期間は終了しました',
   past_due: 'お支払いを確認できませんでした',
   canceled: '解約済み',
 }
@@ -771,8 +771,8 @@ export default function SettingsPage() {
                 ) : (
                   <SectionCard title="プラン">
                     <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginBottom: 6 }}>現在の状態</div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>{BILLING_STATUS_LABEL[billing.status] || '不明'}</div>
-                    {billing.status === 'trialing' ? (
+                    <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>{BILLING_STATUS_LABEL[billing.effectiveStatus] || '不明'}</div>
+                    {billing.effectiveStatus === 'trialing' ? (
                       billing.trialEndsAt ? (
                         <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>無料期間は{formatJpDate(billing.trialEndsAt)}まで</div>
                       ) : null
@@ -782,7 +782,7 @@ export default function SettingsPage() {
                         <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>{formatJpDate(billing.currentPeriodEnd)}に解約予定</div>
                       ) : null
                     ) : null}
-                    {(billing.status === 'trial_expired' || billing.status === 'past_due' || billing.status === 'canceled') ? (
+                    {(billing.effectiveStatus === 'trial_expired' || billing.effectiveStatus === 'past_due' || billing.effectiveStatus === 'canceled') ? (
                       <div style={{ marginTop: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>月額9,800円（税別）でご利用いただけます。</div>
                         <button
