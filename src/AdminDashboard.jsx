@@ -491,11 +491,6 @@ function SellersPanel() {
     }
   }
 
-  function copyUrl(token) {
-    const url = `https://www.house-ai.co.jp/seller?token=${token}`
-    navigator.clipboard.writeText(url).then(() => showToast('URLをコピーしました'))
-  }
-
   return (
     <div>
       {/* トースト */}
@@ -537,11 +532,15 @@ function SellersPanel() {
                   <td style={{ padding: '12px 14px', color: '#475569' }}>{s.email}</td>
                   <td style={{ padding: '12px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
                   <td style={{ padding: '12px 14px' }}>
+                    {/* 売主ポータル（/api/seller）は Phase S0 で 503 停止中。
+                        一覧 API も access_token を返さなくなったため、操作できないことを明示する。 */}
                     <button
-                      onClick={() => copyUrl(s.access_token)}
-                      style={{ background: '#f0f4ff', color: '#1a3a5c', border: '1px solid #c7d2fe', borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      type="button"
+                      disabled
+                      title="売主ポータルは現在停止中です"
+                      style={{ background: '#f1f5f9', color: '#94a3b8', border: '1px solid #e2e8f0', borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'not-allowed', whiteSpace: 'nowrap' }}
                     >
-                      📋 URLコピー
+                      URL発行停止中
                     </button>
                   </td>
                 </tr>

@@ -25,9 +25,13 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
+    // access_token は返さない。一覧表示に不要で、ブラウザに渡すと
+    // 画面・拡張機能・スクリーンショット経由で漏れる面が増えるため。
+    // 売主ポータル（api/seller.js）は Phase S0 で 503 停止中であり、
+    // トークンを配る用途も今は無い。
     const { data, error } = await supabaseAdmin
       .from('sellers')
-      .select('*')
+      .select('id, name, seller_name, email, phone, property_address, agent_name, agent_email, inquiry_count, view_count, created_at')
       .order('created_at', { ascending: false })
     if (error) return res.status(500).json({ error: error.message })
     return res.json({ sellers: data })
