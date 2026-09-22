@@ -95,12 +95,36 @@ async function startBillingCheckout() {
   }
 }
 
+// body は送らない。サーバーは org_id / customer / return_url を一切受け取らない設計
+async function startBillingPortal() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/billing/portal', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const CHECKOUT_ERROR_LABEL = {
   not_owner: '契約はWorkspaceのオーナーのみ手続きできます。',
   billing_exempt: 'このWorkspaceは課金の対象外です。',
   already_active: 'すでにご契約いただいています。',
   subscription_exists: 'すでに手続き済みのご契約があります。',
   no_subscription_record: 'Workspaceが未開設です。',
+}
+
+const PORTAL_ERROR_LABEL = {
+  portal_not_available: '現在の契約状態ではこの操作は行えません。',
+  no_customer: 'お支払い情報が見つかりませんでした。お問い合わせください。',
+  billing_exempt: 'この組織ではお支払いの手続きは不要です。',
 }
 
 function readTabFromUrl() {
@@ -176,6 +200,8 @@ export default function SettingsPage() {
   const [billing, setBilling] = useState(null)
   const [checkoutStarting, setCheckoutStarting] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
+  const [portalOpening, setPortalOpening] = useState(false)
+  const [portalError, setPortalError] = useState('')
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -304,6 +330,20 @@ export default function SettingsPage() {
     }
     setCheckoutError(CHECKOUT_ERROR_LABEL[r.data && r.data.error] || '手続きを開始できませんでした。時間をおいて再度お試しください。')
     setCheckoutStarting(false)
+  }
+
+  // 成功時は Stripe の管理画面へ遷移するため、遷移後の状態は戻さない
+  const handleOpenPortal = async () => {
+    if (portalOpening) return
+    setPortalOpening(true)
+    setPortalError('')
+    const r = await startBillingPortal()
+    if (r.ok && r.data && r.data.url) {
+      window.location.href = r.data.url
+      return
+    }
+    setPortalError(PORTAL_ERROR_LABEL[r.data && r.data.error] || '手続きを開始できませんでした。時間をおいて再度お試しください。')
+    setPortalOpening(false)
   }
 
   // 楽観的更新はせず、upsert の成功を確認してから state を反映する
@@ -782,7 +822,7 @@ export default function SettingsPage() {
                         <div style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8', marginTop: 8 }}>{formatJpDate(billing.currentPeriodEnd)}に解約予定</div>
                       ) : null
                     ) : null}
-                    {(billing.effectiveStatus === 'trial_expired' || billing.effectiveStatus === 'past_due' || billing.effectiveStatus === 'canceled') ? (
+                    {(billing.effectiveStatus === 'trial_expired' || billing.effectiveStatus === 'canceled') ? (
                       <div style={{ marginTop: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>月額9,800円（税別）でご利用いただけます。</div>
                         <button
@@ -796,6 +836,37 @@ export default function SettingsPage() {
                           <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{checkoutError}</div>
                         ) : null}
                       </div>
+                    ) : null}
+                    {billing.canOpenPortal === true ? (
+                      billing.effectiveStatus === 'past_due' ? (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>お支払い方法をご確認・更新してください。お支払いが確認されると、Workspaceの利用を再開できます。</div>
+                          <button
+                            onClick={handleOpenPortal}
+                            disabled={portalOpening}
+                            style={{ background: portalOpening ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: portalOpening ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                          >
+                            {portalOpening ? '手続き中...' : 'お支払い方法を確認・更新する'}
+                          </button>
+                          {portalError !== '' ? (
+                            <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{portalError}</div>
+                          ) : null}
+                        </div>
+                      ) : billing.effectiveStatus === 'active' ? (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>お支払い方法の変更・請求書の確認・解約の手続きはこちらから行えます。</div>
+                          <button
+                            onClick={handleOpenPortal}
+                            disabled={portalOpening}
+                            style={{ background: 'transparent', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 400, cursor: portalOpening ? 'default' : 'pointer', fontFamily: 'inherit', opacity: portalOpening ? 0.5 : 1 }}
+                          >
+                            {portalOpening ? '手続き中...' : '契約・お支払いの管理'}
+                          </button>
+                          {portalError !== '' ? (
+                            <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{portalError}</div>
+                          ) : null}
+                        </div>
+                      ) : null
                     ) : null}
                   </SectionCard>
                 )}

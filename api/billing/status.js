@@ -2,9 +2,20 @@ import { supabaseAdmin } from '../_adminAuth.js'
 import { requireOrgOwner } from '../_userAuth.js'
 
 // 読み取り専用。契約の作成・変更はここでは行わない。
-// Stripe の識別子（stripe_customer_id / stripe_subscription_id / stripe_status）は select しない。
-// billing_exempt は effectiveStatus の計算にのみ使い、レスポンスには含めない。
-const COLUMNS = 'status, billing_exempt, trial_started_at, trial_ends_at, current_period_end, cancel_at_period_end'
+// stripe_customer_id は canOpenPortal の判定にのみ使い、値はレスポンスに含めない。
+// stripe_subscription_id / stripe_status は select しない。
+// billing_exempt も effectiveStatus と canOpenPortal の計算にのみ使い、レスポンスには含めない。
+const COLUMNS = 'status, billing_exempt, stripe_customer_id, trial_started_at, trial_ends_at, current_period_end, cancel_at_period_end'
+
+// Customer Portal を開けるか。api/billing/portal.js の許可条件と同じものを使う。
+// （billing_exempt でない / status が active または past_due / Stripe の顧客がある）
+function computeCanOpenPortal(row) {
+  if (!row) return false
+  if (row.billing_exempt === true) return false
+  if (row.status !== 'active' && row.status !== 'past_due') return false
+  if (!row.stripe_customer_id) return false
+  return true
+}
 
 // DB の status 文字列をそのまま信じると、期限切れの trialing を「Trial中」と
 // 表示しながら RLS には拒否される、という食い違いが起きる。実効値はここで確定させる。
@@ -42,6 +53,7 @@ export default async function handler(req, res) {
       hasOrganization: false,
       effectiveStatus: null,
       canCreateWorkspace: false,
+      canOpenPortal: false,
       needsTrialStart: true,
     })
   }
@@ -67,6 +79,7 @@ export default async function handler(req, res) {
       hasOrganization: true,
       effectiveStatus: null,
       canCreateWorkspace: false,
+      canOpenPortal: false,
       needsTrialStart: true,
     })
   }
@@ -85,6 +98,7 @@ export default async function handler(req, res) {
     hasOrganization: true,
     effectiveStatus: effectiveStatus,
     canCreateWorkspace: effectiveStatus === 'active' || effectiveStatus === 'trialing',
+    canOpenPortal: computeCanOpenPortal(row),
     needsTrialStart: false,
   })
 }
