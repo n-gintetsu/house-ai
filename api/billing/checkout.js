@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../_adminAuth.js'
 import { requireOrgOwner } from '../_userAuth.js'
 
 // 契約に必要な列のみ。Stripe の識別子はここでの判定に使うだけでクライアントには返さない。
-const COLUMNS = 'status, billing_exempt, stripe_customer_id, stripe_subscription_id'
+const COLUMNS = 'status, billing_exempt, stripe_customer_id'
 const DEFAULT_ORIGIN = 'https://house-ai.co.jp'
 // 「終了済み」とみなす Subscription の status。
 // これ以外（active / trialing / past_due / unpaid / incomplete / paused / 未知の値）はすべて生きているとみなす。
