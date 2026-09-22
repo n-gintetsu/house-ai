@@ -824,7 +824,19 @@ export default function SettingsPage() {
                     ) : null}
                     {(billing.effectiveStatus === 'trial_expired' || billing.effectiveStatus === 'canceled') ? (
                       <div style={{ marginTop: 16 }}>
-                        <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', marginBottom: 12 }}>月額9,800円（税別）でご利用いただけます。</div>
+                        <div style={{ marginBottom: 12 }}>
+                          {[
+                            '月額9,800円（税別）／月額10,780円（税込）',
+                            '月単位の契約・最低利用期間なし（毎月自動更新）',
+                            '解約は契約・支払管理画面からいつでも可能。解約は現在の契約期間の満了時に反映され、それまでは利用できます',
+                            '途中解約による日割り返金はありません',
+                          ].map((line, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 6, fontSize: 13, fontWeight: 400, color: '#94A3B8', lineHeight: 1.8 }}>
+                              <span style={{ color: '#c9a84c', flexShrink: 0 }}>・</span>
+                              <span>{line}</span>
+                            </div>
+                          ))}
+                        </div>
                         <button
                           onClick={handleStartCheckout}
                           disabled={checkoutStarting}
@@ -832,6 +844,15 @@ export default function SettingsPage() {
                         >
                           {checkoutStarting ? '手続き中...' : 'お支払いに進む'}
                         </button>
+                        <div style={{ fontSize: 11, fontWeight: 400, color: '#64748B', lineHeight: 1.8, marginTop: 10 }}>
+                          お進みいただくと、
+                          <a href="/ws-legal" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>利用規約</a>
+                          ・
+                          <a href="/ws-legal?tab=privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>プライバシーポリシー</a>
+                          ・
+                          <a href="/ws-legal?tab=tokusho" target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400 }}>特定商取引法に基づく表記</a>
+                          に同意したものとみなします。
+                        </div>
                         {checkoutError !== '' ? (
                           <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{checkoutError}</div>
                         ) : null}
