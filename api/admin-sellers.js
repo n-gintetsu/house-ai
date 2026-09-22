@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     // トークンを配る用途も今は無い。
     const { data, error } = await supabaseAdmin
       .from('sellers')
-      .select('id, name, seller_name, email, phone, property_address, agent_name, agent_email, inquiry_count, view_count, created_at')
+      .select('id, name, seller_name, email, phone, property_address, agent_name, agent_email, created_at')
       .order('created_at', { ascending: false })
     if (error) return res.status(500).json({ error: error.message })
     return res.json({ sellers: data })
