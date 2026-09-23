@@ -14,6 +14,7 @@ import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './legalContent'
 import MobileWorkspaceLayout from './MobileWorkspaceLayout'
 import MobileHeader from './MobileHeader'
 import FeedbackModal from './FeedbackModal'
+import ConfirmRequestButton from './ConfirmRequestButton'
 import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
 
 function normalizeLabel(s) {
@@ -3479,6 +3480,15 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                         <button onClick={() => handleDeleteFile(wf)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 3 }} title="削除">
                           <Trash2 size={12} color="#475569" />
                         </button>
+                      ) : null}
+                      {canWrite === true ? (
+                        <ConfirmRequestButton
+                          workspaceId={workspaceId}
+                          targetType="file"
+                          targetId={wf.id}
+                          members={workspaceMembers}
+                          currentUserId={currentUserId}
+                        />
                       ) : null}
                     </div>
                     </div>
