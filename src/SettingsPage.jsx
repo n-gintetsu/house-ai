@@ -60,6 +60,16 @@ function formatJpDate(iso) {
   return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日'
 }
 
+// 6桁コードの有効期限は時刻だけ見せる（日付は当日で固定のため）
+function formatJpTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return hh + ':' + mm
+}
+
 // GET なので method と Content-Type は付けない
 async function fetchBillingStatus() {
   const { data: sess } = await supabase.auth.getSession()
@@ -113,6 +123,57 @@ async function startBillingPortal() {
   }
 }
 
+// body は送らない。対象ユーザーはサーバーがセッションから決める
+async function fetchLineStatus() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/notifications/line/status', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
+async function issueLineCode() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/notifications/line/link-code', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
+async function unlinkLine() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = (sess && sess.session && sess.session.access_token) || ''
+  if (!token) return { ok: false, status: 0, data: {} }
+  try {
+    const res = await fetch('/api/notifications/line/unlink', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data: data || {} }
+  } catch (e) {
+    console.error(e)
+    return { ok: false, status: 0, data: {} }
+  }
+}
+
 const CHECKOUT_ERROR_LABEL = {
   not_owner: '契約はWorkspaceのオーナーのみ手続きできます。',
   billing_exempt: 'このWorkspaceは課金の対象外です。',
@@ -125,6 +186,12 @@ const PORTAL_ERROR_LABEL = {
   portal_not_available: '現在の契約状態ではこの操作は行えません。',
   no_customer: 'お支払い情報が見つかりませんでした。お問い合わせください。',
   billing_exempt: 'この組織ではお支払いの手続きは不要です。',
+}
+
+const LINE_ERROR_LABEL = {
+  already_linked: 'すでに連携済みです。',
+  line_not_configured: 'ただいま発行できません。時間をおいてお試しください。',
+  code_generation_failed: 'ただいま発行できません。時間をおいてお試しください。',
 }
 
 function readTabFromUrl() {
@@ -202,6 +269,12 @@ export default function SettingsPage() {
   const [checkoutError, setCheckoutError] = useState('')
   const [portalOpening, setPortalOpening] = useState(false)
   const [portalError, setPortalError] = useState('')
+  const [lineStatus, setLineStatus] = useState(null)
+  const [lineCode, setLineCode] = useState('')
+  const [lineCodeExpiresAt, setLineCodeExpiresAt] = useState(null)
+  const [lineBusy, setLineBusy] = useState(false)
+  const [lineError, setLineError] = useState('')
+  const [lineEnabledSaving, setLineEnabledSaving] = useState(false)
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 768)
@@ -299,6 +372,25 @@ export default function SettingsPage() {
     return () => { mounted = false }
   }, [tab, currentUserId])
 
+  // LINE 連携状態も通知タブを開いたときに読み込む
+  useEffect(() => {
+    if (tab !== 'notifications') return
+    if (!currentUserId) return
+    let mounted = true
+    async function loadLineStatus() {
+      const r = await fetchLineStatus()
+      if (!mounted) return
+      if (r.ok) {
+        setLineStatus(r.data)
+        setLineError('')
+      } else {
+        setLineError(LINE_ERROR_LABEL[r.data && r.data.error] || '処理できませんでした。時間をおいて再度お試しください。')
+      }
+    }
+    loadLineStatus()
+    return () => { mounted = false }
+  }, [tab, currentUserId])
+
   // プランタブを開いたときだけ読み込む。読み込み済みなら再取得しない
   useEffect(() => {
     if (tab !== 'billing') return
@@ -367,6 +459,86 @@ export default function SettingsPage() {
       return
     }
     setReminderOn(next)
+  }
+
+  // 連携用の6桁コードを発行する
+  const handleIssueLineCode = async () => {
+    if (lineBusy) return
+    setLineBusy(true)
+    setLineError('')
+    const r = await issueLineCode()
+    setLineBusy(false)
+    if (r.ok && r.data && r.data.code) {
+      setLineCode(r.data.code)
+      setLineCodeExpiresAt(r.data.expiresAt ? r.data.expiresAt : null)
+      return
+    }
+    setLineError(LINE_ERROR_LABEL[r.data && r.data.error] || '処理できませんでした。時間をおいて再度お試しください。')
+  }
+
+  // 連携できたかを取り直す
+  const handleRecheckLine = async () => {
+    if (lineBusy) return
+    setLineBusy(true)
+    setLineError('')
+    const r = await fetchLineStatus()
+    setLineBusy(false)
+    if (r.ok) {
+      setLineStatus(r.data)
+      if (r.data && r.data.linked === true) {
+        setLineCode('')
+        setLineCodeExpiresAt(null)
+      }
+      return
+    }
+    setLineError(LINE_ERROR_LABEL[r.data && r.data.error] || '処理できませんでした。時間をおいて再度お試しください。')
+  }
+
+  // 楽観的更新はせず、upsert の成功を確認してから state を反映する
+  const toggleLineEnabled = async () => {
+    if (lineEnabledSaving) return
+    if (!currentUserId) return
+    if (!lineStatus) return
+    const next = lineStatus.enabled === true ? false : true
+    setLineEnabledSaving(true)
+    const { error } = await supabase
+      .from('workspace_notification_settings')
+      .upsert({
+        user_id: currentUserId,
+        line_confirm_request: next,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+    setLineEnabledSaving(false)
+    if (error) {
+      console.error('[settings] LINE通知設定の保存に失敗しました:', error)
+      window.alert('設定を保存できませんでした。通信状況をご確認のうえ、もう一度お試しください。')
+      return
+    }
+    setLineStatus(prev => (prev ? { ...prev, enabled: next } : prev))
+  }
+
+  // 解除は取り消せないため、実行前に確認する
+  const handleUnlinkLine = async () => {
+    if (lineBusy) return
+    const ok = window.confirm('LINE連携を解除します。よろしいですか。')
+    if (!ok) return
+    setLineBusy(true)
+    setLineError('')
+    const r = await unlinkLine()
+    if (!r.ok) {
+      setLineBusy(false)
+      setLineError(LINE_ERROR_LABEL[r.data && r.data.error] || '処理できませんでした。時間をおいて再度お試しください。')
+      return
+    }
+    const s = await fetchLineStatus()
+    setLineBusy(false)
+    setLineCode('')
+    setLineCodeExpiresAt(null)
+    if (s.ok) {
+      setLineStatus(s.data)
+      return
+    }
+    setLineError(LINE_ERROR_LABEL[s.data && s.data.error] || '処理できませんでした。時間をおいて再度お試しください。')
   }
 
   // 楽観的更新はせず、update の成功を確認してから state を反映する
@@ -896,6 +1068,7 @@ export default function SettingsPage() {
 
             {/* ===== 通知 ===== */}
             {tab === 'notifications' ? (
+              <div>
               <SectionCard title="通知設定">
                 {loading ? (
                   <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', padding: '14px 0' }}>読み込み中...</div>
@@ -949,6 +1122,123 @@ export default function SettingsPage() {
                   案件の重要なお知らせ・招待・本人確認のメールは停止できません。
                 </div>
               </SectionCard>
+
+              <SectionCard title="LINE通知">
+                {lineStatus === null ? (
+                  <div style={{ fontSize: 13, fontWeight: 400, color: '#64748B', padding: '14px 0' }}>読み込み中...</div>
+                ) : lineStatus.linked === true ? (
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0' }}>
+                      連携済み
+                      {lineStatus.connectedAt ? (
+                        <span style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginLeft: 6 }}>（{formatJpDate(lineStatus.connectedAt)} 連携）</span>
+                      ) : null}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '14px 0' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 400, color: '#E2E8F0', wordBreak: 'break-all', overflowWrap: 'anywhere' }}>確認のご依頼をLINEで受け取る</div>
+                        {lineEnabledSaving ? (
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#c9a84c', marginTop: 6 }}>保存中...</div>
+                        ) : null}
+                      </div>
+                      <button
+                        onClick={toggleLineEnabled}
+                        disabled={lineEnabledSaving}
+                        title={lineStatus.enabled === true ? 'オンになっています' : 'オフになっています'}
+                        style={{
+                          position: 'relative',
+                          flexShrink: 0,
+                          width: 46,
+                          height: 26,
+                          borderRadius: 13,
+                          padding: 0,
+                          border: lineStatus.enabled === true ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                          background: lineStatus.enabled === true ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.12)',
+                          cursor: lineEnabledSaving ? 'default' : 'pointer',
+                          opacity: lineEnabledSaving ? 0.5 : 1,
+                          transition: 'background 0.15s, opacity 0.15s',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: 3,
+                            left: lineStatus.enabled === true ? 23 : 3,
+                            width: 18,
+                            height: 18,
+                            borderRadius: '50%',
+                            background: lineStatus.enabled === true ? '#0A0F1E' : '#94A3B8',
+                            transition: 'left 0.15s',
+                            display: 'block',
+                          }}
+                        />
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleUnlinkLine}
+                      disabled={lineBusy}
+                      style={{ background: 'transparent', color: '#F87171', border: '1px solid rgba(248,113,113,0.4)', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 400, cursor: lineBusy ? 'default' : 'pointer', fontFamily: 'inherit', opacity: lineBusy ? 0.5 : 1 }}
+                    >
+                      {lineBusy ? '処理中...' : '連携を解除する'}
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8', lineHeight: 1.8 }}>確認のご依頼があるときに、LINEでお知らせを受け取れます。Workspaceの中身はLINEには表示されません。</div>
+                    <div style={{ marginTop: 12 }}>
+                      {[
+                        '下のボタンで6桁の番号を発行する',
+                        '「House-AI Workspace」を友だち追加する',
+                        'トークに6桁の番号を送信する',
+                      ].map((step, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, fontWeight: 400, color: '#94A3B8', lineHeight: 1.8 }}>
+                          <span style={{ color: '#c9a84c', flexShrink: 0 }}>{i + 1}.</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: 12 }}>
+                      <a
+                        href="https://line.me/R/ti/p/@957tihyh"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 13, fontWeight: 400, color: '#c9a84c', textDecoration: 'underline' }}
+                      >友だち追加</a>
+                    </div>
+                    <div style={{ marginTop: 16 }}>
+                      <button
+                        onClick={handleIssueLineCode}
+                        disabled={lineBusy}
+                        style={{ background: lineBusy ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: lineBusy ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                      >
+                        {lineBusy ? '発行中...' : '連携用の番号を発行する'}
+                      </button>
+                    </div>
+                    {lineCode !== '' ? (
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ fontSize: 32, fontWeight: 500, color: '#c9a84c', letterSpacing: 6 }}>{lineCode}</div>
+                        {lineCodeExpiresAt ? (
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#64748B', marginTop: 6 }}>有効期限：{formatJpTime(lineCodeExpiresAt)}まで（10分）</div>
+                        ) : null}
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            onClick={handleRecheckLine}
+                            disabled={lineBusy}
+                            style={{ background: 'transparent', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 400, cursor: lineBusy ? 'default' : 'pointer', fontFamily: 'inherit', opacity: lineBusy ? 0.5 : 1 }}
+                          >
+                            {lineBusy ? '確認中...' : '連携できたか確認する'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                {lineError !== '' ? (
+                  <div style={{ fontSize: 12, fontWeight: 400, color: '#F87171', marginTop: 8 }}>{lineError}</div>
+                ) : null}
+              </SectionCard>
+              </div>
             ) : null}
 
             {/* ===== 法務・サポート ===== */}
