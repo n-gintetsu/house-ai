@@ -3481,7 +3481,11 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                           <Trash2 size={12} color="#475569" />
                         </button>
                       ) : null}
-                      {canWrite === true ? (
+                    </div>
+                    </div>
+                    {/* 確認依頼：上段のアイコン列を押し広げないよう、下段に右寄せで置く */}
+                    {canWrite === true ? (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
                         <ConfirmRequestButton
                           workspaceId={workspaceId}
                           targetType="file"
@@ -3489,9 +3493,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                           members={workspaceMembers}
                           currentUserId={currentUserId}
                         />
-                      ) : null}
-                    </div>
-                    </div>
+                      </div>
+                    ) : null}
                     {/* 共有パネル（fpCanDel かつ開いているときのみ） */}
                     {shareOpenFileId === wf.id ? (
                     <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 8 }}>
