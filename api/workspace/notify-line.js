@@ -186,8 +186,9 @@ export default async function handler(req, res) {
   const useLine = connection && connection.line_user_id && lineEnabled ? true : false
   const requestedChannel = useLine ? 'line' : 'email'
 
-  // 12. 連打防止（5分）。通す場合だけログ行が作られ、その id が返る。
-  const { data: logId, error: claimErr } = await supabaseAdmin.rpc('claim_line_notification', {
+  // 12. 連打防止。accepted のときだけログ行が作られ、その id が戻り値に入る。
+  //     引数は旧関数と同じ。戻り値の形だけが uuid から jsonb に変わる。
+  const { data: claim, error: claimErr } = await supabaseAdmin.rpc('claim_line_notification_v2', {
     p_workspace_id: workspaceId,
     p_sender_user_id: ctx.userId,
     p_recipient_user_id: recipient.user_id,
@@ -200,9 +201,19 @@ export default async function handler(req, res) {
     console.error('[workspace/notify-line] claim error:', JSON.stringify(claimErr))
     return res.status(500).json({ error: 'db_error' })
   }
-  if (!logId) {
-    return res.status(429).json({ error: 'too_many_requests' })
+  const claimResult = claim && claim.result ? claim.result : ''
+  if (claimResult === 'duplicate_cooldown') {
+    return res.status(429).json({ error: 'duplicate_cooldown' })
   }
+  if (claimResult === 'recipient_rate_limit') {
+    return res.status(429).json({ error: 'recipient_rate_limit' })
+  }
+  // invalid_input / null / 想定外はここで止める
+  if (claimResult !== 'accepted' || !claim.id) {
+    console.error('[workspace/notify-line] claim unexpected result:', String(claimResult))
+    return res.status(500).json({ error: 'db_error' })
+  }
+  const logId = claim.id
 
   // 13. 送信
   let lastErrorCode = null

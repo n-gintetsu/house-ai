@@ -18,6 +18,8 @@ const NOTIFY_ERROR_LABEL = {
   target_not_found: '対象が見つかりませんでした。',
   billing_required: 'ご契約が必要です。',
   notify_failed: 'お知らせを送れませんでした。時間をおいてお試しください。',
+  duplicate_cooldown: '先ほど同じ内容でお知らせ済みです。',
+  recipient_rate_limit: '確認依頼の送信上限に達しています。時間をおいてお試しください。',
 }
 
 // body には宛先メンバーIDと対象だけを渡す。送信者・メール・LINEのIDはサーバーが決める。
