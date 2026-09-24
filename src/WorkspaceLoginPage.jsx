@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { Mail, Loader, Lock, KeyRound, HelpCircle } from 'lucide-react'
 import LoginHelpModal from './LoginHelpModal'
+import { saveReturnTo, getReturnTo, takeReturnTo } from './returnTo'
 
 export default function WorkspaceLoginPage() {
   const [email, setEmail] = useState('')
@@ -45,6 +46,14 @@ export default function WorkspaceLoginPage() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // /login?returnTo=... で来た場合は sessionStorage に退避しておく。
+  // Google ログインはクエリを持たない /workspace に戻ってくるため、ここで残さないと復帰先が消える。
+  // 値の検証は returnTo.js 側で行う（自サイト内の許可パスだけが通る）。
+  useEffect(() => {
+    const saved = getReturnTo()
+    if (saved) saveReturnTo(saved)
+  }, [])
+
   // ── 既存ハンドラ（変更なし）────────────────────────────────
   const handleLogin = async () => {
     const trimmed = (email || '').trim()
@@ -58,7 +67,8 @@ export default function WorkspaceLoginPage() {
         password,
       })
       if (signInErr) throw signInErr
-      window.location.href = window.location.origin + '/workspace'
+      const dest = takeReturnTo() || '/workspace'
+      window.location.href = window.location.origin + dest
     } catch (e) {
       setError('ログインに失敗しました。' + (e.message || ''))
       setLoading(null)
@@ -74,7 +84,7 @@ export default function WorkspaceLoginPage() {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: {
-          emailRedirectTo: window.location.origin + '/workspace',
+          emailRedirectTo: window.location.origin + (getReturnTo() || '/workspace'),
         },
       })
       if (otpErr) throw otpErr
@@ -130,7 +140,8 @@ export default function WorkspaceLoginPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) throw error
-      window.location.href = window.location.origin + '/workspace'
+      const dest = takeReturnTo() || '/workspace'
+      window.location.href = window.location.origin + dest
     } catch (e) {
       setError('パスワードの設定に失敗しました。' + (e.message || ''))
       setLoading(null)

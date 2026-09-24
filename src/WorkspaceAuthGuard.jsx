@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { Loader } from 'lucide-react'
+import { saveReturnTo, takeReturnTo, isSafeInternalPath } from './returnTo'
 
 // 招待の受諾はサーバー側で行う（対象は必ずセッションのメールアドレスから決まる）
 async function claimPendingInvitations(session) {
@@ -27,6 +28,21 @@ export default function WorkspaceAuthGuard({ children }) {
   // null=ローディング, true=認証済み, false=未認証
   const [authed, setAuthed] = useState(null)
   const claimedRef = useRef(false)
+  const restoredRef = useRef(false)
+
+  // ログイン前に保存した復帰先へ戻す。招待受諾による遷移が起きなかったときだけ実行する。
+  function restoreReturnTo() {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    // 復帰先は1回限り。ここで必ず消して、以降のページ移動に持ち越さない。
+    const dest = takeReturnTo()
+    if (!dest) return
+    // 既に案件を開いている場合は上書きしない（復帰先に直接着地した場合など）
+    if (window.location.search.includes('id=')) return
+    const current = window.location.pathname + window.location.search
+    if (dest === current) return
+    window.location.replace(dest)
+  }
 
   async function runClaim(session) {
     if (!session || claimedRef.current) return
@@ -34,7 +50,9 @@ export default function WorkspaceAuthGuard({ children }) {
     const claimed = await claimPendingInvitations(session)
     if (claimed.length > 0 && !window.location.search.includes('id=')) {
       window.location.href = `/workspace?id=${claimed[0].workspace_id}`
+      return
     }
+    restoreReturnTo()
   }
 
   useEffect(() => {
@@ -69,6 +87,14 @@ export default function WorkspaceAuthGuard({ children }) {
 
   useEffect(() => {
     if (authed === false) {
+      // 現在地（案件IDを含むクエリまで）を復帰先として保存する。
+      // sessionStorage が使えない場合の保険として、クエリにも載せて /login へ渡す。
+      const here = window.location.pathname + window.location.search
+      if (isSafeInternalPath(here)) {
+        saveReturnTo(here)
+        window.location.replace('/login?returnTo=' + encodeURIComponent(here))
+        return
+      }
       window.location.replace('/login')
     }
   }, [authed])
