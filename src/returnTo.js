@@ -15,6 +15,24 @@ function hasUnsafeChars(v) {
   return false
 }
 
+function pathPart(v) {
+  const q = v.indexOf('?')
+  if (q === -1) return v
+  return v.slice(0, q)
+}
+
+// pathname を '/' で分割し、'.' または '..' と完全一致するセグメントがあれば真。
+// '/workspace/../admin' はブラウザが /admin に正規化するため allowlist をすり抜ける。
+// includes('..') ではなくセグメント単位で見るので '/house/a..b' や '/workspace/..foo' は拒否しない。
+// クエリは見ない（'?note=a..b' は正当）。
+function hasDotSegment(v) {
+  const parts = pathPart(v).split('/')
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === '.' || parts[i] === '..') return true
+  }
+  return false
+}
+
 // 形の検証（規則2〜6）。デコード後にも同じ検証をかける。
 function basicShapeOk(v) {
   if (typeof v !== 'string' || v === '') return false
@@ -23,13 +41,8 @@ function basicShapeOk(v) {
   if (v.indexOf('//') === 0) return false
   if (v.indexOf('/\\') === 0) return false
   if (v.indexOf(':') !== -1) return false
+  if (hasDotSegment(v)) return false
   return true
-}
-
-function pathPart(v) {
-  const q = v.indexOf('?')
-  if (q === -1) return v
-  return v.slice(0, q)
 }
 
 // パス部分が allowlist と一致、または '/' 区切りの前方一致であること
