@@ -10,6 +10,10 @@ const PERMISSION_LABEL = {
   Member: 'Member',
 }
 
+// 確認依頼を送れるロール。サーバー側 api/_roles.js の NOTIFY_SENDER_ROLES と同じ内容を保つこと。
+// （Customer / Guest / Member はサーバーが 403 insufficient_permission を返すため、ここでも出さない）
+const NOTIFY_SENDER_ROLES = ['Owner', 'Manager', 'Staff', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany']
+
 const NOTIFY_ERROR_LABEL = {
   too_many_requests: '先ほど同じ内容でお知らせ済みです。しばらく経ってからお試しください。',
   insufficient_permission: 'この操作の権限がありません。',
@@ -46,6 +50,21 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+
+  // 自分のメンバー行（この案件の active な自分）
+  const myMember = (members || []).filter(m => {
+    if (!m) return false
+    if (m.status !== 'active') return false
+    if (!m.user_id) return false
+    if (m.user_id !== currentUserId) return false
+    return true
+  })[0] || null
+
+  // 送信可能ロールかどうか。判定は必ず normRole を通す（保存値が小文字のことがある）。
+  // 自分の行が見つからない／role 未取得のときは送れない扱い（fail-closed）。
+  // メンバー一覧の読み込み中もここで false になるため、ボタンが一瞬見えてから消えることはない。
+  const myRole = myMember ? normRole(myMember.role) : ''
+  const canSend = myRole ? NOTIFY_SENDER_ROLES.indexOf(myRole) !== -1 : false
 
   // 送れる相手は「この案件の active メンバーで、アカウントが有効で、自分以外」
   const candidates = (members || []).filter(m => {
@@ -89,6 +108,8 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
     }
     setError(NOTIFY_ERROR_LABEL[r.data && r.data.error] || 'お知らせを送れませんでした。時間をおいてお試しください。')
   }
+
+  if (!canSend) return null
 
   return (
     <div style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
