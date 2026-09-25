@@ -2562,19 +2562,6 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                           ) : null}
                           <span style={{ fontSize: 10, color: '#475569' }}>{timeStr}</span>
                         </div>
-                        {/* 確認依頼：自分の発言にだけ。窓幅が狭いのでメタ行とは別の行に置く */}
-                        {(isMe === true && canWrite === true) ? (
-                          <div style={{ marginTop: 2 }}>
-                            <ConfirmRequestButton
-                              variant="link"
-                              workspaceId={id}
-                              targetType="message"
-                              targetId={msg.id}
-                              members={workspaceMembers}
-                              currentUserId={currentUserId}
-                            />
-                          </div>
-                        ) : null}
                       </div>
                     )
                   })}
