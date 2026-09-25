@@ -730,6 +730,7 @@ function DashboardView({ id }) {
   // 家カルテ昇格用
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
+  const [promoteMessageIsError, setPromoteMessageIsError] = useState(false)
   // ログイン中ユーザーのこの案件でのロール
   const [currentRole, setCurrentRole] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
@@ -1462,12 +1463,15 @@ function DashboardView({ id }) {
       // wsFinish をそのまま展開するので、2回目以降は status / completed_at が
       // キーごと入らず、画面のステータスも書き換わらない
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
+      setPromoteMessageIsError(false)
       setPromoteMessage('家カルテに保存しました')
       setTimeout(() => setPromoteMessage(''), 4000)
       return { skipped: false, houseRecordId }
     } catch (e) {
       console.error('promoteToHouseRecord error', e)
+      setPromoteMessageIsError(true)
       setPromoteMessage('保存に失敗しました: ' + (e.message || ''))
+      setTimeout(() => setPromoteMessage(''), 8000)
       return { skipped: false, error: e }
     } finally {
       setPromoting(false)
@@ -1483,7 +1487,14 @@ function DashboardView({ id }) {
       ? 'この案件を「完了」にして、家カルテへ保存します。よろしいですか？'
       : '家カルテを現在の内容で上書きします。よろしいですか？')
     if (!ok) return
-    await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+    const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+    // 住所が無いと早期 return（{ skipped: true }）で何も起きないため、ここで理由を伝える。
+    // 自動昇格経路は別のメッセージを出しているので、手動押下のこの場所だけで出す。
+    if (r && r.skipped === true) {
+      setPromoteMessageIsError(true)
+      setPromoteMessage('住所が未入力のため、家カルテに保存できません。案件情報に住所を入力してください。')
+      setTimeout(() => setPromoteMessage(''), 8000)
+    }
   }
 
   if (loading) {
@@ -1853,7 +1864,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       </header>
       {/* 家カルテ保存メッセージ（固定トースト） */}
       {promoteMessage ? (
-        <div style={{ position: 'fixed', top: 72, right: 20, zIndex: 150, background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(201,168,76,0.45)', borderRadius: 8, padding: '8px 16px', fontSize: 12, color: '#c9a84c', fontWeight: 400, boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}>
+        <div style={{ position: 'fixed', top: 72, right: 20, zIndex: 150, background: promoteMessageIsError ? 'rgba(239,68,68,0.12)' : 'rgba(15,23,42,0.97)', border: promoteMessageIsError ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(201,168,76,0.45)', borderRadius: 8, padding: '8px 16px', fontSize: 12, color: promoteMessageIsError ? '#F87171' : '#c9a84c', fontWeight: 400, boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}>
           {promoteMessage}
         </div>
       ) : null}
