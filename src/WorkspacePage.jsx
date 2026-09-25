@@ -1475,6 +1475,14 @@ function DashboardView({ id }) {
   }
 
   const handleManualPromote = async () => {
+    // 押すと戻せない影響が出る（初回は status が '完了' になり作成者の削除権限が変わる、
+    // client_records へ insert される、同一住所の既存家カルテの snapshot を上書きする、
+    // promoted_at を戻す手段が無い）ため、必ず確認を取る。
+    const isFirstPromote = !workspace.promoted_at
+    const ok = window.confirm(isFirstPromote
+      ? 'この案件を「完了」にして、家カルテへ保存します。よろしいですか？'
+      : '家カルテを現在の内容で上書きします。よろしいですか？')
+    if (!ok) return
     await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
   }
 
@@ -1764,7 +1772,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         {canManage ? (
           ws.promoted_at ? (
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
+              <button onClick={handleManualPromote} disabled={promoting} style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
                 {promoting ? <Loader size={11} /> : null}
                 家カルテに上書き保存
               </button>
@@ -1773,7 +1781,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               </button>
             </div>
           ) : (
-            <button onClick={handleManualPromote} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+            <button onClick={handleManualPromote} disabled={promoting} style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
               {promoting ? <Loader size={11} /> : null}
               家カルテに保存して完了
             </button>
