@@ -2763,6 +2763,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [shareOpenFileId, setShareOpenFileId] = useState(null)
   const [historyOpenFileId, setHistoryOpenFileId] = useState(null)
   const [accessLogs, setAccessLogs] = useState([])
+  const [notifyLogs, setNotifyLogs] = useState([])
   const [docTypeFilter, setDocTypeFilter] = useState('all')
   const [loadingFolders, setLoadingFolders] = useState(true)
   const [uploadingFolderId, setUploadingFolderId] = useState(null)
@@ -2828,6 +2829,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       setFileGrants(grantsData || [])
 
       await loadAccessLogs()
+      await loadNotifyLogs()
     } catch (e) {
       console.error('FileFolderPanel loadAll error', e)
     } finally {
@@ -2842,6 +2844,24 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
     setAccessLogs(logsData || [])
+  }
+
+  // 確認依頼の送信履歴。ログは service_role 専用のため API 経由で取る。
+  // 失敗しても握りつぶす（履歴が出ないだけで、送信機能は動き続ける）。
+  async function loadNotifyLogs() {
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = (sess && sess.session && sess.session.access_token) || ''
+      if (!token) return
+      const res = await fetch('/api/workspace/notify-line-history?workspaceId=' + encodeURIComponent(workspaceId), {
+        headers: { 'Authorization': 'Bearer ' + token },
+      })
+      if (!res.ok) return
+      const r = await res.json().catch(() => ({}))
+      if (r && Array.isArray(r.items)) setNotifyLogs(r.items)
+    } catch (e) {
+      // 履歴は無くても業務は続けられるので、ここでは何もしない
+    }
   }
 
   async function handleUpload(folderId, file) {
@@ -3483,15 +3503,26 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                       ) : null}
                     </div>
                     </div>
-                    {/* 確認依頼：上段のアイコン列を押し広げないよう、下段に右寄せで置く */}
+                    {/* 確認依頼：上段のアイコン列を押し広げないよう、下段に置く（左=最終送信・右=ボタン） */}
                     {canWrite === true ? (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        {(() => {
+                          // notifyLogs は created_at 降順なので先頭がこの行の最終送信
+                          const last = (notifyLogs || []).filter(l => l.target_type === 'file' && l.target_id === wf.id)[0]
+                          return last ? (
+                            <span style={{ fontSize: 9, color: '#475569', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+                              {'依頼済 ' + formatJst(last.created_at)}
+                            </span>
+                          ) : null
+                        })()}
                         <ConfirmRequestButton
                           workspaceId={workspaceId}
                           targetType="file"
                           targetId={wf.id}
                           members={workspaceMembers}
                           currentUserId={currentUserId}
+                          history={notifyLogs}
+                          onSent={loadNotifyLogs}
                         />
                       </div>
                     ) : null}

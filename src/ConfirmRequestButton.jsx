@@ -26,6 +26,41 @@ const NOTIFY_ERROR_LABEL = {
   recipient_rate_limit: '確認依頼の送信上限に達しています。時間をおいてお試しください。',
 }
 
+// 履歴の日時表示。不正な値でも例外は投げない。
+function formatJst(iso) {
+  try {
+    return new Date(iso).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  } catch (e) {
+    return ''
+  }
+}
+
+// 履歴から「この対象をこの相手に送った最後の1件」を探す。
+// 配列は created_at 降順で来る前提だが、念のため最大のものを取る。
+function lastSentTo(history, targetType, targetId, recipientUserId) {
+  const rows = (history || []).filter(l => {
+    if (!l) return false
+    if (l.target_type !== targetType) return false
+    if (l.target_id !== targetId) return false
+    if (l.recipient_user_id !== recipientUserId) return false
+    return true
+  })
+  if (rows.length === 0) return null
+  let best = rows[0]
+  for (let i = 1; i < rows.length; i++) {
+    if (new Date(rows[i].created_at) > new Date(best.created_at)) best = rows[i]
+  }
+  return best
+}
+
+// 送信済みの文言。経路が分かるときはそれも出す。
+function sentLabel(row) {
+  const t = formatJst(row.created_at)
+  if (row.delivered_channel === 'line') return t + ' にLINEで送信済み'
+  if (row.delivered_channel === 'email') return t + ' にメールで送信済み'
+  return t + ' に送信済み'
+}
+
 // body には宛先メンバーIDと対象だけを渡す。送信者・メール・LINEのIDはサーバーが決める。
 async function postNotify(payload) {
   const { data: sess } = await supabase.auth.getSession()
@@ -45,7 +80,7 @@ async function postNotify(payload) {
   }
 }
 
-export default function ConfirmRequestButton({ workspaceId, targetType, targetId, members, currentUserId, variant }) {
+export default function ConfirmRequestButton({ workspaceId, targetType, targetId, members, currentUserId, variant, history, onSent }) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -100,6 +135,8 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
     setSending(false)
     if (r.ok) {
       setDone(true)
+      // 履歴を持っている側に再取得を促す（成功時のみ）
+      if (typeof onSent === 'function') onSent()
       setTimeout(() => {
         setOpen(false)
         setDone(false)
@@ -142,6 +179,7 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
               candidates.map(m => {
                 const label = m.display_name ? m.display_name : '（名前未設定）'
                 const roleLabel = PERMISSION_LABEL[normRole(m.role)] || normRole(m.role) || ''
+                const lastSent = lastSentTo(history, targetType, targetId, m.user_id)
                 return (
                   <div
                     key={m.id}
@@ -150,6 +188,9 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
                   >
                     <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, wordBreak: 'break-all' }}>{label}</div>
                     <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>{roleLabel}</div>
+                    {lastSent ? (
+                      <div style={{ fontSize: 9, color: '#475569', fontWeight: 400, marginTop: 2 }}>{sentLabel(lastSent)}</div>
+                    ) : null}
                   </div>
                 )
               })
