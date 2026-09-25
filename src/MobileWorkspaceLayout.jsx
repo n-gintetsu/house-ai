@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { heicTo } from 'heic-to'
 import JSZip from 'jszip'
-import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock, Settings } from 'lucide-react'
+import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock, Settings, House, Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 import ConfirmRequestButton from './ConfirmRequestButton'
@@ -1090,11 +1090,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           }).eq('id', clientRecordId)
         }
       }
+      // 「完了」は原則1回の状態遷移なので、status / completed_at を書くのは初回昇格のときだけ。
+      // 2回目以降（上書き保存）で書くと、差し戻して進行中に戻した案件が保存で完了へ巻き戻る。
+      const isFirstPromote = !currentWs.promoted_at
       const wsFinish = {
-        house_record_id: houseRecordId, client_record_id: clientRecordId,
-        status: '完了', completed_at: currentWs.completed_at || now, promoted_at: now
+        house_record_id: houseRecordId, client_record_id: clientRecordId, promoted_at: now
+      }
+      if (isFirstPromote) {
+        wsFinish.status = '完了'
+        wsFinish.completed_at = currentWs.completed_at || now
       }
       await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      // wsFinish をそのまま展開するので、2回目以降は status / completed_at が入らない
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
       setPromoteMessage('家カルテに保存しました')
       setTimeout(() => setPromoteMessage(''), 4000)
@@ -1109,7 +1116,10 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   }
 
   const handleManualPromote = async () => {
-    const ok = window.confirm('この案件を「家カルテに保存して完了」します。よろしいですか？')
+    const isFirstPromote = !workspace.promoted_at
+    const ok = window.confirm(isFirstPromote
+      ? 'この案件を「完了」にして、家カルテへ保存します。よろしいですか？'
+      : '家カルテを現在の内容で上書きします。よろしいですか？')
     if (!ok) return
     const membersForSnapshot = (workspaceMembers || []).map(m => ({ name: m.display_name, role_label: m.role, permission: m.role }))
     await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: membersForSnapshot, currentNotices: notices, currentSchedule: schedule })
@@ -1599,17 +1609,27 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 
             </div>
 
-            {/* 家カルテ保存ボタン */}
+            {/* 家カルテ保存ボタン（Owner / Manager のみ。ロール未取得中は出さない＝fail-closed）
+                クライアントから直接 Supabase を叩くため、ここが唯一のゲートになる */}
+            {canManage ? (
             <div style={{ marginTop: 16 }}>
-              {workspace.house_record_id ? (
-                <button onClick={() => { window.location.href = `/house/${workspace.house_record_id}` }} style={{ width: '100%', background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>家カルテを見る</button>
+              {workspace.promoted_at ? (
+                <>
+                  <button onClick={handleManualPromote} disabled={promoting} style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    {promoting ? <Loader size={14} /> : <Save size={14} />}家カルテに上書き保存
+                  </button>
+                  <button onClick={() => { window.location.href = `/house/${workspace.house_record_id}` }} style={{ width: '100%', marginTop: 8, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <House size={14} />家カルテを見る
+                  </button>
+                </>
               ) : (
                 <button onClick={handleManualPromote} disabled={promoting} style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  {promoting ? <Loader size={14} /> : null}家カルテに保存して完了
+                  {promoting ? <Loader size={14} /> : <House size={14} />}家カルテに保存して完了
                 </button>
               )}
               {promoteMessage ? <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8', fontWeight: 400, textAlign: 'center' }}>{promoteMessage}</div> : null}
             </div>
+            ) : null}
 
             {/* ロードマップカード */}
             {steps.length > 0 ? (
