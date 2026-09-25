@@ -3427,7 +3427,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     {/* ファイル情報 */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 1 }}>{wf.file_name || ''}</div>
-                      <div style={{ fontSize: 10, color: '#475569', fontWeight: 400, marginBottom: 2 }}>{formatFileSize(wf.size_bytes)}</div>
+                      <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 400, marginBottom: 2 }}>{formatFileSize(wf.size_bytes)}</div>
                       {/* 種別タグ */}
                       {isEditingDocType ? (
                         <div>
@@ -3452,17 +3452,17 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                       ) : (
                         <span
                           onClick={() => { setEditingFileDocId(wf.id); setFileDocTypeVal(wf.doc_type || '') }}
-                          style={{ fontSize: 9, background: wf.doc_type ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)', color: wf.doc_type ? '#c9a84c' : '#475569', border: wf.doc_type ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '1px 5px', fontWeight: 400, cursor: 'pointer', display: 'inline-block' }}
+                          style={{ fontSize: 9, background: wf.doc_type ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)', color: wf.doc_type ? '#c9a84c' : '#94A3B8', border: wf.doc_type ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.22)', borderRadius: 3, padding: '1px 5px', fontWeight: 400, cursor: 'pointer', display: 'inline-block' }}
                         >{wf.doc_type || '種別を設定'}</span>
                       )}
                       {wf.uploaded_by ? (
-                        <div style={{ fontSize: 9, color: '#334155', fontWeight: 400, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{'投稿: ' + nameForUser(wf.uploaded_by)}</div>
+                        <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{'投稿: ' + nameForUser(wf.uploaded_by)}</div>
                       ) : null}
                       {isFullAccess ? (
                         (() => {
                           const logs = (accessLogs || []).filter(l => l.file_id === wf.id)
                           return logs.length > 0 ? (
-                            <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginTop: 2, display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                            <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 400, marginTop: 2, display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap', overflow: 'hidden' }}>
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{nameForUser(logs[0].user_id)}</span>
                               <span style={{ flexShrink: 0 }}>{'・' + formatJst(logs[0].created_at) + '・' + actionLabel(logs[0].action)}</span>
                             </div>
@@ -3507,13 +3507,14 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     {canWrite === true ? (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                         {(() => {
-                          // notifyLogs は created_at 降順なので先頭がこの行の最終送信
+                          // notifyLogs は created_at 降順なので先頭がこの行の最終送信。
+                          // 履歴が無くても span は描画する（子が1つになるとボタンが左へ寄るため）
                           const last = (notifyLogs || []).filter(l => l.target_type === 'file' && l.target_id === wf.id)[0]
-                          return last ? (
-                            <span style={{ fontSize: 9, color: '#475569', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
-                              {'依頼済 ' + formatJst(last.created_at)}
+                          return (
+                            <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+                              {last ? '依頼済 ' + formatJst(last.created_at) : ''}
                             </span>
-                          ) : null
+                          )
                         })()}
                         <ConfirmRequestButton
                           workspaceId={workspaceId}

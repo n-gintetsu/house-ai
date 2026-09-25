@@ -1195,7 +1195,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wf.file_name || ''}</div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                                  <span style={{ fontSize: 11, fontWeight: 400, color: '#475569' }}>{formatFileSize(wf.size_bytes)}</span>
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}>{formatFileSize(wf.size_bytes)}</span>
                                   {wf.doc_type ? (
                                     <span style={{ fontSize: 10, fontWeight: 400, color: '#c9a84c', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 3, padding: '1px 5px' }}>{wf.doc_type}</span>
                                   ) : null}
