@@ -1446,12 +1446,21 @@ function DashboardView({ id }) {
         }
       }
 
-      // workspaceを完了・昇格済みとして更新
+      // workspaceを昇格済みとして更新。
+      // 「完了」は原則1回の状態遷移なので、status / completed_at を書くのは初回昇格のときだけ。
+      // 2回目以降（上書き保存）で書いてしまうと、差し戻して進行中に戻した案件が
+      // 保存した瞬間に完了へ巻き戻る。
+      const isFirstPromote = !currentWs.promoted_at
       const wsFinish = {
-        house_record_id: houseRecordId, client_record_id: clientRecordId,
-        status: '完了', completed_at: currentWs.completed_at || now, promoted_at: now
+        house_record_id: houseRecordId, client_record_id: clientRecordId, promoted_at: now
+      }
+      if (isFirstPromote) {
+        wsFinish.status = '完了'
+        wsFinish.completed_at = currentWs.completed_at || now
       }
       await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      // wsFinish をそのまま展開するので、2回目以降は status / completed_at が
+      // キーごと入らず、画面のステータスも書き換わらない
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
       setPromoteMessage('家カルテに保存しました')
       setTimeout(() => setPromoteMessage(''), 4000)
