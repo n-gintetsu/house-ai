@@ -45,7 +45,7 @@ async function postNotify(payload) {
   }
 }
 
-export default function ConfirmRequestButton({ workspaceId, targetType, targetId, members, currentUserId }) {
+export default function ConfirmRequestButton({ workspaceId, targetType, targetId, members, currentUserId, variant }) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -111,12 +111,18 @@ export default function ConfirmRequestButton({ workspaceId, targetType, targetId
 
   if (!canSend) return null
 
+  // トリガーの見た目だけを切り替える。'button'（既定）はファイル一覧で使用中の見た目のまま。
+  // 'link' はチャットの吹き出し下に置くための、枠線・背景を持たない小さな文字リンク。
+  const triggerStyle = variant === 'link'
+    ? { background: 'transparent', color: '#c9a84c', border: 'none', borderRadius: 0, padding: 0, fontSize: 10, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', textDecoration: 'none' }
+    : { background: 'transparent', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 4, padding: '4px 8px', fontSize: 11, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }
+
   return (
     <div style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
       <button
         onClick={handleOpen}
         title="確認を依頼"
-        style={{ background: 'transparent', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 4, padding: '4px 8px', fontSize: 11, fontWeight: 400, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+        style={triggerStyle}
       >確認を依頼</button>
       {open ? (
         <>
