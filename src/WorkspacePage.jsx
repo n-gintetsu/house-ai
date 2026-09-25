@@ -6,7 +6,7 @@ import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare, MessageCircle,
   Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings, Video,
-  Menu, User, Shield, LogOut
+  Menu, User, Shield, LogOut, House, Save
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -1771,6 +1771,9 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </div>
           <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{ws.progress || 0}%</span>
         </div>
+        {/* 右端アクション領域（コマンドバー）。ここに操作系だけを集める。
+            チップ・進捗バーは「状態」なのでこの中には入れない */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
         {/* currentRole バッジ */}
         {currentRole ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 4, padding: '2px 8px', flexShrink: 0 }}>
@@ -1783,18 +1786,18 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         {canManage ? (
           ws.promoted_at ? (
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <button onClick={handleManualPromote} disabled={promoting} style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
-                {promoting ? <Loader size={11} /> : null}
-                家カルテに上書き保存
+              <button onClick={handleManualPromote} disabled={promoting} title="家カルテを現在の内容で上書き保存" style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
+                {promoting ? <Loader size={11} /> : <Save size={13} />}
+                上書き保存
               </button>
-              <button onClick={() => { window.location.href = `/house/${ws.house_record_id}` }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
-                家カルテを開く
+              <button onClick={() => { window.location.href = `/house/${ws.house_record_id}` }} title="家カルテを開く" style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '5px 7px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                <House size={14} />
               </button>
             </div>
           ) : (
-            <button onClick={handleManualPromote} disabled={promoting} style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
-              {promoting ? <Loader size={11} /> : null}
-              家カルテに保存して完了
+            <button onClick={handleManualPromote} disabled={promoting} title="この案件を完了にして家カルテへ保存" style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+              {promoting ? <Loader size={11} /> : <House size={13} />}
+              家カルテに保存
             </button>
           )
         ) : null}
@@ -1861,6 +1864,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             </div>
           )
         })()}
+        </div>
       </header>
       {/* 家カルテ保存メッセージ（固定トースト） */}
       {promoteMessage ? (
