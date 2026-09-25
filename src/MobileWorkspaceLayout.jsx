@@ -4,6 +4,7 @@ import JSZip from 'jszip'
 import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, Trash2, Plus, FileText, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, Send, AlertCircle, Video, Clock, Settings } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
+import ConfirmRequestButton from './ConfirmRequestButton'
 
 const NAV_TABS = [
   { label: '案件',   icon: Home },
@@ -1188,7 +1189,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         ) : (
                           <>
                           {visibleFiles.map((wf, idx) => (
-                            <div key={wf.id || idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div key={wf.id || idx}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                               <FileText size={16} color="#c9a84c" style={{ flexShrink: 0 }} />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 14, fontWeight: 400, color: '#CBD5E1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wf.file_name || ''}</div>
@@ -1216,6 +1218,19 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                                   <Trash2 size={14} color="#475569" />
                                 </button>
                               ) : null}
+                            </div>
+                            {/* 確認依頼：上段の行を押し広げないよう、下段に右寄せで置く */}
+                            {canWrite === true ? (
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                                <ConfirmRequestButton
+                                  workspaceId={id}
+                                  targetType="file"
+                                  targetId={wf.id}
+                                  members={workspaceMembers}
+                                  currentUserId={currentUserId}
+                                />
+                              </div>
+                            ) : null}
                             </div>
                           ))}
                           {folderFiles.length > 2 ? (
@@ -1921,6 +1936,19 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                       ) : null}
                       <span style={{ fontSize: 10, color: '#475569', fontWeight: 400 }}>{timeStr}</span>
                     </div>
+                    {/* 確認依頼：自分の発言にだけ。幅が狭いのでメタ行とは別の行に置く */}
+                    {(isMe === true && canWrite === true) ? (
+                      <div style={{ marginTop: 2 }}>
+                        <ConfirmRequestButton
+                          variant="link"
+                          workspaceId={id}
+                          targetType="message"
+                          targetId={msg.id}
+                          members={workspaceMembers}
+                          currentUserId={currentUserId}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 )
               })
