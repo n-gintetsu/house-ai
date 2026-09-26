@@ -1147,18 +1147,12 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           }).eq('id', clientRecordId)
         }
       }
-      // 「完了」は原則1回の状態遷移なので、status / completed_at を書くのは初回昇格のときだけ。
-      // 2回目以降（上書き保存）で書くと、差し戻して進行中に戻した案件が保存で完了へ巻き戻る。
-      const isFirstPromote = !currentWs.promoted_at
+      // この関数は家カルテの保存だけを担う。案件の完了（status / completed_at）には
+      // 一切触れない（完了は completeWorkspace の責務）。
       const wsFinish = {
         house_record_id: houseRecordId, client_record_id: clientRecordId, promoted_at: now
       }
-      if (isFirstPromote) {
-        wsFinish.status = '完了'
-        wsFinish.completed_at = currentWs.completed_at || now
-      }
       await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
-      // wsFinish をそのまま展開するので、2回目以降は status / completed_at が入らない
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
       setPromoteMessageIsError(false)
       setPromoteMessage('家カルテに保存しました')
@@ -1175,20 +1169,70 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
     }
   }
 
+  // 案件を明示的に完了にする。家カルテの保存とは独立した操作。
+  // 既に '完了' のときは書かない（最初に完了した completed_at を上書きしないため）。
+  const completeWorkspace = async () => {
+    if (workspace.status === '完了') return { ok: true, skipped: true }
+    const now = new Date().toISOString()
+    const patch = { status: '完了', completed_at: now, updated_at: now }
+    const { error } = await supabase.from('workspaces').update(patch).eq('id', id)
+    if (error) {
+      console.error('completeWorkspace error', JSON.stringify(error))
+      return { ok: false, error: error }
+    }
+    setWorkspace(prev => ({ ...prev, ...patch }))
+    return { ok: true, skipped: false }
+  }
+
   const handleManualPromote = async () => {
     const isFirstPromote = !workspace.promoted_at
-    const ok = window.confirm(isFirstPromote
-      ? 'この案件を「完了」にして、家カルテへ保存します。よろしいですか？'
-      : '家カルテを現在の内容で上書きします。よろしいですか？')
+    // 住所は「空かどうか」だけを見る。正規化も品質判定もしない（粗い住所も住所として扱う）。
+    const hasAddress = String(workspace.property_address || '').trim() !== ''
+    const ok = window.confirm(!isFirstPromote
+      ? '家カルテを現在の内容で上書きします。よろしいですか？'
+      : hasAddress
+        ? 'この案件を完了にします。家カルテにも保存します。よろしいですか？'
+        : 'この案件を完了にします。住所が未入力のため、家カルテには保存されません。よろしいですか？')
     if (!ok) return
+
+    // 完了にするのは初回だけ。上書き保存では触らない。
+    if (isFirstPromote) {
+      const done = await completeWorkspace()
+      if (!done.ok) {
+        setPromoteMessageIsError(true)
+        setPromoteMessage('完了にできませんでした: ' + ((done.error && done.error.message) || ''))
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
+    }
+
+    // 住所が無ければ家カルテは作らない。完了は成功しているのでエラー色にしない。
+    if (!hasAddress) {
+      setPromoteMessageIsError(false)
+      setPromoteMessage(isFirstPromote
+        ? '案件を完了しました。住所が未入力のため、家カルテには保存していません。'
+        : '住所が未入力のため、家カルテには保存していません。')
+      setTimeout(() => setPromoteMessage(''), 8000)
+      return
+    }
+
     const membersForSnapshot = (workspaceMembers || []).map(m => ({ name: m.display_name, role_label: m.role, permission: m.role }))
     const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: membersForSnapshot, currentNotices: notices, currentSchedule: schedule })
-    // 住所が無いと早期 return（{ skipped: true }）で何も起きないため、ここで理由を伝える。
-    if (r && r.skipped === true) {
-      setPromoteMessageIsError(true)
-      setPromoteMessage('住所が未入力のため、家カルテに保存できません。案件情報に住所を入力してください。')
-      setTimeout(() => setPromoteMessage(''), 8000)
+    const saved = r ? (r.skipped === false && !r.error) : false
+    if (saved) {
+      setPromoteMessageIsError(false)
+      setPromoteMessage(isFirstPromote
+        ? '案件を完了しました。家カルテにも保存しました。'
+        : '家カルテに保存しました。')
+      setTimeout(() => setPromoteMessage(''), 4000)
+      return
     }
+    // 家カルテの保存に失敗しても、完了は取り消さない
+    setPromoteMessageIsError(true)
+    setPromoteMessage(isFirstPromote
+      ? '案件は完了しましたが、家カルテの保存に失敗しました。'
+      : '家カルテの保存に失敗しました。')
+    setTimeout(() => setPromoteMessage(''), 8000)
   }
 
   return (
