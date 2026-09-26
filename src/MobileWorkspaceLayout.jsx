@@ -1733,8 +1733,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   </button>
                 </>
               ) : (
-                <button onClick={handleManualPromote} disabled={promoting} style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  {promoting ? <Loader size={14} /> : <House size={14} />}家カルテに保存して完了
+                <button onClick={handleManualPromote} disabled={promoting} title="この案件を完了にする" style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  {promoting ? <Loader size={14} /> : <Check size={14} />}案件を完了する
                 </button>
               )}
               {promoteMessage ? <div style={{ marginTop: 8, fontSize: 12, color: promoteMessageIsError ? '#F87171' : '#94A3B8', fontWeight: 400, textAlign: 'center' }}>{promoteMessage}</div> : null}

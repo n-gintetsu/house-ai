@@ -1018,8 +1018,11 @@ function DashboardView({ id }) {
       if (addrKey) {
         await promoteToHouseRecord({ currentWs: mergedWs, currentSteps: newSteps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
       } else {
-        setPromoteMessage('住所未入力のため家カルテ未保存')
-        setTimeout(() => setPromoteMessage(''), 5000)
+        // status は 1行上の update で既に '完了' になっているので、完了したことは事実。
+        // 家カルテだけ作れなかったので、エラー色にはしない（手動押下と同じ文言・秒数）。
+        setPromoteMessageIsError(false)
+        setPromoteMessage('案件を完了しました。住所が未入力のため、家カルテには保存していません。')
+        setTimeout(() => setPromoteMessage(''), 8000)
       }
     }
   }
@@ -1439,7 +1442,7 @@ function DashboardView({ id }) {
   }
 
   // --- 家カルテ昇格 ---
-  // address_key: property_address || title を NFKC正規化して空白除去
+  // address_key: property_address を NFKC正規化して空白除去（タイトルへのフォールバックは廃止）
   // 二重カウント防止: house_record_id が null のとき初回昇格、あれば上書き保存のみ
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
     const rawAddr = (currentWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
@@ -1893,9 +1896,9 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               </button>
             </div>
           ) : (
-            <button onClick={handleManualPromote} disabled={promoting} title="この案件を完了にして家カルテへ保存" style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
-              {promoting ? <Loader size={11} /> : <House size={13} />}
-              家カルテに保存
+            <button onClick={handleManualPromote} disabled={promoting} title="この案件を完了にする" style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+              {promoting ? <Loader size={11} /> : <Check size={13} />}
+              案件を完了
             </button>
           )
         ) : null}
