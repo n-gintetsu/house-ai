@@ -233,6 +233,7 @@ export default function MobileWorkspaceLayout() {
   const [showAllFilesByFolder, setShowAllFilesByFolder] = useState({})
   const [promoting, setPromoting] = useState(false)
   const [promoteMessage, setPromoteMessage] = useState('')
+  const [promoteMessageIsError, setPromoteMessageIsError] = useState(false)
 
   // 予定タブ用フォーム state
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -1159,12 +1160,15 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
       // wsFinish をそのまま展開するので、2回目以降は status / completed_at が入らない
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
+      setPromoteMessageIsError(false)
       setPromoteMessage('家カルテに保存しました')
       setTimeout(() => setPromoteMessage(''), 4000)
       return { skipped: false, houseRecordId }
     } catch (e) {
       console.error('promoteToHouseRecord error', e)
+      setPromoteMessageIsError(true)
       setPromoteMessage('保存に失敗しました: ' + (e.message || ''))
+      setTimeout(() => setPromoteMessage(''), 8000)
       return { skipped: false, error: e }
     } finally {
       setPromoting(false)
@@ -1178,7 +1182,13 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       : '家カルテを現在の内容で上書きします。よろしいですか？')
     if (!ok) return
     const membersForSnapshot = (workspaceMembers || []).map(m => ({ name: m.display_name, role_label: m.role, permission: m.role }))
-    await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: membersForSnapshot, currentNotices: notices, currentSchedule: schedule })
+    const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: membersForSnapshot, currentNotices: notices, currentSchedule: schedule })
+    // 住所が無いと早期 return（{ skipped: true }）で何も起きないため、ここで理由を伝える。
+    if (r && r.skipped === true) {
+      setPromoteMessageIsError(true)
+      setPromoteMessage('住所が未入力のため、家カルテに保存できません。案件情報に住所を入力してください。')
+      setTimeout(() => setPromoteMessage(''), 8000)
+    }
   }
 
   return (
@@ -1683,7 +1693,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   {promoting ? <Loader size={14} /> : <House size={14} />}家カルテに保存して完了
                 </button>
               )}
-              {promoteMessage ? <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8', fontWeight: 400, textAlign: 'center' }}>{promoteMessage}</div> : null}
+              {promoteMessage ? <div style={{ marginTop: 8, fontSize: 12, color: promoteMessageIsError ? '#F87171' : '#94A3B8', fontWeight: 400, textAlign: 'center' }}>{promoteMessage}</div> : null}
             </div>
             ) : null}
 
