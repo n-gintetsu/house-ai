@@ -312,6 +312,12 @@ export default function MobileWorkspaceLayout() {
 
   useEffect(() => {
     if (!currentUserId || !id || steps.length === 0) return
+    // お祝いはお客様（Customer）にだけ出す。文面が買主向けのため、社内・業者には出さない。
+    // ロール判定は ref を立てる「前」に置く。currentRole は後から入ってくるので、
+    // ここで ref を立ててしまうと Customer が入った再実行で二度と評価されなくなる。
+    // role は render 本体の後方で定義されており、ローディング中の早期 return で
+    // 未初期化のまま effect が走り得るため、ここでは normRole を直接呼ぶ。
+    if (normRole(currentRole) !== 'Customer') return
     if (celebrationCheckedRef.current === id) return
     celebrationCheckedRef.current = id
 
@@ -339,7 +345,7 @@ export default function MobileWorkspaceLayout() {
       fireCelebration('contract')
       try { localStorage.setItem(kContract, '1') } catch (e) {}
     }
-  }, [steps, currentUserId, id])
+  }, [steps, currentUserId, currentRole, id])
 
   useEffect(() => {
     if (!id) { setLoading(false); setFailed(true); return }
@@ -2137,7 +2143,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                   padding: '12px 32px', fontSize: 16, fontWeight: 500, cursor: 'pointer',
                 }}
               >
-                ありがとう
+                閉じる
               </button>
             </motion.div>
           </motion.div>
