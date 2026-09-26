@@ -1014,7 +1014,7 @@ function DashboardView({ id }) {
     // 全工程完了で自動昇格（address_keyが作れる場合のみ）
     if (allDone) {
       const mergedWs = { ...workspace, ...wsUpdate }
-      const addrKey = (mergedWs.property_address || mergedWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+      const addrKey = (mergedWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
       if (addrKey) {
         await promoteToHouseRecord({ currentWs: mergedWs, currentSteps: newSteps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
       } else {
@@ -1442,7 +1442,7 @@ function DashboardView({ id }) {
   // address_key: property_address || title を NFKC正規化して空白除去
   // 二重カウント防止: house_record_id が null のとき初回昇格、あれば上書き保存のみ
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
-    const rawAddr = (currentWs.property_address || currentWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+    const rawAddr = (currentWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
     if (!rawAddr) return { skipped: true }
     setPromoting(true)
     setPromoteMessage('')

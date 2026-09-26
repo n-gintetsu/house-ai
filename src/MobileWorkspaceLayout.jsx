@@ -1093,7 +1093,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   }
 
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
-    const rawAddr = (currentWs.property_address || currentWs.title || '').normalize('NFKC').replace(/[\s　]/g, '')
+    const rawAddr = (currentWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
     if (!rawAddr) return { skipped: true }
     setPromoting(true)
     setPromoteMessage('')
