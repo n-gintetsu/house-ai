@@ -329,22 +329,72 @@ export default function MobileWorkspaceLayout() {
     const kSettle = 'houseai_celebrated_settlement_' + currentUserId + '_' + id
     const kContract = 'houseai_celebrated_contract_' + currentUserId + '_' + id
 
-    let seenSettle = false
-    let seenContract = false
+    let localSettle = false
+    let localContract = false
     try {
-      seenSettle = localStorage.getItem(kSettle) === '1'
-      seenContract = localStorage.getItem(kContract) === '1'
+      localSettle = localStorage.getItem(kSettle) === '1'
+      localContract = localStorage.getItem(kContract) === '1'
     } catch (e) {}
 
-    if (settlementDone ? !seenSettle : false) {
-      fireCelebration('settlement')
-      try { localStorage.setItem(kSettle, '1'); localStorage.setItem(kContract, '1') } catch (e) {}
-      return
+    // 既読の記録先。UPDATE 権限は無いので ignoreDuplicates で「無ければ入れる」だけにする。
+    async function markRead(kinds) {
+      try {
+        await supabase.from('workspace_celebration_reads').upsert(
+          kinds.map(k => ({ workspace_id: id, user_id: currentUserId, kind: k })),
+          { onConflict: 'workspace_id,user_id,kind', ignoreDuplicates: true }
+        )
+      } catch (e) {
+        // 記録できなくても祝福自体は成立させる
+      }
     }
-    if (contractDone ? !seenContract : false) {
-      fireCelebration('contract')
-      try { localStorage.setItem(kContract, '1') } catch (e) {}
+
+    // useEffect のコールバックは同期のまま、中で async 関数を呼ぶ。
+    // ref は await の前（上）で既に立てているので、await 中に再入することはない。
+    async function run() {
+      // 既読は localStorage と DB の和集合で見る。
+      // DB が読めないときは localStorage だけで判定して続行する
+      // （祝福が二重に出ることはあっても、画面が壊れないことを優先）。
+      let dbSettle = false
+      let dbContract = false
+      try {
+        const { data: readRows } = await supabase
+          .from('workspace_celebration_reads')
+          .select('kind')
+          .eq('workspace_id', id)
+          .eq('user_id', currentUserId)
+        const kinds = (readRows || []).map(r => r.kind)
+        dbSettle = kinds.indexOf('settlement') !== -1
+        dbContract = kinds.indexOf('contract') !== -1
+      } catch (e) {
+        // localStorage だけで判定する
+      }
+
+      const seenSettle = localSettle || dbSettle
+      const seenContract = localContract || dbContract
+
+      // 移行補完：この端末では既読なのに DB に行が無い場合は、祝福を出さずに行だけ足す。
+      // これをしないと、既に見た人が別端末で開いたときに1回出てしまう。
+      const backfill = []
+      if (localSettle ? !dbSettle : false) backfill.push('settlement')
+      if (localContract ? !dbContract : false) backfill.push('contract')
+      if (backfill.length > 0) {
+        await markRead(backfill)
+      }
+
+      if (settlementDone ? !seenSettle : false) {
+        fireCelebration('settlement')
+        try { localStorage.setItem(kSettle, '1'); localStorage.setItem(kContract, '1') } catch (e) {}
+        // 決済を出したときは契約側も既読にする（localStorage の2キーと同じ扱い）
+        await markRead(['settlement', 'contract'])
+        return
+      }
+      if (contractDone ? !seenContract : false) {
+        fireCelebration('contract')
+        try { localStorage.setItem(kContract, '1') } catch (e) {}
+        await markRead(['contract'])
+      }
     }
+    run()
   }, [steps, currentUserId, currentRole, id])
 
   useEffect(() => {
