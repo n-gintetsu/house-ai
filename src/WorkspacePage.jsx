@@ -1473,12 +1473,23 @@ function DashboardView({ id }) {
         // 初回昇格: address_key で既存を検索
         const { data: existing } = await supabase.from('house_records').select('*').eq('address_key', rawAddr).maybeSingle()
         if (existing) {
-          // 既存あり: snapshot更新 + transactions追記 + count+1
-          await supabase.from('house_records').update({
+          // 既存あり: snapshot更新 + transactions追記（同一案件なら追記しない）+ count+1
+          // 同じ案件が既に取引履歴に入っているなら append しない（冪等化）。
+          // workspaces の update が失敗したまま再度押された場合に、同一 workspace_id が
+          // 二重に積まれ transaction_count も二重に増えるのを防ぐ。
+          const prevTx = Array.isArray(existing.transactions) ? existing.transactions : []
+          const already = prevTx.some(t => t && t.workspace_id === currentWs.id)
+          const nextTx = already ? prevTx : prevTx.concat([txRecord])
+          const nextCount = already
+            ? (existing.transaction_count || 0)
+            : (existing.transaction_count || 0) + 1
+          // snapshot / last_completed_at / latest_workspace_id は already でも最新化する
+          const { error: upErr } = await supabase.from('house_records').update({
             snapshot, latest_workspace_id: currentWs.id, last_completed_at: now,
-            transactions: [...(existing.transactions || []), txRecord],
-            transaction_count: (existing.transaction_count || 0) + 1, updated_at: now
+            transactions: nextTx,
+            transaction_count: nextCount, updated_at: now
           }).eq('id', existing.id)
+          if (upErr) throw upErr
           houseRecordId = existing.id
         } else {
           // 新規insert
@@ -1491,28 +1502,38 @@ function DashboardView({ id }) {
           houseRecordId = inserted.id
         }
         // 顧客カルテ（名寄せは次フェーズ）
-        const { data: clientIns } = await supabase.from('client_records').insert({
+        const { data: clientIns, error: clientErr } = await supabase.from('client_records').insert({
           name: currentWs.customer_name, last_workspace_id: currentWs.id,
           last_house_record_id: houseRecordId, deal_count: 1
         }).select().single()
+        // 顧客カルテの失敗では全体を止めない（家カルテの紐付けは成功させたい）
+        if (clientErr) console.error('promoteToHouseRecord client_records insert error', JSON.stringify(clientErr))
         if (clientIns) clientRecordId = clientIns.id
       } else {
         // 上書き保存: snapshotのみ更新、transactions追記・count増加なし
-        await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        const { error: overErr } = await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        if (overErr) throw overErr
         if (clientRecordId) {
-          await supabase.from('client_records').update({
+          const { error: clientUpErr } = await supabase.from('client_records').update({
             last_workspace_id: currentWs.id, last_house_record_id: houseRecordId, updated_at: now
           }).eq('id', clientRecordId)
+          // 顧客カルテの失敗では全体を止めない
+          if (clientUpErr) console.error('promoteToHouseRecord client_records update error', JSON.stringify(clientUpErr))
         }
       }
 
       // workspaceを昇格済みとして更新。
       // この関数は家カルテの保存だけを担う。案件の完了（status / completed_at）には
       // 一切触れない（完了は completeWorkspace / handleStepStateChange の責務）。
-      const wsFinish = {
-        house_record_id: houseRecordId, client_record_id: clientRecordId, promoted_at: now
+      // client_record_id が取れなかった場合はキーごと外す（null で上書きしない）
+      const wsFinish = { house_record_id: houseRecordId, promoted_at: now }
+      if (clientRecordId) {
+        wsFinish.client_record_id = clientRecordId
       }
-      await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      // ここが失敗したまま成功表示になると house_record_id が付かないため、
+      // 次に押したときに同じ案件がもう一度 append される。必ずエラーを検知する。
+      const { error: wsErr } = await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      if (wsErr) throw wsErr
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
       setPromoteMessageIsError(false)
       setPromoteMessage('家カルテに保存しました')
@@ -1558,44 +1579,53 @@ function DashboardView({ id }) {
         : 'この案件を完了にします。住所が未入力のため、家カルテには保存されません。よろしいですか？')
     if (!ok) return
 
-    // 完了にするのは初回だけ。上書き保存では触らない
-    // （差し戻して進行中に戻した案件を勝手に完了へ戻さないため）。
-    if (isFirstPromote) {
-      const done = await completeWorkspace()
-      if (!done.ok) {
-        setPromoteMessageIsError(true)
-        setPromoteMessage('完了にできませんでした: ' + ((done.error && done.error.message) || ''))
+    // confirm を通った時点でボタンを無効化する。
+    // completeWorkspace() の await 中もボタンが有効だと、二重クリックで
+    // promoteToHouseRecord が並走し、同じ案件が二重に append される。
+    setPromoting(true)
+    try {
+      // 完了にするのは初回だけ。上書き保存では触らない
+      // （差し戻して進行中に戻した案件を勝手に完了へ戻さないため）。
+      if (isFirstPromote) {
+        const done = await completeWorkspace()
+        if (!done.ok) {
+          setPromoteMessageIsError(true)
+          setPromoteMessage('完了にできませんでした: ' + ((done.error && done.error.message) || ''))
+          setTimeout(() => setPromoteMessage(''), 8000)
+          return
+        }
+      }
+
+      // 住所が無ければ家カルテは作らない。完了は成功しているのでエラー色にしない。
+      if (!hasAddress) {
+        setPromoteMessageIsError(false)
+        setPromoteMessage(isFirstPromote
+          ? '案件を完了しました。住所が未入力のため、家カルテには保存していません。'
+          : '住所が未入力のため、家カルテには保存していません。')
         setTimeout(() => setPromoteMessage(''), 8000)
         return
       }
-    }
 
-    // 住所が無ければ家カルテは作らない。完了は成功しているのでエラー色にしない。
-    if (!hasAddress) {
-      setPromoteMessageIsError(false)
+      const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+      const saved = r ? (r.skipped === false && !r.error) : false
+      if (saved) {
+        setPromoteMessageIsError(false)
+        setPromoteMessage(isFirstPromote
+          ? '案件を完了しました。家カルテにも保存しました。'
+          : '家カルテに保存しました。')
+        setTimeout(() => setPromoteMessage(''), 4000)
+        return
+      }
+      // 家カルテの保存に失敗しても、完了は取り消さない
+      setPromoteMessageIsError(true)
       setPromoteMessage(isFirstPromote
-        ? '案件を完了しました。住所が未入力のため、家カルテには保存していません。'
-        : '住所が未入力のため、家カルテには保存していません。')
+        ? '案件は完了しましたが、家カルテの保存に失敗しました。'
+        : '家カルテの保存に失敗しました。')
       setTimeout(() => setPromoteMessage(''), 8000)
-      return
+    } finally {
+      // どの経路（早期 return・例外）でも必ずボタンを戻す
+      setPromoting(false)
     }
-
-    const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
-    const saved = r ? (r.skipped === false && !r.error) : false
-    if (saved) {
-      setPromoteMessageIsError(false)
-      setPromoteMessage(isFirstPromote
-        ? '案件を完了しました。家カルテにも保存しました。'
-        : '家カルテに保存しました。')
-      setTimeout(() => setPromoteMessage(''), 4000)
-      return
-    }
-    // 家カルテの保存に失敗しても、完了は取り消さない
-    setPromoteMessageIsError(true)
-    setPromoteMessage(isFirstPromote
-      ? '案件は完了しましたが、家カルテの保存に失敗しました。'
-      : '家カルテの保存に失敗しました。')
-    setTimeout(() => setPromoteMessage(''), 8000)
   }
 
   if (loading) {
