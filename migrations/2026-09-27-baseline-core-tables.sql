@@ -258,10 +258,14 @@ create trigger trg_log_ws_code
 --     同一 workspace_id が複数 append された実績あり（本番で10回）。
 --     transaction_count はクライアント側の read-modify-write で算出しており lost update する。
 --
--- [4] 削除権限のモデルが2系統ある。
---     enforce_record_lifecycle : is_org_admin() または（作成者本人 かつ 未完了）
---     guard_deleted_at_*       : organizations.owner_id または 作成者本人
---     両方を通る必要があるため、owner 以外の org 管理者は他人のレコードを削除できない。
+-- [4] 削除権限のチェックが2重になっている（矛盾ではない・2026-09-27 訂正）。
+--     enforce_record_lifecycle : is_org_admin() または（作成者本人、workspaces では加えて未完了）
+--     guard_deleted_at_*       : organizations.owner_id = auth.uid() または
+--                                （作成者本人、workspaces では加えて未完了）
+--     is_org_admin() の実体は organizations.owner_id = auth.uid() であるため、
+--     両者は同じ権限モデルを別経路で二重に評価している。動作上の不整合は無い。
+--     ただし片方だけ変更すると齟齬が生まれるため、削除権限を変更する際は
+--     必ず両方を同時に見ること。
 --
 -- [5] DELETE ポリシーの有無が不揃い。
 --     house_records / client_records には DELETE ポリシーが無く物理削除は不可（正しい）。

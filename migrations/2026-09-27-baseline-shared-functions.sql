@@ -10,8 +10,8 @@
 --   テーブルからも使われています。変更時は影響範囲を必ず確認してください。
 --
 -- 収録: can_access_workspace / current_org_id / enforce_record_lifecycle /
---       guard_deleted_at_basic / guard_deleted_at_workspace / log_ws_code /
---       org_is_billable / set_org_id_from_current
+--       guard_deleted_at_basic / guard_deleted_at_workspace / is_org_admin /
+--       log_ws_code / org_is_billable / set_org_id_from_current
 -- =====================================================================
 
 -- ---- can_access_workspace ----
@@ -172,6 +172,19 @@ begin
 end;
 $function$
 
+-- ---- is_org_admin ----
+CREATE OR REPLACE FUNCTION public.is_org_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1 from public.organizations o
+    where o.id = current_org_id() and o.owner_id = auth.uid()
+  );
+$function$
+
 -- ---- log_ws_code ----
 CREATE OR REPLACE FUNCTION public.log_ws_code()
  RETURNS trigger
@@ -219,7 +232,10 @@ $function$
 -- =====================================================================
 -- 依存メモ（2026-09-27 時点）
 --
--- enforce_record_lifecycle は is_org_admin() を呼んでいる（本ファイル未収録）。
+-- enforce_record_lifecycle は is_org_admin() を呼んでいる（本ファイル収録済み）。
+-- is_org_admin() は organizations.owner_id = auth.uid() を見ており、
+-- guard_deleted_at_basic / guard_deleted_at_workspace のオーナー判定と同一のロジック。
+-- is_org_admin() だけ STABLE が付いていない（他7本は STABLE または VOLATILE 明示）。
 -- can_access_workspace は public.workspace_members を参照している。
 -- org_is_billable は public.organization_subscriptions を参照している。
 -- log_ws_code は public.ws_code_log に insert している。
