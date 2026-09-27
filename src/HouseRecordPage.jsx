@@ -62,7 +62,7 @@ function PrefillCreateModal({ house, onClose }) {
 
   const handleSubmit = async () => {
     if (!form.title || !form.customer_name || !form.contract_type) {
-      setError('案件名・顧客名・契約種別は必須です'); return
+      setError('案件名・お客様名・契約種別は必須です'); return
     }
     setSubmitting(true); setError('')
     try {
@@ -180,8 +180,8 @@ function PrefillCreateModal({ house, onClose }) {
             <input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>顧客名 * <span style={{ color: '#475569', fontSize: 10 }}>（新しい取引のため空欄）</span></div>
-            <input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="顧客名を入力" style={inputStyle} />
+            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様名 * <span style={{ color: '#475569', fontSize: 10 }}>（新しい取引のため空欄）</span></div>
+            <input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="お客様名を入力" style={inputStyle} />
           </div>
           <div>
             <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>担当</div>

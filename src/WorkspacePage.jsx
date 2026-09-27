@@ -398,7 +398,7 @@ function ListView() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
-                  {[{ label: '顧客', value: ws.customer_name }, { label: '担当', value: ws.agent_name }, { label: '契約種別', value: ws.contract_type }].map(item => (
+                  {[{ label: 'お客様', value: ws.customer_name }, { label: '担当', value: ws.agent_name }, { label: '契約種別', value: ws.contract_type }].map(item => (
                     <div key={item.label}>
                       <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400, marginBottom: 2 }}>{item.label}</div>
                       <div style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 400 }}>{item.value || '-'}</div>
@@ -456,7 +456,7 @@ function CreateModal({ onClose, onCreated }) {
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
   const handleSubmit = async () => {
-    if (!form.title || !form.customer_name || !form.contract_type) { setError('案件名・顧客名・契約種別は必須です。'); return }
+    if (!form.title || !form.customer_name || !form.contract_type) { setError('案件名・お客様名・契約種別は必須です。'); return }
     const custEmail = (form.customer_email || '').trim().toLowerCase()
     if (custEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(custEmail)) { setError('お客様メールアドレスの形式が正しくありません。'); return }
     const { data: { session } } = await supabase.auth.getSession()
@@ -532,7 +532,7 @@ function CreateModal({ onClose, onCreated }) {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>案件名 *</div><input type="text" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="例：山田様 さいたま市〇〇マンション購入" style={inputStyle} /></div>
-              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>顧客名 *</div><input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="例：山田太郎" style={inputStyle} /></div>
+              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様名 *</div><input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="例：山田太郎" style={inputStyle} /></div>
               <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>担当</div><input type="text" value={form.agent_name} onChange={e => handleChange('agent_name', e.target.value)} placeholder="例：自社スタッフ" style={inputStyle} /></div>
               <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>契約種別 *</div>
                 <select value={form.contract_type} onChange={e => handleChange('contract_type', e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
@@ -1882,7 +1882,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
           {[
-            { label: '顧客',    value: ws.customer_name,        accent: '#2dd4bf', borderRgba: 'rgba(45,212,191,0.28)',  shadowRgba: 'rgba(45,212,191,0.22)',  hasDot: false },
+            { label: 'お客様',  value: ws.customer_name,        accent: '#2dd4bf', borderRgba: 'rgba(45,212,191,0.28)',  shadowRgba: 'rgba(45,212,191,0.22)',  hasDot: false },
             { label: '担当',    value: ws.agent_name,           accent: '#8b5cf6', borderRgba: 'rgba(139,92,246,0.28)', shadowRgba: 'rgba(139,92,246,0.22)', hasDot: false },
             { label: '契約種別', value: ws.contract_type,        accent: '#D4AF37', borderRgba: 'rgba(212,175,55,0.28)', shadowRgba: 'rgba(212,175,55,0.22)', hasDot: false },
             { label: 'ステータス', value: ws.status,             accent: statusAccent, borderRgba: statusBorderRgba, shadowRgba: statusShadowRgba, hasDot: true },
