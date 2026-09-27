@@ -1471,7 +1471,11 @@ function DashboardView({ id }) {
 
       if (!houseRecordId) {
         // 初回昇格: address_key で既存を検索
-        const { data: existing } = await supabase.from('house_records').select('*').eq('address_key', rawAddr).maybeSingle()
+        // 部分ユニークインデックス（deleted_at is null）に合わせ、生存行だけを候補にする。
+        // 正常なら 0件 か 1件。2件返るのは設計の破綻なので .limit(1) で隠さず落とす。
+        const { data: existing, error: findErr } = await supabase.from('house_records')
+          .select('*').eq('address_key', rawAddr).is('deleted_at', null).maybeSingle()
+        if (findErr) throw findErr
         if (existing) {
           // 既存あり: snapshot更新 + transactions追記（同一案件なら追記しない）+ count+1
           // 同じ案件が既に取引履歴に入っているなら append しない（冪等化）。
@@ -1479,7 +1483,14 @@ function DashboardView({ id }) {
           // 二重に積まれ transaction_count も二重に増えるのを防ぐ。
           const prevTx = Array.isArray(existing.transactions) ? existing.transactions : []
           const already = prevTx.some(t => t && t.workspace_id === currentWs.id)
-          const nextTx = already ? prevTx : prevTx.concat([txRecord])
+          // already のときは要素を捨てずに最新の案件情報へ差し替える。
+          // promoted_at（家カルテへ初めて記録した時刻）だけは初回値を維持する。
+          // completed_at は案件そのものの完了時刻（currentWs.completed_at）なので最新値を使う。
+          const nextTx = already
+            ? prevTx.map(t => (t && t.workspace_id === currentWs.id)
+                ? Object.assign({}, txRecord, { promoted_at: t.promoted_at || txRecord.promoted_at })
+                : t)
+            : prevTx.concat([txRecord])
           const nextCount = already
             ? (existing.transaction_count || 0)
             : (existing.transaction_count || 0) + 1

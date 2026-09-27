@@ -258,7 +258,7 @@ export default function HouseRecordPage() {
 
   useEffect(() => {
     if (!houseId) { setNotFound(true); setLoading(false); return }
-    supabase.from('house_records').select('*').eq('id', houseId).single()
+    supabase.from('house_records').select('*').eq('id', houseId).is('deleted_at', null).single()
       .then(({ data, error }) => {
         if (error || !data) { setNotFound(true) } else { setRecord(data) }
         setLoading(false)
