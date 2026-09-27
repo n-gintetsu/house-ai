@@ -5,6 +5,7 @@ import { Home, FolderOpen, MessageSquare, Calendar, Sparkles, Loader, Check, X, 
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './supabaseClient'
 import ConfirmRequestButton from './ConfirmRequestButton'
+import { propertyAttrsForInsert, propertyAttrsFillNulls } from './workspaceConstants'
 
 const NAV_TABS = [
   { label: '案件',   icon: Home },
@@ -1140,19 +1141,22 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
             ? (existing.transaction_count || 0)
             : (existing.transaction_count || 0) + 1
           // snapshot / last_completed_at / latest_workspace_id は already でも最新化する
-          const { error: upErr } = await supabase.from('house_records').update({
+          // 物件属性は家カルテ側が空の列だけ埋める（別案件の値で物件情報を書き換えない）
+          const mergePatch = Object.assign({
             snapshot, latest_workspace_id: currentWs.id, last_completed_at: now,
             transactions: nextTx,
             transaction_count: nextCount, updated_at: now
-          }).eq('id', existing.id)
+          }, propertyAttrsFillNulls(currentWs, existing))
+          const { error: upErr } = await supabase.from('house_records').update(mergePatch).eq('id', existing.id)
           if (upErr) throw upErr
           houseRecordId = existing.id
         } else {
-          const { data: inserted, error: insErr } = await supabase.from('house_records').insert({
+          // 新規カルテには案件の物件属性をそのまま入れる（空文字は null）
+          const { data: inserted, error: insErr } = await supabase.from('house_records').insert(Object.assign({
             address_key: rawAddr, property_name: currentWs.title, address_raw: currentWs.property_address,
             contract_type: currentWs.contract_type, snapshot, latest_workspace_id: currentWs.id,
             first_completed_at: now, last_completed_at: now, transaction_count: 1, transactions: [txRecord]
-          }).select().single()
+          }, propertyAttrsForInsert(currentWs))).select().single()
           if (insErr) throw insErr
           houseRecordId = inserted.id
         }
@@ -1164,7 +1168,13 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         if (clientErr) console.error('promoteToHouseRecord client_records insert error', JSON.stringify(clientErr))
         if (clientIns) clientRecordId = clientIns.id
       } else {
-        const { error: overErr } = await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        // 上書き保存でも、家カルテ側が空の物件属性だけは埋める。
+        // 既に値がある列には触らない（別案件の値で物件情報を書き換えない）。
+        const { data: curHouse, error: curErr } = await supabase.from('house_records')
+          .select('property_type, building_name, unit_no').eq('id', houseRecordId).maybeSingle()
+        if (curErr) throw curErr
+        const overPatch = Object.assign({ snapshot, last_completed_at: now, updated_at: now }, propertyAttrsFillNulls(currentWs, curHouse))
+        const { error: overErr } = await supabase.from('house_records').update(overPatch).eq('id', houseRecordId)
         if (overErr) throw overErr
         if (clientRecordId) {
           const { error: clientUpErr } = await supabase.from('client_records').update({

@@ -4,14 +4,13 @@ import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
 import MobileHeader from './MobileHeader'
 import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
+import { CONTRACT_TYPES, PROPERTY_TYPES, propertyFieldsFor } from './workspaceConstants'
 
 const glass = {
   background: 'rgba(15,23,42,0.85)',
   border: '1px solid rgba(255,255,255,0.08)',
   boxShadow: '0 0 30px rgba(201,168,76,0.15)',
 }
-
-const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン', '不動産担保ローン', 'アジェンダ']
 
 const ROADMAP_TEMPLATES = {
   '賃貸':     ['問い合わせ', '内見', '申込', '保証会社審査', '契約', '入金', '鍵渡し', '完了'],
@@ -54,6 +53,10 @@ function PrefillCreateModal({ house, onClose }) {
     customer_name: '',      // 顧客名は引き継がない（新しい取引なので空）
     agent_name: '',
     contract_type: property.contract_type || house.contract_type || '売買',
+    // 物件の属性は家カルテの列から引き継ぐ（snapshot には入っていない）
+    property_type: house.property_type || '',
+    building_name: house.building_name || '',
+    unit_no: house.unit_no || '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -64,6 +67,8 @@ function PrefillCreateModal({ house, onClose }) {
     if (!form.title || !form.customer_name || !form.contract_type) {
       setError('案件名・お客様名・契約種別は必須です'); return
     }
+    // 家カルテから作る案件は必ず物件に紐づくため、物件種別は必須
+    if (!form.property_type) { setError('物件種別を選択してください'); return }
     setSubmitting(true); setError('')
     try {
       // 0) 本人確認（user_id / email は必ず getUser の結果から取る）
@@ -97,6 +102,15 @@ function PrefillCreateModal({ house, onClose }) {
       const codeRes = await supabase.rpc('next_workspace_code')
       if (codeRes.error) { setError('案件番号の採番に失敗しました。' + (codeRes.error.message || '')); setSubmitting(false); return }
       const wsCode = codeRes.data
+      // 出し分けで隠れている項目は null にする。空文字も null に寄せる。
+      const pFields = propertyFieldsFor(form.property_type)
+      const trimOrNull = (v) => {
+        const t = String(v || '').trim()
+        return t === '' ? null : t
+      }
+      // ★house_record_id はここで設定しない。
+      //   設定すると昇格時に「上書き保存」の経路へ入り、取引履歴に追加されなくなる。
+      //   この案件をどの家カルテへ紐づけるかは完了時に判定する（F-2-7 で扱う）。
       const { error: wsErr } = await supabase.from('workspaces').insert({
         id: newId,
         ws_code: wsCode,
@@ -104,7 +118,12 @@ function PrefillCreateModal({ house, onClose }) {
         customer_name: form.customer_name,
         agent_name: form.agent_name,
         contract_type: form.contract_type,
+        // 家カルテから作る案件は必ず物件に紐づく
+        property_scope: 'property',
+        property_type: trimOrNull(form.property_type),
         property_address: form.property_address,
+        building_name: pFields.building ? trimOrNull(form.building_name) : null,
+        unit_no: pFields.unit ? trimOrNull(form.unit_no) : null,
         status: '進行中',
         progress: 0,
       })
@@ -156,6 +175,8 @@ function PrefillCreateModal({ house, onClose }) {
     color: '#E2E8F0', padding: '10px 14px', borderRadius: 8,
     width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
   }
+  const labelStyle = { fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }
+  const showFields = propertyFieldsFor(form.property_type)
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -176,9 +197,28 @@ function PrefillCreateModal({ house, onClose }) {
             <input type="text" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="案件名を入力" style={inputStyle} />
           </div>
           <div>
+            <div style={labelStyle}>物件種別 *</div>
+            <select value={form.property_type} onChange={e => handleChange('property_type', e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
+              <option value="" style={{ background: '#0F172A' }}>選択してください</option>
+              {PROPERTY_TYPES.map(pt => <option key={pt.value} value={pt.value} style={{ background: '#0F172A' }}>{pt.label}</option>)}
+            </select>
+          </div>
+          <div>
             <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>物件住所</div>
             <input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} style={inputStyle} />
           </div>
+          {showFields.building ? (
+            <div>
+              <div style={labelStyle}>建物名</div>
+              <input type="text" value={form.building_name} onChange={e => handleChange('building_name', e.target.value)} placeholder="例：〇〇マンション" style={inputStyle} />
+            </div>
+          ) : null}
+          {showFields.unit ? (
+            <div>
+              <div style={labelStyle}>部屋番号</div>
+              <input type="text" value={form.unit_no} onChange={e => handleChange('unit_no', e.target.value)} placeholder="例：201" style={inputStyle} />
+            </div>
+          ) : null}
           <div>
             <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様名 * <span style={{ color: '#475569', fontSize: 10 }}>（新しい取引のため空欄）</span></div>
             <input type="text" value={form.customer_name} onChange={e => handleChange('customer_name', e.target.value)} placeholder="お客様名を入力" style={inputStyle} />

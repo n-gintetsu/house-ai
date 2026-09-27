@@ -6,7 +6,7 @@ import {
   Bell, FileText,
   Check, Users, Calendar, Send, AlertCircle, X, MessageSquare, MessageCircle,
   Plus, ChevronLeft, ChevronRight, Loader, Trash2, Eye, Download, Share2, History, Image, Sparkles, Settings, Video,
-  Menu, User, Shield, LogOut, House, Save
+  Menu, User, Shield, LogOut, House, Save, Pencil
 } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import WorkspaceNav from './WorkspaceNav'
@@ -16,6 +16,7 @@ import MobileHeader from './MobileHeader'
 import FeedbackModal from './FeedbackModal'
 import ConfirmRequestButton from './ConfirmRequestButton'
 import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
+import { CONTRACT_TYPES, PROPERTY_SCOPES, PROPERTY_TYPES, propertyFieldsFor, propertyAttrsForInsert, propertyAttrsFillNulls } from './workspaceConstants'
 
 function normalizeLabel(s) {
   return (s || '').trim().replace(/\s+/g, ' ')
@@ -62,7 +63,6 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
-const CONTRACT_TYPES = ['賃貸', '売買', '買取', '注文住宅', 'リフォーム', '外構工事', '相続', '登記', '住宅ローン', '不動産担保ローン', 'アジェンダ']
 const ROLE_OPTIONS = ['お客様', '担当', '仲介業者', '司法書士', '銀行', '火災保険', 'リフォーム', '管理会社', '売主', '買主']
 const PERMISSION_OPTIONS = ['Owner', 'Manager', 'Staff', 'Customer', 'Broker', 'JudicialScrivener', 'Bank', 'ReformCompany', 'Guest']
 const PERMISSION_LABEL = {
@@ -444,10 +444,147 @@ function ListView() {
   )
 }
 
+// ===================== 物件情報の入力（作成モーダルと編集モーダルで共用） =====================
+
+// form は { property_scope, property_type, property_address, building_name, unit_no } を持つ。
+// lockScope / lockAddress が true の項目は表示のみで変更できない（家カルテ保存済みの案件）。
+function PropertyFields({ form, onChange, lockScope, lockAddress }) {
+  const inputStyle = { fontSize: 16, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#E2E8F0', padding: '10px 14px', borderRadius: 8, width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }
+  const labelStyle = { fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }
+  const lockNoteStyle = { fontSize: 11, color: '#475569', fontWeight: 400, marginTop: 6, lineHeight: 1.6 }
+  // 3択がロックされている＝既に家カルテへ保存済みなので、物件項目は常に出す
+  const showBlock = lockScope ? true : form.property_scope === 'property'
+  const showFields = propertyFieldsFor(form.property_type)
+
+  return (
+    <>
+      <div>
+        <div style={labelStyle}>この案件は特定の不動産に関する案件ですか？</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {PROPERTY_SCOPES.map(sc => {
+            const selected = form.property_scope === sc.value
+            return (
+              <button
+                key={sc.value}
+                type="button"
+                disabled={lockScope === true}
+                onClick={() => onChange('property_scope', sc.value)}
+                style={{ flex: 1, minWidth: 0, background: selected ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)', border: selected ? '1px solid rgba(201,168,76,0.6)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '9px 8px', cursor: lockScope === true ? 'not-allowed' : 'pointer', fontFamily: 'inherit', textAlign: 'center', opacity: (lockScope === true && !selected) ? 0.5 : 1 }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 500, color: selected ? '#c9a84c' : '#CBD5E1' }}>{sc.label}</div>
+                <div style={{ fontSize: 10, fontWeight: 400, color: selected ? 'rgba(201,168,76,0.8)' : '#475569', marginTop: 3, lineHeight: 1.4 }}>{sc.hint}</div>
+              </button>
+            )
+          })}
+        </div>
+        {lockScope === true ? (
+          <div style={lockNoteStyle}>家カルテに保存済みのため変更できません</div>
+        ) : null}
+      </div>
+      {showBlock ? (
+        <>
+          <div>
+            <div style={labelStyle}>物件種別 *</div>
+            <select value={form.property_type} onChange={e => onChange('property_type', e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
+              <option value="" style={{ background: '#0F172A' }}>選択してください</option>
+              {PROPERTY_TYPES.map(pt => <option key={pt.value} value={pt.value} style={{ background: '#0F172A' }}>{pt.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <div style={labelStyle}>物件住所</div>
+            <input type="text" value={form.property_address} disabled={lockAddress === true} onChange={e => onChange('property_address', e.target.value)} placeholder="例：さいたま市大宮区〇〇" style={{ ...inputStyle, opacity: lockAddress === true ? 0.6 : 1, cursor: lockAddress === true ? 'not-allowed' : 'auto' }} />
+            {lockAddress === true ? (
+              <div style={lockNoteStyle}>家カルテに保存済みのため変更できません</div>
+            ) : null}
+          </div>
+          {showFields.building ? (
+            <div><div style={labelStyle}>建物名</div><input type="text" value={form.building_name} onChange={e => onChange('building_name', e.target.value)} placeholder="例：〇〇マンション" style={inputStyle} /></div>
+          ) : null}
+          {showFields.unit ? (
+            <div><div style={labelStyle}>部屋番号</div><input type="text" value={form.unit_no} onChange={e => onChange('unit_no', e.target.value)} placeholder="例：201" style={inputStyle} /></div>
+          ) : null}
+        </>
+      ) : null}
+    </>
+  )
+}
+
+// ===================== 物件情報の編集モーダル =====================
+
+// workspaces の物件5列だけを更新する。house_records には一切書き込まない
+// （家カルテへの反映は完了時・上書き保存時の既存経路が行う）。
+function PropertyEditModal({ ws, onClose, onSaved }) {
+  const locked = ws.house_record_id ? true : false
+  const [form, setForm] = useState({
+    property_scope: ws.property_scope || 'undecided',
+    property_type: ws.property_type || '',
+    property_address: ws.property_address || '',
+    building_name: ws.building_name || '',
+    unit_no: ws.unit_no || '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
+
+  const handleSave = async () => {
+    // ロック中は家カルテ保存済み＝物件に紐づく案件なので、常に物件ありとして扱う
+    const isProperty = locked ? true : form.property_scope === 'property'
+    if (isProperty && !form.property_type) { setError('物件種別を選択してください'); return }
+    setSaving(true); setError('')
+    try {
+      const pFields = propertyFieldsFor(form.property_type)
+      const trimOrNull = (v) => {
+        const t = String(v || '').trim()
+        return t === '' ? null : t
+      }
+      const patch = {
+        property_type: isProperty ? trimOrNull(form.property_type) : null,
+        building_name: (isProperty && pFields.building) ? trimOrNull(form.building_name) : null,
+        unit_no: (isProperty && pFields.unit) ? trimOrNull(form.unit_no) : null,
+        updated_at: new Date().toISOString(),
+      }
+      // ロック中は property_scope / property_address を update に含めない
+      if (!locked) {
+        patch.property_scope = form.property_scope
+        patch.property_address = isProperty ? trimOrNull(form.property_address) : null
+      }
+      const { error: updErr } = await supabase.from('workspaces').update(patch).eq('id', ws.id)
+      if (updErr) throw updErr
+      onSaved(patch)
+      onClose()
+    } catch (e) {
+      setError('保存に失敗しました。' + (e.message || ''))
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ ...glass, borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>物件情報を編集</div>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <PropertyFields form={form} onChange={handleChange} lockScope={locked} lockAddress={locked} />
+        </div>
+        {error ? <div style={{ marginTop: 12, fontSize: 12, color: '#F87171', fontWeight: 400 }}>{error}</div> : null}
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 400, cursor: 'pointer' }}>キャンセル</button>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 1, background: saving ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {saving ? <Loader size={14} /> : null}保存
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ===================== 新規作成モーダル =====================
 
 function CreateModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ title: '', customer_name: '', agent_name: '', contract_type: '売買', property_address: '', customer_email: '' })
+  const [form, setForm] = useState({ title: '', customer_name: '', agent_name: '', contract_type: '売買', property_scope: 'undecided', property_type: '', property_address: '', building_name: '', unit_no: '', customer_email: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [inviteFailed, setInviteFailed] = useState(false)
@@ -457,6 +594,8 @@ function CreateModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.title || !form.customer_name || !form.contract_type) { setError('案件名・お客様名・契約種別は必須です。'); return }
+    // 物件に関する案件のときだけ物件種別を必須にする（物件所在地は任意）
+    if (form.property_scope === 'property' && !form.property_type) { setError('物件種別を選択してください'); return }
     const custEmail = (form.customer_email || '').trim().toLowerCase()
     if (custEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(custEmail)) { setError('お客様メールアドレスの形式が正しくありません。'); return }
     const { data: { session } } = await supabase.auth.getSession()
@@ -470,10 +609,23 @@ function CreateModal({ onClose, onCreated }) {
       const codeRes = await supabase.rpc('next_workspace_code')
       if (codeRes.error) { setError('案件番号の採番に失敗しました。' + (codeRes.error.message || '')); setSubmitting(false); return }
       const wsCode = codeRes.data
+      // 物件項目は property のときだけ保存する。
+      // 出し分けで隠れている建物名・部屋番号、および property 以外のときは null を入れる。
+      const isProperty = form.property_scope === 'property'
+      const pFields = propertyFieldsFor(form.property_type)
+      const trimOrNull = (v) => {
+        const t = String(v || '').trim()
+        return t === '' ? null : t
+      }
       const { error: wsErr } = await supabase.from('workspaces').insert({
         id: newId, ws_code: wsCode, title: form.title, customer_name: form.customer_name,
         agent_name: form.agent_name, contract_type: form.contract_type,
-        property_address: form.property_address, status: '進行中', progress: 0,
+        property_scope: form.property_scope,
+        property_type: isProperty ? trimOrNull(form.property_type) : null,
+        property_address: isProperty ? trimOrNull(form.property_address) : null,
+        building_name: (isProperty && pFields.building) ? trimOrNull(form.building_name) : null,
+        unit_no: (isProperty && pFields.unit) ? trimOrNull(form.unit_no) : null,
+        status: '進行中', progress: 0,
       })
       if (wsErr) throw wsErr
       const labels = getRoadmapLabels(form.contract_type)
@@ -539,7 +691,7 @@ function CreateModal({ onClose, onCreated }) {
                   {CONTRACT_TYPES.map(t => <option key={t} value={t} style={{ background: '#0F172A' }}>{t}</option>)}
                 </select>
               </div>
-              <div><div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>物件住所</div><input type="text" value={form.property_address} onChange={e => handleChange('property_address', e.target.value)} placeholder="例：さいたま市大宮区〇〇" style={inputStyle} /></div>
+              <PropertyFields form={form} onChange={handleChange} lockScope={false} lockAddress={false} />
               <div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>お客様メールアドレス（任意）</div>
                 <input type="text" value={form.customer_email} onChange={e => handleChange('customer_email', e.target.value)} placeholder="例：yamada@example.com" style={inputStyle} />
@@ -749,6 +901,7 @@ function DashboardView({ id }) {
   const [glowingSteps, setGlowingSteps] = useState(false)
 
   const [celebration, setCelebration] = useState(null)
+  const [showPropertyEdit, setShowPropertyEdit] = useState(false)
   const [confettiPieces, setConfettiPieces] = useState([])
   const celebrationCheckedRef = useRef(null)
   const chatBottomRef = useRef(null)
@@ -1495,20 +1648,23 @@ function DashboardView({ id }) {
             ? (existing.transaction_count || 0)
             : (existing.transaction_count || 0) + 1
           // snapshot / last_completed_at / latest_workspace_id は already でも最新化する
-          const { error: upErr } = await supabase.from('house_records').update({
+          // 物件属性は家カルテ側が空の列だけ埋める（別案件の値で物件情報を書き換えない）
+          const mergePatch = Object.assign({
             snapshot, latest_workspace_id: currentWs.id, last_completed_at: now,
             transactions: nextTx,
             transaction_count: nextCount, updated_at: now
-          }).eq('id', existing.id)
+          }, propertyAttrsFillNulls(currentWs, existing))
+          const { error: upErr } = await supabase.from('house_records').update(mergePatch).eq('id', existing.id)
           if (upErr) throw upErr
           houseRecordId = existing.id
         } else {
           // 新規insert
-          const { data: inserted, error: insErr } = await supabase.from('house_records').insert({
+          // 新規カルテには案件の物件属性をそのまま入れる（空文字は null）
+          const { data: inserted, error: insErr } = await supabase.from('house_records').insert(Object.assign({
             address_key: rawAddr, property_name: currentWs.title, address_raw: currentWs.property_address,
             contract_type: currentWs.contract_type, snapshot, latest_workspace_id: currentWs.id,
             first_completed_at: now, last_completed_at: now, transaction_count: 1, transactions: [txRecord]
-          }).select().single()
+          }, propertyAttrsForInsert(currentWs))).select().single()
           if (insErr) throw insErr
           houseRecordId = inserted.id
         }
@@ -1522,7 +1678,13 @@ function DashboardView({ id }) {
         if (clientIns) clientRecordId = clientIns.id
       } else {
         // 上書き保存: snapshotのみ更新、transactions追記・count増加なし
-        const { error: overErr } = await supabase.from('house_records').update({ snapshot, last_completed_at: now, updated_at: now }).eq('id', houseRecordId)
+        // 上書き保存でも、家カルテ側が空の物件属性だけは埋める。
+        // 既に値がある列には触らない（別案件の値で物件情報を書き換えない）。
+        const { data: curHouse, error: curErr } = await supabase.from('house_records')
+          .select('property_type, building_name, unit_no').eq('id', houseRecordId).maybeSingle()
+        if (curErr) throw curErr
+        const overPatch = Object.assign({ snapshot, last_completed_at: now, updated_at: now }, propertyAttrsFillNulls(currentWs, curHouse))
+        const { error: overErr } = await supabase.from('house_records').update(overPatch).eq('id', houseRecordId)
         if (overErr) throw overErr
         if (clientRecordId) {
           const { error: clientUpErr } = await supabase.from('client_records').update({
@@ -2018,8 +2180,44 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       <main style={{ paddingTop: 80, paddingBottom: 140, paddingLeft: 20, paddingRight: 20, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
         <div className="ws-grid">
 
-          {/* 左カラム：役割フォルダ */}
-          <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} canWrite={canWrite} onWriteBlocked={() => setCanWrite(false)} />
+          {/* 左カラム：物件情報 + 役割フォルダ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+
+            {/* PROPERTY（社内メンバーのみ。お客様には出さない） */}
+            {isInternal ? (
+              <div style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 14, padding: '14px 18px' }}>
+                <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 4 }}>PROPERTY</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500 }}>物件情報</div>
+                  <button
+                    onClick={() => setShowPropertyEdit(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94A3B8', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    <Pencil size={11} />編集
+                  </button>
+                </div>
+                {(() => {
+                  const scopeDef = PROPERTY_SCOPES.filter(sc => sc.value === (ws.property_scope || 'undecided'))[0]
+                  const typeDef = PROPERTY_TYPES.filter(pt => pt.value === ws.property_type)[0]
+                  const rows = [
+                    { label: '物件', value: scopeDef ? scopeDef.label : (ws.property_scope || '') },
+                    { label: '物件種別', value: typeDef ? typeDef.label : (ws.property_type || '') },
+                    { label: '物件住所', value: ws.property_address || '' },
+                    { label: '建物名', value: ws.building_name || '' },
+                    { label: '部屋番号', value: ws.unit_no || '' },
+                  ]
+                  return rows.map((r, idx) => (
+                    <div key={r.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '5px 0', borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 400, width: 62, flexShrink: 0 }}>{r.label}</div>
+                      <div style={{ fontSize: 11, color: r.value ? '#CBD5E1' : '#475569', fontWeight: 400, flex: 1, minWidth: 0, wordBreak: 'break-all', lineHeight: 1.5 }}>{r.value ? r.value : '未入力'}</div>
+                    </div>
+                  ))
+                })()}
+              </div>
+            ) : null}
+
+            <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} canWrite={canWrite} onWriteBlocked={() => setCanWrite(false)} />
+          </div>
 
           {/* 中央カラム */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
@@ -2848,6 +3046,14 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {showPropertyEdit ? (
+        <PropertyEditModal
+          ws={ws}
+          onClose={() => setShowPropertyEdit(false)}
+          onSaved={(patch) => setWorkspace(prev => ({ ...prev, ...patch }))}
+        />
+      ) : null}
 
       {showAvatarModal ? (
         <div onClick={() => { setShowAvatarModal(false); setAvatarError(''); setAvatarFile(null); setAvatarPreview(null) }}
