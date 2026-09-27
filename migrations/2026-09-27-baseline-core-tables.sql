@@ -253,6 +253,8 @@ create trigger trg_log_ws_code
 --     一覧に出ないカルテへ案件が紐づく。
 --     対策: UNIQUE (org_id, address_key) WHERE deleted_at IS NULL（部分ユニーク）へ張替え
 --           ＋ ルックアップに deleted_at 除外を追加（DDL を先、コードを後）。
+--     → 2026-09-27: DDL側は migrations/2026-09-27-house-records-partial-unique.sql で解消。
+--       コード側（ルックアップの deleted_at 除外）は同日の B-7-d で対応。
 --
 -- [3] transactions (jsonb) に (house_record_id, workspace_id) の一意性が無い。
 --     同一 workspace_id が複数 append された実績あり（本番で10回）。
