@@ -1699,7 +1699,8 @@ function DashboardView({ id }) {
       // この関数は家カルテの保存だけを担う。案件の完了（status / completed_at）には
       // 一切触れない（完了は completeWorkspace / handleStepStateChange の責務）。
       // client_record_id が取れなかった場合はキーごと外す（null で上書きしない）
-      const wsFinish = { house_record_id: houseRecordId, promoted_at: now }
+      // promoted_at は「家カルテへ初めて保存した時刻」の履歴値。既に値があれば維持する。
+      const wsFinish = { house_record_id: houseRecordId, promoted_at: currentWs.promoted_at || now }
       if (clientRecordId) {
         wsFinish.client_record_id = clientRecordId
       }
@@ -1740,9 +1741,13 @@ function DashboardView({ id }) {
 
   const handleManualPromote = async () => {
     // 押すと戻せない影響が出る（初回は status が '完了' になり作成者の削除権限が変わる、
-    // client_records へ insert される、同一住所の既存家カルテの snapshot を上書きする、
-    // promoted_at を戻す手段が無い）ため、必ず確認を取る。
-    const isFirstPromote = !workspace.promoted_at
+    // client_records へ insert される、同一住所の既存家カルテの snapshot を上書きする）
+    // ため、必ず確認を取る。
+    //
+    // 現在の紐付けは house_record_id で判定する（promoted_at は初回保存の履歴値なので、
+    // 紐付けを外した案件でも過去日時が残り、現在の状態を表さない）。
+    const isLinked = workspace.house_record_id ? true : false
+    const isFirstPromote = !isLinked
     // 住所は「空かどうか」だけを見る。正規化も品質判定もしない（粗い住所も住所として扱う）。
     const hasAddress = String(workspace.property_address || '').trim() !== ''
     const ok = window.confirm(!isFirstPromote
@@ -2088,7 +2093,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
         ) : null}
         {/* 家カルテ保存ボタン（Owner/Manager のみ） */}
         {canManage ? (
-          ws.promoted_at ? (
+          ws.house_record_id ? (
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
               <button onClick={handleManualPromote} disabled={promoting} title="家カルテを現在の内容で上書き保存" style={{ display: 'flex', alignItems: 'center', gap: 4, background: promoting ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', color: '#c9a84c', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer' }}>
                 {promoting ? <Loader size={11} /> : <Save size={13} />}

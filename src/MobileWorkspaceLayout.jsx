@@ -1187,7 +1187,8 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       // この関数は家カルテの保存だけを担う。案件の完了（status / completed_at）には
       // 一切触れない（完了は completeWorkspace の責務）。
       // client_record_id が取れなかった場合はキーごと外す（null で上書きしない）
-      const wsFinish = { house_record_id: houseRecordId, promoted_at: now }
+      // promoted_at は「家カルテへ初めて保存した時刻」の履歴値。既に値があれば維持する。
+      const wsFinish = { house_record_id: houseRecordId, promoted_at: currentWs.promoted_at || now }
       if (clientRecordId) {
         wsFinish.client_record_id = clientRecordId
       }
@@ -1227,7 +1228,10 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   }
 
   const handleManualPromote = async () => {
-    const isFirstPromote = !workspace.promoted_at
+    // 現在の紐付けは house_record_id で判定する（promoted_at は初回保存の履歴値なので、
+    // 紐付けを外した案件でも過去日時が残り、現在の状態を表さない）。
+    const isLinked = workspace.house_record_id ? true : false
+    const isFirstPromote = !isLinked
     // 住所は「空かどうか」だけを見る。正規化も品質判定もしない（粗い住所も住所として扱う）。
     const hasAddress = String(workspace.property_address || '').trim() !== ''
     const ok = window.confirm(!isFirstPromote
@@ -1774,7 +1778,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 クライアントから直接 Supabase を叩くため、ここが唯一のゲートになる */}
             {canManage ? (
             <div style={{ marginTop: 16 }}>
-              {workspace.promoted_at ? (
+              {workspace.house_record_id ? (
                 <>
                   <button onClick={handleManualPromote} disabled={promoting} style={{ width: '100%', background: promoting ? 'rgba(201,168,76,0.5)' : '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 500, cursor: promoting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     {promoting ? <Loader size={14} /> : <Save size={14} />}家カルテに上書き保存
