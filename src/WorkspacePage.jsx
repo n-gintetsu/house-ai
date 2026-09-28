@@ -17,6 +17,7 @@ import FeedbackModal from './FeedbackModal'
 import ConfirmRequestButton from './ConfirmRequestButton'
 import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from './BillingGate'
 import { CONTRACT_TYPES, PROPERTY_SCOPES, PROPERTY_TYPES, propertyFieldsFor, propertyAttrsForInsert, propertyAttrsFillNulls } from './workspaceConstants'
+import HouseCandidateModal from './HouseCandidateModal'
 
 function normalizeLabel(s) {
   return (s || '').trim().replace(/\s+/g, ' ')
@@ -902,6 +903,9 @@ function DashboardView({ id }) {
 
   const [celebration, setCelebration] = useState(null)
   const [showPropertyEdit, setShowPropertyEdit] = useState(false)
+  const [candidateList, setCandidateList] = useState([])
+  const [showCandidates, setShowCandidates] = useState(false)
+  const [candidateBusy, setCandidateBusy] = useState(false)
   const [confettiPieces, setConfettiPieces] = useState([])
   const celebrationCheckedRef = useRef(null)
   const chatBottomRef = useRef(null)
@@ -1164,12 +1168,22 @@ function DashboardView({ id }) {
         fireStepGlow(newSteps.length)
       }
     }
-    // 全工程完了で自動昇格（address_keyが作れる場合のみ）
+    // 全工程完了で自動昇格（住所が入力されている場合のみ）
     if (allDone) {
       const mergedWs = { ...workspace, ...wsUpdate }
       const addrKey = (mergedWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
       if (addrKey) {
-        await promoteToHouseRecord({ currentWs: mergedWs, currentSteps: newSteps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+        const r = await promoteToHouseRecord({ currentWs: mergedWs, currentSteps: newSteps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+        if (r ? r.needsChoice === true : false) {
+          // 候補があるときは自動で決めない。何も書き込まれていない
+          setPromoteMessageIsError(false)
+          setPromoteMessage('同じ住所の家カルテがあります。右上の「案件を完了」から保存先を選んでください。')
+          setTimeout(() => setPromoteMessage(''), 8000)
+        } else if (r ? r.reason === 'candidate_search_failed' : false) {
+          setPromoteMessageIsError(true)
+          setPromoteMessage('家カルテの候補検索に失敗したため、保存していません。時間をおいて再度お試しください。')
+          setTimeout(() => setPromoteMessage(''), 8000)
+        }
       } else {
         // status は 1行上の update で既に '完了' になっているので、完了したことは事実。
         // 家カルテだけ作れなかったので、エラー色にはしない（手動押下と同じ文言・秒数）。
@@ -1595,9 +1609,12 @@ function DashboardView({ id }) {
   }
 
   // --- 家カルテ昇格 ---
-  // address_key: property_address を NFKC正規化して空白除去（タイトルへのフォールバックは廃止）
+  // 照合は DB の RPC find_house_record_candidates（match_key による候補検索）で行う。
+  // 候補が1件でも自動では合流せず、選択結果（choice）を受けてから書き込む。
+  //   choice: undefined = 未選択（候補検索する） / 'new' = 新規作成 / それ以外 = その家カルテのid
   // 二重カウント防止: house_record_id が null のとき初回昇格、あれば上書き保存のみ
-  const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }) => {
+  // rawAddr は「住所が空か」の判定にだけ使う（照合キーには使わない）
+  const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }, choice) => {
     const rawAddr = (currentWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
     if (!rawAddr) return { skipped: true }
     setPromoting(true)
@@ -1623,12 +1640,33 @@ function DashboardView({ id }) {
       let clientRecordId = currentWs.client_record_id || null
 
       if (!houseRecordId) {
-        // 初回昇格: address_key で既存を検索
-        // 部分ユニークインデックス（deleted_at is null）に合わせ、生存行だけを候補にする。
-        // 正常なら 0件 か 1件。2件返るのは設計の破綻なので .limit(1) で隠さず落とす。
-        const { data: existing, error: findErr } = await supabase.from('house_records')
-          .select('*').eq('address_key', rawAddr).is('deleted_at', null).maybeSingle()
-        if (findErr) throw findErr
+        // 初回昇格: どの家カルテへ入れるかを決める。
+        // 未選択なら候補を探すだけで、書き込みは一切しない（人が選ぶまで保留）。
+        let existing = null
+        if (choice === undefined || choice === null) {
+          const { data: cands, error: candErr } = await supabase.rpc('find_house_record_candidates', { p_address: currentWs.property_address })
+          if (candErr) {
+            // 検索できなかったときは0件と見なさない（fail closed）。何も書かずに返す。
+            console.error('promoteToHouseRecord candidate search error', JSON.stringify(candErr))
+            return { skipped: false, error: candErr, reason: 'candidate_search_failed' }
+          }
+          const list = cands || []
+          if (list.length > 0) {
+            return { skipped: false, needsChoice: true, candidates: list }
+          }
+          // 0件なら新規作成へ進む
+        } else if (choice !== 'new') {
+          // 選ばれた家カルテを書き込み直前に再取得する（RLS で自組織以外は取れない）。
+          // 選択中に削除された場合は何も書かずに返す。
+          const { data: picked, error: pickErr } = await supabase.from('house_records')
+            .select('*').eq('id', choice).is('deleted_at', null).maybeSingle()
+          if (pickErr) throw pickErr
+          if (!picked) {
+            return { skipped: false, error: null, reason: 'candidate_gone' }
+          }
+          existing = picked
+        }
+
         if (existing) {
           // 既存あり: snapshot更新 + transactions追記（同一案件なら追記しない）+ count+1
           // 同じ案件が既に取引履歴に入っているなら append しない（冪等化）。
@@ -1660,8 +1698,10 @@ function DashboardView({ id }) {
         } else {
           // 新規insert
           // 新規カルテには案件の物件属性をそのまま入れる（空文字は null）
+          // address_key は旧方式の照合キー（legacy）。新規カルテでは書かない（null のまま）。
+          // match_key は address_raw から DB のトリガーが生成する。
           const { data: inserted, error: insErr } = await supabase.from('house_records').insert(Object.assign({
-            address_key: rawAddr, property_name: currentWs.title, address_raw: currentWs.property_address,
+            property_name: currentWs.title, address_raw: currentWs.property_address,
             contract_type: currentWs.contract_type, snapshot, latest_workspace_id: currentWs.id,
             first_completed_at: now, last_completed_at: now, transaction_count: 1, transactions: [txRecord]
           }, propertyAttrsForInsert(currentWs))).select().single()
@@ -1761,6 +1801,8 @@ function DashboardView({ id }) {
     // completeWorkspace() の await 中もボタンが有効だと、二重クリックで
     // promoteToHouseRecord が並走し、同じ案件が二重に append される。
     setPromoting(true)
+    // 候補選択画面を開いた場合は、画面を閉じるまで promoting を戻さない
+    let openedCandidates = false
     try {
       // 完了にするのは初回だけ。上書き保存では触らない
       // （差し戻して進行中に戻した案件を勝手に完了へ戻さないため）。
@@ -1785,7 +1827,22 @@ function DashboardView({ id }) {
       }
 
       const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
-      const saved = r ? (r.skipped === false && !r.error) : false
+      if (r ? r.needsChoice === true : false) {
+        // 何も書き込まれていない。保存先を人が選ぶ
+        setCandidateList(r.candidates || [])
+        setShowCandidates(true)
+        openedCandidates = true
+        // promoteToHouseRecord の finally で false になっているので立て直す
+        setPromoting(true)
+        return
+      }
+      if (r ? r.reason === 'candidate_search_failed' : false) {
+        setPromoteMessageIsError(true)
+        setPromoteMessage('家カルテの候補検索に失敗したため、保存していません。時間をおいて再度お試しください。')
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
+      const saved = r ? (r.skipped === false && !r.error && !r.reason) : false
       if (saved) {
         setPromoteMessageIsError(false)
         setPromoteMessage(isFirstPromote
@@ -1801,9 +1858,57 @@ function DashboardView({ id }) {
         : '家カルテの保存に失敗しました。')
       setTimeout(() => setPromoteMessage(''), 8000)
     } finally {
-      // どの経路（早期 return・例外）でも必ずボタンを戻す
+      // どの経路（早期 return・例外）でも必ずボタンを戻す。
+      // ただし候補選択画面を開いたときは、その画面を閉じるまで維持する。
+      if (!openedCandidates) setPromoting(false)
+    }
+  }
+
+  // 候補選択画面での決定（id を選ぶ / 'new' で新規作成）
+  const handleCandidateChoice = async (choice) => {
+    setPromoting(true)
+    setCandidateBusy(true)
+    try {
+      const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule }, choice)
+      if (r ? r.reason === 'candidate_gone' : false) {
+        setPromoteMessageIsError(true)
+        setPromoteMessage('選んだ家カルテが見つかりませんでした（削除された可能性があります）。保存していません。')
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
+      if (r ? r.reason === 'candidate_search_failed' : false) {
+        setPromoteMessageIsError(true)
+        setPromoteMessage('家カルテの候補検索に失敗したため、保存していません。時間をおいて再度お試しください。')
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
+      const saved = r ? (r.skipped === false && !r.error && !r.reason) : false
+      if (saved) {
+        setPromoteMessageIsError(false)
+        setPromoteMessage('案件を完了しました。家カルテにも保存しました。')
+        setTimeout(() => setPromoteMessage(''), 4000)
+        return
+      }
+      // 家カルテの保存に失敗しても、完了は取り消さない
+      setPromoteMessageIsError(true)
+      setPromoteMessage('案件は完了しましたが、家カルテの保存に失敗しました。')
+      setTimeout(() => setPromoteMessage(''), 8000)
+    } finally {
+      setCandidateBusy(false)
+      setShowCandidates(false)
+      setCandidateList([])
       setPromoting(false)
     }
+  }
+
+  // 候補選択画面で「今は保存しない」
+  const handleCandidateCancel = () => {
+    setShowCandidates(false)
+    setCandidateList([])
+    setPromoting(false)
+    setPromoteMessageIsError(false)
+    setPromoteMessage('案件を完了しました。家カルテには保存していません。')
+    setTimeout(() => setPromoteMessage(''), 8000)
   }
 
   if (loading) {
@@ -3051,6 +3156,17 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {showCandidates ? (
+        <HouseCandidateModal
+          candidates={candidateList}
+          address={ws.property_address || ''}
+          busy={candidateBusy}
+          onSelect={(hid) => handleCandidateChoice(hid)}
+          onCreateNew={() => handleCandidateChoice('new')}
+          onCancel={handleCandidateCancel}
+        />
+      ) : null}
 
       {showPropertyEdit ? (
         <PropertyEditModal
