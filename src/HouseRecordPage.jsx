@@ -330,6 +330,9 @@ export default function HouseRecordPage() {
   const timeline = snap.timeline || []
   const members = snap.members || []
   const transactions = record.transactions || []
+  // 物件種別は英字スラッグで保存されているので表示名に直す。未設定なら「未入力」
+  const propertyTypeDef = PROPERTY_TYPES.filter(pt => pt.value === record.property_type)[0]
+  const propertyTypeLabel = propertyTypeDef ? propertyTypeDef.label : (record.property_type || '')
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0A0F1E 0%, #0F172A 100%)', color: '#E2E8F0', fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -384,11 +387,18 @@ export default function HouseRecordPage() {
           <div style={{ fontSize: 18, fontWeight: 500, color: '#E2E8F0', marginBottom: 4 }}>
             {property.property_name || record.property_name || '-'}
           </div>
-          <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400, marginBottom: 18 }}>
+          <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400, marginBottom: (record.building_name || record.unit_no) ? 4 : 18 }}>
             {property.address_raw || record.address_raw || record.address_key || '-'}
           </div>
+          {(record.building_name || record.unit_no) ? (
+            <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 400, marginBottom: 18, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {record.building_name ? <span>{record.building_name}</span> : null}
+              {record.unit_no ? <span>{record.unit_no}</span> : null}
+            </div>
+          ) : null}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {[
+              { label: '物件種別', value: propertyTypeLabel },
               { label: '契約種別', value: property.contract_type || record.contract_type },
               { label: '取引回数', value: `${record.transaction_count || 0}回`, gold: true },
               { label: '初回完了', value: formatDate(record.first_completed_at) },
@@ -397,7 +407,7 @@ export default function HouseRecordPage() {
             ].map(item => (
               <div key={item.label} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 8, padding: '10px 16px', textAlign: 'center' }}>
                 <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400, marginBottom: 4 }}>{item.label}</div>
-                <div style={{ fontSize: 14, color: item.gold ? '#c9a84c' : '#E2E8F0', fontWeight: 500 }}>{item.value || '-'}</div>
+                <div style={{ fontSize: 14, color: item.value ? (item.gold ? '#c9a84c' : '#E2E8F0') : '#475569', fontWeight: 500 }}>{item.value ? item.value : (item.label === '物件種別' ? '未入力' : '-')}</div>
               </div>
             ))}
           </div>
