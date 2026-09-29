@@ -19,6 +19,10 @@ import { checkWorkspaceCreateGate, TrialStartModal, ContractRequiredModal } from
 import { CONTRACT_TYPES, PROPERTY_SCOPES, PROPERTY_TYPES, propertyFieldsFor, propertyAttrsForInsert, propertyAttrsFillNulls } from './workspaceConstants'
 import HouseCandidateModal from './HouseCandidateModal'
 
+// 他組織が管理している案件で、完了・家カルテ保存を止めたときの文言。
+// 「案件を完了」ボタンの事前確認と、昇格側の最後の防御（SKIP_OTHER_ORG）で同じ文を出す。
+const OTHER_ORG_BLOCKED_MSG = 'この案件は別の組織が管理しているため、案件の完了と家カルテへの保存はできません。案件を管理している組織の担当者に依頼してください。'
+
 function normalizeLabel(s) {
   return (s || '').trim().replace(/\s+/g, ' ')
 }
@@ -1608,6 +1612,25 @@ function DashboardView({ id }) {
     setNotices(prev => prev.filter(n => n.id !== noticeId))
   }
 
+  // 操作者の所属組織を取得する。取得できないときは ok: false を返す（fail closed）。
+  // 組織の照合を行う全経路（昇格の入口ガード・「案件を完了」ボタンの事前確認）から使う。
+  const resolveOwnOrgId = async () => {
+    let actorUserId = currentUserId || null
+    if (!actorUserId) {
+      const { data: sessData } = await supabase.auth.getSession()
+      actorUserId = (sessData && sessData.session && sessData.session.user) ? sessData.session.user.id : null
+    }
+    if (!actorUserId) return { ok: false }
+    const { data: ownProfile, error: ownProfileErr } = await supabase
+      .from('profiles').select('org_id').eq('id', actorUserId).maybeSingle()
+    if (ownProfileErr) {
+      console.error('resolveOwnOrgId error', JSON.stringify(ownProfileErr))
+      return { ok: false }
+    }
+    if (!ownProfile || !ownProfile.org_id) return { ok: false }
+    return { ok: true, orgId: ownProfile.org_id }
+  }
+
   // --- 家カルテ昇格 ---
   // 照合は DB の RPC find_house_record_candidates（match_key による候補検索）で行う。
   // 候補が1件でも自動では合流せず、選択結果（choice）を受けてから書き込む。
@@ -1617,6 +1640,19 @@ function DashboardView({ id }) {
   const promoteToHouseRecord = async ({ currentWs, currentSteps, currentTimeline, currentMembers, currentNotices, currentSchedule }, choice) => {
     const rawAddr = (currentWs.property_address || '').normalize('NFKC').replace(/[\s　]/g, '')
     if (!rawAddr) return { skipped: true }
+
+    // --- 組織ガード（DB の読み書きより前に必ず通す） ---
+    // 他社の案件から自社の家カルテ・顧客カルテを作らせない。
+    // 自分の組織が確定できないときは書き込まない（fail closed）。
+    const ownOrg = await resolveOwnOrgId()
+    if (!ownOrg.ok || !currentWs.org_id) {
+      return { skipped: false, error: new Error('own_org_unavailable') }
+    }
+    if (ownOrg.orgId !== currentWs.org_id) {
+      // 意図的なスキップ。案件の状態を変えるのは、案件が所属する組織だけ
+      return { skipped: true, reason: 'SKIP_OTHER_ORG' }
+    }
+
     setPromoting(true)
     setPromoteMessage('')
     try {
@@ -1745,9 +1781,12 @@ function DashboardView({ id }) {
         wsFinish.client_record_id = clientRecordId
       }
       // ここが失敗したまま成功表示になると house_record_id が付かないため、
-      // 次に押したときに同じ案件がもう一度 append される。必ずエラーを検知する。
-      const { error: wsErr } = await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id)
+      // 次に押したときに同じ案件がもう一度 append される。
+      // エラーだけでなく「0件更新（RLS で弾かれた等）」も失敗として扱う。
+      const { data: linked, error: wsErr } = await supabase.from('workspaces').update(wsFinish).eq('id', currentWs.id).select('id')
       if (wsErr) throw wsErr
+      const linkedCount = Array.isArray(linked) ? linked.length : -1
+      if (linkedCount !== 1) throw new Error('workspace_link_count_' + linkedCount)
       setWorkspace(prev => ({ ...prev, ...wsFinish }))
       setPromoteMessageIsError(false)
       setPromoteMessage('家カルテに保存しました')
@@ -1756,7 +1795,12 @@ function DashboardView({ id }) {
     } catch (e) {
       console.error('promoteToHouseRecord error', e)
       setPromoteMessageIsError(true)
-      setPromoteMessage('保存に失敗しました: ' + (e.message || ''))
+      // 案件への書き戻しだけが確定できなかった場合は、家カルテが作られている可能性があるので
+      // 「保存されなかった」と断定しない
+      const failMsg = String((e && e.message) || '')
+      setPromoteMessage(failMsg.indexOf('workspace_link_count_') === 0
+        ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
+        : '保存に失敗しました: ' + failMsg)
       setTimeout(() => setPromoteMessage(''), 8000)
       return { skipped: false, error: e }
     } finally {
@@ -1770,16 +1814,38 @@ function DashboardView({ id }) {
     if (workspace.status === '完了') return { ok: true, skipped: true }
     const now = new Date().toISOString()
     const patch = { status: '完了', completed_at: now, updated_at: now }
-    const { error } = await supabase.from('workspaces').update(patch).eq('id', id)
+    const { data: completed, error } = await supabase.from('workspaces').update(patch).eq('id', id).select('id')
     if (error) {
       console.error('completeWorkspace error', JSON.stringify(error))
       return { ok: false, error: error }
+    }
+    // 0件更新（RLS で弾かれた等）を成功扱いにしない。
+    // ここで setWorkspace を呼ぶと、DB は未変更のまま画面だけ完了に見えてしまう。
+    const completedCount = Array.isArray(completed) ? completed.length : -1
+    if (completedCount !== 1) {
+      return { ok: false, error: new Error('workspace_complete_count_' + completedCount) }
     }
     setWorkspace(prev => ({ ...prev, ...patch }))
     return { ok: true, skipped: false }
   }
 
   const handleManualPromote = async () => {
+    // 案件の状態を変えるのは、案件が所属する組織だけ。
+    // 確認ダイアログより前に組織を照合し、他組織の案件では完了も家カルテ保存も行わない。
+    // 上書き保存の経路もこのハンドラを通るので、同じ事前確認が効く。
+    const ownOrg = await resolveOwnOrgId()
+    if (!ownOrg.ok || !workspace.org_id) {
+      setPromoteMessageIsError(true)
+      setPromoteMessage('所属組織を確認できませんでした。時間をおいて再度お試しください。')
+      setTimeout(() => setPromoteMessage(''), 8000)
+      return
+    }
+    if (ownOrg.orgId !== workspace.org_id) {
+      setPromoteMessageIsError(false)
+      setPromoteMessage(OTHER_ORG_BLOCKED_MSG)
+      setTimeout(() => setPromoteMessage(''), 8000)
+      return
+    }
     // 押すと戻せない影響が出る（初回は status が '完了' になり作成者の削除権限が変わる、
     // client_records へ insert される、同一住所の既存家カルテの snapshot を上書きする）
     // ため、必ず確認を取る。
@@ -1827,6 +1893,13 @@ function DashboardView({ id }) {
       }
 
       const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule })
+      if (r ? r.reason === 'SKIP_OTHER_ORG' : false) {
+        // 変更D をすり抜けた場合の最後の防御。家カルテには何も書き込まれていない
+        setPromoteMessageIsError(false)
+        setPromoteMessage(OTHER_ORG_BLOCKED_MSG)
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
       if (r ? r.needsChoice === true : false) {
         // 何も書き込まれていない。保存先を人が選ぶ
         setCandidateList(r.candidates || [])
@@ -1853,9 +1926,12 @@ function DashboardView({ id }) {
       }
       // 家カルテの保存に失敗しても、完了は取り消さない
       setPromoteMessageIsError(true)
-      setPromoteMessage(isFirstPromote
-        ? '案件は完了しましたが、家カルテの保存に失敗しました。'
-        : '家カルテの保存に失敗しました。')
+      const linkFailed = (r && r.error) ? String(r.error.message || '').indexOf('workspace_link_count_') === 0 : false
+      setPromoteMessage(linkFailed
+        ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
+        : (isFirstPromote
+          ? '案件は完了しましたが、家カルテの保存に失敗しました。'
+          : '家カルテの保存に失敗しました。'))
       setTimeout(() => setPromoteMessage(''), 8000)
     } finally {
       // どの経路（早期 return・例外）でも必ずボタンを戻す。
@@ -1870,6 +1946,12 @@ function DashboardView({ id }) {
     setCandidateBusy(true)
     try {
       const r = await promoteToHouseRecord({ currentWs: workspace, currentSteps: steps, currentTimeline: timeline, currentMembers: members, currentNotices: notices, currentSchedule: schedule }, choice)
+      if (r ? r.reason === 'SKIP_OTHER_ORG' : false) {
+        setPromoteMessageIsError(false)
+        setPromoteMessage(OTHER_ORG_BLOCKED_MSG)
+        setTimeout(() => setPromoteMessage(''), 8000)
+        return
+      }
       if (r ? r.reason === 'candidate_gone' : false) {
         setPromoteMessageIsError(true)
         setPromoteMessage('選んだ家カルテが見つかりませんでした（削除された可能性があります）。保存していません。')
@@ -1891,7 +1973,10 @@ function DashboardView({ id }) {
       }
       // 家カルテの保存に失敗しても、完了は取り消さない
       setPromoteMessageIsError(true)
-      setPromoteMessage('案件は完了しましたが、家カルテの保存に失敗しました。')
+      const linkFailed = (r && r.error) ? String(r.error.message || '').indexOf('workspace_link_count_') === 0 : false
+      setPromoteMessage(linkFailed
+        ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
+        : '案件は完了しましたが、家カルテの保存に失敗しました。')
       setTimeout(() => setPromoteMessage(''), 8000)
     } finally {
       setCandidateBusy(false)
