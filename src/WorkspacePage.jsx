@@ -956,6 +956,9 @@ function DashboardView({ id }) {
   const [inviteStatus, setInviteStatus] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
+  // 資料欄（FileFolderPanel）は自分の中で folders を持っているため、
+  // 招待で業者フォルダを作ったことを外から伝える必要がある。この値を変えると読み直す。
+  const [foldersRefreshKey, setFoldersRefreshKey] = useState(0)
 
   useEffect(() => {
     async function fetchAll() {
@@ -1419,13 +1422,15 @@ function DashboardView({ id }) {
           const folderLabel = (inviteForm.displayName || '').trim()
             || PERMISSION_LABEL[normRole(inviteForm.role)]
             || inviteForm.role
-          await supabase.from('ws_file_folders').insert({
+          const { error: folderErr } = await supabase.from('ws_file_folders').insert({
             workspace_id: id,
             role_label: folderLabel,
             is_fixed: false,
             sort_order: maxOrder + 1,
             owner_member_id: newMemberId,
           })
+          // 作れたときだけ資料欄に読み直させる（失敗時は従来どおり何もしない）
+          if (!folderErr) setFoldersRefreshKey(k => k + 1)
         }
       }
 
@@ -2411,7 +2416,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
               </div>
             ) : null}
 
-            <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} canWrite={canWrite} onWriteBlocked={() => setCanWrite(false)} />
+            <FileFolderPanel workspaceId={id} currentRole={currentRole} workspaceMembers={workspaceMembers} currentUserId={currentUserId} customerName={workspace ? workspace.customer_name : null} orgName={orgName} canWrite={canWrite} onWriteBlocked={() => setCanWrite(false)} refreshKey={foldersRefreshKey} />
           </div>
 
           {/* 中央カラム */}
@@ -3333,7 +3338,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
 // 社内・顧客は全ファイル閲覧可。それ以外（業者系）はgrantされたファイルのみ。
 const FULL_ACCESS_ROLES = ['Owner', 'Manager', 'Staff', 'Customer']
 
-function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId, customerName, orgName, canWrite, onWriteBlocked }) {
+function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUserId, customerName, orgName, canWrite, onWriteBlocked, refreshKey }) {
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const fpIsInternal = ['Owner', 'Manager', 'Staff'].includes(normRole(currentRole))
@@ -3371,7 +3376,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
 
   useEffect(() => {
     loadAll()
-  }, [workspaceId])
+  }, [workspaceId, refreshKey])
 
   async function loadAll() {
     setLoadingFolders(true)
@@ -4115,7 +4120,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                     ) : null}
                     {/* 共有パネル（fpCanDel かつ開いているときのみ） */}
                     {shareOpenFileId === wf.id ? (
-                    <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 8 }}>
+                    <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 30px rgba(201,168,76,0.15)', borderRadius: 8, boxSizing: 'border-box', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 1, marginBottom: 8 }}>共有相手（業者ロール）</div>
                       {vendorMembers.length === 0 ? (
                         <div style={{ fontSize: 11, color: '#475569', fontWeight: 400 }}>業者ロールのメンバーがいません</div>
@@ -4125,10 +4130,10 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                           const displayName = (vm.profiles && vm.profiles.display_name) || vm.email || ''
                           const roleLabel = PERMISSION_LABEL[normRole(vm.role)] || normRole(vm.role)
                           return (
-                            <div key={vm.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                              <div>
-                                <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400 }}>{displayName}</div>
-                                <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400 }}>{roleLabel}</div>
+                            <div key={vm.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minWidth: 0, padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                                <div style={{ fontSize: 11, color: '#CBD5E1', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={displayName}>{displayName}</div>
+                                <div style={{ fontSize: 9, color: '#64748B', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{roleLabel}</div>
                               </div>
                               <button
                                 onClick={() => handleGrantToggle(wf.id, vm.id, granted)}

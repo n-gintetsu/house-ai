@@ -1065,13 +1065,16 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
           const folderLabel = (inviteForm.displayName || '').trim()
             || PERMISSION_LABEL[normRole(inviteForm.role)]
             || inviteForm.role
-          await supabase.from('ws_file_folders').insert({
+          const { data: newFolder } = await supabase.from('ws_file_folders').insert({
             workspace_id: id,
             role_label: folderLabel,
             is_fixed: false,
             sort_order: maxOrder + 1,
             owner_member_id: newMemberId,
-          })
+          }).select().single()
+          // sort_order は末尾なので、返った行を足すだけで並び順どおりに表示される。
+          // 失敗時（newFolder が null）は従来どおり何もしない
+          if (newFolder) setFolders(prev => [...prev, newFolder])
         }
       }
 
