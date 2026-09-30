@@ -453,6 +453,62 @@ export default function MobileWorkspaceLayout() {
     fetchAll()
   }, [id])
 
+  // アンマウント後に状態を更新しないための目印（静かな読み直しだけで見る）
+  const filesPanelMountedRef = useRef(true)
+  useEffect(() => () => { filesPanelMountedRef.current = false }, [])
+
+  // 資料欄の3つ（フォルダ・ファイル・共有）だけを読み直す。スピナーは出さない。
+  // 取得の条件と並び順は fetchAll と同じ。
+  const reloadFilesPanel = async () => {
+    if (!id) return
+    const [{ data: foldersData }, { data: filesData }, { data: fileGrantsData }] = await Promise.all([
+      supabase.from('ws_file_folders').select('*').eq('workspace_id', id).order('sort_order', { ascending: true }),
+      supabase.from('ws_files').select('*').eq('workspace_id', id).order('created_at', { ascending: false }),
+      supabase.from('file_grants').select('*').eq('workspace_id', id),
+    ])
+    if (!filesPanelMountedRef.current) return
+    setFolders(foldersData || [])
+    setFiles(filesData || [])
+    setFileGrants(fileGrantsData || [])
+  }
+
+  // 資料欄の変更を、リロードなしで反映する。
+  // 通知は「何か変わった」の合図としてだけ使い、payload は画面の状態に使わない。
+  useEffect(() => {
+    if (!id) return
+    let alive = true
+    let timer = null
+    // 連続した通知をまとめる。500ms 静かになってから1回だけ読み直す
+    const scheduleReload = () => {
+      if (!alive) return
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        timer = null
+        if (!alive) return
+        reloadFilesPanel()
+      }, 500)
+    }
+    const wsFilter = `workspace_id=eq.${id}`
+    const filesChannel = supabase
+      .channel(`ws-files-m-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ws_file_folders', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ws_file_folders', filter: wsFilter }, scheduleReload)
+      // DELETE は Supabase の仕様で案件による絞り込みができないため、filter なしで受ける
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ws_file_folders' }, scheduleReload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ws_files', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ws_files', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ws_files' }, scheduleReload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'file_grants', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'file_grants', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'file_grants' }, scheduleReload)
+      .subscribe()
+    return () => {
+      alive = false
+      if (timer) clearTimeout(timer)
+      supabase.removeChannel(filesChannel)
+    }
+  }, [id])
+
   // 契約状態の判定は案件詳細を開いたときに1回だけ。
   // true 以外（false / null / エラー）はすべて書き込み不可に倒す（fail closed）。
   useEffect(() => {

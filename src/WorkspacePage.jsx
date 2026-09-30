@@ -3382,12 +3382,56 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const [galleryUrls, setGalleryUrls] = useState({})
   const [galleryLoading, setGalleryLoading] = useState(false)
 
+  // アンマウント後に状態を更新しないための目印（静かな読み直しだけで見る）
+  const panelMountedRef = useRef(true)
+  useEffect(() => () => { panelMountedRef.current = false }, [])
+
   useEffect(() => {
     loadAll()
   }, [workspaceId, refreshKey])
 
-  async function loadAll() {
-    setLoadingFolders(true)
+  // 資料欄（フォルダ・ファイル・共有）の変更を、リロードなしで反映する。
+  // 通知は「何か変わった」の合図としてだけ使い、payload は画面の状態に使わない。
+  // 読み直した結果（RLS に従って取れたものだけ）を表示する。
+  useEffect(() => {
+    if (!workspaceId) return
+    let alive = true
+    let timer = null
+    // 連続した通知をまとめる。500ms 静かになってから1回だけ読み直す
+    const scheduleReload = () => {
+      if (!alive) return
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        timer = null
+        if (!alive) return
+        loadAll(true)
+      }, 500)
+    }
+    const wsFilter = `workspace_id=eq.${workspaceId}`
+    const filesChannel = supabase
+      .channel(`ws-files-${workspaceId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ws_file_folders', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ws_file_folders', filter: wsFilter }, scheduleReload)
+      // DELETE は Supabase の仕様で案件による絞り込みができないため、filter なしで受ける
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ws_file_folders' }, scheduleReload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ws_files', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ws_files', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ws_files' }, scheduleReload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'file_grants', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'file_grants', filter: wsFilter }, scheduleReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'file_grants' }, scheduleReload)
+      .subscribe()
+    return () => {
+      alive = false
+      if (timer) clearTimeout(timer)
+      supabase.removeChannel(filesChannel)
+    }
+  }, [workspaceId])
+
+  // quiet = true のときはスピナーを出さない（Realtime からの静かな読み直し用）。
+  // 取得の内容は通常の読み込みと同じ。
+  async function loadAll(quiet) {
+    if (!quiet) setLoadingFolders(true)
     try {
       const { data: foldersData } = await supabase
         .from('ws_file_folders')
@@ -3412,6 +3456,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         finalFolders = reloaded || []
       }
 
+      if (quiet && !panelMountedRef.current) return
       setFolders(finalFolders)
 
       const { data: filesData } = await supabase
@@ -3419,20 +3464,23 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false })
+      if (quiet && !panelMountedRef.current) return
       setFiles(filesData || [])
 
       const { data: grantsData } = await supabase
         .from('file_grants')
         .select('*')
         .eq('workspace_id', workspaceId)
+      if (quiet && !panelMountedRef.current) return
       setFileGrants(grantsData || [])
 
+      if (quiet && !panelMountedRef.current) return
       await loadAccessLogs()
       await loadNotifyLogs()
     } catch (e) {
       console.error('FileFolderPanel loadAll error', e)
     } finally {
-      setLoadingFolders(false)
+      if (!quiet) setLoadingFolders(false)
     }
   }
 
