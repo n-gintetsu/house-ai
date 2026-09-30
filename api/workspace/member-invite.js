@@ -156,6 +156,43 @@ export default async function handler(req, res) {
     })
     .select('id')
   if (insErr) {
+    // 23505 = 一意制約の違反。二重送信の2本目や、ほぼ同時の招待がここに来る。
+    // 1本目が作った行を拾い直し、手順7と同じ扱い（active なら 409 / pending なら再利用）にする。
+    if (insErr.code === '23505') {
+      const { data: raceRows, error: raceErr } = await supabaseAdmin
+        .from('workspace_members')
+        .select('id, email, status')
+        .eq('workspace_id', workspaceId)
+      if (raceErr) {
+        console.error('[workspace/member-invite] conflict re-lookup error:', JSON.stringify(raceErr))
+        return res.status(500).json({ error: 'invite_failed' })
+      }
+      const raceMatched = (raceRows || []).filter(r => String(r.email || '').toLowerCase() === wanted)
+      const raceActive = raceMatched.filter(r => r.status === 'active')[0] || null
+      if (raceActive) {
+        return res.status(409).json({ error: 'already_member' })
+      }
+      const racePending = raceMatched.filter(r => r.status === 'pending')[0] || null
+      if (racePending) {
+        const { data: raceReused, error: raceReuseErr } = await supabaseAdmin
+          .from('workspace_members')
+          .update({ role: role, display_name: displayName })
+          .eq('id', racePending.id)
+          .select('id')
+        if (raceReuseErr) {
+          console.error('[workspace/member-invite] conflict reuse update error:', JSON.stringify(raceReuseErr))
+          return res.status(500).json({ error: 'invite_failed' })
+        }
+        if (!raceReused || raceReused.length === 0) {
+          console.error('[workspace/member-invite] conflict reuse updated 0 rows for member:', racePending.id)
+          return res.status(500).json({ error: 'invite_failed' })
+        }
+        return res.status(200).json({ ok: true, memberId: racePending.id, reused: true })
+      }
+      // 制約違反なのに該当行が見つからない（別の一意制約など）。従来どおり失敗にする
+      console.error('[workspace/member-invite] unique violation without matching row:', JSON.stringify(insErr))
+      return res.status(500).json({ error: 'invite_failed' })
+    }
     console.error('[workspace/member-invite] insert error:', JSON.stringify(insErr))
     return res.status(500).json({ error: 'invite_failed' })
   }

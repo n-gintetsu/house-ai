@@ -956,6 +956,9 @@ function DashboardView({ id }) {
   const [inviteStatus, setInviteStatus] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
+  // 連打で招待 API が2回走るのを止めるフラグ。state（inviteLoading）は
+  // 同じイベント内では更新が間に合わないため、同期的に読める ref を使う。
+  const inviteInFlightRef = useRef(false)
   // 資料欄（FileFolderPanel）は自分の中で folders を持っているため、
   // 招待で業者フォルダを作ったことを外から伝える必要がある。この値を変えると読み直す。
   const [foldersRefreshKey, setFoldersRefreshKey] = useState(0)
@@ -1382,9 +1385,12 @@ function DashboardView({ id }) {
 
   // --- WORKSPACE MEMBERS（招待・ログインメンバー）---
   const handleInvite = async () => {
+    // 二重送信の防止。入力チェックより前に置き、どの return でも必ず戻す
+    if (inviteInFlightRef.current) return
+    inviteInFlightRef.current = true
     const email = inviteForm.email.trim().toLowerCase()
-    if (!email) { setInviteError('メールアドレスを入力してください'); return }
-    if ((inviteForm.companyName || '').trim() === '') { setInviteError('名称（表示名）を入力してください'); return }
+    if (!email) { inviteInFlightRef.current = false; setInviteError('メールアドレスを入力してください'); return }
+    if ((inviteForm.companyName || '').trim() === '') { inviteInFlightRef.current = false; setInviteError('名称（表示名）を入力してください'); return }
     setInviteLoading(true); setInviteError(''); setInviteStatus('')
     try {
       // 既存 pending の検索・update・insert はサーバー側でまとめて行う
@@ -1456,6 +1462,7 @@ function DashboardView({ id }) {
       console.error('handleInvite error', e)
       setInviteError('招待に失敗しました: ' + (e.message || ''))
     } finally {
+      inviteInFlightRef.current = false
       setInviteLoading(false)
     }
   }
@@ -2977,6 +2984,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                       >キャンセル</button>
                       <button
                         onClick={handleInvite}
+                        disabled={inviteLoading}
                         style={{ ...saveBtn, opacity: inviteLoading ? 0.5 : 1, cursor: inviteLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         {inviteLoading ? <Loader size={11} /> : null}招待を送る

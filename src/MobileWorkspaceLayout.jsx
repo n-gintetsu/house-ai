@@ -319,6 +319,9 @@ export default function MobileWorkspaceLayout() {
   const [inviteStatus, setInviteStatus] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
+  // 連打で招待 API が2回走るのを止めるフラグ。state（inviteLoading）は
+  // 同じイベント内では更新が間に合わないため、同期的に読める ref を使う。
+  const inviteInFlightRef = useRef(false)
 
   useEffect(() => {
     if (!currentUserId || !id || steps.length === 0) return
@@ -1027,9 +1030,12 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
   }
 
   const handleInvite = async () => {
+    // 二重送信の防止。入力チェックより前に置き、どの return でも必ず戻す
+    if (inviteInFlightRef.current) return
+    inviteInFlightRef.current = true
     const email = inviteForm.email.trim().toLowerCase()
-    if (!email) { setInviteError('メールアドレスを入力してください'); return }
-    if ((inviteForm.companyName || '').trim() === '') { setInviteError('名称（表示名）を入力してください'); return }
+    if (!email) { inviteInFlightRef.current = false; setInviteError('メールアドレスを入力してください'); return }
+    if ((inviteForm.companyName || '').trim() === '') { inviteInFlightRef.current = false; setInviteError('名称（表示名）を入力してください'); return }
     setInviteLoading(true); setInviteError(''); setInviteStatus('')
     try {
       // 既存 pending の検索・update・insert はサーバー側でまとめて行う
@@ -1100,6 +1106,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       console.error('handleInvite error', e)
       setInviteError('招待に失敗しました: ' + (e.message || ''))
     } finally {
+      inviteInFlightRef.current = false
       setInviteLoading(false)
     }
   }
@@ -2247,6 +2254,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                         >キャンセル</button>
                         <button
                           onClick={handleInvite}
+                          disabled={inviteLoading}
                           style={{ background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: inviteLoading ? 'not-allowed' : 'pointer', opacity: inviteLoading ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
                         >
                           {inviteLoading ? <Loader size={11} /> : null}招待を送る
