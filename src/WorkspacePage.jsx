@@ -594,6 +594,8 @@ function CreateModal({ onClose, onCreated }) {
   const [error, setError] = useState('')
   const [inviteFailed, setInviteFailed] = useState(false)
   const [createdWsId, setCreatedWsId] = useState(null)
+  const [partialFailures, setPartialFailures] = useState([])
+  const [ownerFailed, setOwnerFailed] = useState(false)
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
@@ -633,13 +635,8 @@ function CreateModal({ onClose, onCreated }) {
         status: '進行中', progress: 0,
       })
       if (wsErr) throw wsErr
-      const labels = getRoadmapLabels(form.contract_type)
-      await supabase.from('roadmap_steps').insert(labels.map((label, i) => ({ workspace_id: newId, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手' })))
-      await supabase.from('ws_file_folders').insert([
-        { workspace_id: newId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
-        { workspace_id: newId, role_label: '顧客', is_fixed: true, sort_order: 1 },
-      ])
-      await supabase.from('workspace_members').insert({
+      // 作成者の Owner 行は workspaces の直後に入れる。失敗したら以降は何もしない
+      const { error: ownerErr } = await supabase.from('workspace_members').insert({
         workspace_id: newId,
         user_id: session.user.id,
         email: session.user.email || '',
@@ -647,6 +644,31 @@ function CreateModal({ onClose, onCreated }) {
         status: 'active',
         invited_by: session.user.id,
       })
+      if (ownerErr) {
+        setOwnerFailed(true)
+        setSubmitting(false)
+        return
+      }
+      // 工程表と資料フォルダは互いに依存しないので、片方が失敗しても残りは実行する
+      const failed = []
+      const labels = getRoadmapLabels(form.contract_type)
+      const { error: stepsErr } = await supabase.from('roadmap_steps').insert(labels.map((label, i) => ({ workspace_id: newId, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手' })))
+      if (stepsErr) failed.push('工程表')
+      const { error: foldersErr } = await supabase.from('ws_file_folders').insert([
+        { workspace_id: newId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
+        { workspace_id: newId, role_label: '顧客', is_fixed: true, sort_order: 1 },
+      ])
+      if (foldersErr) failed.push('資料フォルダ')
+      // 一部でも失敗したら自動では遷移せず、モーダルに失敗内容と「案件を開く」を出す
+      const finishCreate = () => {
+        if (failed.length > 0) {
+          setCreatedWsId(newId)
+          setPartialFailures(failed)
+          setSubmitting(false)
+        } else {
+          onCreated(newId)
+        }
+      }
       if (custEmail) {
         try {
           await callWorkspaceApi('/api/workspace/member-invite', {
@@ -657,14 +679,15 @@ function CreateModal({ onClose, onCreated }) {
           })
           // 招待メールであることをメールひな形側で判別するための印。名前などの本文用データは載せない。
           await supabase.auth.signInWithOtp({ email: custEmail, options: { emailRedirectTo: 'https://house-ai.co.jp/workspace', shouldCreateUser: true, data: { invited: true } } })
-          onCreated(newId)
+          finishCreate()
         } catch (_inviteErr) {
           setCreatedWsId(newId)
+          setPartialFailures(failed)
           setInviteFailed(true)
           setSubmitting(false)
         }
       } else {
-        onCreated(newId)
+        finishCreate()
       }
     } catch (e) { setError('作成に失敗しました。' + (e.message || '')); setSubmitting(false) }
   }
@@ -678,7 +701,24 @@ function CreateModal({ onClose, onCreated }) {
           <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0' }}>新規案件作成</div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
         </div>
-        {inviteFailed ? (
+        {ownerFailed ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              案件は作成されましたが、メンバー登録に失敗したため処理を中断しました。同じ内容で作成し直さず、時間をおいて案件一覧を確認してください。
+            </div>
+            <button onClick={onClose} style={{ width: '100%', background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>閉じる</button>
+          </div>
+        ) : partialFailures.length > 0 ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              <div>案件は作成されましたが、次の作成に失敗しました：{partialFailures.join('・')}。案件を開いて内容を確認してください。</div>
+              {inviteFailed ? (
+                <div style={{ marginTop: 8 }}>また、お客様への招待メールの送信にも失敗しました（通信状況や送信回数制限の可能性があります）。案件を開いて「メンバー招待」から再送できます。</div>
+              ) : null}
+            </div>
+            <button onClick={() => onCreated(createdWsId)} style={{ width: '100%', background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>案件を開く</button>
+          </div>
+        ) : inviteFailed ? (
           <div>
             <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
               案件は作成されました。ただしお客様への招待メール送信に失敗しました（通信状況や送信回数制限の可能性があります）。案件を開いて「メンバー招待」から再送できます。

@@ -60,6 +60,9 @@ function PrefillCreateModal({ house, onClose }) {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [createdWsId, setCreatedWsId] = useState(null)
+  const [partialFailures, setPartialFailures] = useState([])
+  const [ownerFailed, setOwnerFailed] = useState(false)
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
@@ -130,7 +133,8 @@ function PrefillCreateModal({ house, onClose }) {
       if (wsErr) throw wsErr
 
       // 1-2) 作成者を Owner として登録する（これが無いと作成者自身がメンバーにならない）
-      await supabase.from('workspace_members').insert({
+      //      失敗したら以降は何もしない
+      const { error: ownerErr } = await supabase.from('workspace_members').insert({
         workspace_id: newId,
         user_id: userData.user.id,
         email: userData.user.email || '',
@@ -138,18 +142,34 @@ function PrefillCreateModal({ house, onClose }) {
         status: 'active',
         invited_by: userData.user.id,
       })
+      if (ownerErr) {
+        setOwnerFailed(true)
+        setSubmitting(false)
+        return
+      }
 
-      // 2) 契約種別に応じたロードマップ雛形を roadmap_steps に一括 insert（新規・全未着手）
+      // 以下は互いに依存しないので、1つが失敗しても残りは実行する
+      const failed = []
+
+      // 2) 資料欄の固定フォルダ2行（CreateModal と同じ値）
+      const { error: foldersErr } = await supabase.from('ws_file_folders').insert([
+        { workspace_id: newId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
+        { workspace_id: newId, role_label: '顧客', is_fixed: true, sort_order: 1 },
+      ])
+      if (foldersErr) failed.push('資料フォルダ')
+
+      // 3) 契約種別に応じたロードマップ雛形を roadmap_steps に一括 insert（新規・全未着手）
       const labels = getRoadmapLabels(form.contract_type)
-      await supabase.from('roadmap_steps').insert(
+      const { error: stepsErr } = await supabase.from('roadmap_steps').insert(
         labels.map((label, i) => ({
           workspace_id: newId, step_order: i + 1, label, state: i === 0 ? '進行中' : '未着手'
         }))
       )
+      if (stepsErr) failed.push('工程表')
 
-      // 3) 前回の関係者を ws_members に引き継ぎ insert
+      // 4) 前回の関係者を ws_members に引き継ぎ insert
       if (inheritedMembers.length > 0) {
-        await supabase.from('ws_members').insert(
+        const { error: membersErr } = await supabase.from('ws_members').insert(
           inheritedMembers.map(m => ({
             workspace_id: newId,
             name: m.name,
@@ -157,9 +177,18 @@ function PrefillCreateModal({ house, onClose }) {
             permission: m.permission,
           }))
         )
+        if (membersErr) failed.push('関係者の引き継ぎ')
       }
 
-      // 4) 新しい案件ダッシュボードへ遷移
+      // 一部でも失敗したら自動では遷移せず、モーダルに失敗内容と「案件を開く」を出す
+      if (failed.length > 0) {
+        setCreatedWsId(newId)
+        setPartialFailures(failed)
+        setSubmitting(false)
+        return
+      }
+
+      // 5) 新しい案件ダッシュボードへ遷移
       window.location.href = `/workspace?id=${newId}`
     } catch (e) {
       console.error('PrefillCreate error', e)
@@ -191,6 +220,22 @@ function PrefillCreateModal({ house, onClose }) {
           </button>
         </div>
 
+        {ownerFailed ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              案件は作成されましたが、メンバー登録に失敗したため処理を中断しました。同じ内容で作成し直さず、時間をおいて案件一覧を確認してください。
+            </div>
+            <button onClick={onClose} style={{ width: '100%', background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>閉じる</button>
+          </div>
+        ) : partialFailures.length > 0 ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 400, lineHeight: 1.7, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              案件は作成されましたが、次の作成に失敗しました：{partialFailures.join('・')}。案件を開いて内容を確認してください。
+            </div>
+            <button onClick={() => { window.location.href = `/workspace?id=${createdWsId}` }} style={{ width: '100%', background: '#c9a84c', color: '#0A0F1E', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>案件を開く</button>
+          </div>
+        ) : (
+        <div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6, fontWeight: 400 }}>案件名 *</div>
@@ -261,6 +306,8 @@ function PrefillCreateModal({ house, onClose }) {
             作成して開く
           </button>
         </div>
+        </div>
+        )}
       </div>
     </div>
   )
