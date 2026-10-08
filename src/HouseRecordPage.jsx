@@ -209,7 +209,7 @@ function PrefillCreateModal({ house, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'rgba(10,15,30,0.98)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 500, boxShadow: '0 0 40px rgba(201,168,76,0.2)' }}>
+      <div style={{ background: 'rgba(10,15,30,0.98)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 500, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', boxShadow: '0 0 40px rgba(201,168,76,0.2)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 500, color: '#E2E8F0', marginBottom: 4 }}>この家で新規案件を作成</div>
