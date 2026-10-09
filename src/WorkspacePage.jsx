@@ -1196,17 +1196,72 @@ function DashboardView({ id }) {
   }
 
   // --- ROADMAP 状態変更 ---
+  // 書き込み結果の判定：エラーなし、かつ .select('id') で返った件数が1件のときだけ成功
+  function isOneRowWritten(res) {
+    return !!res && !res.error && Array.isArray(res.data) && res.data.length === 1
+  }
+
+  // 書き込みに失敗したとき、工程表と案件を DB の今の値に戻す
+  async function reloadRoadmapFromDb() {
+    const [stepsRes, wsRes] = await Promise.all([
+      supabase.from('roadmap_steps').select('*').eq('workspace_id', id).order('step_order', { ascending: true }),
+      supabase.from('workspaces').select('*').eq('id', id).single(),
+    ])
+    if (stepsRes.error) {
+      console.error('reloadRoadmapFromDb steps error', JSON.stringify(stepsRes.error))
+    } else {
+      setSteps(stepsRes.data || [])
+    }
+    if (wsRes.error || !wsRes.data) {
+      console.error('reloadRoadmapFromDb workspace error', JSON.stringify(wsRes.error))
+    } else {
+      setWorkspace(wsRes.data)
+    }
+  }
+
+  function showWriteFailed() {
+    setPromoteMessageIsError(true)
+    setPromoteMessage(canWrite === false
+      ? MEMBER_API_ERROR.billing_required
+      : '保存できませんでした。権限がないか、通信に失敗した可能性があります。画面を最新の状態に戻しました。')
+    setTimeout(() => setPromoteMessage(''), 8000)
+  }
+
+  function showProgressNotSaved() {
+    setPromoteMessageIsError(true)
+    setPromoteMessage('工程は保存しましたが、案件の状態は更新できませんでした（案件の所属組織のメンバーのみ更新できます）。')
+    setTimeout(() => setPromoteMessage(''), 8000)
+  }
+
+  // 工程の並べ直し（step_order の一括 update）。1件でも失敗（エラーか0件）があれば false
+  async function saveStepOrders(stepsArr) {
+    const results = await Promise.all(stepsArr.map(s =>
+      supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id).select('id')
+    ))
+    return results.every(isOneRowWritten)
+  }
+
   const handleStepStateChange = async (stepId, newState) => {
     setActiveStepPopover(null)
     const newSteps = steps.map(s => s.id === stepId ? { ...s, state: newState } : s)
     setSteps(newSteps)
-    await supabase.from('roadmap_steps').update({ state: newState }).eq('id', stepId)
+    const stepRes = await supabase.from('roadmap_steps').update({ state: newState }).eq('id', stepId).select('id')
+    if (!isOneRowWritten(stepRes)) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+      return
+    }
     const doneCount = newSteps.filter(s => s.state === '完了').length
     const newProgress = newSteps.length > 0 ? Math.round(doneCount / newSteps.length * 100) : 0
     const allDone = newSteps.length > 0 && doneCount === newSteps.length
     const now = new Date().toISOString()
     const wsUpdate = { progress: newProgress, updated_at: now, status: allDone ? '完了' : '進行中', completed_at: allDone ? now : null }
-    await supabase.from('workspaces').update(wsUpdate).eq('id', id)
+    const wsRes = await supabase.from('workspaces').update(wsUpdate).eq('id', id).select('id')
+    if (!isOneRowWritten(wsRes)) {
+      await reloadRoadmapFromDb()
+      showProgressNotSaved()
+      return
+    }
     setWorkspace(prev => ({ ...prev, ...wsUpdate }))
     // 全ステップ完了アニメ（編集モード中は発火しない・一度だけ）
     if (allDone && !editingRoadmap) {
@@ -1249,8 +1304,10 @@ function DashboardView({ id }) {
     const doneCount = stepsArr.filter(s => s.state === '完了').length
     const newProgress = stepsArr.length > 0 ? Math.round(doneCount / stepsArr.length * 100) : 0
     const now = new Date().toISOString()
-    await supabase.from('workspaces').update({ progress: newProgress, updated_at: now }).eq('id', id)
+    const res = await supabase.from('workspaces').update({ progress: newProgress, updated_at: now }).eq('id', id).select('id')
+    if (!isOneRowWritten(res)) return false
     setWorkspace(prev => ({ ...prev, progress: newProgress, updated_at: now }))
+    return true
   }
 
   function handleToggleRoadmapEdit() {
@@ -1270,19 +1327,35 @@ function DashboardView({ id }) {
     if (!trimmed) { setRenamingStepId(null); return }
     setSteps(prev => prev.map(s => s.id === stepId ? { ...s, label: trimmed } : s))
     setRenamingStepId(null)
-    await supabase.from('roadmap_steps').update({ label: trimmed }).eq('id', stepId)
+    const res = await supabase.from('roadmap_steps').update({ label: trimmed }).eq('id', stepId).select('id')
+    if (!isOneRowWritten(res)) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+    }
   }
 
   async function handleDeleteStep(stepId) {
     const newSteps = steps.filter(s => s.id !== stepId).map((s, i) => ({ ...s, step_order: i + 1 }))
     setSteps(newSteps)
-    await supabase.from('roadmap_steps').delete().eq('id', stepId)
-    if (newSteps.length > 0) {
-      await Promise.all(newSteps.map(s =>
-        supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
-      ))
+    const delRes = await supabase.from('roadmap_steps').delete().eq('id', stepId).select('id')
+    if (!isOneRowWritten(delRes)) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+      return
     }
-    await recalcAndSaveProgress(newSteps)
+    if (newSteps.length > 0) {
+      const ordersOk = await saveStepOrders(newSteps)
+      if (!ordersOk) {
+        await reloadRoadmapFromDb()
+        showWriteFailed()
+        return
+      }
+    }
+    const progressOk = await recalcAndSaveProgress(newSteps)
+    if (!progressOk) {
+      await reloadRoadmapFromDb()
+      showProgressNotSaved()
+    }
   }
 
   async function handleInsertStep(afterIdx, label) {
@@ -1296,11 +1369,23 @@ function DashboardView({ id }) {
     setSteps(combined)
     setInsertingAfterIdx(null)
     setInsertLabel('')
-    await supabase.from('roadmap_steps').insert({ id: newId, workspace_id: id, label: trimmed, state: '未着手', step_order: 0 })
-    await Promise.all(combined.map(s =>
-      supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
-    ))
-    await recalcAndSaveProgress(combined)
+    const insRes = await supabase.from('roadmap_steps').insert({ id: newId, workspace_id: id, label: trimmed, state: '未着手', step_order: 0 }).select('id')
+    if (!isOneRowWritten(insRes)) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+      return
+    }
+    const ordersOk = await saveStepOrders(combined)
+    if (!ordersOk) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+      return
+    }
+    const progressOk = await recalcAndSaveProgress(combined)
+    if (!progressOk) {
+      await reloadRoadmapFromDb()
+      showProgressNotSaved()
+    }
   }
 
   async function handleDropReorder(fromIdx, toIdx) {
@@ -1310,10 +1395,17 @@ function DashboardView({ id }) {
     reordered.splice(toIdx, 0, moved)
     const renumbered = reordered.map((s, i) => ({ ...s, step_order: i + 1 }))
     setSteps(renumbered)
-    await Promise.all(renumbered.map(s =>
-      supabase.from('roadmap_steps').update({ step_order: s.step_order }).eq('id', s.id)
-    ))
-    await recalcAndSaveProgress(renumbered)
+    const ordersOk = await saveStepOrders(renumbered)
+    if (!ordersOk) {
+      await reloadRoadmapFromDb()
+      showWriteFailed()
+      return
+    }
+    const progressOk = await recalcAndSaveProgress(renumbered)
+    if (!progressOk) {
+      await reloadRoadmapFromDb()
+      showProgressNotSaved()
+    }
   }
 
   useEffect(() => {
@@ -3829,13 +3921,15 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
       alert('同じ名前の役割フォルダが既にあります。別の名前にしてください。')
       return
     }
-    try {
-      await supabase.from('ws_file_folders').update({ role_label: trimmed }).eq('id', folderId)
-      setFolders(prev => prev.map(f => f.id === folderId ? { ...f, role_label: trimmed } : f))
+    const { data: updated, error } = await supabase.from('ws_file_folders').update({ role_label: trimmed }).eq('id', folderId).select('id')
+    if (error || !Array.isArray(updated) || updated.length !== 1) {
+      if (error) console.error('folder label update error', JSON.stringify(error))
       setEditingFolderId(null)
-    } catch (e) {
-      console.error('folder label update error', e)
+      alert('フォルダ名を保存できませんでした。権限がないか、通信に失敗した可能性があります。')
+      return
     }
+    setFolders(prev => prev.map(f => f.id === folderId ? { ...f, role_label: trimmed } : f))
+    setEditingFolderId(null)
   }
 
   async function handleDeleteFolder(folder) {
