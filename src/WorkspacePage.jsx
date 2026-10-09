@@ -554,8 +554,13 @@ function PropertyEditModal({ ws, onClose, onSaved }) {
         patch.property_scope = form.property_scope
         patch.property_address = isProperty ? trimOrNull(form.property_address) : null
       }
-      const { error: updErr } = await supabase.from('workspaces').update(patch).eq('id', ws.id)
+      const { data: updated, error: updErr } = await supabase.from('workspaces').update(patch).eq('id', ws.id).select('id')
       if (updErr) throw updErr
+      if (!Array.isArray(updated) || updated.length !== 1) {
+        setError('保存できませんでした。物件情報は案件の所属組織のメンバーのみ変更できます。')
+        setSaving(false)
+        return
+      }
       onSaved(patch)
       onClose()
     } catch (e) {
@@ -1227,6 +1232,20 @@ function DashboardView({ id }) {
     setTimeout(() => setPromoteMessage(''), 8000)
   }
 
+  // 追加系の失敗文言。42501 = RLS で弾かれた
+  function deniedMessage(error) {
+    if (error && error.code === '42501') {
+      return canWrite === false ? MEMBER_API_ERROR.billing_required : 'この操作を行う権限がありません。'
+    }
+    return '追加に失敗しました。通信状況を確認して、もう一度お試しください。'
+  }
+
+  function showDeleteFailed() {
+    setPromoteMessageIsError(true)
+    setPromoteMessage('削除できませんでした。権限がないか、通信に失敗した可能性があります。')
+    setTimeout(() => setPromoteMessage(''), 8000)
+  }
+
   function showProgressNotSaved() {
     setPromoteMessageIsError(true)
     setPromoteMessage('工程は保存しましたが、案件の状態は更新できませんでした（案件の所属組織のメンバーのみ更新できます）。')
@@ -1508,10 +1527,15 @@ function DashboardView({ id }) {
       setMembers(prev => [...prev, data])
       setMemberForm({ name: '', role_label: 'お客様', permission: 'Member' })
       setShowMemberForm(false)
-    } catch (e) { console.error('ws_members insert error', e); setMemberError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { console.error('ws_members insert error', e); setMemberError(deniedMessage(e)) }
   }
   const handleDeleteMember = async (memberId) => {
-    await supabase.from('ws_members').delete().eq('id', memberId)
+    const res = await supabase.from('ws_members').delete().eq('id', memberId).select('id')
+    if (!isOneRowWritten(res)) {
+      if (res && res.error) console.error('ws_members delete error', JSON.stringify(res.error))
+      showDeleteFailed()
+      return
+    }
     setMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
@@ -1643,10 +1667,15 @@ function DashboardView({ id }) {
       setTimeline(prev => [...prev, newItem].sort((a, b) => a.event_date > b.event_date ? 1 : -1))
       setTimelineForm({ event_date: '', label: '' })
       setShowTimelineForm(false)
-    } catch (e) { console.error('timeline_events insert error', e); setTimelineError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { console.error('timeline_events insert error', e); setTimelineError(deniedMessage(e)) }
   }
   const handleDeleteTimeline = async (itemId) => {
-    await supabase.from('timeline_events').delete().eq('id', itemId)
+    const res = await supabase.from('timeline_events').delete().eq('id', itemId).select('id')
+    if (!isOneRowWritten(res)) {
+      if (res && res.error) console.error('timeline_events delete error', JSON.stringify(res.error))
+      showDeleteFailed()
+      return
+    }
     setTimeline(prev => prev.filter(t => t.id !== itemId))
   }
 
@@ -1663,10 +1692,15 @@ function DashboardView({ id }) {
       setSchedule(prev => [...prev, newItem].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
       setScheduleForm({ scheduled_date: '', label: '' })
       setShowScheduleForm(false)
-    } catch (e) { console.error('ws_schedule insert error', e); setScheduleError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { console.error('ws_schedule insert error', e); setScheduleError(deniedMessage(e)) }
   }
   const handleDeleteSchedule = async (itemId) => {
-    await supabase.from('ws_schedule').delete().eq('id', itemId)
+    const res = await supabase.from('ws_schedule').delete().eq('id', itemId).select('id')
+    if (!isOneRowWritten(res)) {
+      if (res && res.error) console.error('ws_schedule delete error', JSON.stringify(res.error))
+      showDeleteFailed()
+      return
+    }
     setSchedule(prev => prev.filter(s => s.id !== itemId))
   }
 
@@ -1743,16 +1777,19 @@ function DashboardView({ id }) {
       const newId = crypto.randomUUID()
       const newItem = { id: newId, workspace_id: id, level: noticeForm.level, message: noticeForm.message }
       const { error } = await supabase.from('ws_notices').insert(newItem)
-      // 42501 = RLS で弾かれた。黙って終わらず、契約の案内に切り替える
-      if (error && error.code === '42501') { setNoticeError(''); setCanWrite(false); return }
       if (error) throw error
       setNotices(prev => [...prev, newItem])
       setNoticeForm({ level: 'info', message: '' })
       setShowNoticeForm(false)
-    } catch (e) { console.error('ws_notices insert error', e); setNoticeError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { console.error('ws_notices insert error', e); setNoticeError(deniedMessage(e)) }
   }
   const handleDeleteNotice = async (noticeId) => {
-    await supabase.from('ws_notices').delete().eq('id', noticeId)
+    const res = await supabase.from('ws_notices').delete().eq('id', noticeId).select('id')
+    if (!isOneRowWritten(res)) {
+      if (res && res.error) console.error('ws_notices delete error', JSON.stringify(res.error))
+      showDeleteFailed()
+      return
+    }
     setNotices(prev => prev.filter(n => n.id !== noticeId))
   }
 

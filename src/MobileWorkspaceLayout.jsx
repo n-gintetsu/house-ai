@@ -940,11 +940,16 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       setSchedule(prev => [...prev, newItem].sort((a, b) => a.scheduled_date > b.scheduled_date ? 1 : -1))
       setScheduleForm({ scheduled_date: '', label: '' })
       setShowScheduleForm(false)
-    } catch (e) { setScheduleError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { setScheduleError((e && e.code === '42501') ? 'この操作はできません（権限、またはご契約の状態による制限です）。' : '追加に失敗しました。通信状況を確認して、もう一度お試しください。') }
   }
 
   const handleDeleteSchedule = async (itemId) => {
-    await supabase.from('ws_schedule').delete().eq('id', itemId)
+    const { data: deleted, error } = await supabase.from('ws_schedule').delete().eq('id', itemId).select('id')
+    if (error || !Array.isArray(deleted) || deleted.length !== 1) {
+      if (error) console.error('ws_schedule delete error', JSON.stringify(error))
+      alert('削除できませんでした。権限がないか、通信に失敗した可能性があります。')
+      return
+    }
     setSchedule(prev => prev.filter(s => s.id !== itemId))
   }
 
@@ -1024,11 +1029,16 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
       setMembers(prev => [...prev, { id: newId, workspace_id: id, name: memberForm.name, role_label: memberForm.role_label, permission: memberForm.permission }])
       setMemberForm({ name: '', role_label: 'お客様', permission: 'Member' })
       setShowMemberForm(false)
-    } catch (e) { console.error('ws_members insert error', e); setMemberError('追加に失敗しました: ' + (e.message || '')) }
+    } catch (e) { console.error('ws_members insert error', e); setMemberError((e && e.code === '42501') ? 'この操作はできません（権限、またはご契約の状態による制限です）。' : '追加に失敗しました。通信状況を確認して、もう一度お試しください。') }
   }
 
   const handleDeleteMember = async (memberId) => {
-    await supabase.from('ws_members').delete().eq('id', memberId)
+    const { data: deleted, error } = await supabase.from('ws_members').delete().eq('id', memberId).select('id')
+    if (error || !Array.isArray(deleted) || deleted.length !== 1) {
+      if (error) console.error('ws_members delete error', JSON.stringify(error))
+      alert('削除できませんでした。権限がないか、通信に失敗した可能性があります。')
+      return
+    }
     setMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
