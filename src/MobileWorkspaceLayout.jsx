@@ -2170,7 +2170,7 @@ House-AIは現在、無料でご利用いただけます。より多くの方に
                 <div style={{ fontSize: 12, color: '#475569', fontWeight: 400, marginBottom: 12 }}>関係者が登録されていません。</div>
               )}
 
-              {canManage ? (
+              {isInternal ? (
                 showMemberForm ? (
                   <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                     <input

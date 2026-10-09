@@ -3390,6 +3390,8 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   const fpCanDel = normRole(currentRole) === 'Owner' || normRole(currentRole) === 'Manager'
   const fpCanAdd = currentRole !== null && currentRole !== undefined && currentRole !== ''
   const fpIsInternal = ['Owner', 'Manager', 'Staff'].includes(normRole(currentRole))
+  // フォルダ名の変更可否（固定は不可、業者の専用フォルダは管理者のみ、普通フォルダは社内）
+  const canRenameFolder = folder => !!folder && !folder.is_fixed && (folder.owner_member_id ? fpCanDel : fpIsInternal)
   const isFullAccess = FULL_ACCESS_ROLES.includes(normRole(currentRole))
   // ログイン中ユーザー自身の workspace_members.id（業者絞り込みに使う）
   const myMemberId = (workspaceMembers || []).find(m => m.user_id === currentUserId) ? (workspaceMembers || []).find(m => m.user_id === currentUserId).id : null
@@ -3480,21 +3482,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true })
 
-      let finalFolders = foldersData || []
-
-      if (finalFolders.length === 0) {
-        await supabase.from('ws_file_folders').insert([
-          { workspace_id: workspaceId, role_label: '自社（不動産）', is_fixed: true, sort_order: 0 },
-          { workspace_id: workspaceId, role_label: '顧客', is_fixed: true, sort_order: 1 },
-        ])
-        const { data: reloaded } = await supabase
-          .from('ws_file_folders')
-          .select('*')
-          .eq('workspace_id', workspaceId)
-          .order('sort_order', { ascending: true })
-          .order('created_at', { ascending: true })
-        finalFolders = reloaded || []
-      }
+      const finalFolders = foldersData || []
 
       if (quiet && !panelMountedRef.current) return
       setFolders(finalFolders)
@@ -3833,6 +3821,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
   }
 
   async function handleSaveFolderLabel(folderId, newLabel) {
+    if (!canRenameFolder(folders.find(f => f.id === folderId))) return
     const trimmed = (newLabel || '').trim()
     if (!trimmed) { setEditingFolderId(null); return }
     const dup = folders.some(f => f.id !== folderId && normalizeLabel(f.role_label) === normalizeLabel(trimmed))
@@ -3998,7 +3987,7 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
             <div style={{ marginBottom: folderFiles.length > 0 ? 12 : 0 }}>
               {/* 1段目: 名前 + 削除 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                {!folder.is_fixed && editingFolderId === folder.id ? (
+                {canRenameFolder(folder) && editingFolderId === folder.id ? (
                   <input
                     type="text"
                     value={folderEditVal}
@@ -4015,13 +4004,13 @@ function FileFolderPanel({ workspaceId, currentRole, workspaceMembers, currentUs
                 ) : (
                   <span
                     onClick={() => {
-                      if (!folder.is_fixed) {
+                      if (canRenameFolder(folder)) {
                         setEditingFolderId(folder.id)
                         setFolderEditVal(folder.role_label || '')
                       }
                     }}
-                    style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: folder.is_fixed ? 'default' : 'pointer' }}
-                    title={folder.is_fixed ? undefined : 'クリックで編集'}
+                    style={{ fontSize: 13, color: '#c9a84c', fontWeight: 500, flex: 1, minWidth: 0, cursor: canRenameFolder(folder) ? 'pointer' : 'default' }}
+                    title={canRenameFolder(folder) ? 'クリックで編集' : undefined}
                   >{
                     folder.is_fixed && folder.role_label === '自社（不動産）'
                       ? (orgName || '会社')
