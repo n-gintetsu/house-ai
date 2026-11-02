@@ -78,9 +78,13 @@ export default function ClientsListPage() {
     e.stopPropagation()
     const ok = window.confirm('「' + (c.name || '無題') + '」を削除しますか？\n削除すると一覧から消えます（管理者は後で復元できます）。')
     if (!ok) { return }
-    const { error } = await supabase.rpc('soft_delete_client_record', { p_id: c.id })
+    const { data, error } = await supabase.rpc('soft_delete_client_record', { p_id: c.id })
     if (error) {
       window.alert('削除できませんでした。権限がない可能性があります。')
+      return
+    }
+    if (data !== 'deleted') {
+      window.alert('削除できませんでした。すでに削除されているか、削除する権限がありません。画面を再読み込みしてご確認ください。')
       return
     }
     setClients(prev => prev.filter(x => x.id !== c.id))
