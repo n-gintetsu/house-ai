@@ -62,19 +62,83 @@ export default async function handler(req, res) {
 
     // 完全削除（物理削除）
     if (action === 'hard') {
-      // 削除対象ユーザー「について」書かれたメモを削除する。
-      // admin_id（メモを書いた管理者）ではなく target_id で絞ること。
-      await supabaseAdmin.from('admin_notes').delete().eq('target_id', userId);
-      await supabaseAdmin.from('reports').delete().eq('reporter_id', userId);
-      await supabaseAdmin.from('reports').delete().eq('handled_by', userId);
-      await supabaseAdmin.from('community_posts').delete().eq('user_id', userId);
-      await supabaseAdmin.from('valuations').delete().eq('user_id', userId);
-      await supabaseAdmin.from('expert_requests').delete().eq('user_id', userId);
-      await supabaseAdmin.from('favorites').delete().eq('user_id', userId);
-      await supabaseAdmin.from('profiles').delete().eq('id', userId);
-      const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-      if (error) return res.status(500).json({ error: error.message });
-      return res.json({ success: true });
+      if (userId === userData.user.id) {
+        return res.status(400).json({ error: 'cannot_delete_self' });
+      }
+
+      // 事前確認A：組織の持ち主なら止める（organizations.owner_id には外部キーが無く、DB は止めない）
+      const { data: ownedOrgs, error: orgErr } = await supabaseAdmin
+        .from('organizations')
+        .select('id, name')
+        .eq('owner_id', userId);
+      if (orgErr) {
+        return res.status(500).json({ error: 'precheck_failed', step: 'organizations' });
+      }
+      if ((ownedOrgs || []).length > 0) {
+        return res.status(409).json({ error: 'owns_organization', organizations: ownedOrgs.map(o => o.name) });
+      }
+
+      // 事前確認B：生存案件の最後の Owner なら止める（workspace_members.user_id は CASCADE で行ごと消えるため）
+      const { data: myRows, error: myErr } = await supabaseAdmin
+        .from('workspace_members')
+        .select('workspace_id, role')
+        .eq('user_id', userId);
+      if (myErr) {
+        return res.status(500).json({ error: 'precheck_failed', step: 'workspace_owner' });
+      }
+      const ownerWsIds = (myRows || [])
+        .filter(m => String(m.role || '').toLowerCase() === 'owner')
+        .map(m => m.workspace_id);
+      if (ownerWsIds.length > 0) {
+        const { data: liveWs, error: wsErr } = await supabaseAdmin
+          .from('workspaces')
+          .select('id, title')
+          .in('id', ownerWsIds)
+          .is('deleted_at', null);
+        if (wsErr) {
+          return res.status(500).json({ error: 'precheck_failed', step: 'workspace_owner' });
+        }
+        const lastOwnerTitles = [];
+        for (const ws of (liveWs || [])) {
+          const { data: others, error: othersErr } = await supabaseAdmin
+            .from('workspace_members')
+            .select('role')
+            .eq('workspace_id', ws.id)
+            .neq('user_id', userId)
+            .eq('status', 'active');
+          if (othersErr) {
+            return res.status(500).json({ error: 'precheck_failed', step: 'workspace_owner' });
+          }
+          const hasOtherOwner = (others || []).some(m => String(m.role || '').toLowerCase() === 'owner');
+          if (!hasOtherOwner) lastOwnerTitles.push(ws.title);
+        }
+        if (lastOwnerTitles.length > 0) {
+          return res.status(409).json({ error: 'last_owner_of_workspace', workspaces: lastOwnerTitles });
+        }
+      }
+
+      // auth を先に消す。NO ACTION の参照が残っていればここで失敗し、まだ何も消していない。
+      // profiles は CASCADE、reports は SET NULL で DB 側が処理する。
+      const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authErr) {
+        return res.status(409).json({ error: 'auth_delete_failed', detail: authErr.message });
+      }
+
+      // 外部キーの無い関連データ。失敗しても残りは続け、失敗したテーブル名を返す。
+      // admin_notes は admin_id（メモを書いた管理者）ではなく target_id で絞ること。
+      const cleanupTargets = [
+        ['admin_notes', 'target_id'],
+        ['community_posts', 'user_id'],
+        ['valuations', 'user_id'],
+        ['expert_requests', 'user_id'],
+        ['favorites', 'user_id'],
+      ];
+      const cleanup_failed = [];
+      for (const [table, column] of cleanupTargets) {
+        const { error: delErr } = await supabaseAdmin.from(table).delete().eq(column, userId);
+        if (delErr) cleanup_failed.push(table);
+      }
+      return res.json({ success: true, cleanup_failed });
     }
 
     return res.status(400).json({ error: 'invalid action' });

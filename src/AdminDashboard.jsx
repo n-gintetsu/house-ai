@@ -696,10 +696,30 @@ function MembersPanel() {
       headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ userId: member.id, action: 'hard' }),
     })
-    if (!res.ok) { alert('削除に失敗しました'); setDeleteModal(null); return }
+    const result = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const code = (result && result.error) || ''
+      let message = '削除に失敗しました。何も削除していない可能性があります。画面を再読み込みしてご確認ください。'
+      if (code === 'cannot_delete_self') {
+        message = '自分自身のアカウントは削除できません。'
+      } else if (code === 'owns_organization') {
+        message = 'この会員は組織の持ち主です（' + (result.organizations || []).join('、') + '）。先に組織の持ち主を変更してください。'
+      } else if (code === 'last_owner_of_workspace') {
+        message = 'この会員が唯一の Owner になっている案件があります（' + (result.workspaces || []).join('、') + '）。先に別の Owner を立ててください。'
+      } else if (code === 'auth_delete_failed') {
+        message = '削除できませんでした。案件チャットやアクセス記録など、他のデータから参照されている可能性があります。何も削除していません。'
+      }
+      window.alert(message)
+      setDeleteModal(null)
+      return
+    }
     setMembers(list => list.filter(m => m.id !== member.id))
     setDeleteModal(null)
     setSelectedMember(null)
+    const cleanupFailed = (result && result.cleanup_failed) || []
+    if (cleanupFailed.length > 0) {
+      window.alert('アカウントは削除しましたが、次の関連データの削除に失敗しました：' + cleanupFailed.join('、'))
+    }
   }
 
   async function executeRestore(member) {
