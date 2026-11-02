@@ -323,6 +323,9 @@ export default function HouseRecordPage() {
   const [showPrefillModal, setShowPrefillModal] = useState(false)
   const [gateChecking, setGateChecking] = useState(false)
   const [gateModal, setGateModal] = useState('')   // '' | 'trial' | 'contract'
+  // 取引履歴の明細（正本は house_record_transactions）。null=読み込み中
+  const [txRows, setTxRows] = useState(null)
+  const [txError, setTxError] = useState(false)
 
   // 契約可否の判定は BillingGate に集約する。ここでは結果の state だけを見る。
   const handleCreateClick = async () => {
@@ -344,12 +347,32 @@ export default function HouseRecordPage() {
   }, [])
 
   useEffect(() => {
+    // 別の家カルテに切り替わった後に、前の家カルテの読み込み結果で上書きしない
+    let cancelled = false
+    // 別の家カルテに切り替わったときに前の取引履歴を出さないよう、読み込み中に戻す
+    setTxRows(null)
+    setTxError(false)
     if (!houseId) { setNotFound(true); setLoading(false); return }
     supabase.from('house_records').select('*').eq('id', houseId).is('deleted_at', null).single()
       .then(({ data, error }) => {
+        if (cancelled) return
         if (error || !data) { setNotFound(true) } else { setRecord(data) }
         setLoading(false)
+        if (error || !data) return
+        // 家カルテが取れたときだけ取引履歴を読む。失敗しても旧 jsonb には切り替えない
+        supabase.from('house_record_transactions')
+          .select('id, workspace_id, ws_code, contract_type, customer_name, agent_name, completed_at, promoted_at, created_at')
+          .eq('house_record_id', houseId)
+          .order('promoted_at', { ascending: true })
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .then(({ data: txData, error: txErr }) => {
+            if (cancelled) return
+            if (txErr) { setTxError(true); return }
+            setTxRows(txData || [])
+          })
       })
+    return () => { cancelled = true }
   }, [houseId])
 
   if (loading) {
@@ -376,7 +399,9 @@ export default function HouseRecordPage() {
   const roadmap = snap.roadmap || []
   const timeline = snap.timeline || []
   const members = snap.members || []
-  const transactions = record.transactions || []
+  // 件数は明細の行数から出す。読み込み中・失敗のときは「-」
+  const txLoaded = !txError && Array.isArray(txRows)
+  const txCountLabel = txLoaded ? txRows.length + '回' : '-'
   // 物件種別は英字スラッグで保存されているので表示名に直す。未設定なら「未入力」
   const propertyTypeDef = PROPERTY_TYPES.filter(pt => pt.value === record.property_type)[0]
   const propertyTypeLabel = propertyTypeDef ? propertyTypeDef.label : (record.property_type || '')
@@ -411,7 +436,7 @@ export default function HouseRecordPage() {
           <WorkspaceNav current="/houses" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 20, padding: '3px 12px' }}>
-              <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>取引{record.transaction_count || 0}回</span>
+              <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>取引{txCountLabel}</span>
             </div>
             {/* プリフィル新規案件作成ボタン */}
             <button
@@ -447,7 +472,7 @@ export default function HouseRecordPage() {
             {[
               { label: '物件種別', value: propertyTypeLabel },
               { label: '契約種別', value: property.contract_type || record.contract_type },
-              { label: '取引回数', value: `${record.transaction_count || 0}回`, gold: true },
+              { label: '取引回数', value: txCountLabel, gold: true },
               { label: '初回完了', value: formatDate(record.first_completed_at) },
               { label: '最終完了', value: formatDate(record.last_completed_at) },
               { label: '最終更新', value: formatDate(record.updated_at) },
@@ -513,11 +538,15 @@ export default function HouseRecordPage() {
         <div style={{ ...glass, borderRadius: 14, padding: 24 }}>
           <div style={{ fontSize: 10, color: '#c9a84c', fontWeight: 500, letterSpacing: 3, marginBottom: 8 }}>TRANSACTIONS</div>
           <div style={{ fontSize: 14, color: '#E2E8F0', fontWeight: 500, marginBottom: 16 }}>取引履歴</div>
-          {transactions.length === 0 ? (
+          {txError ? (
+            <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>取引履歴を読み込めませんでした。画面を再読み込みしてください。</div>
+          ) : !txLoaded ? (
+            <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>読み込み中…</div>
+          ) : txRows.length === 0 ? (
             <div style={{ fontSize: 12, color: '#475569', fontWeight: 400 }}>取引履歴がありません。</div>
           ) : (
-            transactions.map((tx, idx) => (
-              <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: idx < transactions.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+            txRows.map((tx, idx) => (
+              <div key={tx.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: idx < txRows.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{idx + 1}</span>
                 </div>

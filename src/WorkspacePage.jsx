@@ -1857,6 +1857,31 @@ function DashboardView({ id }) {
         customer_name: currentWs.customer_name, agent_name: currentWs.agent_name,
         completed_at: currentWs.completed_at || now, promoted_at: now
       }
+      // 取引履歴の明細（正本）を house_record_transactions に記録する。
+      // 段1：無ければ追加（同じ家カルテ×案件が既にあれば何もしない）
+      // 段2：5列を最新化し、ちょうど1件あることを確かめる
+      // id / org_id / promoted_at / created_at は送らない（DB のトリガーと default が入れる）
+      const recordHouseTransaction = async (hrId) => {
+        const txCols = {
+          completed_at: currentWs.completed_at || now,
+          ws_code: currentWs.ws_code,
+          agent_name: currentWs.agent_name,
+          contract_type: currentWs.contract_type,
+          customer_name: currentWs.customer_name
+        }
+        const { error: txInsErr } = await supabase.from('house_record_transactions').upsert(
+          Object.assign({ house_record_id: hrId, workspace_id: currentWs.id }, txCols),
+          { onConflict: 'house_record_id,workspace_id', ignoreDuplicates: true }
+        )
+        if (txInsErr) throw new Error('house_tx_insert: ' + (txInsErr.message || ''))
+        const { data: txRows, error: txUpErr } = await supabase.from('house_record_transactions')
+          .update(txCols)
+          .eq('house_record_id', hrId).eq('workspace_id', currentWs.id)
+          .select('id')
+        if (txUpErr) throw new Error('house_tx_update: ' + (txUpErr.message || ''))
+        const txCount = Array.isArray(txRows) ? txRows.length : -1
+        if (txCount !== 1) throw new Error('house_tx_count_' + txCount)
+      }
       let houseRecordId = currentWs.house_record_id || null
       let clientRecordId = currentWs.client_record_id || null
 
@@ -1929,6 +1954,8 @@ function DashboardView({ id }) {
           if (insErr) throw insErr
           houseRecordId = inserted.id
         }
+        // 取引履歴の明細を新テーブルにも記録する（移行期間中は上の jsonb にも書き続ける）
+        await recordHouseTransaction(houseRecordId)
         // 顧客カルテ（名寄せは次フェーズ）
         const { data: clientIns, error: clientErr } = await supabase.from('client_records').insert({
           name: currentWs.customer_name, last_workspace_id: currentWs.id,
@@ -1985,7 +2012,9 @@ function DashboardView({ id }) {
       const failMsg = String((e && e.message) || '')
       setPromoteMessage(failMsg.indexOf('workspace_link_count_') === 0
         ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
-        : '保存に失敗しました: ' + failMsg)
+        : failMsg.indexOf('house_tx_') === 0
+          ? '取引履歴の記録を確定できませんでした。家カルテは作成・更新されている場合があります。もう一度保存するときは、候補から同じ家カルテを選んでください。'
+          : '保存に失敗しました: ' + failMsg)
       setTimeout(() => setPromoteMessage(''), 8000)
       return { skipped: false, error: e }
     } finally {
@@ -2111,6 +2140,8 @@ function DashboardView({ id }) {
       }
       // 家カルテの保存に失敗しても、完了は取り消さない
       setPromoteMessageIsError(true)
+      // 取引履歴の記録だけが確定できなかったときは、promoteToHouseRecord が出した案内を残す
+      if ((r && r.error) ? String(r.error.message || '').indexOf('house_tx_') === 0 : false) return
       const linkFailed = (r && r.error) ? String(r.error.message || '').indexOf('workspace_link_count_') === 0 : false
       setPromoteMessage(linkFailed
         ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
@@ -2158,6 +2189,8 @@ function DashboardView({ id }) {
       }
       // 家カルテの保存に失敗しても、完了は取り消さない
       setPromoteMessageIsError(true)
+      // 取引履歴の記録だけが確定できなかったときは、promoteToHouseRecord が出した案内を残す
+      if ((r && r.error) ? String(r.error.message || '').indexOf('house_tx_') === 0 : false) return
       const linkFailed = (r && r.error) ? String(r.error.message || '').indexOf('workspace_link_count_') === 0 : false
       setPromoteMessage(linkFailed
         ? '家カルテへの保存を確定できませんでした。家カルテが作成されている場合があるため、家カルテ一覧を確認してください。'
