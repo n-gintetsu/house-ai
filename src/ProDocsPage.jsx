@@ -131,6 +131,9 @@ function describeApiError(data) {
         : ''
     return new Error('無料でお試しいただける回数の上限に達しました' + suffix)
   }
+  if (code === 'unsupported_property_type') {
+    return new Error((data && data.error) || '現在この機能は土地の売買・交換用の書式のみに対応しています')
+  }
   return new Error((data && data.error) || 'ドラフト生成に失敗しました')
 }
 
@@ -433,7 +436,7 @@ export default function ProDocsPage() {
               'Content-Type': 'application/json',
               Authorization: 'Bearer ' + token,
             },
-            body: JSON.stringify({ template: template, draft: buildMergedDraft() }),
+            body: JSON.stringify({ template: template, draft: buildMergedDraft(), propertyType: propertyType }),
           })
         })
       })

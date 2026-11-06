@@ -10,6 +10,7 @@ const supabaseAdmin = createClient(
 
 const MAX_TEMPLATE_BASE64_CHARS = 4000000
 const EMPTY_CHECKBOX = '□'
+const SUPPORTED_PROPERTY_TYPE = '土地'
 
 export function escapeXml(text) {
   return String(text)
@@ -153,7 +154,15 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'ログインの有効期限が切れています', code: 'invalid_token' })
   }
 
-  const { template, draft } = body
+  const { template, draft, propertyType } = body
+
+  // セル座標は「土地の売買・交換用」書式専用のため、それ以外の物件種別はサーバー側でも弾く
+  if (typeof propertyType !== 'string' || propertyType !== SUPPORTED_PROPERTY_TYPE) {
+    return res.status(400).json({
+      error: '現在この機能は土地の売買・交換用の書式のみに対応しています',
+      code: 'unsupported_property_type',
+    })
+  }
 
   if (typeof template !== 'string' || template === '') {
     return res.status(400).json({ error: 'テンプレートファイルが必要です' })
