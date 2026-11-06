@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import JSZip from 'jszip'
-import { resolveWrites, CHECK_MARK, SHEET_NAME } from '../lib/juusetsu-excel-map.js'
+import { resolveWrites, CHECK_MARK, resolveSheetName } from '../lib/juusetsu-excel-map.js'
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
@@ -10,7 +10,12 @@ const supabaseAdmin = createClient(
 
 const MAX_TEMPLATE_BASE64_CHARS = 4000000
 const EMPTY_CHECKBOX = '□'
-const SUPPORTED_PROPERTY_TYPE = '土地'
+const SUPPORTED_PROPERTY_TYPES = ['土地', '戸建']
+// エラーメッセージ用の人間向け書式名（シート名とは別）
+const FORMAT_LABELS = {
+  '土地': '『重要事項説明書（土地の売買・交換用）』',
+  '戸建': '『重要事項説明書（土地建物の売買・交換用）』',
+}
 
 export function escapeXml(text) {
   return String(text)
@@ -84,7 +89,7 @@ export function buildInlineStrCell(ref, styleAttr, value) {
  * workbook.xml と workbook.xml.rels から、対象シートXMLのパスを解決する。
  * パスはハードコードしない。
  */
-export function resolveSheetPath(workbookXml, relsXml) {
+export function resolveSheetPath(workbookXml, relsXml, sheetName) {
   const sheetTags = workbookXml.match(/<sheet\b[^>]*\/?>/g) || []
   let relId = ''
   for (const tag of sheetTags) {
@@ -96,7 +101,7 @@ export function resolveSheetPath(workbookXml, relsXml) {
       .split('&gt;').join('>')
       .split('&quot;').join('"')
       .split('&apos;').join("'")
-    if (name !== SHEET_NAME) continue
+    if (name !== sheetName) continue
     const idMatch = tag.match(/r:id="([^"]*)"/)
     if (idMatch) relId = idMatch[1]
     break
@@ -156,13 +161,15 @@ export default async function handler(req, res) {
 
   const { template, draft, propertyType } = body
 
-  // セル座標は「土地の売買・交換用」書式専用のため、それ以外の物件種別はサーバー側でも弾く
-  if (typeof propertyType !== 'string' || propertyType !== SUPPORTED_PROPERTY_TYPE) {
+  // セル座標は書式ごとに異なるため、マップのある物件種別（土地・戸建）以外はサーバー側でも弾く
+  if (typeof propertyType !== 'string' || SUPPORTED_PROPERTY_TYPES.indexOf(propertyType) === -1) {
     return res.status(400).json({
-      error: '現在この機能は土地の売買・交換用の書式のみに対応しています',
+      error: '現在この機能は土地・土地建物の売買・交換用の書式のみに対応しています。区分所有建物（マンション）の書式は準備中です',
       code: 'unsupported_property_type',
     })
   }
+
+  const formatLabel = FORMAT_LABELS[propertyType]
 
   if (typeof template !== 'string' || template === '') {
     return res.status(400).json({ error: 'テンプレートファイルが必要です' })
@@ -182,18 +189,18 @@ export default async function handler(req, res) {
   const relsFile = zip.file('xl/_rels/workbook.xml.rels')
   if (!workbookFile || !relsFile) {
     return res.status(400).json({
-      error: '対応している書式ではありません。全宅連の『重要事項説明書（土地の売買・交換用）』をアップロードしてください',
+      error: '対応している書式ではありません。全宅連の' + formatLabel + 'をアップロードしてください',
     })
   }
 
   const workbookXml = await workbookFile.async('string')
   const relsXml = await relsFile.async('string')
-  const sheetPath = resolveSheetPath(workbookXml, relsXml)
+  const sheetPath = resolveSheetPath(workbookXml, relsXml, resolveSheetName(propertyType))
 
   const sheetFile = sheetPath ? zip.file(sheetPath) : null
   if (!sheetFile) {
     return res.status(400).json({
-      error: '対応している書式ではありません。全宅連の『重要事項説明書（土地の売買・交換用）』をアップロードしてください',
+      error: '対応している書式ではありません。全宅連の' + formatLabel + 'をアップロードしてください',
     })
   }
 
@@ -203,7 +210,7 @@ export default async function handler(req, res) {
   const sharedStringsXml = sharedStringsFile ? await sharedStringsFile.async('string') : ''
   const checkboxIndexes = findCheckboxIndexes(sharedStringsXml)
 
-  const resolved = resolveWrites(draft)
+  const resolved = resolveWrites(draft, propertyType)
   const skipped = resolved.skipped.slice()
   let written = 0
 

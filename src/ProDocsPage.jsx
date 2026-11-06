@@ -1177,14 +1177,14 @@ export default function ProDocsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ background: '#111827', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#E2E8F0', marginBottom: '8px' }}>重説フォーマットに転記</div>
-                {propertyType !== '土地' ? (
+                {propertyType !== '土地' && propertyType !== '戸建' ? (
                   <div style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.8' }}>
-                    現在この機能は『土地の売買・交換用』の書式のみに対応しています。戸建・マンションの書式は準備中です。
+                    現在この機能は『土地の売買・交換用』『土地建物の売買・交換用』の書式に対応しています。区分所有建物（マンション）の書式は準備中です。
                   </div>
                 ) : (
                 <div>
                 <div style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.8', marginBottom: '12px' }}>
-                  全宅連の『重要事項説明書（土地の売買・交換用）』のExcelファイルをアップロードすると、AIが読み取った内容を転記します。書式は全宅連の会員ページからダウンロードしてください。
+                  全宅連の{propertyType === '戸建' ? '『重要事項説明書（土地建物の売買・交換用）』' : '『重要事項説明書（土地の売買・交換用）』'}のExcelファイルをアップロードすると、AIが読み取った内容を転記します。書式は全宅連の会員ページからダウンロードしてください。
                 </div>
 
                 <input
@@ -1244,6 +1244,12 @@ export default function ProDocsPage() {
                         ログインする
                       </button>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {propertyType === '戸建' ? (
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '10px' }}>
+                    建物の床面積と新築年月日は、書式が階別・元号別の分割入力のため転記されません。手入力してください。
                   </div>
                 ) : null}
 
