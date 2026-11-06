@@ -29,6 +29,10 @@ const UNLIMITED_EMAILS = (process.env.JUUSETSU_UNLIMITED_EMAILS || '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter((e) => e !== '')
+// 作り直しの上限。作り直しは必ず g1 から始まるため、g1 のときだけ数える。
+const MAX_REGENERATE = Number.isFinite(Number(process.env.JUUSETSU_MAX_REGENERATE))
+  ? Number(process.env.JUUSETSU_MAX_REGENERATE)
+  : 10
 
 // PDF解析は30〜60秒かかるため既定タイムアウトを延長する
 export const config = { maxDuration: 60 }
@@ -128,7 +132,7 @@ export default async function handler(req, res) {
   // 5) 回数チェック。同一 runId の2回目以降（g2〜g5）は継続中の生成として通す。
   const { data: runRows, error: runErr } = await supabaseAdmin
     .from('juusetsu_runs')
-    .select('id, user_id')
+    .select('id, user_id, regenerate_count')
     .eq('id', runId)
     .limit(1)
 
@@ -141,6 +145,25 @@ export default async function handler(req, res) {
   if (existingRun) {
     if (existingRun.user_id !== userId) {
       return res.status(403).json({ error: '不正なリクエストです' })
+    }
+    // 作り直し（既存 runId で g1 から再開）のときだけ加算する。g2〜g5 と group 未指定は対象外。
+    if (group === 'g1' && UNLIMITED_EMAILS.indexOf(userEmail) === -1) {
+      const regenerated = Number(existingRun.regenerate_count) || 0
+      if (regenerated >= MAX_REGENERATE) {
+        return res.status(403).json({
+          error: '作り直しの上限に達しました',
+          code: 'regenerate_limit',
+          used: regenerated,
+          limit: MAX_REGENERATE,
+        })
+      }
+      const { error: regenErr } = await supabaseAdmin
+        .from('juusetsu_runs')
+        .update({ regenerate_count: regenerated + 1 })
+        .eq('id', runId)
+      if (regenErr) {
+        return res.status(500).json({ error: '生成回数の確認に失敗しました' })
+      }
     }
   } else {
     // 新規生成
